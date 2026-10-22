@@ -1,0 +1,1115 @@
+{
+  "data": "2026-10-22T15:51:41.912Z",
+  "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
+  "respostas": {
+    "GET pagina": {
+      "status": 200,
+      "tipo": "text/html",
+      "sha256": "b5559cee0e21c12e"
+    },
+    "GET pagina-html": {
+      "status": 200,
+      "tipo": "text/html",
+      "sha256": "b5559cee0e21c12e"
+    },
+    "GET emblemas": {
+      "status": 200,
+      "tipo": "text/javascript",
+      "sha256": "3139a94cfce9c756"
+    },
+    "GET kit-iso": {
+      "status": 200,
+      "tipo": "text/javascript",
+      "sha256": "9084341a5c3f4917"
+    },
+    "GET kit-torno": {
+      "status": 200,
+      "tipo": "text/javascript",
+      "sha256": "471a9ce69c251e5e"
+    },
+    "GET web-js": {
+      "status": 200,
+      "tipo": "text/javascript",
+      "sha256": "daf6bef5ac877262"
+    },
+    "GET web-css": {
+      "status": 200,
+      "tipo": "text/css",
+      "sha256": "4168059ff21a5ccf"
+    },
+    "404 /server.mjs": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /data.json": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /kit/../server.mjs": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /web/js/nao-existe.js": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /qualquer": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /api/ia": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /api/agente/pastas": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /agentes": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /prototipos/curto.html": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "404 /prototipos/ffffffffffffffff.html": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "GET /api/dados": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprints": [
+          {
+            "acoes": [
+              {
+                "checkpoints": [
+                  {
+                    "data": "2026-11-20",
+                    "id": "m1",
+                    "nome": "Rota no ar"
+                  },
+                  {
+                    "data": "2026-11-25",
+                    "feito": true,
+                    "id": "m2",
+                    "nome": "Já feito"
+                  }
+                ],
+                "fim": "2026-11-30",
+                "id": "f1",
+                "inicio": "2026-11-01",
+                "nome": "Base",
+                "obs": "instruções",
+                "planos": [
+                  {
+                    "descricao": "x",
+                    "id": "t1",
+                    "texto": "Criar rota"
+                  },
+                  {
+                    "descricao": "y",
+                    "feito": true,
+                    "id": "t2",
+                    "texto": "Já feita"
+                  }
+                ],
+                "prototipos": [],
+                "status": "planejado"
+              }
+            ],
+            "descricao": "d",
+            "id": "p1",
+            "nome": "Portal"
+          }
+        ],
+        "empresa": "Contrato",
+        "workspaces": [
+          {
+            "blueprints": [
+              {
+                "acoes": [],
+                "id": "p9",
+                "nome": "Dele"
+              }
+            ],
+            "id": "w2",
+            "nome": "Outro"
+          }
+        ]
+      }
+    },
+    "PUT sem tipo": {
+      "status": 415,
+      "tipo": "text/plain",
+      "corpo": "envie application/json"
+    },
+    "PUT json inválido": {
+      "status": 400,
+      "tipo": "text/plain",
+      "corpo": "erro"
+    },
+    "PUT sem blueprints": {
+      "status": 400,
+      "tipo": "text/plain",
+      "corpo": "formato inválido: falta blueprints[]"
+    },
+    "DELETE /api/dados": {
+      "status": 405,
+      "tipo": "text/plain",
+      "corpo": "método não permitido"
+    },
+    "PUT válido": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "ok": true
+      }
+    },
+    "GET /api/dados depois": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprints": [
+          {
+            "acoes": [
+              {
+                "checkpoints": [
+                  {
+                    "data": "2026-11-20",
+                    "id": "m1",
+                    "nome": "Rota no ar"
+                  },
+                  {
+                    "data": "2026-11-25",
+                    "feito": true,
+                    "id": "m2",
+                    "nome": "Já feito"
+                  }
+                ],
+                "fim": "2026-11-30",
+                "id": "f1",
+                "inicio": "2026-11-01",
+                "nome": "Base",
+                "obs": "instruções",
+                "planos": [
+                  {
+                    "descricao": "x",
+                    "id": "t1",
+                    "texto": "Criar rota"
+                  },
+                  {
+                    "descricao": "y",
+                    "feito": true,
+                    "id": "t2",
+                    "texto": "Já feita"
+                  }
+                ],
+                "prototipos": [],
+                "status": "planejado"
+              }
+            ],
+            "descricao": "d",
+            "id": "p1",
+            "nome": "Portal"
+          }
+        ],
+        "empresa": "Contrato 2",
+        "workspaces": [
+          {
+            "blueprints": [
+              {
+                "acoes": [],
+                "id": "p9",
+                "nome": "Dele"
+              }
+            ],
+            "id": "w2",
+            "nome": "Outro"
+          }
+        ]
+      }
+    },
+    "PUT volta ao original": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "ok": true
+      }
+    },
+    "mcp host falso": {
+      "status": 403,
+      "tipo": "text/plain",
+      "corpo": "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"
+    },
+    "mcp origin falsa": {
+      "status": 403,
+      "tipo": "text/plain",
+      "corpo": "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"
+    },
+    "mcp POST sem tipo": {
+      "status": 415,
+      "tipo": "text/plain",
+      "corpo": "envie application/json"
+    },
+    "mcp POST json inválido (só o status)": {
+      "status": 400
+    },
+    "mcp PUT": {
+      "status": 405,
+      "tipo": "text/plain",
+      "corpo": "método não permitido"
+    },
+    "mcp GET desconhecido": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "mcp POST desconhecido": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    },
+    "mcp corpo grande demais": {
+      "status": 413,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "grande demais"
+      }
+    },
+    "mcp blueprints": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "hoje": "<mascarado>",
+        "workspaces": [
+          {
+            "blueprints": [
+              {
+                "acoes": 1,
+                "descricao": "d",
+                "id": "p1",
+                "nome": "Portal"
+              }
+            ],
+            "id": "sm",
+            "nome": "Contrato"
+          },
+          {
+            "blueprints": [
+              {
+                "acoes": 0,
+                "descricao": "",
+                "id": "p9",
+                "nome": "Dele"
+              }
+            ],
+            "id": "w2",
+            "nome": "Outro"
+          }
+        ]
+      }
+    },
+    "mcp blueprint (estrutura)": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprint": {
+          "acoes": [
+            {
+              "checkpoints": [
+                {
+                  "data": "2026-11-20",
+                  "id": "m1",
+                  "nome": "Rota no ar"
+                },
+                {
+                  "data": "2026-11-25",
+                  "feito": true,
+                  "id": "m2",
+                  "nome": "Já feito"
+                }
+              ],
+              "fim": "2026-11-30",
+              "id": "f1",
+              "inicio": "2026-11-01",
+              "nome": "Base",
+              "planos": [
+                {
+                  "id": "t1",
+                  "texto": "Criar rota"
+                },
+                {
+                  "feito": true,
+                  "id": "t2",
+                  "texto": "Já feita"
+                }
+              ],
+              "status": "planejado"
+            }
+          ],
+          "descricao": "d",
+          "id": "p1",
+          "nome": "Portal"
+        },
+        "hoje": "<mascarado>",
+        "outros": [],
+        "workspaceId": "sm"
+      }
+    },
+    "mcp blueprint (ação)": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "acao": {
+          "checkpoints": [
+            {
+              "data": "2026-11-20",
+              "feito": false,
+              "id": "m1",
+              "nome": "Rota no ar"
+            },
+            {
+              "data": "2026-11-25",
+              "feito": true,
+              "id": "m2",
+              "nome": "Já feito"
+            }
+          ],
+          "fim": "2026-11-30",
+          "id": "f1",
+          "inicio": "2026-11-01",
+          "nome": "Base",
+          "observacao": "instruções",
+          "planos": [
+            {
+              "descricao": "x",
+              "feito": false,
+              "id": "t1",
+              "texto": "Criar rota"
+            },
+            {
+              "descricao": "y",
+              "feito": true,
+              "id": "t2",
+              "texto": "Já feita"
+            }
+          ],
+          "prototipos": [],
+          "status": "planejado"
+        },
+        "blueprintId": "p1",
+        "hoje": "<mascarado>",
+        "workspaceId": "sm"
+      }
+    },
+    "mcp blueprint de outro workspace": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprint": {
+          "acoes": [],
+          "descricao": "",
+          "id": "p9",
+          "nome": "Dele"
+        },
+        "hoje": "<mascarado>",
+        "outros": [],
+        "workspaceId": "w2"
+      }
+    },
+    "mcp blueprint sem blueprint": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Informe o blueprint_id."
+      }
+    },
+    "mcp blueprint blueprint inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Blueprint não encontrado neste workspace (veja listar_blueprints)."
+      }
+    },
+    "mcp blueprint workspace inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Workspace não encontrado (veja listar_blueprints)."
+      }
+    },
+    "mcp blueprint ação inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Ação não encontrada neste blueprint (veja ler_blueprint sem acao_id)."
+      }
+    },
+    "mcp info": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "arquivo": "<mascarado>",
+        "url": "<mascarado>"
+      }
+    },
+    "proposta inválida": {
+      "status": 422,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Ação 1 \"x\": sem planos (ok só se for um esqueleto que o usuário vai detalhar)."
+        ],
+        "erros": [
+          "Ação 1 \"x\": `fim` (2026-11-01) é anterior a `inicio` (2026-12-01)."
+        ]
+      }
+    },
+    "proposta workspace inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Workspace não encontrado (veja listar_blueprints)."
+      }
+    },
+    "proposta blueprint novo sem nome": {
+      "status": 422,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+        ],
+        "erros": [
+          "Blueprint novo: informe `blueprint: { nome, descricao }`."
+        ]
+      }
+    },
+    "proposta válida": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+        ],
+        "ok": true
+      }
+    },
+    "proposta substitui": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+        ],
+        "ok": true
+      }
+    },
+    "proposta blueprint novo": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+        ],
+        "ok": true
+      }
+    },
+    "proposta mover": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
+          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+        ],
+        "ok": true
+      }
+    },
+    "proposta remover": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [
+          "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
+        ],
+        "ok": true
+      }
+    },
+    "proposta remover inválido": {
+      "status": 422,
+      "tipo": "application/json",
+      "corpo": {
+        "avisos": [],
+        "erros": [
+          "Remoção 1: informe plano_id ou checkpoint_id, não os dois (sem nenhum dos dois, remove a ação inteira).",
+          "Remoção 2: o acao_id \"nao\" não existe neste blueprint (use só ids de ler_blueprint)."
+        ]
+      }
+    },
+    "mcp fila depois das propostas": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "itens": [
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "",
+            "em": "<mascarado>",
+            "id": 3,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-30",
+                      "id": "",
+                      "nome": "Pronto"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 1"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 2"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 3"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "blueprint": {
+                "descricao": "d",
+                "nome": "Novo"
+              },
+              "mensagem": "",
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
+            ],
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 5,
+            "proposta": {
+              "acoes": [],
+              "mensagem": "",
+              "remover": [
+                {
+                  "acao": "Base",
+                  "acaoId": "f1",
+                  "checkpoint": "",
+                  "checkpointId": "",
+                  "motivo": "teste",
+                  "plano": "Já feita",
+                  "planoId": "t2"
+                },
+                {
+                  "acao": "Base",
+                  "acaoId": "f1",
+                  "checkpoint": "Rota no ar",
+                  "checkpointId": "m1",
+                  "motivo": "",
+                  "plano": "",
+                  "planoId": ""
+                }
+              ]
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          }
+        ]
+      }
+    },
+    "evento tipo inválido": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "tipo de evento inválido"
+      }
+    },
+    "evento sem texto": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "texto é obrigatório"
+      }
+    },
+    "evento progresso": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprintId": "p1",
+        "em": "<mascarado>",
+        "id": 6,
+        "texto": "lendo",
+        "tipo": "progresso",
+        "workspaceId": "sm"
+      }
+    },
+    "evento bloqueio": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprintId": "p1",
+        "em": "<mascarado>",
+        "id": 7,
+        "texto": "preciso de acesso",
+        "tipo": "bloqueio",
+        "workspaceId": "sm"
+      }
+    },
+    "evento concluir": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "acaoId": "f1",
+        "blueprintId": "p1",
+        "em": "<mascarado>",
+        "id": 8,
+        "plano": "Criar rota",
+        "planoId": "t1",
+        "texto": "testes passaram",
+        "tipo": "concluir",
+        "workspaceId": "sm"
+      }
+    },
+    "evento concluir já feita": {
+      "status": 409,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Este plano já está concluída."
+      }
+    },
+    "evento concluir inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Ação ou plano não encontrada (veja ler_blueprint)."
+      }
+    },
+    "evento progresso com plano": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "acaoId": "f1",
+        "blueprintId": "p1",
+        "em": "<mascarado>",
+        "id": 9,
+        "plano": "Já feita",
+        "planoId": "t2",
+        "texto": "x",
+        "tipo": "progresso",
+        "workspaceId": "sm"
+      }
+    },
+    "evento checkpoint feito": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "acaoId": "f1",
+        "blueprintId": "p1",
+        "checkpoint": "Rota no ar",
+        "checkpointId": "m1",
+        "em": "<mascarado>",
+        "id": 10,
+        "texto": "demonstrado",
+        "tipo": "checkpoint-feito",
+        "workspaceId": "sm"
+      }
+    },
+    "evento checkpoint já feito": {
+      "status": 409,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Este checkpoint já está concluído."
+      }
+    },
+    "evento checkpoint inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Ação ou checkpoint não encontrado (veja ler_blueprint)."
+      }
+    },
+    "evento texto longo": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "blueprintId": "p1",
+        "em": "<mascarado>",
+        "id": 11,
+        "texto": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…",
+        "tipo": "progresso",
+        "workspaceId": "sm"
+      }
+    },
+    "mcp fila depois dos eventos": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "itens": [
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "",
+            "em": "<mascarado>",
+            "id": 3,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-30",
+                      "id": "",
+                      "nome": "Pronto"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 1"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 2"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 3"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "blueprint": {
+                "descricao": "d",
+                "nome": "Novo"
+              },
+              "mensagem": "",
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
+            ],
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 5,
+            "proposta": {
+              "acoes": [],
+              "mensagem": "",
+              "remover": [
+                {
+                  "acao": "Base",
+                  "acaoId": "f1",
+                  "checkpoint": "",
+                  "checkpointId": "",
+                  "motivo": "teste",
+                  "plano": "Já feita",
+                  "planoId": "t2"
+                },
+                {
+                  "acao": "Base",
+                  "acaoId": "f1",
+                  "checkpoint": "Rota no ar",
+                  "checkpointId": "m1",
+                  "motivo": "",
+                  "plano": "",
+                  "planoId": ""
+                }
+              ]
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 6,
+            "texto": "lendo",
+            "tipo": "progresso",
+            "workspaceId": "sm"
+          },
+          {
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 7,
+            "texto": "preciso de acesso",
+            "tipo": "bloqueio",
+            "workspaceId": "sm"
+          },
+          {
+            "acaoId": "f1",
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 8,
+            "plano": "Criar rota",
+            "planoId": "t1",
+            "texto": "testes passaram",
+            "tipo": "concluir",
+            "workspaceId": "sm"
+          },
+          {
+            "acaoId": "f1",
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 9,
+            "plano": "Já feita",
+            "planoId": "t2",
+            "texto": "x",
+            "tipo": "progresso",
+            "workspaceId": "sm"
+          },
+          {
+            "acaoId": "f1",
+            "blueprintId": "p1",
+            "checkpoint": "Rota no ar",
+            "checkpointId": "m1",
+            "em": "<mascarado>",
+            "id": 10,
+            "texto": "demonstrado",
+            "tipo": "checkpoint-feito",
+            "workspaceId": "sm"
+          },
+          {
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 11,
+            "texto": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…",
+            "tipo": "progresso",
+            "workspaceId": "sm"
+          }
+        ]
+      }
+    },
+    "ack": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "ok": true
+      }
+    },
+    "mcp fila depois do ack": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "itens": [
+          {
+            "avisos": [
+              "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
+            ],
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 5,
+            "proposta": {
+              "acoes": [],
+              "mensagem": "",
+              "remover": [
+                {
+                  "acao": "Base",
+                  "acaoId": "f1",
+                  "checkpoint": "",
+                  "checkpointId": "",
+                  "motivo": "teste",
+                  "plano": "Já feita",
+                  "planoId": "t2"
+                },
+                {
+                  "acao": "Base",
+                  "acaoId": "f1",
+                  "checkpoint": "Rota no ar",
+                  "checkpointId": "m1",
+                  "motivo": "",
+                  "plano": "",
+                  "planoId": ""
+                }
+              ]
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 6,
+            "texto": "lendo",
+            "tipo": "progresso",
+            "workspaceId": "sm"
+          },
+          {
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 7,
+            "texto": "preciso de acesso",
+            "tipo": "bloqueio",
+            "workspaceId": "sm"
+          },
+          {
+            "acaoId": "f1",
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 8,
+            "plano": "Criar rota",
+            "planoId": "t1",
+            "texto": "testes passaram",
+            "tipo": "concluir",
+            "workspaceId": "sm"
+          },
+          {
+            "acaoId": "f1",
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 9,
+            "plano": "Já feita",
+            "planoId": "t2",
+            "texto": "x",
+            "tipo": "progresso",
+            "workspaceId": "sm"
+          },
+          {
+            "acaoId": "f1",
+            "blueprintId": "p1",
+            "checkpoint": "Rota no ar",
+            "checkpointId": "m1",
+            "em": "<mascarado>",
+            "id": 10,
+            "texto": "demonstrado",
+            "tipo": "checkpoint-feito",
+            "workspaceId": "sm"
+          },
+          {
+            "blueprintId": "p1",
+            "em": "<mascarado>",
+            "id": 11,
+            "texto": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa…",
+            "tipo": "progresso",
+            "workspaceId": "sm"
+          }
+        ]
+      }
+    },
+    "protótipo sem tag": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "html é obrigatório: um documento HTML autocontido"
+      }
+    },
+    "protótipo sem título": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "titulo é obrigatório"
+      }
+    },
+    "protótipo ação inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Ação não encontrada (veja ler_blueprint)."
+      }
+    },
+    "protótipo grande demais": {
+      "status": 413,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "o protótipo passa de 2 MB; reduza (sem imagens grandes nem bibliotecas inline)"
+      }
+    },
+    "protótipo substituir inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "prototipo_id não existe nesta ação (veja ler_blueprint)"
+      }
+    },
+    "protótipo anexar": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "acaoId": "f1",
+        "atualizado": false,
+        "blueprintId": "p1",
+        "em": "<mascarado>",
+        "id": 12,
+        "plano": "",
+        "prototipoId": "<mascarado>",
+        "texto": "Tela",
+        "tipo": "prototipo",
+        "titulo": "Tela",
+        "workspaceId": "sm"
+      }
+    },
+    "protótipo servido": {
+      "status": 200,
+      "tipo": "text/html",
+      "content-security-policy": "sandbox allow-scripts; default-src 'none'; img-src data: blob:; media-src data: blob:; font-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'",
+      "x-content-type-options": "nosniff",
+      "corpo": "<!doctype html><title>t</title><svg></svg>"
+    },
+    "protótipo remover id inválido": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "prototipoId inválido"
+      }
+    },
+    "protótipo remover": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "ok": true
+      }
+    },
+    "protótipo depois de remover": {
+      "status": 404,
+      "tipo": "text/plain",
+      "corpo": "não encontrado"
+    }
+  }
+}

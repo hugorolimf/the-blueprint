@@ -1,0 +1,12 @@
+node_modules/
+target/
+*.db
+*.db-wal
+*.db-shm
+data.json
+data.backup-*.json
+prototipos/
+.dev/
+.claude/
+.impeccable/
+graphify-out/

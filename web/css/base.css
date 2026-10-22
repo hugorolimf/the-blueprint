@@ -1,0 +1,53 @@
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--paper)}
+/* a rolagem do navegador some: quem rola é a régua lateral do blueprint */
+html{scrollbar-width:none;-ms-overflow-style:none}
+html::-webkit-scrollbar,body::-webkit-scrollbar{display:none;width:0;height:0}
+body{color:var(--ink);font:12px/1.4 var(--mono);overflow-x:auto}
+.folha{position:relative;min-height:100vh;min-width:960px;background:#061d42}
+.folha::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.09;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>")}
+#desenho{position:relative}
+/* a tela é o papel: grade fina, grade grossa e um leve clareado no centro */
+svg.desenho{display:block;position:relative;z-index:1;user-select:none;-webkit-user-select:none;box-shadow:0 14px 50px #02132ecc;
+  background:
+    linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/60px 60px,
+    linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,
+    linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
+    linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
+    radial-gradient(ellipse at 50% 40%,#1250a0 0,#0c3a78 62%,#082b5e 100%)}
+/* o rolo do blueprint abrindo: desce junto com o papel que se revela */
+.rolo{position:absolute;left:0;right:0;top:0;height:30px;z-index:4;pointer-events:none;
+  background:linear-gradient(#061d42 0,#2f66aa 22%,#eaf4ff 50%,#2f66aa 78%,#061d42 100%);
+  border-top:1px solid #eaf4ff;border-bottom:1px solid #02132e;box-shadow:0 10px 28px #02132ecc}
+text{font-family:var(--mono);letter-spacing:.06em;fill:var(--ink)}
+.mid{fill:var(--mid)}.cap{text-transform:uppercase}
+.ln{fill:none;stroke:var(--ink);stroke-width:1;stroke-linecap:round}
+.ln.m{stroke:var(--mid)}.ln.l{stroke:var(--lo)}
+.guia{stroke:var(--faint);stroke-width:1;stroke-dasharray:2 5}
+.eixo{stroke:var(--ink);stroke-width:1;stroke-dasharray:16 4 2 4}
+.acao{cursor:default;outline:none}
+.acao .caixa{fill:var(--paper);stroke:var(--ink);stroke-width:1.2;transition:stroke-width .2s}
+.acao[data-st="andamento"] .caixa{stroke-width:1.8}
+.acao[data-st="planejado"] .caixa{stroke:var(--mid);stroke-dasharray:6 4;fill:none}
+.acao:hover .caixa,.acao:focus-visible .caixa,.acao[data-on] .caixa{stroke-width:2.6}
+.acao[data-ir],.acao[data-ir] .checkpoint{cursor:pointer}
+.acao .hit{fill:transparent;transition:fill .15s}
+.acao[data-ir]:hover .hit,.acao[data-ir]:focus-visible .hit{fill:#ffffff1a}
+.pisca{fill:#eaf4ff;fill-opacity:.2;stroke:var(--ink);stroke-width:2.4;pointer-events:none;opacity:0}
+.realce{fill:none;stroke:var(--ink);stroke-width:1;opacity:0;transition:opacity .2s}
+.acao[data-on] .realce{opacity:1}
+.hach{fill:url(#hach)}
+.prog{fill:var(--ink);fill-opacity:.9}
+.dm{fill:#0c3a78;stroke:var(--ink);stroke-width:1.4}
+.dm.ok{fill:var(--ink);stroke:#0c3a78}
+.checkpoint,.nota,.chk{cursor:pointer;outline:none}
+.cx{fill:#0c3a78;stroke:var(--ink);stroke-width:1.3}
+.cx.ok{fill:var(--ink)}
+.cxm{fill:none;stroke:#0c3a78;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chk:hover .cx,.chk:focus-visible .cx,.chk:hover .dm,.chk:focus-visible .dm{stroke-width:2.6}
+.chk .tx{fill:var(--ink)}
+.chk.ok .tx{fill:var(--mid);opacity:.8}
+.chk:hover .tx,.chk:focus-visible .tx{fill:#fff}
+.chk .foco2{fill:none;stroke:var(--ink);stroke-width:1;opacity:0}
+.chk:focus-visible .foco2{opacity:1}

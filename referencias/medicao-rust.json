@@ -1,0 +1,65 @@
+{
+  "data": "2026-10-22T07:39:36.609Z",
+  "plataforma": "win32 x64",
+  "comando": "node scripts/medir-rust.mjs",
+  "cpu_metodo": "PowerShell Get-Process TotalProcessorTime, delta numa janela de 10 s sem requisições, com uma conexão SSE aberta",
+  "binario_bytes": 2612224,
+  "partida_ms": 177.3,
+  "rss_apos_subir_mb": 10.9,
+  "rss_apos_20_req_mb": 10.9,
+  "cpu_repouso_pct_de_um_nucleo": 0,
+  "latencia_ms_http_persistente": {
+    "GET /api/dados": {
+      "mediana": 0.73,
+      "p95": 4.43,
+      "n": 200
+    },
+    "GET /": {
+      "mediana": 0.26,
+      "p95": 0.4,
+      "n": 200
+    },
+    "GET /api/mcp/fila": {
+      "mediana": 0.23,
+      "p95": 0.42,
+      "n": 200
+    },
+    "POST /api/mcp/fila/ack": {
+      "mediana": 0.21,
+      "p95": 0.28,
+      "n": 200
+    }
+  },
+  "latencia_ms_fetch_como_a_linha_de_base": {
+    "GET /api/dados": {
+      "mediana": 15.6,
+      "p95": 16.6,
+      "n": 100
+    },
+    "GET /": {
+      "mediana": 15.9,
+      "p95": 16.6,
+      "n": 100
+    },
+    "GET /api/mcp/fila": {
+      "mediana": 15.8,
+      "p95": 16.8,
+      "n": 100
+    },
+    "POST /api/mcp/fila/ack": {
+      "mediana": 15.9,
+      "p95": 16.6,
+      "n": 100
+    }
+  },
+  "tamanho": {
+    "html_servido_bytes": 11753,
+    "html_gzip_bytes": 3143
+  },
+  "linha_de_base_node": {
+    "partida_ms": 164.1,
+    "rss_apos_20_req_mb": 60.4,
+    "cpu_repouso_pct_de_um_nucleo": 0,
+    "p95_api_dados_ms": 18.7
+  }
+}

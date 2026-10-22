@@ -1,0 +1,12 @@
+{
+  "name": "the-blueprint",
+  "version": "0.1.0",
+  "description": "The Blueprint (beta), roadmap local-first em Rust para agentes de IA (MCP): Workspace, Blueprint, Ação, Plano e Checkpoint. O Node roda só os testes e as verificações em scripts/.",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "git+https://github.com/hugorolimf/the-blueprint.git" },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "node dev.mjs",
+    "test": "node emblemas.test.mjs && node agentes-figura.test.mjs && node scripts/migrar-vocabulario.test.mjs"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "data": "2026-10-22T01:08:43.676Z",
+  "node": "v24.18.0",
+  "plataforma": "win32 x64",
+  "comando": "node medir.mjs",
+  "cpu_metodo": "PowerShell Get-Process TotalProcessorTime, delta numa janela de 10 s sem requisições",
+  "partida_ms": 164.1,
+  "rss_apos_subir_mb": 58.6,
+  "rss_apos_20_req_mb": 60.4,
+  "cpu_repouso_pct_de_um_nucleo": 0,
+  "latencia_ms": {
+    "GET /api/dados": {
+      "mediana": 7.8,
+      "p95": 18.7,
+      "n": 100
+    },
+    "GET /": {
+      "mediana": 7.1,
+      "p95": 16.6,
+      "n": 100
+    },
+    "GET /api/mcp/fila": {
+      "mediana": 7.7,
+      "p95": 16.4,
+      "n": 100
+    },
+    "POST /api/mcp/fila/ack": {
+      "mediana": 7.1,
+      "p95": 16,
+      "n": 100
+    }
+  },
+  "tamanho": {
+    "html_servido_bytes": 191445,
+    "data_json_bytes": 194107
+  }
+}

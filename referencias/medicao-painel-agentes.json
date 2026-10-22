@@ -1,0 +1,19 @@
+{
+  "data": "2026-10-22T15:52:52.668Z",
+  "comando": "node scripts/painel-agentes-e2e.mjs",
+  "navegador": "Microsoft Edge sem janela, 1440×1000",
+  "checkpoint_pelo_mcp": {
+    "feito": true,
+    "evidencia_guardada": true,
+    "gravado_no_servidor": true
+  },
+  "doze_agentes": {
+    "cartoes": 15,
+    "figuras": 15,
+    "posesDistintas": 16,
+    "nos": 20094,
+    "kb": 2864,
+    "quadro_medio_ms": 16.6,
+    "pior_quadro_ms": 16.8
+  }
+}

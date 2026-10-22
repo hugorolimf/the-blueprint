@@ -1,0 +1,32 @@
+{
+  "blueprint": {
+    "bytes": 49780,
+    "sha256": "e322ec2a5cffd2cbf0cccbaff8497698b8b06aa3f2ff1cafbfd52406b4e86697",
+    "feitas": 77,
+    "total": 77
+  },
+  "blueprint-metade": {
+    "bytes": 50844,
+    "sha256": "fdf9131cb50359654066d74038ea7602e8bd78dcac30b798d7d541ce541c378a",
+    "feitas": 39,
+    "total": 77
+  },
+  "blueprint-sem-sombra-azimute-30": {
+    "bytes": 49046,
+    "sha256": "f2a31668fc059ee7ae34fdf7d07726bfc913c1d66f948651f70b136e5a5e6eb6",
+    "feitas": 77,
+    "total": 77
+  },
+  "todos-os-tipos": {
+    "bytes": 15895,
+    "sha256": "f29022cc133bb1b58b5696c4845e7ac79ac296d5d373ea873f4edea21f3559f7",
+    "feitas": 11,
+    "total": 11
+  },
+  "todos-os-tipos-parcial": {
+    "bytes": 16343,
+    "sha256": "157d36646607330925209f66929a5b1e3139957c5fb108f028899c5315ee92cd",
+    "feitas": 4,
+    "total": 11
+  }
+}

@@ -1,0 +1,87 @@
+/* marca da folha: as regras do kit do anatomy com as cores do blueprint */
+.emblema{--anatomy-paper:#0c3a78;--anatomy-face:#17508f;--anatomy-top:#1a5398;--anatomy-shade-0:#0a2f63;--anatomy-shade-1:#0c346c;--anatomy-shade-2:#0f3a75;--anatomy-shade-3:#13427f;--anatomy-hi:#eaf4ff;--anatomy-mid:#8dbaea;--anatomy-lo:#518ac8;--anatomy-faint:#2d63a6;--anatomy-lit:#fff;--anatomy-lit-top:#2b69b3;--anatomy-lit-shade:#1d5aa3;--anatomy-glow:#cfe6ff;--anatomy-halo:#03142e;--anatomy-dot:#e6f2ff;--anatomy-weight:.6px;pointer-events:none;overflow:visible}
+.emblema path,.emblema circle{vector-effect:non-scaling-stroke}
+.emblema .iso-fill{fill:var(--anatomy-paper);stroke:none}
+.emblema .iso-shade,.emblema .iso-top{stroke:none}
+.emblema .iso-shade[data-shade="0"]{fill:var(--anatomy-shade-0)}
+.emblema .iso-shade[data-shade="1"]{fill:var(--anatomy-shade-1)}
+.emblema .iso-shade[data-shade="2"]{fill:var(--anatomy-shade-2)}
+.emblema .iso-shade[data-shade="3"]{fill:var(--anatomy-shade-3)}
+.emblema .iso-top{fill:var(--anatomy-top)}
+.emblema .iso-halo{fill:var(--anatomy-halo);stroke:none;filter:blur(9px);opacity:.45;transform:translateY(3px)}
+.emblema .iso-line{fill:none;stroke:var(--anatomy-lo);stroke-width:var(--anatomy-weight);stroke-linecap:round;stroke-linejoin:round}
+.emblema .iso-line[data-tone="hi"]{stroke:var(--anatomy-hi)}
+.emblema .iso-line[data-tone="mid"]{stroke:var(--anatomy-mid)}
+.emblema .iso-line[data-tone="lo"]{stroke:var(--anatomy-lo)}
+.emblema .iso-line[data-tone="faint"]{stroke:var(--anatomy-faint)}
+.emblema .iso-line[data-tone="lit"]{stroke:var(--anatomy-lit);stroke-width:1.6px}
+/* a peça "lit" (a única que o olhar deve seguir, como a lâmpada ou a ponta da ferramenta de um agente) é mais clara que a "hi": contorno mais grosso, brilho e preenchimento claro */
+.emblema .iso-solid:has(>.iso-edge[data-tone="lit"]){filter:drop-shadow(0 0 3px var(--anatomy-glow))}
+.emblema .iso-solid:has(>.iso-edge[data-tone="lit"])>.iso-top{fill:var(--anatomy-lit-top)}
+.emblema .iso-solid:has(>.iso-edge[data-tone="lit"])>.iso-shade{fill:var(--anatomy-lit-shade)}
+.emblema .iso-dots circle{fill:var(--anatomy-dot);stroke:none;opacity:.32}
+.emblema .iso-dots[data-tone="hi"] circle{opacity:.85}
+.emblema .iso-dots[data-tone="mid"] circle{opacity:.45}
+.emblema .iso-dots[data-tone="lo"] circle{opacity:.22}
+.emblema .iso-face-text{fill:var(--anatomy-mid);font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-weight:700;letter-spacing:.04em}
+.emblema .iso-face-text[data-tone="hi"]{fill:var(--anatomy-hi)}
+.emblema .iso-face-text[data-tone="lo"]{fill:var(--anatomy-lo)}
+.emblema .iso-face-text[data-tone="faint"]{fill:var(--anatomy-faint)}
+/* marca da folha e tela de novo blueprint */
+.em-blueprint .so-home{display:none}
+#painel-claude{display:flex;flex-direction:column;gap:16px}
+#painel-claude[hidden]{display:none}
+#painel-claude .cl{flex:1;min-height:0;height:auto}
+.nv{display:grid;grid-template-columns:1fr 1.5fr auto;gap:14px;align-items:end;border:1px solid var(--lo);background:#0c3a7870;padding:16px 18px;flex:none}
+.nv[hidden]{display:none}
+.modo-novo .ed-lateral{display:none}
+.modo-novo .ed-corpo{grid-template-columns:1fr}
+.marca-previa{display:grid;place-items:center;padding:6px 0}
+.marca-previa svg{max-width:100%;height:auto}
+.emblema.marca{opacity:.4;pointer-events:auto;transition:opacity .25s}
+.emblema.marca:hover,.emblema.marca:focus-visible{opacity:.85;outline:none}
+.emblema.marca-fundo{opacity:.18}
+.emblema.marca-fundo:hover,.emblema.marca-fundo:focus-visible{opacity:.28}
+.emblema .legenda-marca{letter-spacing:.16em}
+svg.desenho text:not(.iso-face-text):not(.hoje-t):not(.botao-t){paint-order:stroke;stroke:#0c3a78;stroke-width:3px;stroke-linejoin:round}
+svg.desenho .lk text{stroke:none}
+.emblema .fantasma-emb{opacity:.6}
+.emblema .fantasma-emb .iso-fill,.emblema .fantasma-emb .iso-shade,.emblema .fantasma-emb .iso-top{fill:none}
+.emblema .fantasma-emb .iso-line{stroke-dasharray:3 3}
+.emblema .fantasma-emb .iso-face-text{fill:none;stroke:var(--anatomy-mid);stroke-width:.6}
+.emblema .fantasma-emb .iso-halo{display:none}
+/* folha pequena sobre o blueprint */
+.nota-folha{position:absolute;z-index:8;width:min(480px,calc(100vw - 32px));padding:20px 22px 18px;color:var(--ink);overflow:hidden;font:12px/1.6 var(--mono);border:2px solid var(--ink);box-shadow:0 20px 56px #02132ee6,0 0 0 6px #082b5e;
+  background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/10px 10px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/10px 10px,#0c3a78}
+.nota-folha[hidden]{display:none}
+.nota-folha h4{margin:0 0 4px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);font-weight:400}
+.nota-folha h3{margin:0 0 14px;font-size:15px;letter-spacing:.05em;text-transform:uppercase}
+.nota-folha .corpo{white-space:pre-wrap;max-height:min(46vh,380px);overflow:auto;padding:14px 16px;border:1px dashed var(--lo);background:#082b5e99;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.nota-folha .corpo.vazio{color:var(--mid)}
+.nota-folha textarea{display:block;width:100%;box-sizing:border-box;height:min(46vh,380px);min-height:160px;resize:vertical;padding:14px 16px;border:1px dashed var(--ink);background:#082b5e;color:var(--ink);font:12px/1.6 var(--mono);scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.nota-folha textarea:focus{outline:2px solid var(--ink);outline-offset:1px}
+.nota-folha .dica-ed{margin:8px 0 0;font-size:10px;color:var(--mid)}
+#proto-tela{position:fixed;inset:2.5vh 2.5vw;z-index:40;display:flex;flex-direction:column;background:#082044;color:var(--ink);border:2px solid var(--ink);box-shadow:0 0 0 100vmax #02132ecc;font:12px/1.5 var(--mono)}
+#proto-tela[hidden]{display:none}
+#proto-tela header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--lo);flex:none}
+#proto-tela .tit{display:grid;gap:2px;min-width:0;flex:1}#proto-tela .tit span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid)}#proto-tela .tit b{font-size:14px;letter-spacing:.04em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#proto-tela select{max-width:240px;font:12px var(--mono);color:var(--ink);background:#0c3a78;border:1px solid var(--mid);padding:6px 8px}
+#proto-tela a.btn{text-decoration:none}
+#proto-quadro{flex:1;min-height:0;width:100%;border:0;background:#fff}
+@media print{#proto-tela{display:none!important}}
+.nota-folha .acoes{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+@media (max-width:1000px){.nv{grid-template-columns:1fr}}
+@media print{:is(#editor,#workspace-nova,#agente-tela){display:none!important}}
+@media (max-width:640px){.barra{right:20px}.busca{right:30px}}
+@media print{.barra,.busca,.gaveta,#rolagem{display:none!important}.folha{background:none;padding:0;margin:0!important}svg.desenho{box-shadow:none;break-after:page}}
+
+.periodo{position:absolute;top:116px;left:70px;right:70px;z-index:3;display:flex;flex-direction:column;gap:12px;padding:8px 0}
+.periodo-controles{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--mid)}
+.menu-contextual{position:fixed;z-index:100;display:grid;gap:2px;min-width:220px;max-width:calc(100vw - 16px);max-height:calc(100vh - 16px);overflow:auto;padding:5px;background:#082b5ef5;border:1px solid var(--ink);box-shadow:0 12px 36px #02132ecc;color:var(--ink)}
+.menu-contextual[hidden]{display:none}
+.menu-contextual button{width:100%;padding:9px 12px;border:1px solid transparent;background:transparent;color:inherit;text-align:left;font:11px var(--mono);letter-spacing:.04em;cursor:pointer}
+.menu-contextual button:hover,.menu-contextual button:focus-visible{background:var(--ink);border-color:var(--ink);color:var(--paper);outline:none}
+
+/* O painel ocupa uma coluna própria, fora da folha. */
+#blueprint-layout{display:grid;grid-template-columns:minmax(0,1fr);align-items:start}
+#blueprint-layout .folha{min-width:0;overflow:auto}

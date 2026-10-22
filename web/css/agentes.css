@@ -1,0 +1,24 @@
+/* painel de agentes: um cartão por agente, com a figura do anatomy */
+#agentes-painel{width:min(1040px,94vw);padding:0;border:1px solid var(--mid);background:#0a3270;color:var(--ink)}
+#agentes-painel::backdrop{background:#041a3acc}
+.ag-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:12px;padding:16px;max-height:72vh;overflow:auto}
+.ag-card{display:grid;grid-template-columns:220px minmax(0,1fr);gap:12px;align-items:start;border:1px solid var(--lo);background:#0c3a7870;padding:12px;content-visibility:auto;contain-intrinsic-size:auto 190px}
+/* a figura fica sempre sobre o papel de plotagem do blueprint (decisão 2026-10-22: o app tem um tema só e a paleta do anatomy foi feita para este papel) */
+.ag-fig{display:flex;justify-content:center;border:1px solid var(--faint);background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,radial-gradient(ellipse at 50% 40%,#1250a0 0,#0c3a78 62%,#082b5e 100%)}
+.ag-fig svg{display:block;max-width:100%;height:auto}
+.ag-info{display:grid;gap:6px;min-width:0;font-size:12px;line-height:1.5}
+.ag-info p{margin:0}
+.ag-topo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.ag-topo b{font-size:13px;letter-spacing:.06em;word-break:break-word}
+.ag-estado{display:flex;align-items:center;gap:7px;text-transform:uppercase;letter-spacing:.1em;font-size:10px;color:var(--mid)}
+.ag-estado i{width:8px;height:8px;border-radius:50%;background:var(--mid);flex:none}
+.ag-estado.e-lendo i,.ag-estado.e-escrevendo i,.ag-estado.e-testando i{background:var(--ink)}
+.ag-estado.e-bloqueado{color:var(--erro)}.ag-estado.e-bloqueado i{background:var(--erro)}
+.ag-estado.e-concluido i{background:transparent;border:1.5px solid var(--ink)}
+.ag-barra{height:6px;border:1px solid var(--lo)}.ag-barra span{display:block;height:100%;background:var(--ink)}
+.ag-plano{color:var(--mid)}
+.ag-onde{color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:11px}
+.ag-msg{color:var(--ink)}.ag-ha{color:var(--mid);white-space:nowrap}
+.ag-vazio{grid-column:1/-1;margin:24px;text-align:center;color:var(--mid)}
+.ag-rodape{margin:0;padding:10px 18px;border-top:1px solid var(--lo);font-size:11px;color:var(--mid)}
+@media (prefers-reduced-motion:no-preference){.ag-estado.e-lendo i,.ag-estado.e-escrevendo i,.ag-estado.e-testando i{animation:ag-pulso 2.2s ease-in-out infinite}@keyframes ag-pulso{50%{opacity:.3}}}
+@media (max-width:560px){.ag-lista{grid-template-columns:1fr}.ag-card{grid-template-columns:1fr}}

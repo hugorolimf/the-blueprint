@@ -1,0 +1,242 @@
+//! `blueprint --mcp`: o servidor MCP por stdio (JSON-RPC 2.0, uma mensagem por linha) que o agente do usuário registra
+//! (`claude mcp add blueprint -- blueprint.exe --mcp`). Porte de mcp-roadmap.mjs: mesmas ferramentas, mesmas instruções e mesmos textos.
+//! Não tem dados próprios: cada ferramenta chama as rotas /api/mcp do servidor local.
+use super::cliente::{codificar, requisitar};
+use serde_json::{json, Map, Value};
+use std::io::{BufRead, Write};
+
+const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 caracteres são autossuficientes: é o que o Codex lê
+const FERRAMENTAS: &str = include_str!("ferramentas.json");
+const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
+const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
+const TOPICOS: [(&str, &str); 4] = [
+    ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
+    ("editar", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
+    ("executar", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
+    ("prototipos", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
+];
+const REGRA: &str = "Mantenha este blueprint sempre atualizado: planos e mudanças de plano via propor_blueprint; ao começar um plano, registrar_progresso; ao terminar, marcar_concluido com a evidência; se não deu, marcar_nao_concluido; se travar, reportar_bloqueio.";
+
+/// só ao criar blueprint: as instruções do servidor já dizem para manter a linha nas sessões seguintes
+fn vinculo(w: &str) -> String {
+    format!("\nO blueprint novo só ganha blueprint_id quando o usuário aplicar: depois, chame listar_blueprints, ache-o e grave no CLAUDE.md (ou AGENTS.md) da pasta, se ainda não estiver lá:\nBlueprint: workspace_id `{w}`, blueprint_id `<id>` (MCP `blueprint`).\n{REGRA}")
+}
+
+type R = Result<String, String>;
+
+fn base() -> String {
+    std::env::var("BLUEPRINT_URL").ok().filter(|u| !u.is_empty()).unwrap_or_else(|| "http://127.0.0.1:3000".into()).trim_end_matches('/').to_string()
+}
+
+/// Chama uma rota do servidor; se ele recusar, devolve o motivo como o agente precisa lê-lo.
+fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, String> {
+    let (status, texto) = requisitar(&base(), metodo, rota, corpo.map(Value::to_string).as_deref())?;
+    let dados: Value = serde_json::from_str(&texto).unwrap_or_else(|_| json!({}));
+    if (200..300).contains(&status) {
+        return Ok(dados);
+    }
+    let lista = |chave: &str| dados.get(chave).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).collect::<Vec<_>>().join("\n- ")).unwrap_or_default();
+    if dados.get("erros").is_some_and(Value::is_array) {
+        let avisos = lista("avisos");
+        return Err(format!("A proposta tem erros; corrija e envie de novo:\n- {}{}", lista("erros"), if avisos.is_empty() { String::new() } else { format!("\nAvisos:\n- {avisos}") }));
+    }
+    let motivo = dados.get("erro").and_then(Value::as_str).map(String::from).unwrap_or_else(|| texto.chars().take(200).collect());
+    Err(format!("O The Blueprint recusou ({status}): {motivo}"))
+}
+
+fn texto(a: &Value, chave: &str) -> Result<String, String> {
+    match a.get(chave).and_then(Value::as_str).map(str::trim) {
+        Some(t) if !t.is_empty() => Ok(t.to_string()),
+        _ => Err(format!("{chave} é obrigatório.")),
+    }
+}
+
+fn opcional(a: &Value, chave: &str) -> String {
+    a.get(chave).and_then(Value::as_str).unwrap_or("").to_string()
+}
+
+fn alvo(a: &Value) -> Map<String, Value> {
+    let mut m = Map::new();
+    m.insert("workspaceId".into(), json!(opcional(a, "workspace_id")));
+    m.insert("blueprintId".into(), json!(opcional(a, "blueprint_id")));
+    m
+}
+
+fn com(mut m: Map<String, Value>, extra: &[(&str, Value)]) -> Map<String, Value> {
+    for (k, v) in extra {
+        m.insert((*k).into(), v.clone());
+    }
+    m
+}
+
+fn plano(a: &Value) -> Result<Map<String, Value>, String> {
+    Ok(com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("planoId", json!(texto(a, "plano_id")?))]))
+}
+
+fn checkpoint(a: &Value) -> Result<Map<String, Value>, String> {
+    Ok(com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("checkpointId", json!(texto(a, "checkpoint_id")?))]))
+}
+
+/// Os campos opcionais de atividade (painel de agentes) que a ferramenta recebeu; o servidor valida e recusa o que estiver fora do contrato.
+fn com_atividade(mut m: Map<String, Value>, a: &Value) -> Map<String, Value> {
+    for campo in ["agente", "papel", "estado", "onde", "percentual"] {
+        if let Some(v) = a.get(campo) {
+            m.insert(campo.into(), v.clone());
+        }
+    }
+    m
+}
+
+fn plano_se_houver(a: &Value) -> Result<Map<String, Value>, String> {
+    if a.get("plano_id").is_some_and(|v| crate::blueprint::verdade(Some(v))) { plano(a) } else { Ok(alvo(a)) }
+}
+
+fn evento(tipo: &str, texto: String, extra: Map<String, Value>) -> Result<Value, String> {
+    servidor("evento", "POST", Some(&Value::Object(com(extra, &[("tipo", json!(tipo)), ("texto", json!(texto))]))))
+}
+
+/// tira o bloco `---…---` do começo de um arquivo de guia
+fn sem_cabecalho(t: &str) -> String {
+    match t.strip_prefix("---").and_then(|r| r.split_once("---")) {
+        Some((_, resto)) => resto.trim_start().to_string(),
+        None => t.to_string(),
+    }
+}
+
+fn chamar(nome: &str, a: &Value) -> R {
+    match nome {
+        "listar_blueprints" => {
+            let r = servidor("blueprints", "GET", None)?;
+            let linhas: Vec<String> = r["workspaces"].as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|w| {
+                let blueprints = w["blueprints"].as_array().map(Vec::as_slice).unwrap_or(&[]);
+                let corpo = if blueprints.is_empty() { "  (sem blueprints)".to_string() } else { blueprints.iter().map(|p| format!("  - {} (blueprint_id: {}) · {} ação(s)", p["nome"].as_str().unwrap_or(""), p["id"].as_str().unwrap_or(""), p["acoes"])).collect::<Vec<_>>().join("\n") };
+                format!("Workspace {} (workspace_id: {})\n{corpo}", w["nome"].as_str().unwrap_or(""), w["id"].as_str().unwrap_or(""))
+            }).collect();
+            Ok(format!("Hoje: {}\n{}", r["hoje"].as_str().unwrap_or(""), linhas.join("\n")))
+        }
+        "guia_de_planejamento" => {
+            let t = opcional(a, "topico");
+            let t = t.trim();
+            if t.is_empty() {
+                return Ok(sem_cabecalho(GUIA));
+            }
+            match TOPICOS.iter().find(|(n, _)| *n == t) {
+                Some((_, conteudo)) => Ok(sem_cabecalho(conteudo)),
+                None => Err(format!("Tópico desconhecido: {t}. Use um destes: {}.", TOPICOS.map(|(n, _)| n).join(", "))),
+            }
+        }
+        "ler_blueprint" => {
+            let acao = opcional(a, "acao_id");
+            let acao = if acao.trim().is_empty() { String::new() } else { format!("&acao={}", codificar(acao.trim())) };
+            let rota = format!("blueprint?workspace={}&blueprint={}{acao}", codificar(&texto(a, "workspace_id")?), codificar(&texto(a, "blueprint_id")?));
+            Ok(servidor(&rota, "GET", None)?.to_string()) // compacto: cada byte vai para o contexto do agente
+        }
+        "propor_blueprint" => {
+            let mut corpo = alvo(a);
+            for (de, para) in [("mensagem", "mensagem"), ("blueprint", "blueprint"), ("acoes", "acoes"), ("remover", "remover")] {
+                if let Some(v) = a.get(de) {
+                    corpo.insert(para.into(), v.clone());
+                }
+            }
+            let r = servidor("proposta", "POST", Some(&Value::Object(corpo)))?;
+            let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
+            let aviso = if avisos.is_empty() { String::new() } else { format!("\nAvisos (não impedem o envio, mas vale ajustar):\n- {}", avisos.join("\n- ")) };
+            let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
+            Ok(format!("Proposta enviada ao app para o usuário revisar e aplicar.{aviso}\nSe ele pedir mudanças, envie de novo só o que muda.{ligar}"))
+        }
+        "anexar_prototipo" => {
+            let corpo = com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("titulo", json!(texto(a, "titulo")?)), ("html", json!(texto(a, "html")?)), ("prototipoId", json!(opcional(a, "prototipo_id")))]);
+            let r = servidor("prototipo", "POST", Some(&Value::Object(corpo)))?;
+            let acao = if r["atualizado"] == true { "atualizado" } else { "anexado" };
+            Ok(format!("Protótipo \"{}\" {acao} à ação (prototipo_id: {}); o usuário o vê na folha do blueprint, no ícone de protótipo da ação. Para revisar, chame de novo com este prototipo_id.", r["titulo"].as_str().unwrap_or(""), r["prototipoId"].as_str().unwrap_or("")))
+        }
+        "registrar_progresso" => {
+            evento("progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
+            Ok("Progresso registrado.".into())
+        }
+        "marcar_concluido" => {
+            evento("concluir", texto(a, "evidencia")?, plano(a)?)?;
+            Ok("Plano enviado ao app como concluído, com a evidência.".into())
+        }
+        "marcar_nao_concluido" => {
+            evento("nao-concluida", texto(a, "motivo")?, plano(a)?)?;
+            Ok("Registrado: o plano continua pendente.".into())
+        }
+        "marcar_checkpoint_feito" => {
+            evento("checkpoint-feito", texto(a, "evidencia")?, checkpoint(a)?)?;
+            Ok("Checkpoint enviado ao app como atingido, com a evidência.".into())
+        }
+        "marcar_checkpoint_nao_feito" => {
+            evento("checkpoint-nao-feito", texto(a, "motivo")?, checkpoint(a)?)?;
+            Ok("Registrado: o checkpoint continua pendente.".into())
+        }
+        "reportar_bloqueio" => {
+            evento("bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
+            Ok("Bloqueio registrado; o usuário foi avisado.".into())
+        }
+        _ => Err(format!("Ferramenta desconhecida: {nome}")),
+    }
+}
+
+fn resposta(id: &Value, corpo: Value) -> Value {
+    let mut m = Map::new();
+    m.insert("jsonrpc".into(), json!("2.0"));
+    m.insert("id".into(), id.clone());
+    if let Value::Object(extra) = corpo {
+        m.extend(extra);
+    }
+    Value::Object(m)
+}
+
+/// Responde a uma mensagem JSON-RPC; None para notificações (sem id), que não têm resposta.
+pub fn tratar(msg: &Value) -> Option<Value> {
+    let id = msg.get("id")?;
+    let (metodo, params) = (msg["method"].as_str().unwrap_or(""), &msg["params"]);
+    let erro = |codigo: i32, mensagem: String| resposta(id, json!({"error": {"code": codigo, "message": mensagem}}));
+    Some(match metodo {
+        "initialize" => {
+            let pedida = params["protocolVersion"].as_str().unwrap_or("");
+            let versao = VERSOES.iter().find(|v| **v == pedida).unwrap_or(&VERSOES[0]);
+            resposta(id, json!({"result": {"protocolVersion": versao, "capabilities": {"tools": {}}, "serverInfo": {"name": "blueprint", "version": "2.0.0"}, "instructions": INSTRUCOES}}))
+        }
+        "ping" => resposta(id, json!({"result": {}})),
+        "tools/list" => {
+            let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
+            resposta(id, json!({"result": {"tools": ferramentas}}))
+        }
+        "tools/call" => {
+            let nome = params["name"].as_str().unwrap_or("");
+            let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
+            if !ferramentas.as_array().is_some_and(|f| f.iter().any(|x| x["name"] == nome)) {
+                return Some(erro(-32602, format!("Ferramenta desconhecida: {nome}")));
+            }
+            let argumentos = if params["arguments"].is_object() { params["arguments"].clone() } else { json!({}) };
+            match chamar(nome, &argumentos) {
+                Ok(texto) => resposta(id, json!({"result": {"content": [{"type": "text", "text": texto}]}})),
+                Err(texto) => resposta(id, json!({"result": {"isError": true, "content": [{"type": "text", "text": texto}]}})), // o erro volta ao modelo, que pode corrigir
+            }
+        }
+        outro => erro(-32601, format!("Método não suportado: {outro}")),
+    })
+}
+
+/// Lê mensagens de stdin (uma por linha) até o agente fechar a conversa.
+pub fn executar() -> i32 {
+    let saida = std::io::stdout();
+    for linha in std::io::stdin().lock().lines().map_while(Result::ok) {
+        if linha.trim().is_empty() {
+            continue;
+        }
+        let r = match serde_json::from_str::<Value>(&linha) {
+            Ok(msg) => tratar(&msg),
+            Err(_) => Some(json!({"jsonrpc": "2.0", "id": null, "error": {"code": -32700, "message": "JSON inválido"}})),
+        };
+        if let Some(r) = r {
+            let mut s = saida.lock();
+            if writeln!(s, "{r}").and_then(|_| s.flush()).is_err() {
+                break;
+            }
+        }
+    }
+    0
+}

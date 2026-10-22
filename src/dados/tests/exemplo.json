@@ -1,0 +1,42 @@
+{
+  "empresa": "Empresa de Exemplo", "titulo": "Roadmap", "rev": "2026-10-21", "exemplo": false,
+  "usuario": {"nome": "Pessoa de Exemplo", "preferencias": {"ia": "claude"}},
+  "chats": [{"id": "c1", "msgs": [], "proposta": null}],
+  "chatsAtivos": {"sm:p1": "c1"},
+  "ordemWorkspaces": ["w2", "sm"],
+  "blueprints": [
+    {
+      "id": "p1", "nome": "Portal", "descricao": "d", "obs": "", "emblema": null,
+      "links": [{"id": "l1", "rotulo": "Docs", "url": "https://exemplo.dev"}],
+      "acoes": [
+        {
+          "id": "f1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "obs": "instruções", "status": "andamento", "progresso": 0.5,
+          "planos": [
+            {"id": "t1", "texto": "Criar rota", "descricao": "x", "feito": true,
+             "agente": {"estado": "revisao", "alteracoes": [], "comentarios": [
+               {"texto": "feito", "em": "2026-10-21T10:00:00Z", "tipo": "relatorio", "sessaoId": "s1"},
+               {"texto": "outro", "em": "2026-10-21T11:00:00Z", "tipo": "comentario"}]}},
+            {"id": "t2", "texto": "Criar tela", "feito": false, "agente": {"estado": "pendente", "comentarios": []}},
+            {"id": "t3", "texto": "Sem agente", "feito": "sim", "novo": {"a": [1, 2, {"b": null}]}},
+            {"id": "t4", "texto": "Agente sem comentarios", "agente": {"estado": "pendente"}}
+          ],
+          "checkpoints": [
+            {"id": "m1", "nome": "Rota no ar", "data": "2026-11-20", "feito": true, "evidencia": "ok", "feitoEm": "2026-11-20T12:00:00Z"},
+            {"id": "m2", "nome": "Fim", "data": "2026-11-30", "feito": false}
+          ],
+          "prototipos": [
+            {"id": "pr1", "titulo": "Tela", "em": "2026-10-21T10:00:00Z"},
+            {"id": "pr2", "titulo": "Figura", "em": "2026-10-22T10:00:00Z"}
+          ]
+        },
+        {"id": "f2", "nome": "Sem listas", "inicio": "2026-12-01", "fim": "2026-12-10", "status": "planejado", "progresso": 0}
+      ]
+    },
+    {"id": "p2", "nome": "Sem ações", "descricao": ""}
+  ],
+  "workspaces": [
+    {"id": "w2", "nome": "Outro", "descricao": "d", "empresa": "Outro", "emblema": null, "icone": "x", "pastaLocal": "C:/x",
+     "blueprints": [{"id": "p3", "nome": "Terceiro", "acoes": []}]},
+    {"id": "w3", "nome": "Vazio"}
+  ]
+}

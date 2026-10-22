@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Blueprint (beta)</title>
+<link rel="stylesheet" href="/web/css/tokens.css">
+<link rel="stylesheet" href="/web/css/base.css">
+<link rel="stylesheet" href="/web/css/robo.css">
+<link rel="stylesheet" href="/web/css/controles.css">
+<link rel="stylesheet" href="/web/css/edicao.css">
+<link rel="stylesheet" href="/web/css/planejar.css">
+<link rel="stylesheet" href="/web/css/agentes.css">
+<link rel="stylesheet" href="/web/css/marca.css">
+<link rel="stylesheet" href="/web/css/entrada.css">
+</head>
+<body class="carregando">
+<section class="login" id="login" aria-label="Entrar">
+  <div class="login-folha">
+    <div class="login-ilustra"><span class="entrada-marca">The Blueprint / Workspace</span><div id="login-arte" aria-hidden="true"></div><span class="legenda">Fig. 01 · Do plano à próxima entrega</span></div>
+    <form id="login-form"><span class="rot">Seu próximo blueprint começa aqui</span><h1>Bom ter você por aqui.</h1><p>Como podemos chamar você?<br>Depois, é só escolher seu espaço e continuar.</p><label for="login-nome">Seu nome</label><input id="login-nome" name="nome" maxlength="80" placeholder="Digite seu nome" autocomplete="nickname" required><button class="btn cheio" type="submit" disabled>Entrar no meu espaço →</button><small>Seu nome fica salvo junto dos blueprints.</small><p id="login-erro" role="status"></p></form>
+  </div>
+</section>
+<section class="entrada" id="entrada" aria-label="Selecionar workspace" hidden>
+  <header class="entrada-topo"><strong class="entrada-marca" id="entrada-marca">Workspaces</strong><div class="perfil"><span class="avatar" id="perfil-avatar" aria-hidden="true">H</span><span>Olá, <strong id="perfil-nome"></strong></span><button class="btn" id="perfil-sair" type="button">Trocar nome</button></div></header>
+  <h1 id="entrada-titulo">Seus workspaces</h1><p id="entrada-descricao">Escolha um workspace para continuar.</p>
+  <div class="entrada-acoes"><button class="btn" id="entrada-voltar" type="button" hidden>← Workspaces</button><button class="btn cheio" id="entrada-novo" type="button" hidden>+ Novo blueprint</button></div>
+  <p id="entrada-status" role="status"></p><div class="blueprints-grade" id="entrada-blueprints"></div>
+</section>
+<section id="workspace-nova" role="dialog" aria-modal="true" aria-label="Criar workspace" hidden>
+  <form id="workspace-form">
+    <header class="ed-topo"><button class="btn" id="workspace-cancelar" type="button">← Workspaces</button><div class="tit"><span>Criar workspace</span><b id="workspace-titulo">Novo workspace</b></div><span class="estado" id="workspace-estado" role="status">pronto</span><button class="btn" id="workspace-tela" type="button">⛶ Tela cheia</button></header>
+    <p class="ed-aviso" id="workspace-erro" role="status"></p>
+    <div class="ed-corpo">
+      <main class="ed-main">
+        <div class="ed-painel" id="workspace-manual"><div class="card"><h3>Criar workspace</h3><div class="campos"><div id="workspace-manual-nome"><label class="f" id="workspace-nome-campo">Nome do workspace<input id="workspace-nome" maxlength="80" autocomplete="organization" placeholder="Nome do workspace"></label></div><label class="f">Descrição (opcional)<textarea id="workspace-descricao-manual" maxlength="3000" rows="3" placeholder="Breve descrição do workspace"></textarea></label></div><div class="acoes" id="workspace-manual-acoes"><button class="btn cheio" id="workspace-criar" type="submit">Criar workspace</button></div></div></div>
+      </main>
+    </div>
+  </form>
+</section>
+<div id="blueprint-layout"><main class="folha" id="folha">
+  <div class="barra">
+    <button class="btn so-home" id="b-workspaces" type="button">← Workspaces</button>
+    <button class="btn so-blueprint" id="b-voltar" type="button">← Blueprints</button>
+    <button class="btn so-blueprint" id="b-abrir" type="button">Expandir tudo</button>
+    <button class="btn so-blueprint" id="b-fechar" type="button">Recolher tudo</button>
+    <button class="btn cheio so-home" id="b-novo-proj" type="button">+ Novo blueprint</button>
+    <select class="btn" id="b-anim" aria-label="Animação de abertura da folha"><option value="rolo">Abertura: rolo</option><option value="escrita">Abertura: escrita</option></select>
+    <button class="btn" id="b-tela" type="button">⛶ Tela cheia</button>
+    <button class="btn" id="b-editar" type="button" aria-expanded="false" aria-controls="editor">Editar</button>
+    <button class="btn" id="b-agentes" type="button" aria-haspopup="dialog" hidden>Agentes · <span id="b-agentes-n">0</span></button>
+    <button class="btn" id="b-ia" type="button" aria-haspopup="dialog">✦ Planejar</button>
+  </div>
+  <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button></div></div>
+  <div class="busca"><input id="busca" type="search" placeholder="Pesquisar blueprint ou ação…" aria-label="Pesquisar por nome de blueprint ou ação" autocomplete="off"><span id="busca-n" role="status"></span></div>
+  <div id="desenho"></div>
+  <div class="nota-folha" id="nota-folha" role="dialog" aria-label="Detalhes" hidden></div>
+</main></div>
+<div class="dica-f11" id="dica-f11" role="status" hidden></div>
+<button id="robo-agente" type="button" aria-live="polite" hidden></button>
+<div id="rolagem" role="scrollbar" aria-orientation="vertical" aria-controls="folha" aria-label="Rolagem do blueprint" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" tabindex="0" hidden><div class="trilho"></div><div class="polegar"></div><div class="rotulo"></div></div>
+<nav id="menu-contexto" class="menu-contextual" role="menu" aria-label="Menu do workspace" hidden></nav>
+<section id="editor" role="dialog" aria-modal="true" aria-label="Editar blueprint" hidden>
+  <header class="ed-topo">
+    <button class="btn" id="ed-fechar" type="button">← Voltar ao blueprint</button>
+    <div class="tit"><span>Editar blueprint</span><b id="ed-proj">—</b></div>
+    <span class="estado" id="estado" role="status">pronto</span>
+    <button class="btn" id="ed-tela" type="button">⛶ Tela cheia</button>
+  </header>
+  <p class="ed-aviso" id="avisoed" role="status"></p>
+  <div class="ed-corpo">
+    <nav class="ed-lateral" aria-label="Blueprints">
+      <p class="rot" style="margin-top:0">Blueprints</p>
+      <div id="ed-blueprints" style="display:grid;gap:8px"></div>
+      <button class="btn" id="b-novo" type="button">+ Novo blueprint (outra tela)</button>
+      <details id="geral"><summary>Dados gerais</summary>
+        <div class="campos">
+          <label class="f">Empresa<input data-g="empresa"></label>
+          <label class="f">Título do desenho<input data-g="titulo"></label>
+          <label class="f">Revisão<input data-g="rev"></label>
+          <label style="display:flex;gap:10px;align-items:center;font-size:12px"><input type="checkbox" data-g="exemplo"> Dados de exemplo (marca o carimbo)</label>
+        </div>
+      </details>
+    </nav>
+    <main class="ed-main">
+      <div class="ed-vazio" id="ed-vazio" hidden><p>Escolha um blueprint à esquerda.<br>Para criar um novo, use “+ Novo blueprint”.</p></div>
+      <div class="ed-painel" id="painel-novo-manual" hidden>
+        <div class="nv" id="nv" hidden>
+          <label class="f">Nome do blueprint<input id="nv-nome" placeholder="Ex.: Portal do fornecedor" autocomplete="off"></label>
+          <label class="f">O que ele é? (descrição curta)<input id="nv-desc" placeholder="Para que serve" autocomplete="off"></label>
+          <button class="btn" id="nv-vazio" type="button">Criar blueprint vazio</button>
+        </div>
+      </div>
+      <div class="ed-painel" id="painel-manual">
+        <div class="mn"><div class="mn-lista" id="mn-lista"></div><div class="mn-detalhe" id="mn-detalhe"></div></div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<section id="agente-tela" role="dialog" aria-modal="true" aria-label="Planejar" hidden>
+  <header class="ed-topo">
+    <button class="btn" id="ag-fechar" type="button">← Voltar ao blueprint</button>
+    <div class="tit"><span>Planejar</span><b id="ag-proj">—</b></div>
+    <span class="estado" id="ag-estado" role="status">pronto</span>
+    <span class="estado ruim" id="ag-mcp" role="status" hidden>● servidor sem resposta</span>
+    <button class="btn" id="cu-abrir" type="button" aria-haspopup="dialog">Como conectar</button>
+    <button class="btn" id="ag-tela" type="button">⛶ Tela cheia</button>
+  </header>
+  <p class="ed-aviso" id="ag-aviso" role="status"></p>
+  <div class="ed-corpo">
+    <nav class="ed-lateral" aria-label="Blueprints">
+      <p class="rot" style="margin-top:0">Blueprints</p>
+      <div id="ag-blueprints" style="display:grid;gap:8px"></div>
+      <button class="btn" id="ag-novo" type="button">✦ Proposta de blueprint novo</button>
+    </nav>
+    <main class="ed-main">
+      <div class="ed-vazio" id="ag-vazio" hidden><p>Escolha um blueprint à esquerda.<br>Para um blueprint novo, use “Proposta de blueprint novo”.</p></div>
+      <div class="ed-painel" id="painel-claude">
+        <div class="cl">
+          <div class="cl-prop" id="cl-prop"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<dialog id="agentes-painel" aria-label="Agentes trabalhando agora">
+  <div class="cu-topo"><h3>Agentes trabalhando agora</h3><button class="btn" id="ag-painel-fechar" type="button">Fechar</button></div>
+  <div class="ag-lista" id="ag-cartoes"></div>
+  <p class="ag-rodape">Só mostra o que os seus agentes reportam pelo MCP; o app não abre nem conversa com agentes.</p>
+</dialog>
+
+<dialog id="como-usar" aria-label="Como conectar o seu agente">
+  <div class="cu-topo"><h3>Como conectar o seu agente</h3><button class="btn" id="cu-fechar" type="button">Fechar</button></div>
+  <p class="cu-corpo" id="cu-corpo"></p>
+</dialog>
+
+<section id="proto-tela" role="dialog" aria-modal="true" aria-label="Protótipo da ação" hidden>
+  <header>
+    <div class="tit"><span id="proto-acao">Protótipo</span><b id="proto-titulo"></b></div>
+    <select id="proto-lista" aria-label="Protótipos desta ação" hidden></select>
+    <a class="btn mini" id="proto-aba" target="_blank" rel="noopener">Abrir em nova aba</a>
+    <button class="btn mini perigo" id="proto-excluir" type="button">Excluir</button>
+    <button class="btn mini" id="proto-fechar" type="button">Fechar</button>
+  </header>
+  <iframe id="proto-quadro" title="Protótipo da ação" sandbox="allow-scripts" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
+</section>
+
+<script src="/web/js/base.js"></script>
+<script src="/web/js/entrada.js"></script>
+<script src="/web/js/dados.js"></script>
+<script src="/web/js/render.js"></script>
+<script src="/web/js/navegacao.js"></script>
+<script src="/web/js/arrastar.js"></script>
+<script src="/web/js/rede.js"></script>
+<script src="/web/js/prototipos.js"></script>
+<script src="/web/js/robo.js"></script>
+<script src="/web/js/mcp.js"></script>
+<script src="/web/js/agentes.js"></script>
+<script src="/web/js/edicao.js"></script>
+<script src="/web/js/planejar.js"></script>
+<script src="/web/js/manual.js"></script>
+<script src="/web/js/proposta.js"></script>
+<script src="/web/js/nota.js"></script>
+<script src="/web/js/rolagem.js"></script>
+<script src="/web/js/contexto.js"></script>
+<script src="/web/js/inicio.js"></script>
+</body>
+</html>

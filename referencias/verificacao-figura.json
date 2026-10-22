@@ -1,0 +1,157 @@
+{
+  "data": "2026-10-22T07:28:53.831Z",
+  "comando": "node scripts/verificar-figura.mjs",
+  "auditoria": {
+    "poses": 63,
+    "com_falha": 0,
+    "resumo": "audit passed"
+  },
+  "linhas": [
+    {
+      "papel": "construtor",
+      "estado": "ocioso",
+      "posicao": 0,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 258,
+      "linhas": 85
+    },
+    {
+      "papel": "construtor",
+      "estado": "lendo",
+      "posicao": 0.75,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 260,
+      "linhas": 88
+    },
+    {
+      "papel": "construtor",
+      "estado": "escrevendo",
+      "posicao": 0.75,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 258,
+      "linhas": 87
+    },
+    {
+      "papel": "construtor",
+      "estado": "testando",
+      "posicao": 0.75,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 258,
+      "linhas": 87
+    },
+    {
+      "papel": "construtor",
+      "estado": "aguardando",
+      "posicao": 0.75,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 258,
+      "linhas": 86
+    },
+    {
+      "papel": "construtor",
+      "estado": "bloqueado",
+      "posicao": 0.75,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 266,
+      "linhas": 92
+    },
+    {
+      "papel": "construtor",
+      "estado": "concluido",
+      "posicao": 0.75,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 258,
+      "linhas": 87
+    },
+    {
+      "papel": "explorador",
+      "estado": "lendo",
+      "posicao": 1,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 240,
+      "linhas": 89
+    },
+    {
+      "papel": "explorador",
+      "estado": "bloqueado",
+      "posicao": 0.25,
+      "tema": "claro",
+      "pontas_soltas": 0,
+      "pontas": 246,
+      "linhas": 93
+    },
+    {
+      "papel": "explorador",
+      "estado": "testando",
+      "posicao": 0.5,
+      "tema": "claro",
+      "pontas_soltas": 0,
+      "pontas": 238,
+      "linhas": 88
+    },
+    {
+      "papel": "construtor",
+      "estado": "lendo",
+      "posicao": 1,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 260,
+      "linhas": 88
+    },
+    {
+      "papel": "construtor",
+      "estado": "bloqueado",
+      "posicao": 0.25,
+      "tema": "claro",
+      "pontas_soltas": 0,
+      "pontas": 266,
+      "linhas": 92
+    },
+    {
+      "papel": "construtor",
+      "estado": "testando",
+      "posicao": 0.5,
+      "tema": "claro",
+      "pontas_soltas": 0,
+      "pontas": 258,
+      "linhas": 87
+    },
+    {
+      "papel": "revisor",
+      "estado": "lendo",
+      "posicao": 1,
+      "tema": "escuro",
+      "pontas_soltas": 0,
+      "pontas": 240,
+      "linhas": 87
+    },
+    {
+      "papel": "revisor",
+      "estado": "bloqueado",
+      "posicao": 0.25,
+      "tema": "claro",
+      "pontas_soltas": 0,
+      "pontas": 246,
+      "linhas": 91
+    },
+    {
+      "papel": "revisor",
+      "estado": "testando",
+      "posicao": 0.5,
+      "tema": "claro",
+      "pontas_soltas": 0,
+      "pontas": 238,
+      "linhas": 86
+    }
+  ],
+  "peso": "└─────────┴─────────────────────────────────────────────┴────────────────────┴───────┴────────┴─────────┴────────────┘",
+  "passou": true
+}

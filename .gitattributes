@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.html text eol=crlf
+*.png binary
+*.exe binary

@@ -1,0 +1,325 @@
+{
+  "empresa": "Estúdio Aurora",
+  "titulo": "Roadmap",
+  "rev": "A",
+  "exemplo": true,
+  "blueprints": [
+    {
+      "id": "bp1a2b3",
+      "nome": "Aplicativo de entregas",
+      "descricao": "App para o entregador receber pedidos, seguir a rota e confirmar a entrega.",
+      "obs": "Exemplo fictício. Metas: primeira versão para o piloto em novembro; sem dados reais de clientes.",
+      "links": [
+        {
+          "id": "lk01",
+          "rotulo": "Repositório",
+          "url": "https://example.com/entregas"
+        }
+      ],
+      "acoes": [
+        {
+          "id": "ac1a001",
+          "nome": "Protótipo navegável",
+          "inicio": "2026-10-05",
+          "fim": "2026-10-12",
+          "obs": "Objetivo: validar o fluxo com três entregadores antes de escrever código de produção.\nEntrega: protótipo clicável com as telas de pedido, rota e confirmação.",
+          "status": "concluido",
+          "progresso": 100,
+          "planos": [
+            {
+              "id": "17wdrqp",
+              "texto": "Desenhar as telas principais",
+              "descricao": "Escopo: pedido, rota e confirmação\nResultado esperado: três telas aprovadas\nValidação: revisão com o time de operação",
+              "feito": true,
+              "horas": 2,
+              "agente": {
+                "estado": "concluido",
+                "comentarios": [
+                  {
+                    "texto": "Telas entregues e revisadas com a operação.",
+                    "em": "2026-10-09T14:20:00.000Z",
+                    "tipo": "concluir"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "xgrnhia",
+              "texto": "Montar o protótipo clicável",
+              "descricao": "Escopo: ligar as telas num fluxo navegável\nResultado esperado: link único para testar no celular\nValidação: teste com um entregador",
+              "feito": true,
+              "horas": 3
+            },
+            {
+              "id": "1oo198z",
+              "texto": "Testar com três entregadores",
+              "descricao": "Escopo: sessão de 20 minutos por pessoa\nResultado esperado: lista de ajustes\nValidação: relatório com as observações",
+              "feito": true,
+              "horas": 1
+            }
+          ],
+          "checkpoints": [
+            {
+              "id": "xxjaz0k",
+              "nome": "Fluxo aprovado pela operação",
+              "data": "2026-10-12",
+              "feito": true,
+              "evidencia": "Reunião de 12/10: fluxo aprovado sem ressalvas.",
+              "feitoEm": "2026-10-12T17:00:00.000Z"
+            }
+          ]
+        },
+        {
+          "id": "ac1a002",
+          "nome": "API de pedidos",
+          "inicio": "2026-10-13",
+          "fim": "2026-10-27",
+          "obs": "Objetivo: serviço que recebe pedidos e entrega ao app a lista do dia.\nEntrega: endpoints de listar, aceitar e concluir pedido, com testes automáticos.\nRiscos: instabilidade do provedor de mapas (mitigação: cache da última rota).",
+          "status": "andamento",
+          "progresso": 60,
+          "planos": [
+            {
+              "id": "x6ekos5",
+              "texto": "Modelar pedidos e entregadores",
+              "descricao": "Escopo: tabelas e relacionamentos\nResultado esperado: esquema aprovado\nValidação: migração aplicada num banco vazio",
+              "feito": true,
+              "horas": 1.5
+            },
+            {
+              "id": "1eaygiu",
+              "texto": "Criar o endpoint de listar pedidos",
+              "descricao": "Escopo: GET /pedidos com filtro por entregador\nResultado esperado: lista paginada\nValidação: teste automático de contrato",
+              "feito": true,
+              "horas": 2
+            },
+            {
+              "id": "xn686af",
+              "texto": "Criar o endpoint de aceitar pedido",
+              "descricao": "Escopo: POST /pedidos/{id}/aceitar\nResultado esperado: pedido muda para em rota\nValidação: teste cobre pedido já aceito (409)",
+              "feito": false,
+              "horas": 3,
+              "agente": {
+                "estado": "trabalhando",
+                "comentarios": [
+                  {
+                    "texto": "Começando o endpoint de aceitar pedido.",
+                    "em": "2026-10-22T09:00:00.000Z",
+                    "tipo": "comentario"
+                  }
+                ]
+              }
+            },
+            {
+              "id": "1v2ly14",
+              "texto": "Registrar a confirmação de entrega",
+              "descricao": "Escopo: foto e hora da entrega\nResultado esperado: pedido concluído com comprovante\nValidação: teste com arquivo de 3 MB",
+              "feito": false,
+              "horas": 1
+            },
+            {
+              "id": "13xvnsp",
+              "texto": "Documentar a API",
+              "descricao": "Escopo: exemplos de chamada de cada endpoint\nResultado esperado: documento publicado\nValidação: outra pessoa executa os exemplos sem ajuda",
+              "feito": false,
+              "horas": 2.5
+            }
+          ],
+          "checkpoints": [
+            {
+              "id": "xct5dka",
+              "nome": "API em ambiente de testes",
+              "data": "2026-10-26",
+              "feito": false
+            }
+          ]
+        },
+        {
+          "id": "ac1a003",
+          "nome": "Aplicativo do entregador",
+          "inicio": "2026-10-28",
+          "fim": "2026-11-10",
+          "obs": "Objetivo: versão para o piloto, com lista de pedidos, rota e confirmação.\nDepende da ação \"API de pedidos\".",
+          "status": "planejado",
+          "progresso": 0,
+          "planos": [
+            {
+              "id": "1kpj5az",
+              "texto": "Implementar a lista de pedidos",
+              "descricao": "Escopo: tela de lista com atualização\nResultado esperado: lista do dia no celular\nValidação: teste manual em dois aparelhos",
+              "feito": false,
+              "horas": 2
+            },
+            {
+              "id": "xtksv2k",
+              "texto": "Implementar a rota até o cliente",
+              "descricao": "Escopo: mapa com a rota sugerida\nResultado esperado: rota abre ao aceitar o pedido\nValidação: teste em campo com um entregador",
+              "feito": false,
+              "horas": 3
+            },
+            {
+              "id": "x2g2ku5",
+              "texto": "Implementar a confirmação de entrega",
+              "descricao": "Escopo: foto e assinatura\nResultado esperado: pedido concluído no servidor\nValidação: teste ponta a ponta com a API",
+              "feito": false,
+              "horas": 1
+            }
+          ],
+          "checkpoints": [
+            {
+              "id": "1acgcku",
+              "nome": "Piloto com cinco entregadores",
+              "data": "2026-11-10",
+              "feito": false
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bp4d5e6",
+      "nome": "Site institucional",
+      "descricao": "Site de apresentação do estúdio, com portfólio e formulário de contato.",
+      "obs": "",
+      "links": [],
+      "acoes": [
+        {
+          "id": "ac2b001",
+          "nome": "Conteúdo e identidade",
+          "inicio": "2026-10-14",
+          "fim": "2026-10-23",
+          "obs": "Objetivo: textos e imagens aprovados antes de montar as páginas.",
+          "status": "andamento",
+          "progresso": 50,
+          "planos": [
+            {
+              "id": "xj7q2cf",
+              "texto": "Escrever os textos das páginas",
+              "descricao": "Escopo: início, serviços e contato\nResultado esperado: textos revisados\nValidação: leitura de duas pessoas de fora",
+              "feito": true,
+              "horas": 1.5
+            },
+            {
+              "id": "1r43u34",
+              "texto": "Selecionar as imagens do portfólio",
+              "descricao": "Escopo: doze imagens com autorização de uso\nResultado esperado: pasta organizada\nValidação: lista de autorizações conferida",
+              "feito": false,
+              "horas": 2
+            }
+          ],
+          "checkpoints": [
+            {
+              "id": "xzzdjup",
+              "nome": "Conteúdo aprovado",
+              "data": "2026-10-23",
+              "feito": false
+            }
+          ]
+        },
+        {
+          "id": "ac2b002",
+          "nome": "Montagem das páginas",
+          "inicio": "2026-10-24",
+          "fim": "2026-11-04",
+          "obs": "Objetivo: páginas publicadas num endereço de testes.",
+          "status": "planejado",
+          "progresso": 0,
+          "planos": [
+            {
+              "id": "x8un9ma",
+              "texto": "Montar a página inicial",
+              "descricao": "Escopo: cabeçalho, serviços e rodapé\nResultado esperado: página navegável\nValidação: teste em três tamanhos de tela",
+              "feito": false,
+              "horas": 1
+            },
+            {
+              "id": "1gr11cz",
+              "texto": "Montar o portfólio",
+              "descricao": "Escopo: grade de imagens com legenda\nResultado esperado: página de portfólio\nValidação: teste de desempenho abaixo de 3 s",
+              "feito": false,
+              "horas": 2.5
+            },
+            {
+              "id": "xpmar4k",
+              "texto": "Ligar o formulário de contato",
+              "descricao": "Escopo: envio de mensagem por e-mail\nResultado esperado: mensagem chega à caixa de teste\nValidação: teste com anexo inválido",
+              "feito": false,
+              "horas": 1.5
+            }
+          ],
+          "checkpoints": []
+        }
+      ]
+    }
+  ],
+  "usuario": {
+    "nome": "Pessoa de Exemplo",
+    "preferencias": {}
+  },
+  "workspaces": [
+    {
+      "id": "lab0001",
+      "nome": "Laboratório de ideias",
+      "descricao": "Experimentos fora do dia a dia do estúdio.",
+      "emblema": null,
+      "icone": "",
+      "exemplo": true,
+      "blueprints": [
+        {
+          "id": "bp7g8h9",
+          "nome": "Monitor de consumo",
+          "descricao": "Painel que mostra o consumo de energia do escritório por sala.",
+          "obs": "",
+          "links": [],
+          "acoes": [
+            {
+              "id": "ac3c001",
+              "nome": "Coleta dos medidores",
+              "inicio": "2026-11-02",
+              "fim": "2026-11-09",
+              "obs": "Objetivo: ler os medidores a cada minuto e guardar a série.",
+              "status": "planejado",
+              "progresso": 0,
+              "planos": [
+                {
+                  "id": "1xioiv9",
+                  "texto": "Ler os medidores pela rede local",
+                  "descricao": "Escopo: protocolo do medidor de cada sala\nResultado esperado: leituras a cada minuto\nValidação: uma hora de leituras sem falha",
+                  "feito": false,
+                  "horas": 2
+                },
+                {
+                  "id": "16dy8mu",
+                  "texto": "Guardar as leituras",
+                  "descricao": "Escopo: tabela de série temporal\nResultado esperado: histórico de sete dias\nValidação: consulta de um dia em menos de 1 s",
+                  "feito": false,
+                  "horas": 3
+                },
+                {
+                  "id": "xf97yef",
+                  "texto": "Mostrar o consumo por sala",
+                  "descricao": "Escopo: gráfico de barras do dia\nResultado esperado: painel simples\nValidação: comparação com a conta de energia",
+                  "feito": false,
+                  "horas": 1
+                }
+              ],
+              "checkpoints": [
+                {
+                  "id": "1n5lq54",
+                  "nome": "Primeira semana de dados",
+                  "data": "2026-11-09",
+                  "feito": false
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "chats": [],
+  "chatsAtivos": {},
+  "ordemWorkspaces": [
+    "sm",
+    "lab0001"
+  ]
+}

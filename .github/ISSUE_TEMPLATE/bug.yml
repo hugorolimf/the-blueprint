@@ -1,0 +1,23 @@
+name: Bug
+description: Algo não funciona como o esperado
+labels: [bug]
+body:
+  - type: textarea
+    id: o-que
+    attributes:
+      label: O que aconteceu
+      description: E o que você esperava que acontecesse.
+    validations:
+      required: true
+  - type: textarea
+    id: como
+    attributes:
+      label: Como reproduzir
+      description: Passos curtos. Se envolver o MCP, diga qual agente (Claude Code, Codex…) e a ferramenta chamada.
+    validations:
+      required: true
+  - type: input
+    id: ambiente
+    attributes:
+      label: Ambiente
+      description: Versão do app (a da release ou o commit), Windows ou outro sistema, navegador/WebView.

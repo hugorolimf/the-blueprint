@@ -1,0 +1,521 @@
+[
+ {
+  "name": "listar_blueprints",
+  "description": "Lista os workspaces e blueprints do The Blueprint, com ids, nome e quantidade de ações. Chame no começo.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {}
+  }
+ },
+ {
+  "name": "guia_de_planejamento",
+  "description": "Devolve o guia de planejamento por partes. Sem topico: o índice (modelo do app, ordem de trabalho e qual tópico ler). Tópicos: planejar (ações, planos, checkpoints, checklist), editar (mudar o que existe), executar (ligar a pasta, registrar e marcar), prototipos. Chame antes de planejar.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "topico": {
+     "type": "string",
+     "enum": [
+      "planejar",
+      "editar",
+      "executar",
+      "prototipos"
+     ]
+    }
+   }
+  }
+ },
+ {
+  "name": "ler_blueprint",
+  "description": "Sem acao_id: a estrutura do blueprint (ações, planos e checkpoints com ids, datas e o que está feito), a data de hoje e os outros blueprints do workspace. Com acao_id: aquela ação inteira (instruções, descrições dos planos, protótipos). Leia a ação inteira antes de executá-la ou de reescrever suas instruções.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "Opcional: id da ação a ler por inteiro."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id"
+   ]
+  }
+ },
+ {
+  "name": "propor_blueprint",
+  "description": "Envia a proposta ao app para o usuário revisar e aplicar (nada muda antes disso). Inclua só as ações novas ou alteradas. Ação nova vai completa; ação existente vai com o id e só o que muda (o que não vier fica como está, nada é apagado). Mover: cite o id do plano/checkpoint na ação de destino. Apagar: lista `remover`, que o usuário aprova na tela. Sem blueprint_id, é um blueprint novo: inclua blueprint: {nome, descricao}. Devolve os erros de formato para você corrigir.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "Vazio para criar um blueprint novo."
+    },
+    "mensagem": {
+     "type": "string",
+     "description": "Resumo curto do que propõe e do que supôs."
+    },
+    "blueprint": {
+     "type": "object",
+     "properties": {
+      "nome": {
+       "type": "string"
+      },
+      "descricao": {
+       "type": "string"
+      }
+     },
+     "description": "Só em blueprint novo."
+    },
+    "acoes": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "description": "Ação nova: nome, inicio, fim, planos e checkpoints. Ação existente: id e só o que muda; campos, planos e checkpoints que não vierem ficam como estão (nada é apagado).",
+      "properties": {
+       "id": {
+        "type": "string",
+        "description": "id da ação existente (de ler_blueprint); vazio se for nova."
+       },
+       "nome": {
+        "type": "string"
+       },
+       "inicio": {
+        "type": "string",
+        "description": "aaaa-mm-dd"
+       },
+       "fim": {
+        "type": "string",
+        "description": "aaaa-mm-dd"
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "planejado",
+         "andamento"
+        ]
+       },
+       "observacao": {
+        "type": "string",
+        "description": "INSTRUÇÕES DA AÇÃO: o que fazer, o roteiro completo desta ação (objetivo, entrega, passo a passo, dependências, decisões, riscos, critério de pronto). Pode ser longo (até 20000 caracteres)."
+       },
+       "planos": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "description": "Plano novo: texto e descricao obrigatórios. Existente: id e só o que muda. Com o id de um plano de OUTRA ação, ela é movida para esta ação (mantém id e feito).",
+         "properties": {
+          "id": {
+           "type": "string",
+           "description": "id do plano existente (de ler_blueprint); vazio se for nova."
+          },
+          "texto": {
+           "type": "string",
+           "description": "Título: verbo no infinitivo, até 45 caracteres."
+          },
+          "descricao": {
+           "type": "string",
+           "description": "Escopo, resultado esperado e validação (de preferência um comando ou teste)."
+          },
+          "horas": {
+           "type": "number",
+           "minimum": 0.5,
+           "maximum": 16,
+           "description": "Estimativa de trabalho do agente em horas (de 0,5 a 16; o ideal é de 0,5 a 4; acima de 8, divida o plano)."
+          }
+         }
+        }
+       },
+       "checkpoints": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "description": "Novo: nome e data. Existente: id e só o que muda. Com o id de um checkpoint de OUTRA ação, ele é movido para esta (informe a data nova, dentro do período).",
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "nome": {
+           "type": "string"
+          },
+          "data": {
+           "type": "string",
+           "description": "aaaa-mm-dd, dentro do período da ação"
+          }
+         }
+        }
+       }
+      }
+     }
+    },
+    "remover": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "description": "Pedido de remoção: o usuário marca e aprova na tela, nada some antes disso. Só acao_id apaga a ação inteira.",
+      "properties": {
+       "acao_id": {
+        "type": "string"
+       },
+       "plano_id": {
+        "type": "string"
+       },
+       "checkpoint_id": {
+        "type": "string"
+       },
+       "motivo": {
+        "type": "string",
+        "description": "Por que remover."
+       }
+      },
+      "required": [
+       "acao_id"
+      ]
+     },
+     "description": "Planos, checkpoints ou ações a apagar, para o usuário aprovar."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "acoes"
+   ]
+  }
+ },
+ {
+  "name": "anexar_prototipo",
+  "description": "Anexa a uma ação um protótipo visual: um documento HTML AUTOCONTIDO (tudo inline, sem rede nem bibliotecas externas), por exemplo uma figura isométrica feita com a skill anatomy ou uma tela simulada. O usuário o vê num visor isolado ao lado da ação, na folha do blueprint. Para revisar um protótipo existente, passe o prototipo_id (de ler_blueprint): ele é substituído, não duplicado. Máximo de 2 MB.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "titulo": {
+     "type": "string",
+     "description": "Nome curto do protótipo."
+    },
+    "html": {
+     "type": "string",
+     "description": "Documento HTML completo e autocontido."
+    },
+    "prototipo_id": {
+     "type": "string",
+     "description": "Só para substituir um protótipo existente da ação."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acao_id",
+    "titulo",
+    "html"
+   ]
+  }
+ },
+ {
+  "name": "registrar_progresso",
+  "description": "Avisa o usuário da etapa em andamento (uma frase curta) e põe você no painel de agentes. Mande agente (o seu nome; subagentes usam o próprio), estado e onde ao começar e ao mudar de arquivo. Com acao_id e plano_id, o robô do agente aparece ao lado desse plano na folha do blueprint: mande-os ao começar cada plano.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "texto": {
+     "type": "string",
+     "description": "O que está fazendo agora."
+    },
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "plano_id": {
+     "type": "string",
+     "description": "id do plano (de ler_blueprint)."
+    },
+    "agente": {
+     "type": "string",
+     "description": "Seu nome, estável durante o trabalho (até 40 caracteres, sem caracteres de controle). Subagentes usam o próprio nome. É o que identifica você no painel de agentes."
+    },
+    "papel": {
+     "type": "string",
+     "enum": [
+      "explorador",
+      "construtor",
+      "revisor"
+     ],
+     "description": "O que você faz: explorador lê, construtor escreve, revisor testa."
+    },
+    "estado": {
+     "type": "string",
+     "enum": [
+      "lendo",
+      "escrevendo",
+      "testando",
+      "aguardando",
+      "bloqueado",
+      "concluido"
+     ],
+     "description": "O que está fazendo agora."
+    },
+    "onde": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "maxItems": 5,
+     "description": "Até 5 caminhos (arquivos ou pastas, de até 120 caracteres) em que está trabalhando agora."
+    },
+    "percentual": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100,
+     "description": "Quanto do plano já foi feito."
+    }
+   },
+   "required": [
+    "texto"
+   ]
+  }
+ },
+ {
+  "name": "marcar_concluido",
+  "description": "Marca UM plano como concluído. Exige a evidência real: o comando ou teste rodado e o resultado. Sem evidência, não chame.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "plano_id": {
+     "type": "string",
+     "description": "id do plano (de ler_blueprint)."
+    },
+    "evidencia": {
+     "type": "string",
+     "description": "Comando/teste rodado e o resultado."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acao_id",
+    "plano_id",
+    "evidencia"
+   ]
+  }
+ },
+ {
+  "name": "marcar_nao_concluido",
+  "description": "Informa que um plano não foi concluído e por quê; ele continua pendente.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "plano_id": {
+     "type": "string",
+     "description": "id do plano (de ler_blueprint)."
+    },
+    "motivo": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acao_id",
+    "plano_id",
+    "motivo"
+   ]
+  }
+ },
+ {
+  "name": "marcar_checkpoint_feito",
+  "description": "Marca UM checkpoint de uma ação como atingido. Exige a evidência real: a demonstração, o comando ou teste e o resultado. Sem evidência, não chame; só quando o checkpoint foi cumprido de fato.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "checkpoint_id": {
+     "type": "string",
+     "description": "id do checkpoint (de ler_blueprint, em checkpoints da ação)."
+    },
+    "evidencia": {
+     "type": "string",
+     "description": "Como o checkpoint foi cumprido: comando/teste rodado e o resultado."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acao_id",
+    "checkpoint_id",
+    "evidencia"
+   ]
+  }
+ },
+ {
+  "name": "marcar_checkpoint_nao_feito",
+  "description": "Informa que um checkpoint não foi atingido e por quê; ele continua pendente.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "checkpoint_id": {
+     "type": "string",
+     "description": "id do checkpoint (de ler_blueprint, em checkpoints da ação)."
+    },
+    "motivo": {
+     "type": "string"
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acao_id",
+    "checkpoint_id",
+    "motivo"
+   ]
+  }
+ },
+ {
+  "name": "reportar_bloqueio",
+  "description": "Avisa que você travou e precisa do usuário (acesso, decisão, informação). Aceita os mesmos campos de atividade de registrar_progresso (agente, papel, onde...), e o estado vira bloqueado.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "texto": {
+     "type": "string",
+     "description": "O que falta."
+    },
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id da ação (de ler_blueprint)."
+    },
+    "plano_id": {
+     "type": "string",
+     "description": "id do plano (de ler_blueprint)."
+    },
+    "agente": {
+     "type": "string",
+     "description": "Seu nome, estável durante o trabalho (até 40 caracteres, sem caracteres de controle). Subagentes usam o próprio nome. É o que identifica você no painel de agentes."
+    },
+    "papel": {
+     "type": "string",
+     "enum": [
+      "explorador",
+      "construtor",
+      "revisor"
+     ],
+     "description": "O que você faz: explorador lê, construtor escreve, revisor testa."
+    },
+    "estado": {
+     "type": "string",
+     "enum": [
+      "lendo",
+      "escrevendo",
+      "testando",
+      "aguardando",
+      "bloqueado",
+      "concluido"
+     ],
+     "description": "O que está fazendo agora."
+    },
+    "onde": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "maxItems": 5,
+     "description": "Até 5 caminhos (arquivos ou pastas, de até 120 caracteres) em que está trabalhando agora."
+    },
+    "percentual": {
+     "type": "integer",
+     "minimum": 0,
+     "maximum": 100,
+     "description": "Quanto do plano já foi feito."
+    }
+   },
+   "required": [
+    "texto"
+   ]
+  }
+ }
+]

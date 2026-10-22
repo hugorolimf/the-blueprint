@@ -1,0 +1,39 @@
+/* robô do agente: só mostra onde o agente do usuário está (vem da fila do MCP); a antena pisca enquanto ele trabalha */
+.robo{pointer-events:none}.robo .ag-cx{fill:#0c3a78;stroke:var(--ink);stroke-width:1.4}.robo .ag-vz{fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round}.robo .ag-ol{fill:var(--ink)}.robo .ag-an{fill:none;stroke:var(--ink);stroke-width:1.2}.robo .ag-pt{fill:var(--ink);animation:robo-pisca 1.2s steps(2) infinite}
+.robo.ok .ag-cx{fill:var(--ink)}.robo.ok .ag-ol{fill:#0c3a78}.robo.ok .ag-vz{stroke:#0c3a78}.robo.ok .ag-pt{animation:none}
+.robo.erro .ag-cx,.robo.erro .ag-an{stroke:var(--erro)}.robo.erro .ag-pt{fill:var(--erro)}
+@keyframes robo-pisca{50%{opacity:.15}}
+.robo-linha{fill:#eaf4ff14;stroke:var(--ink);stroke-width:1;stroke-dasharray:4 3;pointer-events:none}.robo-linha.erro{stroke:var(--erro)}.robo-linha.ok{stroke-dasharray:none}
+#robo-agente{position:fixed;left:16px;bottom:16px;z-index:25;display:flex;gap:10px;align-items:center;max-width:min(620px,calc(100vw - 32px));padding:8px 14px 8px 10px;border:1px solid var(--ink);background:#082b5ef5;color:var(--ink);font:11px/1.45 var(--mono);text-align:left;cursor:pointer;box-shadow:0 6px 24px #02132e99}
+#robo-agente[hidden]{display:none}#robo-agente.erro{border-color:var(--erro)}#robo-agente:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+#robo-agente div{min-width:0}#robo-agente b{display:block;color:var(--mid);font-size:10px;letter-spacing:.1em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#robo-agente span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(prefers-reduced-motion:reduce){.robo .ag-pt{animation:none}}
+.nota .ic{fill:#0c3a78;stroke:var(--ink);stroke-width:1.2}
+.nota .ic2{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round}
+.nota:hover .ic,.nota:focus-visible .ic{fill:var(--ink)}
+.nota:hover .ic2,.nota:focus-visible .ic2{stroke:var(--paper)}
+.alvo{cursor:pointer;outline:none;touch-action:none}
+.alvo .moldura{fill:#0c3a78b3;stroke:var(--mid);stroke-width:1;transition:stroke .2s,fill .2s}
+.alvo.ok .moldura{fill:#082b5eb3;stroke:var(--lo)}
+.alvo:hover .moldura,.alvo:focus-visible .moldura{stroke:var(--ink);stroke-width:1.6;fill:#17539f}
+.alvo .cab{fill:transparent;transition:fill .2s}
+.alvo:hover .cab,.alvo:focus-visible .cab{fill:#ffffff14}
+.alvo:focus-visible .cab{stroke:var(--ink);stroke-width:1.2}
+.alvo .botao{fill:#0c3a78;stroke:var(--ink);stroke-width:1.2;transition:fill .15s}
+.alvo .botao-t{font-weight:700;fill:var(--ink);transition:fill .15s}
+.alvo:hover .botao,.alvo:focus-visible .botao{fill:var(--ink)}
+.alvo:hover .botao-t,.alvo:focus-visible .botao-t{fill:var(--paper)}
+.alvo.soltar .moldura{stroke:var(--ink);stroke-width:3;fill:#2a6cc0}
+.alvo.criar .moldura{fill:#0c3a7840;stroke:var(--lo);stroke-dasharray:6 4}
+.alvo.criar:hover .moldura,.alvo.criar:focus-visible .moldura{fill:#17539f66;stroke:var(--ink)}
+.alvo.criar .mais-borda{fill:#0c3a7840;stroke:var(--lo);stroke-width:1}
+.alvo.criar:hover .mais-borda,.alvo.criar:focus-visible .mais-borda{fill:#17539f;stroke:var(--ink)}
+.alvo.criar .mais-novo{fill:none;stroke:var(--mid);stroke-width:2;stroke-linecap:square}
+.alvo.criar:hover .mais-novo,.alvo.criar:focus-visible .mais-novo{stroke:var(--ink)}
+.destaque{fill:#fff;opacity:0;pointer-events:none}
+.aviso{fill:var(--erro)}
+.lk{cursor:pointer;outline:none}
+.lk text{fill:var(--ink);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--lo)}
+.lk:hover text,.lk:focus-visible text{text-decoration-color:var(--ink);font-weight:700}
+.lk .foco{fill:none;stroke:var(--ink);stroke-width:1;opacity:0}
+.lk:focus-visible .foco{opacity:1}

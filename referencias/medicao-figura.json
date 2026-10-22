@@ -1,0 +1,46 @@
+{
+  "data": "2026-10-22T07:29:58.205Z",
+  "comando": "node scripts/medir-figura.mjs",
+  "pose": {
+    "papel": "construtor",
+    "estado": "escrevendo",
+    "posicao": 0.5,
+    "progresso": 0.6
+  },
+  "linhas": [
+    {
+      "alternativa": "160 peças (limite antigo, figura cortada)",
+      "tamanho": "cartão 220×170",
+      "pecas": 160,
+      "svg_kb": 135,
+      "nos_svg": 794,
+      "desenho_ms": 9.3
+    },
+    {
+      "alternativa": "160 peças (limite antigo, figura cortada)",
+      "tamanho": "captura 1200×930",
+      "pecas": 160,
+      "svg_kb": 151,
+      "nos_svg": 794,
+      "desenho_ms": 9.1
+    },
+    {
+      "alternativa": "233 peças (figura inteira, limite 400)",
+      "tamanho": "cartão 220×170",
+      "pecas": 233,
+      "svg_kb": 187,
+      "nos_svg": 1153,
+      "desenho_ms": 10.2
+    },
+    {
+      "alternativa": "233 peças (figura inteira, limite 400)",
+      "tamanho": "captura 1200×930",
+      "pecas": 233,
+      "svg_kb": 209,
+      "nos_svg": 1153,
+      "desenho_ms": 9.8
+    }
+  ],
+  "doze_figuras_do_cartao_mb": 2.2,
+  "decisao": "Subir o limite por opção (limite, até 400) só para a figura do agente: o padrão de 160 continua valendo para o que vem de fora (IA, proposta). A figura segue sendo só dados."
+}

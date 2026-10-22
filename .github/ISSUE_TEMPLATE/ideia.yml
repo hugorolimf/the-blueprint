@@ -1,0 +1,15 @@
+name: Ideia
+description: Sugira uma melhoria ou funcionalidade
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problema
+    attributes:
+      label: Que problema isso resolve
+    validations:
+      required: true
+  - type: textarea
+    id: ideia
+    attributes:
+      label: Como você imagina
+      description: Lembre que o app não abre nem conversa com agentes; ele só mostra o que o seu agente informa pelo MCP.

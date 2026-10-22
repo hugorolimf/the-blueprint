@@ -1,0 +1,58 @@
+//! Linha de comando. A janela nativa (sem argumentos) entra na ação 3.5.
+use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
+use crate::http::{self, Config};
+use std::path::Path;
+
+const USO: &str = "uso:\n  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n  blueprint dev                              o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n  blueprint serve                          liga o servidor (HOST, PORT, BLUEPRINT_DB, DADOS_ARQ, PROTOTIPOS_DIR, MCP_REDE)\n  blueprint --mcp                             servidor MCP por stdio, para o agente (claude mcp add blueprint -- blueprint --mcp)\n  blueprint importar <data.json> <banco.db>   copia o data.json para o banco (o arquivo não é alterado)\n  blueprint exportar <banco.db> <saida.json>  grava o banco como data.json\n  blueprint registrar [--remover]            liga (ou desliga) o MCP no Claude Code e no Codex; o instalador faz isto";
+
+/// Devolve o código de saída do processo.
+pub fn executar(args: Vec<String>) -> i32 {
+    let a: Vec<&str> = args.iter().map(String::as_str).collect();
+    let resultado = match a.as_slice() {
+        [] => return abrir_janela(false),
+        ["dev"] => return abrir_janela(true),
+        ["--mcp"] => return crate::mcp::stdio::executar(),
+        ["serve"] => serve(),
+        ["registrar"] | ["registrar", "--remover"] => {
+            let (texto, codigo) = crate::registrar::executar(a.len() == 2);
+            println!("{texto}");
+            return codigo;
+        }
+        ["importar", json, banco] => importar_arquivo(Path::new(json), Path::new(banco)).map(|c| format!("importado: {c}")),
+        ["exportar", banco, saida] => exportar_arquivo(Path::new(banco), Path::new(saida)).map(|_| format!("exportado para {saida}")),
+        _ => {
+            eprintln!("{USO}");
+            return 2;
+        }
+    };
+    match resultado {
+        Ok(mensagem) => {
+            println!("{mensagem}");
+            0
+        }
+        Err(erro) => {
+            eprintln!("erro: {erro}");
+            1
+        }
+    }
+}
+
+/// Sem argumentos: o app com janela (Windows).
+#[cfg(windows)]
+fn abrir_janela(dev: bool) -> i32 {
+    crate::janela::abrir(dev)
+}
+
+#[cfg(not(windows))]
+fn abrir_janela(_dev: bool) -> i32 {
+    eprintln!("{USO}");
+    2
+}
+
+/// Liga o servidor e fica atendendo até o processo ser encerrado.
+fn serve() -> Result<String, crate::erro::Erro> {
+    let servidor = http::iniciar(Config::do_ambiente())?;
+    println!("The Blueprint (beta) em {} · MCP: {} --mcp", servidor.url, servidor.estado.config.exe.display());
+    servidor.aguardar();
+    Ok("servidor encerrado".into())
+}

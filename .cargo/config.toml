@@ -1,0 +1,8 @@
+# CRT do Visual C++ ligada dentro do .exe: numa máquina limpa não precisa do "Visual C++ Redistributable" instalado.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]
+
+# `cargo dev`: o app para desenvolver (`blueprint dev`), recompilado e reaberto sozinho quando o Rust muda.
+# Precisa do cargo-watch (cargo install cargo-watch). A interface recarrega sem recompilar, pelo próprio `blueprint dev`.
+[alias]
+dev = ["watch", "-q", "-w", "src", "-w", "skills", "-w", "Cargo.toml", "-w", "build.rs", "-x", "run -- dev"]

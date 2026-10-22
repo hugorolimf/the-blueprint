@@ -1,0 +1,42 @@
+{
+  "porta_usada": 54697,
+  "dados_em_appdata": {
+    "banco": "%APPDATA%Roadmap\roadmap.db",
+    "importado_igual_ao_data_json": true,
+    "original_intacto": true
+  },
+  "com_janela_aberta": {
+    "memoria_mb_somando_os_processos": 381.9,
+    "processos_webview2": 6
+  },
+  "na_bandeja": {
+    "memoria_mb": 26.3,
+    "processos_webview2": 0,
+    "processo_vivo": true,
+    "mcp_responde": true
+  },
+  "instancia_unica": {
+    "segunda_execucao_encerrou": true,
+    "janela_voltou_ms": 2555
+  },
+  "apos_voltar_da_bandeja": {
+    "memoria_mb": 384.8
+  },
+  "partida": [
+    {
+      "partida": "fria",
+      "ate_janela_visivel_ms": 111
+    },
+    {
+      "partida": "quente 1",
+      "ate_janela_visivel_ms": 137
+    },
+    {
+      "partida": "quente 2",
+      "ate_janela_visivel_ms": 126
+    }
+  ],
+  "partida_quente_media_ms": 131.5,
+  "data": "2026-10-22T07:39:58.106Z",
+  "nota": "Medido com Start-Process e o PowerShell olhando MainWindowHandle a cada 3 ms (a janela só fica visível com a página carregada). O WebView2 usa uma pasta de dados nova na partida fria."
+}
