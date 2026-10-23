@@ -76,7 +76,8 @@ fn plugin_ja_ligado_nao_e_falha_do_registrar() {
 
 #[test]
 fn exe_de_target_nao_e_o_que_o_agente_abre() {
-    assert!(dentro_de_target(Path::new(r"C:\x\Blueprint\target\debug\blueprint.exe")));
-    assert!(dentro_de_target(Path::new(r"C:\x\Blueprint\target\release\blueprint.exe")));
-    assert!(!dentro_de_target(Path::new(r"C:\Users\x\AppData\Local\Programs\Blueprint\blueprint.exe")));
+    // barras normais: `\` só separa pastas no Windows e o CI também roda no Ubuntu
+    assert!(dentro_de_target(Path::new("C:/x/Blueprint/target/debug/blueprint.exe")));
+    assert!(dentro_de_target(Path::new("C:/x/Blueprint/target/release/blueprint.exe")));
+    assert!(!dentro_de_target(Path::new("C:/Users/x/AppData/Local/Programs/Blueprint/blueprint.exe")));
 }
