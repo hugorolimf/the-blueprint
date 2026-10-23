@@ -1,7 +1,7 @@
 name: release
 
 # Ao criar uma tag vX.Y.Z, gera o instalador e o SHA256SUMS (o que o updater do app procura) e os anexa à release.
-# A tag precisa ser igual à versão do Cargo.toml. A release sai como pré-lançamento (o app é beta); o updater a enxerga assim mesmo.
+# A tag precisa ser igual à versão do Cargo.toml. A release sai como normal ("Latest"), para aparecer na lateral do repositório com o instalador à mão; o updater lê a lista e enxerga qualquer uma.
 on:
   push:
     tags: ["v*"]
@@ -52,5 +52,5 @@ jobs:
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" target/release-arquivos/* --clobber
           else
-            gh release create "$tag" target/release-arquivos/* --title "The Blueprint (beta) $tag" --prerelease "${notas[@]}"
+            gh release create "$tag" target/release-arquivos/* --title "The Blueprint (beta) $tag" --latest "${notas[@]}"
           fi

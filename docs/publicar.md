@@ -47,7 +47,7 @@ O updater (`src/atualizador/`) lê a lista de releases do repositório, pega a p
 
 1. Suba a versão em `Cargo.toml` (`version = "0.1.1"`): é a que o app mostra, a que ele compara e a que o instalador recebe (`ISCC /DVersao`).
 2. Commit na `main` com os testes verdes (`cargo test`, `node atualizacao.test.mjs`, `node scripts/atualizador-e2e.mjs`).
-3. Crie a tag `v0.1.1` (igual à versão do Cargo). O workflow `.github/workflows/release.yml` compila, gera o instalador e o `SHA256SUMS` com `node scripts/gerar-release.mjs` e os anexa a uma release de pré-lançamento. Sem o CI: rode `node scripts/gerar-release.mjs` (arquivos em `target/release-arquivos/`; leva alguns minutos e precisa do Inno Setup 6) e `gh release create v0.1.1 target/release-arquivos/* --prerelease --generate-notes`.
+3. Crie a tag `v0.1.1` (igual à versão do Cargo). O workflow `.github/workflows/release.yml` compila, gera o instalador e o `SHA256SUMS` com `node scripts/gerar-release.mjs` e os anexa a uma release normal ("Latest", com as notas de `docs/release-<tag>.md` quando existirem). Sem o CI: rode `node scripts/gerar-release.mjs` (arquivos em `target/release-arquivos/`; leva alguns minutos e precisa do Inno Setup 6) e `gh release create v0.1.1 target/release-arquivos/* --latest --notes-file docs/release-v0.1.1.md`.
 4. Os apps instalados baixam sozinhos em até 24 h depois de abrirem (ou na hora, em "Verificar atualizações" na bandeja) e perguntam antes de instalar.
 
 Autenticidade: o `SHA256SUMS` vem da mesma release do instalador, então prova que o download não corrompeu, mas não quem publicou. Assinar (ed25519 com a chave pública embutida no app, ou Authenticode no instalador) é a melhoria para quando houver uma chave.
