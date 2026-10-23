@@ -111,12 +111,12 @@ try {
   assert.equal((await parado()).animacoes, 0, "reduced-motion: aparece no destino, sem animação");
   await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }] });
 
-  // muitas figuras: o principal + 5 subagentes se juntam, sobrepostas, sem contador
+  // muitas figuras: com os 3 de antes são 8 (o limite), sobrepostas e sem contador
   for (let i = 0; i < 5; i++) await avisa({ texto: `extra ${i}`, agente: `extra-${i}`, papel: ["explorador", "construtor", "revisor"][i % 3], estado: "lendo", acaoId: acao.id, planoId: plano.id });
   await dormir(1500);
-  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 5, "no máximo 5 figuras de agente (1 principal + 4 subagentes; a espera é à parte)");
+  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 8, "as 8 figuras aparecem (1 principal + 7 subagentes; a espera é à parte)");
   assert.equal(await js(`document.querySelector("#claude-camada .claude-mais")`), null, "nunca há contador +N");
-  assert(await js(`(() => { const r = [...document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])")].map((f) => f.getBoundingClientRect()); return Math.max(...r.map((q) => q.right)) - Math.min(...r.map((q) => q.left)) <= 5 * 48 + 16 + 2; })()`), "o grupo se junta: não passa da largura de 5 figuras");
+  assert(await js(`(() => { const r = [...document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])")].map((f) => f.getBoundingClientRect()), c = document.querySelector('#claude-camada [data-robo-nome="claude"]').getBoundingClientRect(), g = r.filter((q) => Math.abs(q.top - c.top) < 2); return g.length >= 6 && Math.max(...g.map((q) => q.right)) - Math.min(...g.map((q) => q.left)) <= 5 * 48 + 16 + 2; })()`), "o grupo do plano (6 ou mais figuras) se junta: não passa da largura de 5 figuras; as de outros planos ficam à parte");
 
   // clicar na figura abre a folhinha (só leitura)
   await js(`document.querySelector('#claude-camada [data-robo-nome="claude"]').click()`);
@@ -127,7 +127,7 @@ try {
   await js(`document.getElementById("nota-folha").hidden = true; agentesLista.forEach((a) => { a.em = new Date(Date.now() - 11 * 60000).toISOString(); }); agenteAgora = null; agentesAtualiza(); render()`);
   await dormir(300);
   const repouso = await figuras();
-  assert.equal(repouso.length, 5, "os agentes sem sinal continuam na folha");
+  assert.equal(repouso.length, 8, "os agentes sem sinal continuam na folha");
   assert(repouso.every((f) => /parado/.test(f.rotulo)), "e repousam na pose parada");
   assert.equal(await js(`document.querySelectorAll("rect.robo-linha").length`), 0, "sem plano: nenhum plano destacado");
 
@@ -155,7 +155,7 @@ try {
   await dormir(1500);
   assert(!(await figuras()).some((f) => f.nome === "claude"), "depois de Concluído, o agente sai da folha (não repousa)");
   assert.equal(await js(`document.querySelectorAll("rect.robo-linha").length`), 0, "e sai do plano");
-  assert.equal((await figuras()).length, 5, "os outros agentes (em repouso, 7 no servidor) continuam, no limite de 5 figuras");
+  assert.equal((await figuras()).length, 7, "os outros 7 agentes (em repouso) continuam, todos dentro do limite de 8 figuras");
 
   // o Claude esperando: clicar abre a folha da ação, com o botão "Iniciar com o Claude" (a rota é simulada: o fetch é interceptado)
   const esp = await espera();
