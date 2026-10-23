@@ -36,3 +36,5 @@ jobs:
           node agentes-figura.test.mjs
           node agentes-claude.test.mjs
           node scripts/migrar-vocabulario.test.mjs
+          node atualizacao.test.mjs
+          node notificacao.test.mjs

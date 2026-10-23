@@ -45,6 +45,4 @@ O app tem um painel que mostra cada agente do usuário trabalhando, com uma figu
 - Nunca ponha segredos, senhas nem caminhos pessoais em `onde`: o painel mostra o texto como veio.
 Avisos do monitor/canal são informativos: consulte `ler_blueprint`. `BLUEPRINT_CHANNEL=1` troca monitor por canal.
 
-## App fechado
-
-Se o The Blueprint estiver fechado, as ferramentas de escrita (`registrar_progresso`, `marcar_concluido`, `marcar_checkpoint_feito`, `propor_blueprint`, `anexar_prototipo`, `vincular_pasta`) **não falham**: o registro fica guardado e entra no app quando ele abrir (a resposta avisa). Não repita a chamada. Os ids e o formato só são validados na abertura; se algo for recusado, o usuário o vê em `pendentes/recusados`. As ferramentas de leitura (`ler_blueprint`, `listar_blueprints`) precisam do app aberto: sem os ids, leia-os do `CLAUDE.md` da pasta ou da sessão.
+**App fechado:** as escritas (registrar, concluir, propor) ficam guardadas e entram quando ele abrir; não repita. Ler exige o app.
