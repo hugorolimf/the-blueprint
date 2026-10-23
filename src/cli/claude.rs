@@ -6,7 +6,23 @@ use std::process::Command;
 
 const AGENTE: &str = "blueprint:blueprint";
 
+/// O canal que o botão "Iniciar com o Claude" liga nas sessões que abre, para elas poderem receber depois o pedido de iniciar outra ação (docs/claude-na-folha.md,
+/// "Escolher a sessão"). Pelo mesmo comando do `docs/monitor-e-channels.md`.
+const FLAG_CANAL: [&str; 2] = ["--dangerously-load-development-channels", "plugin:blueprint@blueprint-local"];
+
+/// `--canal` (em qualquer posição) não é do Claude: liga o canal. A flag do canal vai no FIM, depois do prompt, porque pode aceitar vários valores e engoliria o prompt.
+fn separa_canal(extras: &[String]) -> (bool, Vec<String>) {
+    let canal = extras.iter().any(|e| e == "--canal");
+    let mut resto: Vec<String> = extras.iter().filter(|e| *e != "--canal").cloned().collect();
+    if canal {
+        resto.extend(FLAG_CANAL.map(String::from));
+    }
+    (canal, resto)
+}
+
 pub(super) fn executar(extras: &[String]) -> i32 {
+    let (canal, extras) = separa_canal(extras);
+    let extras = extras.as_slice();
     let Some(cli) = crate::registrar::procurar("claude") else {
         eprintln!("erro: Claude Code não encontrado no PATH");
         return 1;
@@ -35,7 +51,12 @@ pub(super) fn executar(extras: &[String]) -> i32 {
         eprintln!("Aviso: esta pasta não está ligada a um blueprint; abrindo Claude com o plugin, sem o agente Blueprint.");
     }
     let argumentos = argumentos(&pasta.join("plugins/blueprint"), &exe, ligado, extras);
-    match Command::new(cli).args(argumentos).status() {
+    let mut comando = Command::new(cli);
+    comando.args(argumentos);
+    if canal {
+        comando.env("BLUEPRINT_CHANNEL", "1");
+    }
+    match comando.status() {
         Ok(status) => status.code().unwrap_or(1),
         Err(e) => {
             eprintln!("erro: não consegui iniciar Claude Code: {e}");
@@ -135,6 +156,16 @@ mod tests {
             "Blueprint: workspace_id `sm`, blueprint_id `ia-sm` (MCP `blueprint`)."
         ));
         assert!(!linha_blueprint_valida("Blueprint: workspace_id `<workspace_id>`, blueprint_id `<blueprint_id>` (MCP `blueprint`)."));
+    }
+
+    #[test]
+    fn canal_sai_dos_argumentos_do_claude_e_a_flag_vai_depois_do_prompt() {
+        let (canal, resto) = separa_canal(&["Execute a ação".into(), "--canal".into()]);
+        assert!(canal);
+        assert_eq!(resto, ["Execute a ação", "--dangerously-load-development-channels", "plugin:blueprint@blueprint-local"]);
+        let (canal, resto) = separa_canal(&["--continue".into()]);
+        assert!(!canal);
+        assert_eq!(resto, ["--continue"], "sem --canal nada muda");
     }
 
     #[test]

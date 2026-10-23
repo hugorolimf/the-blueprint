@@ -47,7 +47,8 @@ try {
   for (let i = 0; i < 60 && !falso.chamadas().length; i++) await dormir(100); // o terminal falso grava depois que o app responde
   const [chamada, ...resto] = falso.chamadas();
   assert.equal(resto.length, 0, "uma chamada ao terminal");
-  assert.equal(chamada.length, 5, `cinco argumentos: -d, pasta, exe, claude, prompt (veio ${JSON.stringify(chamada)})`);
+  assert.equal(chamada.length, 6, `seis argumentos: -d, pasta, exe, claude, prompt, --canal (veio ${JSON.stringify(chamada)})`);
+  assert.equal(chamada[5], "--canal", "a sessão que o botão abre nasce com o canal ligado (depois do prompt)");
   assert.equal(chamada[0], "-d");
   assert.equal(norm(chamada[1]), norm(pasta), "o terminal abre NA pasta do blueprint");
   assert.equal(norm(chamada[2]), norm(exe), "roda o próprio blueprint.exe");

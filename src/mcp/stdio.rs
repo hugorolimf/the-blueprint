@@ -294,6 +294,14 @@ pub fn tratar(msg: &Value) -> Option<Value> {
     })
 }
 
+/// O id desta sessão com o canal ligado (16 hex): o app o usa para endereçar o pedido de iniciar uma ação. Não é segredo (o app só escuta em loopback);
+/// só precisa ser diferente entre processos, então basta o pid com a hora.
+fn id_do_canal() -> String {
+    use sha2::{Digest, Sha256};
+    let semente = format!("{}-{}", std::process::id(), std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos()));
+    Sha256::digest(semente).iter().take(8).map(|b| format!("{b:02x}")).collect()
+}
+
 /// Lê mensagens de stdin (uma por linha) até o agente fechar a conversa.
 pub fn executar() -> i32 {
     let saida = std::io::stdout();
@@ -306,7 +314,8 @@ pub fn executar() -> i32 {
             Ok(msg) => {
                 if !canal_iniciado && msg["method"] == "notifications/initialized" && std::env::var("BLUEPRINT_CHANNEL").as_deref() == Ok("1") {
                     canal_iniciado = true;
-                    std::thread::spawn(|| crate::watch::observar(|texto| {
+                    let id = id_do_canal();
+                    std::thread::spawn(|| crate::watch::observar(Some(id), |texto| {
                         let mut saida = std::io::stdout().lock();
                         writeln!(saida, "{}", notificacao_canal(texto))?;
                         saida.flush()

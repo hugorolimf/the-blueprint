@@ -55,7 +55,16 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             "sessoes" => Resposta::json(200, &mcp.sessoes_do_blueprint(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default())), // as sessões do Claude abertas no blueprint
             "agentes" => Resposta::json(200, &mcp.agentes()), // quem está trabalhando agora (presença, só memória)
             "info" => Resposta::json(200, &json!({"arquivo": mcp.arquivo, "url": mcp.url, "exe": true})), // a página mostra como registrar o servidor MCP no agente
-            "eventos" => Resposta { status: 200, cabecalhos: vec![("content-type".into(), "text/event-stream; charset=utf-8".into()), ("cache-control".into(), "no-store".into())], corpo: Corpo::Fluxo(Box::new(FluxoSse::novo(mcp.assinar()))) },
+            "eventos" => {
+                let mut fluxo = FluxoSse::novo(mcp.assinar());
+                // `?canal=&cwd=`: a conexão é de uma sessão com o canal ligado e ela é destinatária enquanto durar
+                if let (Some(id), Some(cwd)) = (pedido.parametro("canal"), pedido.parametro("cwd")) {
+                    if let Some(guarda) = mcp.abrir_canal(&id, &cwd) {
+                        fluxo = fluxo.com_guarda(guarda);
+                    }
+                }
+                Resposta { status: 200, cabecalhos: vec![("content-type".into(), "text/event-stream; charset=utf-8".into()), ("cache-control".into(), "no-store".into())], corpo: Corpo::Fluxo(Box::new(fluxo)) }
+            }
             _ => nao_encontrado(),
         });
     }
@@ -98,7 +107,11 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
         "pasta/desvincular" => Resposta::json(200, &hooks::desvincular(dados, &corpo)?),
         "pasta/vincular" => Resposta::json(200, &hooks::vincular(dados, &corpo)?),
         "iniciar" => {
-            let (status, resposta) = super::iniciar::iniciar(dados, &corpo, &super::iniciar::abrir_terminal)?; // abre o terminal de verdade; os testes usam um lançador falso
+            let (status, resposta) = if corpo.get("sessaoId").is_some() {
+                super::iniciar::em_sessao(mcp, dados, &corpo)? // entrega o pedido a uma sessão já aberta, pelo canal dela
+            } else {
+                super::iniciar::iniciar(dados, &corpo, &super::iniciar::abrir_terminal)? // abre o terminal de verdade; os testes usam um lançador falso
+            };
             Resposta::json(status, &resposta)
         }
         "prototipo/remover" => {

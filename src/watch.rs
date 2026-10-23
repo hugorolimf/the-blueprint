@@ -16,7 +16,13 @@ fn linha<R: BufRead>(leitor: &mut R) -> io::Result<Option<String>> {
     Ok(Some(String::from_utf8_lossy(&bytes).trim_end_matches(['\r', '\n']).into()))
 }
 
-fn conectar(url: &str) -> io::Result<BufReader<TcpStream>> {
+/// Percent-encoding mínimo para a pasta ir na query (letras, números e `-_.~/` passam; o resto vira %XX).
+fn codificar(t: &str) -> String {
+    t.bytes().map(|b| if b.is_ascii_alphanumeric() || b"-_.~/".contains(&b) { (b as char).to_string() } else { format!("%{b:02X}") }).collect()
+}
+
+/// `canal` = (id, pasta) de uma sessão com o canal ligado: o servidor a lista como destinatário enquanto esta conexão estiver aberta.
+fn conectar(url: &str, canal: Option<(&str, &str)>) -> io::Result<BufReader<TcpStream>> {
     let endereco = url.strip_prefix("http://").ok_or_else(|| io::Error::other("use http local"))?.trim_end_matches('/');
     // O monitor não aceita destinos remotos: o que chega aqui entra no contexto de uma sessão.
     let host = endereco.split(':').next().unwrap_or("");
@@ -27,7 +33,8 @@ fn conectar(url: &str) -> io::Result<BufReader<TcpStream>> {
     tcp.set_read_timeout(Some(Duration::from_secs(45)))?;
     tcp.set_write_timeout(Some(Duration::from_secs(2)))?;
     // HTTP/1.0 evita transfer-encoding chunked e permite ler SSE diretamente.
-    write!(tcp, "GET /api/mcp/eventos HTTP/1.0\r\nHost: {endereco}\r\nAccept: text/event-stream\r\n\r\n")?;
+    let consulta = canal.map(|(id, pasta)| format!("?canal={id}&cwd={}", codificar(pasta))).unwrap_or_default();
+    write!(tcp, "GET /api/mcp/eventos{consulta} HTTP/1.0\r\nHost: {endereco}\r\nAccept: text/event-stream\r\n\r\n")?;
     let mut leitor = BufReader::new(tcp);
     let status = linha(&mut leitor)?.unwrap_or_default();
     if status.split_whitespace().nth(1) != Some("200") { return Err(io::Error::other("SSE indisponível")); }
@@ -50,17 +57,23 @@ fn alvo(url: &str, pasta: &str) -> Option<(String, String)> {
     Some((r["workspaceId"].as_str()?.into(), r["blueprintId"].as_str()?.into()))
 }
 
-struct Limite { inicio: Instant, linhas: usize }
+struct Limite { inicio: Instant, linhas: usize, canal: Option<String> }
 impl Limite {
-    fn novo() -> Self { Self { inicio: Instant::now(), linhas: 0 } }
-    fn mensagem(&mut self, nome: &str, dados: &str, alvo: &(String, String)) -> Option<&'static str> {
+    fn novo() -> Self { Self { inicio: Instant::now(), linhas: 0, canal: None } }
+    fn mensagem(&mut self, nome: &str, dados: &str, alvo: &(String, String)) -> Option<String> {
         let texto = match nome {
             "proposta-aplicada" => "The Blueprint: o usuário aplicou uma proposta no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual.",
             "checkpoint-marcado" => "The Blueprint: o usuário marcou um checkpoint no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual.",
+            "iniciar-acao" => "", // o texto vem do evento (montado pelo app depois do clique), abaixo; só a sessão com canal endereçada o recebe
             _ => return None,
         };
         let dados: Value = serde_json::from_str(dados).ok()?;
         if dados["workspaceId"] != alvo.0 || dados["blueprintId"] != alvo.1 { return None; }
+        let texto = if nome == "iniciar-acao" {
+            if dados["canalId"].as_str()? != self.canal.as_deref()? { return None; }
+            let pedido: String = dados["texto"].as_str()?.chars().filter(|c| !c.is_control()).take(1200).collect();
+            format!("The Blueprint · pedido do usuário (ele clicou em Iniciar no app): {pedido}")
+        } else { texto.to_string() };
         if self.inicio.elapsed() >= Duration::from_secs(60) { self.inicio = Instant::now(); self.linhas = 0; }
         if self.linhas >= POR_MINUTO { return None; }
         self.linhas += 1;
@@ -77,7 +90,7 @@ fn acompanhar_com<R: BufRead>(leitor: &mut R, alvo: &(String, String), limite: &
     let (mut evento, mut dados) = (String::new(), String::new());
     while let Some(l) = linha(leitor)? {
         if l.is_empty() {
-            if let Some(texto) = limite.mensagem(&evento, &dados, alvo) { avisar(texto)?; }
+            if let Some(texto) = limite.mensagem(&evento, &dados, alvo) { avisar(&texto)?; }
             evento.clear(); dados.clear();
         } else if let Some(e) = l.strip_prefix("event:") { evento = e.trim().into(); }
         else if let Some(d) = l.strip_prefix("data:") {
@@ -90,18 +103,20 @@ fn acompanhar_com<R: BufRead>(leitor: &mut R, alvo: &(String, String), limite: &
 
 pub fn executar() -> i32 {
     if std::env::var("BLUEPRINT_CHANNEL").as_deref() == Ok("1") { return 0; }
-    observar(|texto| { let mut saida = io::stdout().lock(); writeln!(saida, "{texto}")?; saida.flush() });
+    observar(None, |texto| { let mut saida = io::stdout().lock(); writeln!(saida, "{texto}")?; saida.flush() });
     0
 }
 
-pub(crate) fn observar(mut avisar: impl FnMut(&str) -> io::Result<()>) {
+/// `canal`: o id desta sessão com o canal ligado (só o `--mcp` com `BLUEPRINT_CHANNEL=1` passa); sem ele, o pedido de iniciar uma ação nunca chega aqui.
+pub(crate) fn observar(canal: Option<String>, mut avisar: impl FnMut(&str) -> io::Result<()>) {
     let url = base();
     let pasta = std::env::current_dir().unwrap_or_default().display().to_string();
     let mut espera = 1;
     let mut limite = Limite::novo();
+    limite.canal = canal.clone();
     loop {
         if let Some(alvo) = alvo(&url, &pasta) {
-            if let Ok(mut leitor) = conectar(&url) {
+            if let Ok(mut leitor) = conectar(&url, canal.as_deref().map(|id| (id, pasta.as_str()))) {
                 let inicio = Instant::now();
                 let _ = acompanhar_com(&mut leitor, &alvo, &mut limite, &mut avisar);
                 if inicio.elapsed() >= Duration::from_secs(30) { espera = 1; }

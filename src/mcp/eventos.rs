@@ -40,11 +40,18 @@ pub struct FluxoSse {
     pendente: Vec<u8>,
     pos: usize,
     aberto: bool,
+    /// o que vive enquanto a conexão vive (o canal de uma sessão, ver `sessoes`): ao fechar o fluxo, sai da lista
+    _guarda: Option<Box<dyn Send>>,
 }
 
 impl FluxoSse {
     pub fn novo(rx: Receiver<Evento>) -> FluxoSse {
-        FluxoSse { rx, pendente: Vec::new(), pos: 0, aberto: false }
+        FluxoSse { rx, pendente: Vec::new(), pos: 0, aberto: false, _guarda: None }
+    }
+
+    pub(super) fn com_guarda(mut self, guarda: impl Send + 'static) -> FluxoSse {
+        self._guarda = Some(Box::new(guarda));
+        self
     }
 
     fn proximo_trecho(&mut self) -> Option<Vec<u8>> {

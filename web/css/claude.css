@@ -36,3 +36,7 @@
 #robo-agente svg{flex:none;width:44px;height:auto}
 /* o resultado de "Iniciar com o Claude", dentro da folha da ação (iniciar-acao.js) */
 .nota-folha .iniciar-aviso{margin:10px 0 0;color:var(--ink)}.nota-folha .iniciar-aviso.erro{color:var(--erro)}
+/* a escolha da sessão no diálogo "Iniciar a ação" (iniciar-acao.js) */
+.escolher-sessao .cu-opcoes{display:flex;flex-direction:column;gap:6px;padding:0 18px 14px}
+.escolher-sessao .cu-opcoes label{display:flex;align-items:baseline;gap:8px;cursor:pointer}
+.escolher-sessao .cu-opcoes small{color:var(--mid)}

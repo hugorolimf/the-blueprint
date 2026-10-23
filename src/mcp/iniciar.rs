@@ -4,11 +4,13 @@
 use super::acoes;
 use super::hooks::{texto, travado};
 use super::status::lista;
+use super::Mcp;
 use crate::blueprint::numeros_das_acoes;
 use crate::contexto::Contexto;
 use crate::dados::Dados;
 use crate::http::pedido::{falha, ErroHttp};
 use serde_json::{json, Value};
+use std::cell::RefCell;
 use std::path::Path;
 use std::process::Command;
 use std::sync::Mutex;
@@ -58,20 +60,50 @@ pub(super) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path
     })
 }
 
-/// O lançador de verdade: Windows Terminal (`wt -d <pasta> <exe> claude <prompt>`) se existir no PATH; senão um console novo, direto no processo (sem passar pelo
+/// `sessaoId` no corpo: em vez de abrir um terminal, o pedido vai a uma sessão do Claude já aberta, pelo canal dela (docs/claude-na-folha.md, "Escolher a sessão"). Com
+/// `semCanal: true` nada é entregue: a resposta só traz o `prompt` para a página copiar. A resposta sempre traz o `prompt`; os erros da entrega (sessão que caiu,
+/// de outra pasta) saem com o status e o código deles, no lugar do `sem-terminal`.
+pub(super) fn em_sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<(u16, Value), ErroHttp> {
+    let sessao = texto(corpo, "sessaoId");
+    if !id_valido(sessao) {
+        return Err(falha(400, "sessaoId inválido."));
+    }
+    let (ws, bp, copiar) = (texto(corpo, "workspaceId"), texto(corpo, "blueprintId"), corpo["semCanal"] == true);
+    let (pedido, recusa_da_entrega) = (RefCell::new(String::new()), RefCell::new(None));
+    let lancar = |_: &Path, _: &Path, prompt: &str| -> Result<&'static str, String> {
+        *pedido.borrow_mut() = prompt.to_string();
+        if copiar {
+            return Ok("copiar");
+        }
+        mcp.entregar_pedido(ws, bp, sessao, prompt).map(|_| "canal").map_err(|e| {
+            *recusa_da_entrega.borrow_mut() = Some(e);
+            e.2.to_string()
+        })
+    };
+    let (mut status, mut resposta) = iniciar(dados, corpo, &lancar)?;
+    if let Some((s, codigo, frase)) = recusa_da_entrega.take() {
+        (status, resposta) = recusa(s, frase, codigo);
+    }
+    if !pedido.borrow().is_empty() {
+        resposta["prompt"] = json!(pedido.borrow().as_str());
+    }
+    Ok((status, resposta))
+}
+
+/// O lançador de verdade: Windows Terminal (`wt -d <pasta> <exe> claude <prompt> --canal`; `--canal` liga o canal da sessão, ver `cli/claude.rs`) se existir no PATH; senão um console novo, direto no processo (sem passar pelo
 /// cmd.exe, que leria `&` e `|` dos nomes). Não espera o filho. shortcut: só Windows (o app é só Windows); em outro sistema as flags não existem e abre sem elas.
 pub(super) fn abrir_terminal(pasta: &Path, exe: &Path, prompt: &str) -> Result<&'static str, String> {
     let mut falha_wt = String::new();
     if let Some(wt) = crate::registrar::procurar("wt") {
         let mut c = Command::new(&wt);
-        c.arg("-d").arg(pasta).arg(exe).arg("claude").arg(prompt);
+        c.arg("-d").arg(pasta).arg(exe).arg("claude").arg(prompt).arg("--canal");
         match sem_janela(&mut c).spawn() {
             Ok(_) => return Ok("wt"),
             Err(e) => falha_wt = format!("wt ({}): {e}; ", wt.display()),
         }
     }
     let mut c = Command::new(exe);
-    c.arg("claude").arg(prompt).current_dir(pasta);
+    c.arg("claude").arg(prompt).arg("--canal").current_dir(pasta);
     novo_console(&mut c).spawn().map(|_| "cmd").map_err(|e| format!("{falha_wt}console novo ({}) em {}: {e}", exe.display(), pasta.display()))
 }
 
