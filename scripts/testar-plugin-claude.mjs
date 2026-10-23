@@ -37,6 +37,7 @@ try {
   const hooks = JSON.parse(readFileSync(join(pasta, "hooks", "hooks.json"), "utf8")).hooks;
   for (const evento of ["SessionStart", "PostToolUse", "SubagentStart", "SubagentStop", "Notification", "Stop"]) assert.ok(hooks[evento]?.[0]?.hooks?.[0], `hooks.json sem ${evento}`);
   assert.match(hooks.PostToolUse[0].hooks[0].url, /\/api\/mcp\/hook\/edicao$/);
+  assert.match(hooks.SessionEnd[0].hooks[0].url, /\/api\/mcp\/hook\/fim$/, "SessionEnd tira a sessão da lista");
   for (const evento of ["SubagentStart", "SubagentStop"]) assert.match(hooks[evento][0].hooks[0].url, /\/api\/mcp\/hook\/subagente$/, `${evento} avisa o app`);
   if (temCodex) assert.match(codexMcp(), /blueprint/, "o MCP blueprint deve estar registrado no Codex");
   assert.match(rodar("claude", ["plugin", "validate", pasta]), /Validation passed/);

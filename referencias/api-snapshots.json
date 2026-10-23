@@ -1,21 +1,21 @@
 {
-  "data": "2026-10-23T12:19:54.090Z",
+  "data": "2026-10-23T14:53:39.925Z",
   "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
   "respostas": {
     "GET pagina": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "7fd8c2290aeed483"
+      "sha256": "741667b0ec9698ee"
     },
     "GET pagina-html": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "7fd8c2290aeed483"
+      "sha256": "741667b0ec9698ee"
     },
     "GET emblemas": {
       "status": 200,
       "tipo": "text/javascript",
-      "sha256": "6bbc7aaaa3b59352"
+      "sha256": "57953368df83b215"
     },
     "GET kit-iso": {
       "status": 200,
@@ -308,6 +308,18 @@
       "status": 403,
       "tipo": "text/plain",
       "corpo": "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"
+    },
+    "mcp sessões (nenhuma aberta)": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "sessoes": []
+      }
+    },
+    "hook de fim sem session_id": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {}
     },
     "hook de subagente sem agent_id": {
       "status": 200,

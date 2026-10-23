@@ -88,6 +88,8 @@ async function executar(base) {
   await post("iniciar sem pasta ligada", "iniciar", { workspaceId: "sm", blueprintId: "p1", acaoId: "f1" });
   await post("iniciar sem acaoId", "iniciar", { workspaceId: "sm", blueprintId: "p1" });
   await registra("iniciar host falso", "POST", "/api/mcp/iniciar", { cabecalhos: { host: "evil.example.com" }, json: { workspaceId: "sm", blueprintId: "p1", acaoId: "f1" } });
+  await registra("mcp sessões (nenhuma aberta)", "GET", "/api/mcp/sessoes?workspace=sm&blueprint=p1");
+  await post("hook de fim sem session_id", "hook/fim", {});
   await post("hook de subagente sem agent_id", "hook/subagente", { hook_event_name: "SubagentStart", cwd: "C:\sem\blueprint" });
   await post("mcp corpo grande demais", "evento", { tipo: "progresso", texto: "a".repeat(300 * 1024) });
   // leitura

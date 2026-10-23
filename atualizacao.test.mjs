@@ -13,11 +13,12 @@ class El {
   set innerHTML(v) { html.push(v); }
 }
 const caixa = {};
+const topo = new El(); // o botão ao lado do nome (#perfil-atualizar)
 const chamadas = [];
 let respostaInstalar = { ok: true, status: 200, json: async () => ({}) };
 const armazem = new Map();
 const ctx = vm.createContext({
-  document: { createElement: () => new El(), body: { appendChild: (el) => { caixa.el = el; } } },
+  document: { getElementById: (id) => (id === "perfil-atualizar" ? topo : null), createElement: () => new El(), body: { appendChild: (el) => { caixa.el = el; } } },
   localStorage: { getItem: (k) => armazem.get(k) ?? null, setItem: (k, v) => armazem.set(k, v) },
   fetch: async (url, opcoes) => { chamadas.push([url, opcoes?.method || "GET", opcoes?.body]); return url.endsWith("/instalar") ? respostaInstalar : { ok: true, json: async () => ctx.estadoServidor }; },
   Date, JSON,
@@ -36,6 +37,7 @@ assert.match(q(".at-t").textContent, /Baixando a versão 0\.2\.0… 40%/);
 assert.equal(q(".at-barra").hidden, false);
 assert.equal(q(".at-barra i").style.transform, "scaleX(0.4)");
 assert.equal(q(".at-acoes").hidden, true, "baixando não tem botão: nada a decidir ainda");
+assert.equal(topo.hidden, false); assert.equal(topo.disabled, true); assert.match(topo.textContent, /Baixando… 40%/);
 
 // pronta: aviso com a primeira linha das notas e os botões; as notas entram como texto, nunca como HTML
 atualizacaoRecebe({ fase: "pronta", atual: "0.1.0", versao: "0.2.0", notas: "\n<img src=x onerror=alert(1)> melhorias\noutra linha", motivo: null });
@@ -43,6 +45,7 @@ assert.match(q(".at-t").textContent, /A versão 0\.2\.0 está pronta \(você tem
 assert.equal(q(".at-notas").textContent, "<img src=x onerror=alert(1)> melhorias");
 assert.equal(q(".at-acoes").hidden, false);
 assert.equal(q(".at-barra").hidden, true);
+assert.equal(topo.hidden, false); assert.equal(topo.disabled, false); assert.equal(topo.textContent, "Atualizar para 0.2.0");
 assert(!html.some((h) => h.includes("onerror")), "o texto do GitHub não entra por innerHTML");
 
 // o clique em Atualizar chama o POST de instalar (e só ele); com a fila cheia o servidor recusa e o motivo aparece, continuando pronta

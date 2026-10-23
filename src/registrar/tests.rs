@@ -34,6 +34,7 @@ fn grava_o_plugin_completo_com_o_exe_no_mcp_e_sem_agente_padrao() {
         assert_eq!(h["hooks"][evento][0]["hooks"][0]["type"], "http", "{evento} avisa o app por http");
         assert!(h["hooks"][evento][0]["hooks"][0]["url"].as_str().unwrap().ends_with("/api/mcp/hook/subagente"));
     }
+    assert!(h["hooks"]["SessionEnd"][0]["hooks"][0]["url"].as_str().unwrap().ends_with("/api/mcp/hook/fim"), "o SessionEnd tira a sessão da lista");
     assert_eq!(h["hooks"]["Notification"][0]["hooks"][0]["args"][1], "notificacao");
     assert_eq!(h["hooks"]["Stop"][0]["hooks"][0]["type"], "http", "o Stop avisa o app por http");
     assert!(h["hooks"]["Stop"][0]["hooks"][0]["url"].as_str().unwrap().ends_with("/api/mcp/hook/parada"));
