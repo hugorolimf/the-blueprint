@@ -81,6 +81,7 @@ pub fn sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
         return Ok(json!({"vinculado": false, "contexto": "The Blueprint: esta pasta não está ligada a nenhum blueprint. Se for de um, chame listar_blueprints, confirme com o usuário qual é e chame vincular_pasta; se não for, ignore."}));
     };
     mcp.lembrar_sessao(texto(corpo, "session_id"), &ws, &bp);
+    mcp.abrir_sessao(texto(corpo, "session_id"), texto(corpo, "cwd"), &ws, &bp);
     let mut d = travado(dados);
     let tudo = d.ler_tudo(&Contexto::local())?;
     let n = acoes::numero_do_blueprint(tudo, &ws, &bp);

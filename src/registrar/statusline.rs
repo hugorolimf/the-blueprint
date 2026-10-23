@@ -67,7 +67,7 @@ pub fn executar(remover: bool) -> (String, i32) {
         let pasta = PathBuf::from(dir);
         if !pastas.contains(&pasta) { pastas.push(pasta); }
     }
-    let exe = match std::env::current_exe() { Ok(e) => e, Err(e) => return (e.to_string(), 1) };
+    let exe = match std::env::current_exe().map_err(|e| e.to_string()).and_then(|e| if remover { Ok(e) } else { super::exe_estavel(e) }) { Ok(e) => e, Err(e) => return (e, 1) };
     let mut linhas = Vec::new(); let mut codigo = 0;
     if pastas.is_empty() { return ("Não encontrei a pasta do usuário".into(), 1); }
     for pasta in pastas {

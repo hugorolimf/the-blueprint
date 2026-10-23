@@ -8,3 +8,4 @@
 #atualizacao .at-acoes{display:flex;gap:8px;margin-top:10px}
 #atualizacao [hidden]{display:none}
 @media (prefers-reduced-motion:no-preference){#atualizacao .at-barra i{transition:transform .4s ease}}
+#perfil-atualizar[hidden]{display:none}

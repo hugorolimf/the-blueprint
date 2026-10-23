@@ -32,6 +32,7 @@ function atualizacaoRecebe(e) {
 }
 // o clique do usuário é a autorização: só aqui o servidor roda o instalador (e antes confere a fila do MCP, o hash e copia o banco)
 async function atualizacaoInstala() {
+  atualizacaoEl ||= atualizacaoCria();
   const botao = atualizacaoEl.querySelector(".at-ok");
   botao.disabled = true; atualizacaoErro = "";
   try {
@@ -44,6 +45,13 @@ async function atualizacaoInstala() {
 function atualizacaoDesenha() {
   const e = atualizacao;
   const baixando = e?.fase === "baixando", pronta = e?.fase === "pronta" && !atualizacaoAdiada(e.versao), instalando = e?.fase === "instalando", erro = e?.fase === "erro" && !!atualizacaoErro;
+  const topo = document.getElementById("perfil-atualizar"); // o botão ao lado do nome (tela Workspaces); "Depois" esconde só o aviso, não ele
+  if (topo) {
+    topo.hidden = !(baixando || e?.fase === "pronta");
+    topo.disabled = baixando;
+    topo.textContent = baixando ? `Baixando… ${e.percentual ?? 0}%` : `Atualizar para ${e?.versao || ""}`;
+    topo.onclick = atualizacaoInstala;
+  }
   if (!baixando && !pronta && !instalando && !erro && !atualizacaoErro) { if (atualizacaoEl) atualizacaoEl.hidden = true; return; }
   atualizacaoEl ||= atualizacaoCria();
   const q = (s) => atualizacaoEl.querySelector(s), v = e.versao ? ` ${e.versao}` : "";

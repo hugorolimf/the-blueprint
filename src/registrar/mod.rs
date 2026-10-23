@@ -57,10 +57,29 @@ fn rodar(cli: &Path, args: &[String]) -> Result<(), String> {
     Err(if texto.is_empty() { format!("saiu com {}", saida.status) } else { texto })
 }
 
+pub(crate) fn dentro_de_target(exe: &Path) -> bool {
+    exe.components().any(|c| c.as_os_str() == "target")
+}
+
+/// Um .exe de `target\` não pode ser o que o agente abre: com o MCP e o monitor rodando nele, o `cargo build`/`cargo dev` não consegue
+/// sobrescrevê-lo ("Acesso negado"). Nesse caso o agente passa a usar uma cópia em `%APPDATA%\Blueprint\bin\`.
+pub(crate) fn exe_estavel(exe: PathBuf) -> Result<PathBuf, String> {
+    if !dentro_de_target(&exe) {
+        return Ok(exe);
+    }
+    let destino = pasta_do_app().join("bin").join("blueprint.exe");
+    let copiar = || std::fs::create_dir_all(destino.parent().unwrap()).and_then(|()| std::fs::copy(&exe, &destino));
+    copiar().map(|_| destino.clone()).map_err(|e| format!("não consegui copiar para {} ({e}); feche as sessões do agente que usam o blueprint e tente de novo", destino.display()))
+}
+
 /// Registra (ou remove) em cada agente instalado. Devolve o texto para mostrar e o código de saída: 1 só se um agente existe e falhou.
 pub fn executar(remover: bool) -> (String, i32) {
     let exe = match std::env::current_exe() {
-        Ok(e) => e,
+        Ok(e) if remover => e,
+        Ok(e) => match exe_estavel(e) {
+            Ok(e) => e,
+            Err(e) => return (format!("erro: {e}"), 1),
+        },
         Err(e) => return (format!("erro: não sei onde este programa está: {e}"), 1),
     };
     let (mut linhas, mut codigo) = (Vec::new(), 0);

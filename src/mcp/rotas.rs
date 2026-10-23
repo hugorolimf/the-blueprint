@@ -52,6 +52,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             }
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens()})),
+            "sessoes" => Resposta::json(200, &mcp.sessoes_do_blueprint(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default())), // as sessões do Claude abertas no blueprint
             "agentes" => Resposta::json(200, &mcp.agentes()), // quem está trabalhando agora (presença, só memória)
             "info" => Resposta::json(200, &json!({"arquivo": mcp.arquivo, "url": mcp.url, "exe": true})), // a página mostra como registrar o servidor MCP no agente
             "eventos" => Resposta { status: 200, cabecalhos: vec![("content-type".into(), "text/event-stream; charset=utf-8".into()), ("cache-control".into(), "no-store".into())], corpo: Corpo::Fluxo(Box::new(FluxoSse::novo(mcp.assinar()))) },
@@ -90,6 +91,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
         "prototipo" => Resposta::json(200, &com_dados(dados, |d| acoes::prototipo(mcp, d, &corpo))?),
         // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
         "hook/sessao" => Resposta::json(200, &hooks::sessao(mcp, dados, &corpo)?),
+        "hook/fim" => Resposta::json(200, &super::sessoes::fim(mcp, &corpo)), // o SessionEnd tira a sessão da lista
         "hook/edicao" => Resposta::json(200, &hooks::edicao(mcp, dados, &corpo)?),
         "hook/subagente" => Resposta::json(200, &hooks::subagente(mcp, dados, &corpo)?),
         "hook/status" => Resposta::json(200, &super::status::status(mcp, dados, &corpo)?),

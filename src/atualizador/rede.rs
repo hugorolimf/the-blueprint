@@ -86,7 +86,7 @@ pub fn obter_texto(origem: &Origem, url: &str) -> Result<String, String> {
 /// é cancelado. O arquivo só existe se deu certo: em falha ele é apagado.
 pub fn baixar(origem: &Origem, url: &str, destino: &Path, limite: u64, progresso: &dyn Fn(u64)) -> Result<(), String> {
     let mut c = comando(origem, url, 900);
-    let mut filho = c.arg("-o").arg(destino).stderr(Stdio::piped()).spawn().map_err(|e| format!("não consegui rodar o curl: {e}"))?;
+    let mut filho = c.arg("-o").arg(destino).stdout(Stdio::null()).stderr(Stdio::piped()).spawn().map_err(|e| format!("não consegui rodar o curl: {e}"))?;
     let resultado = loop {
         std::thread::sleep(Duration::from_millis(400));
         let tamanho = std::fs::metadata(destino).map_or(0, |m| m.len());

@@ -85,6 +85,9 @@ pub fn lancar_instalador(arquivo: &Path, args: &[String]) -> Result<bool, String
 #[cfg(windows)]
 fn desacoplar(c: &mut std::process::Command) {
     use std::os::windows::process::CommandExt;
+    use std::process::Stdio;
+    // sem console (janela, bandeja) não há stdio para herdar: o spawn falharia com o erro 50 do Windows
+    c.stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::null());
     c.creation_flags(0x0000_0008 | 0x0000_0200); // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP
 }
 #[cfg(not(windows))]

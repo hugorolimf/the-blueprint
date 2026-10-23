@@ -3,6 +3,7 @@
 rustflags = ["-C", "target-feature=+crt-static"]
 
 # `cargo dev`: o app para desenvolver (`blueprint dev`), recompilado e reaberto sozinho quando o Rust muda.
-# Precisa do cargo-watch (cargo install cargo-watch). A interface recarrega sem recompilar, pelo próprio `blueprint dev`.
+# Compila em target/dev (não em target/debug): o MCP e o monitor do agente seguram o target/debug/blueprint.exe aberto, e o Windows
+# não deixa o cargo sobrescrever um .exe em uso ("Acesso negado"). Precisa do cargo-watch (cargo install cargo-watch). A interface recarrega sem recompilar, pelo próprio `blueprint dev`.
 [alias]
-dev = ["watch", "-q", "-w", "src", "-w", "skills", "-w", "Cargo.toml", "-w", "build.rs", "-x", "run -- dev"]
+dev = ["watch", "-q", "-w", "src", "-w", "skills", "-w", "Cargo.toml", "-w", "build.rs", "-x", "run --target-dir target/dev -- dev"]

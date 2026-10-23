@@ -75,6 +75,7 @@ fn skill_status(exe: &str) -> String {
 fn hooks(exe: &str) -> serde_json::Value {
     json!({ "hooks": {
         "SessionStart": [{ "matcher": "startup|resume|clear", "hooks": [{ "type": "command", "command": exe, "args": ["hook", "sessao"], "timeout": 5 }] }],
+        "SessionEnd": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/fim", "timeout": 5 }] }],
         "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/edicao", "timeout": 5 }] }],
         "SubagentStart": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/subagente", "timeout": 5 }] }],
         "SubagentStop": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/subagente", "timeout": 5 }] }],

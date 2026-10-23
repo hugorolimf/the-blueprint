@@ -72,3 +72,10 @@ fn plugin_ja_ligado_nao_e_falha_do_registrar() {
     assert!(ja_ligado("✘ Failed to enable plugin \"blueprint-terminal@blueprint-local\": Plugin \"blueprint-terminal@blueprint-local\" is already enabled at user scope"));
     assert!(!ja_ligado("✘ Failed to enable plugin: plugin not found") && !ja_ligado(""));
 }
+
+#[test]
+fn exe_de_target_nao_e_o_que_o_agente_abre() {
+    assert!(dentro_de_target(Path::new(r"C:\x\Blueprint\target\debug\blueprint.exe")));
+    assert!(dentro_de_target(Path::new(r"C:\x\Blueprint\target\release\blueprint.exe")));
+    assert!(!dentro_de_target(Path::new(r"C:\Users\x\AppData\Local\Programs\Blueprint\blueprint.exe")));
+}
