@@ -36,9 +36,11 @@ Workspace
 | Mudar prazo, escopo ou ordem de algo que já existe | `editar` |
 | Começar a trabalhar na pasta: ligar a pasta ao blueprint, registrar e marcar | `executar` |
 | Mostrar uma ideia de uma ação (tela, figura) | `prototipos` |
+| Já fez algo fora do plano (ajuste pontual): registrar e perguntar se adiciona | `executar` |
 
 ## Como trabalhar (nesta ordem)
 
+0. **Só planeja o que ainda não foi feito.** O que já foi feito fora do plano vai para `registrar_trabalho` (registro, não proposta), e você pergunta se o usuário quer adicionar ao blueprint.
 1. **Entenda antes de propor.** `listar_blueprints` e `ler_blueprint`. Se a proposta depende do código, explore a pasta (só leitura) e cite apenas arquivos que você viu. Se o pedido for ambíguo, faça **até 3 perguntas objetivas** e espere a resposta. Não pergunte o que dá para descobrir lendo.
 2. **Esqueleto primeiro.** Para blueprint novo ou grande, pense nas ações (de 3 a 6) e nas datas antes dos detalhes.
 3. **Proponha com `propor_blueprint`.** Corrija os erros devolvidos até passar. Depois diga ao usuário, em poucas linhas, o que propôs, o que supôs e o que ficou em aberto.

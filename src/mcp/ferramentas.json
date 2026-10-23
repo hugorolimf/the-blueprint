@@ -238,6 +238,132 @@
   }
  },
  {
+  "name": "registrar_trabalho",
+  "description": "Registra no blueprint o que você JÁ fez e não estava no plano (ajuste pontual, correção pedida na conversa). NÃO é proposta (proposta é trabalho futuro): entra na fila como \"Registro nº N\" e nada é salvo antes de o usuário adicionar. Marque feito: true com a evidência no que foi feito; deixe sem feito o que ficou pendente (plano, checkpoint ou ação aberta). Depois de enviar, avise o usuário e pergunte se quer adicionar. Aceita ação existente (id) ou nova, com datas passadas.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint que já existe (de listar_blueprints)."
+    },
+    "mensagem": {
+     "type": "string",
+     "description": "Resumo curto do que foi feito."
+    },
+    "acoes": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "description": "Ação existente: id e só os planos/checkpoints que mudam. Ação nova: nome, inicio, fim, planos e checkpoints.",
+      "properties": {
+       "id": {
+        "type": "string",
+        "description": "id da ação existente (de ler_blueprint); vazio se for nova."
+       },
+       "nome": {
+        "type": "string"
+       },
+       "inicio": {
+        "type": "string",
+        "description": "aaaa-mm-dd (pode ser passado)"
+       },
+       "fim": {
+        "type": "string",
+        "description": "aaaa-mm-dd"
+       },
+       "status": {
+        "type": "string",
+        "enum": [
+         "planejado",
+         "andamento"
+        ]
+       },
+       "observacao": {
+        "type": "string",
+        "description": "Instruções da ação, só em ação nova."
+       },
+       "projeto": {
+        "type": "string",
+        "description": "Projeto da ação: id ou nome de um projeto do blueprint."
+       },
+       "planos": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "description": "Plano novo: texto e descricao. Existente: id e feito/evidencia.",
+         "properties": {
+          "id": {
+           "type": "string",
+           "description": "id do plano existente (de ler_blueprint); vazio se for novo."
+          },
+          "texto": {
+           "type": "string",
+           "description": "Título: verbo no infinitivo, até 45 caracteres."
+          },
+          "descricao": {
+           "type": "string",
+           "description": "Escopo, resultado e validação."
+          },
+          "horas": {
+           "type": "number",
+           "minimum": 0.5,
+           "maximum": 16,
+           "description": "Horas de trabalho."
+          },
+          "feito": {
+           "type": "boolean",
+           "description": "true no que JÁ foi feito (exige evidencia); omita ou false no que ficou pendente."
+          },
+          "evidencia": {
+           "type": "string",
+           "description": "Comando ou teste rodado e o resultado (até 1000 caracteres). Obrigatória com feito: true."
+          }
+         }
+        }
+       },
+       "checkpoints": {
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "nome": {
+           "type": "string"
+          },
+          "data": {
+           "type": "string",
+           "description": "aaaa-mm-dd, dentro do período da ação"
+          },
+          "feito": {
+           "type": "boolean",
+           "description": "true no que JÁ foi feito (exige evidencia); omita ou false no que ficou pendente."
+          },
+          "evidencia": {
+           "type": "string",
+           "description": "Comando ou teste rodado e o resultado (até 1000 caracteres). Obrigatória com feito: true."
+          }
+         }
+        }
+       }
+      }
+     }
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acoes"
+   ]
+  }
+ },
+ {
   "name": "anexar_prototipo",
   "description": "Anexa a uma ação um protótipo visual: um documento HTML AUTOCONTIDO (tudo inline, sem rede nem bibliotecas externas), por exemplo uma figura isométrica feita com a skill anatomy ou uma tela simulada. O usuário o vê num visor isolado ao lado da ação, na folha do blueprint. Para revisar um protótipo existente, passe o prototipo_id (de ler_blueprint): ele é substituído, não duplicado. Máximo de 2 MB.",
   "inputSchema": {

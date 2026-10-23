@@ -64,7 +64,7 @@ function posicoesDaFolha(alvo = host.querySelector("svg.desenho")) {
   });
   return mapa;
 }
-function organizarFolha(antes, alvo = host.querySelector("svg.desenho")) {
+function organizarFolha(antes, alvo = host.querySelector("svg.desenho"), duracao = 650) {
   if (!alvo || !antes?.size || reduz()) return;
   const ease = "cubic-bezier(.45,.05,.2,1)", plano = []; // fase 1 (só leitura) monta o plano; fase 2 cria as animações
   const desliza = (el, velho) => {
@@ -95,5 +95,5 @@ function organizarFolha(antes, alvo = host.querySelector("svg.desenho")) {
       else desliza(f, v);
     });
   }
-  plano.forEach(([el, quadros]) => el.animate(quadros, { duration: 650, easing: ease, fill: "backwards" }));
+  plano.forEach(([el, quadros]) => el.animate(quadros, { duration: duracao, easing: ease, fill: "backwards" }));
 }

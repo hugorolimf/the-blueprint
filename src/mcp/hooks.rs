@@ -67,7 +67,7 @@ fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize) -> Str
         }
         None => t += " Todas as ações estão concluídas.",
     }
-    t += " Mantenha-o atualizado pelo MCP blueprint: registrar_progresso ao começar cada plano, marcar_concluido só com a evidência.";
+    t += " Mantenha-o atualizado pelo MCP blueprint: registrar_progresso ao começar cada plano, marcar_concluido só com a evidência. Trabalho fora do plano termina com registrar_trabalho e uma pergunta ao usuário sobre adicioná-lo ao blueprint.";
     t.chars().take(CONTEXTO_MAX).collect()
 }
 
@@ -138,6 +138,9 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let (nome, papel, _) = identidade(corpo);
     let mut evento = evento_de(mcp, &nome, papel, &ws, &bp, &format!("Editando {arquivo}"), "escrevendo");
     evento["onde"] = json!([arquivo]);
+    if evento.get("planoId").is_none() {
+        super::lembrete::editou_sem_plano(mcp, texto(corpo, "session_id"), &ws, &bp);
+    }
     let mut d = travado(dados);
     acoes::evento(mcp, d.ler_tudo(&Contexto::local())?, &evento)?;
     Ok(json!({}))

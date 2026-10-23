@@ -19,7 +19,7 @@ const [porta, depuracao] = [await livre(), await livre()];
 const url = `http://127.0.0.1:${porta}`;
 const tmp = mkdtempSync(join(tmpdir(), "blueprint-medir-anim-"));
 copyFileSync(join(raiz, "data.exemplo.json"), join(tmp, "data.json"));
-const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), BLUEPRINT_DB: join(tmp, "blueprint.db"), DADOS_ARQ: join(tmp, "data.json"), PROTOTIPOS_DIR: join(tmp, "prototipos") };
+const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), BLUEPRINT_DB: join(tmp, "blueprint.db"), DADOS_ARQ: join(tmp, "data.json"), PROTOTIPOS_DIR: join(tmp, "prototipos"), BLUEPRINT_ASSETS_DIR: raiz };
 const servidor = spawn(exe, ["serve"], { env, stdio: "ignore", windowsHide: true });
 const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", "--disable-features=CalculateNativeWinOcclusion", "--disable-backgrounding-occluded-windows", "--disable-renderer-backgrounding", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "--window-size=1440,1000", "about:blank"], { stdio: "ignore" });
 const limpar = () => { try { edge.kill(); } catch {} try { servidor.kill(); } catch {} setTimeout(() => { try { rmSync(tmp, { recursive: true, force: true }); } catch {} }, 500); };
@@ -28,6 +28,7 @@ process.on("exit", limpar);
 // limites (da meta de desempenho do CLAUDE.md: zero trabalho em repouso)
 // % de um núcleo na thread principal da página (mediana de fatias de 1 s). Regime medido: ~0,04% parada, ~0,4% com uma figura, ~3,5% com seis; os tetos deixam folga para a máquina carregada.
 const TETO_REPOUSO = Number(process.env.TETO_REPOUSO) || 0.5, TETO_UMA = Number(process.env.TETO_UMA) || 2, TETO_ANIMADO = Number(process.env.TETO_ANIMADO) || 10;
+const TETO_ANIMACOES = Number(process.env.TETO_ANIMACOES) || 700, TETO_TAREFA = Number(process.env.TETO_TAREFA) || 250, TETO_ABRIR = Number(process.env.TETO_ABRIR) || 15; // % médio de CPU nos 12 cliques (inclui a espera do Claude e a pintura por software do Edge headless) // (7) abrir/fechar: animações simultâneas e tarefa mais longa tolerada (ms)
 const JANELA = 5000;
 const relatorio = {};
 let mantemVisivel;
@@ -187,6 +188,22 @@ try {
   const depois = await medir(3000);
   relatorio.depoisDeLimpar = depois;
   assert(depois.cpu < TETO_UMA, `de volta só com a espera: ${depois.cpu}% (teto ${TETO_UMA}%)`);
+  // (7) abrir e fechar um blueprint grande (ação 1.13): 45 ações com planos e checkpoints, seis ciclos de recolher e expandir; mede o pico de cada clique
+  await js(`(() => { const b = D.blueprints.find((x) => x.id === ${JSON.stringify(blueprint.id)}); const molde = b.acoes.find((f) => f.planos?.length); b.acoes = Array.from({ length: 45 }, (_, i) => { const f = JSON.parse(JSON.stringify(molde)); f.id = "g" + i; f.planos.forEach((t, j) => { t.id = "g" + i + "p" + j; }); (f.checkpoints || []).forEach((m, j) => { m.id = "g" + i + "m" + j; }); return f; }); abertos[b.id] = true; render(); })()`);
+  await dormir(2500);
+  const grande = await js(`document.querySelectorAll("svg.desenho .chk").length`);
+  assert(grande > 100, `o blueprint grande tem planos e checkpoints à vista (${grande})`);
+  await eventos();
+  const m0 = await metricas();
+  const ciclos = await js(`(async () => { const id = ${JSON.stringify(blueprint.id)}, dorme = (ms) => new Promise((r) => setTimeout(r, ms)), saida = []; for (let i = 0; i < 12; i++) { const t0 = performance.now(); alternar(id); const sync = performance.now() - t0; await dorme(120); saida.push({ acao: i % 2 ? "expandir" : "recolher", sincronoMs: +sync.toFixed(1), animacoes: document.getAnimations().length }); await dorme(2300); } return saida; })()`);
+  const m1 = await metricas(), ev7 = await eventos();
+  const picoAnim = Math.max(...ciclos.map((c) => c.animacoes)), picoSync = Math.max(...ciclos.map((c) => c.sincronoMs));
+  relatorio.abrirEFechar = { planosENaFolha: grande, cliques: ciclos.length, picoDeAnimacoes: picoAnim, maiorTrechoSincronoMs: picoSync, tarefasLongasMs: ev7.longas, cpuMedia: +(((m1.TaskDuration - m0.TaskDuration) / (m1.Timestamp - m0.Timestamp)) * 100).toFixed(2), animacoesNoFim: await animacoes() };
+  console.log("(7) abrir e fechar, 45 ações:", JSON.stringify(relatorio.abrirEFechar));
+  assert(picoAnim <= TETO_ANIMACOES, `no máximo ${TETO_ANIMACOES} animações de uma vez (houve ${picoAnim})`);
+  assert(relatorio.abrirEFechar.cpuMedia < TETO_ABRIR, `abrir e fechar: ${relatorio.abrirEFechar.cpuMedia}% de um núcleo em média (teto ${TETO_ABRIR}%)`);
+  assert(ev7.longas.every((ms) => ms < TETO_TAREFA), `nenhuma tarefa longa passa de ${TETO_TAREFA} ms: [${ev7.longas}]`);
+  assert.equal(await animacoes(), 0, "depois de abrir e fechar nenhuma animação sobra");
   assert.deepEqual(erros, [], "sem erro no console");
   console.log("RELATORIO " + JSON.stringify(relatorio));
   console.log(`animações do Claude: ok (repouso ${repouso.cpu}%, só a espera ${soEspera.cpu}%, ${figs} figuras animadas ${animado.cpu}%, aba oculta ${oculta.cpu}%, movimento reduzido ${reduzido.cpu}%; um relógio por figura, nenhum órfão)`);

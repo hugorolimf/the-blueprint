@@ -56,7 +56,7 @@ function claudeItensDaTela(ancoras) { // todos os itens da tela: o blueprint abe
     if (!ags.length && !esp) continue;
     const base = ancoras.lugar(id), onde = { barra: (fid) => !!ancoras.barra(fid), secao: (fid) => (ancoras.caixaSecao(ancoras.secao(fid) || "")?.w ? ancoras.secao(fid) : null) };
     const itens = ags.length ? claudeItens(ags, (pid) => !!ancoras.plano(pid), onde) : [];
-    if (esp) itens.push(claudeItemEspera(esp.p, esp.f, numeroDaAcao(esp.p, esp.f), (fid) => !!ancoras.acao(fid), itens, onde.secao)); // fora do limite 1 + 4 e do "+N": não é agente
+    if (esp) itens.push(claudeItemEspera(esp.p, esp.f, numeroDaAcao(esp.p, esp.f), (fid) => !!ancoras.acao(fid), itens, onde.secao)); // fora do limite de figuras: não é agente
     for (const it of itens) {
       const [tipoLugar, idLugar] = it.lugar.split(/:(.*)/s), caixa = tipoLugar === "plano" ? ancoras.plano(idLugar) : tipoLugar === "acao" ? ancoras.acao(idLugar) : tipoLugar === "barra" ? ancoras.barra(idLugar) : tipoLugar === "secao" ? ancoras.caixaSecao(idLugar) : base;
       if (caixa?.w) todos.push({ ...it, caixa, tipo: tipoLugar === "cab" || tipoLugar === "secao" ? base.tipo : "plano", bp: id }); // cabeçalho (do blueprint ou da seção) tem o seu jeito de apoiar; o resto fica ao lado da linha/barra
@@ -77,9 +77,9 @@ function claudeCamadaAtualiza() {
   itens.forEach((it) => { const l = grupo.get(it.bp + it.lugar) || []; l[it.indice] = claudeLarguraItem(it); grupo.set(it.bp + it.lugar, l); });
   const principais = new Map(itens.filter((it) => it.principal).map((it) => [it.bp, it.a]));
   for (const it of itens) {
-    const pos = claudePosicao(it.tipo, it.caixa, it.indice, grupo.get(it.bp + it.lugar)), nome = it.mais ? `+${it.bp}` : it.a.agente || "~evento";
+    const pos = claudePosicao(it.tipo, it.caixa, it.indice, grupo.get(it.bp + it.lugar)), nome = it.a.agente || "~evento";
     vistos.add(nome);
-    it.mais ? claudeMais(nome, it, pos) : claudePoe(nome, it, pos, it.espera ? it.a : principais.get(it.bp)); // a espera é do Claude principal (sem papel)
+    claudePoe(nome, it, pos, it.espera ? it.a : principais.get(it.bp)); // a espera é do Claude principal (sem papel)
   }
   claudeLimpa(vistos);
 }
@@ -96,13 +96,6 @@ function claudeSai(el) {
 }
 function claudeLimpa(vistos) {
   for (const [nome, r] of claudeFiguras) if (!vistos.has(nome)) { claudeParaAndar(r); claudeSoltaVigia(r); claudeSai(r.el); claudeFiguras.delete(nome); }
-}
-function claudeMais(nome, it, pos) {
-  let r = claudeFiguras.get(nome);
-  if (!r) { const el = document.createElement("span"); el.className = "claude-mais"; camadaClaude.append(el); claudeFiguras.set(nome, r = { el }); claudeEntra(el); }
-  r.el.textContent = `+${it.mais}`;
-  r.el.title = `Mais ${it.mais} agente${it.mais > 1 ? "s" : ""} trabalhando neste blueprint`;
-  r.el.style.transform = `translate(${pos.x}px,${pos.base - 14}px)`;
 }
 function claudePoe(nome, it, pos, principal) {
   const a = it.a, y = pos.base - claudeAlturaDe(it.papel), lugar = `${it.bp}|${it.lugar}`;
@@ -124,7 +117,8 @@ function claudePoe(nome, it, pos, principal) {
   }
   if (a.espera) { r.el.dataset.espera = a.acaoId; r.el.dataset.bp = a.blueprintId; } // o clique abre a folha desta ação (abreFolhaDaAcao)
   const f = claudeFigura(a, principal, false, claudeMod.poseDoEstado);
-  r.dados = { a, f };
+  r.dados = { a, f, extras: it.extras || 0 };
+  r.el.style.zIndex = 20 - it.indice; // juntas, a mais perto do lugar (o principal) fica por cima
   claudeRotula(r);
   if (novo) return;
   const moveu = Math.abs(r.x - pos.x) > 1 || Math.abs(r.y - y) > 1;
@@ -140,9 +134,9 @@ function claudeFixa(r, x, y) {
   claudeRotula(r);
 }
 function claudeRotula(r) { // aria, dica e SVG da pose; durante o deslocamento o SVG só troca no fim
-  const { a, f } = r.dados;
+  const { a, f, extras } = r.dados;
   r.el.setAttribute("aria-label", a.espera ? "Claude esperando: abrir a ação para iniciar" : `Ver o que ${a.agente || "o agente"} está fazendo`);
-  r.el.title = a.espera ? `${a.texto}. Clique para abrir a ação e iniciar com o Claude.` : `${a.agente || "Agente"}${a.texto ? ": " + umaLinha(a.texto, 140) : ""}`;
+  r.el.title = a.espera ? `${a.texto}. Clique para abrir a ação e iniciar com o Claude.` : `${a.agente || "Agente"}${a.texto ? ": " + umaLinha(a.texto, 140) : ""}${extras ? ` (mais ${extras} agente${extras > 1 ? "s" : ""} junto${extras > 1 ? "s" : ""} aqui)` : ""}`;
   r.el.classList.toggle("erro", f.pose === "bloqueado");
   if (r.chave !== f.chave && !r.anim) { r.el.innerHTML = claudeHtmlPose(f.papel, f.pose); r.chave = f.chave; claudeVidaLiga(r); }
 }

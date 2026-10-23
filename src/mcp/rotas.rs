@@ -70,7 +70,22 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             let (status, resposta) = com_dados(dados, |d| acoes::proposta(mcp, d, &corpo))?;
             Resposta::json(status, &resposta)
         }
-        "evento" => Resposta::json(200, &com_dados(dados, |d| acoes::evento(mcp, d, &corpo))?),
+        "registro" => {
+            let (status, resposta) = com_dados(dados, |d| super::registro::registro(mcp, d, &corpo))?;
+            if status == 200 {
+                super::lembrete::registrado(mcp, &hooks::texto(&corpo, "workspaceId"), &hooks::texto(&corpo, "blueprintId"));
+            }
+            Resposta::json(status, &resposta)
+        }
+        "evento" => {
+            let r = com_dados(dados, |d| acoes::evento(mcp, d, &corpo))?;
+            // um progresso com plano também conta como registro: some o lembrete da sessão
+            if corpo.get("planoId").and_then(Value::as_str).is_some_and(|p| !p.is_empty()) {
+                super::lembrete::registrado(mcp, &hooks::texto(&corpo, "workspaceId"), &hooks::texto(&corpo, "blueprintId"));
+            }
+            Resposta::json(200, &r)
+        }
+        "hook/parada" => Resposta::json(200, &super::lembrete::parada(mcp, &corpo)), // o Stop do turno (ver lembrete.rs)
         "aviso" => Resposta::json(200, &com_dados(dados, |d| super::eventos::aviso(mcp, d, &corpo))?),
         "prototipo" => Resposta::json(200, &com_dados(dados, |d| acoes::prototipo(mcp, d, &corpo))?),
         // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
@@ -94,6 +109,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             let ids: HashSet<i64> = corpo.get("ids").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_i64).collect()).unwrap_or_default();
             mcp.ack(&ids);
             corpo.get("propostas").and_then(Value::as_array).into_iter().flatten().for_each(|p| mcp.ack_proposta(p)); // propostas pela chave: ver `Fila::ack_proposta`
+            corpo.get("registros").and_then(Value::as_array).into_iter().flatten().for_each(|r| mcp.ack_registro(r)); // registros: a contagem e a chave são próprias
             Resposta::json(200, &json!({"ok": true}))
         }
         _ => nao_encontrado(),

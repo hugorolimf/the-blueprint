@@ -35,6 +35,8 @@ fn grava_o_plugin_completo_com_o_exe_no_mcp_e_sem_agente_padrao() {
         assert!(h["hooks"][evento][0]["hooks"][0]["url"].as_str().unwrap().ends_with("/api/mcp/hook/subagente"));
     }
     assert_eq!(h["hooks"]["Notification"][0]["hooks"][0]["args"][1], "notificacao");
+    assert_eq!(h["hooks"]["Stop"][0]["hooks"][0]["type"], "http", "o Stop avisa o app por http");
+    assert!(h["hooks"]["Stop"][0]["hooks"][0]["url"].as_str().unwrap().ends_with("/api/mcp/hook/parada"));
     let terminal = pasta.join("plugins/blueprint-terminal");
     for nome in [".claude-plugin/plugin.json", "hooks/hooks.json", "hooks/register.tsx", "types/index.d.ts", "assets/marca.png", "assets/marca.mjs", "assets/marca-32x16.cells", "assets/marca-16x8.cells"] {
         assert!(terminal.join(nome).is_file(), "faltou {nome}");

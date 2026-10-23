@@ -87,10 +87,13 @@ function alternarItem(pid, fid, tipo, id) {
 }
 // clique numa ação ou checkpoint da folha recolhida: abre as ações, leva até o item e o destaca por um instante
 function irPara(pid, fid, mid) {
-  abertos[pid] = true;
-  const p = D.blueprints.find((x) => x.id === pid);
-  if (p) abrirProjetoDaAcao(p, fid); // com projetos, a seção da ação também abre (senão a ação continua compacta); sem projetos não faz nada
-  render();
+  animarAbrirFechar(() => {
+    abertos[pid] = true;
+    const p = D.blueprints.find((x) => x.id === pid);
+    if (p) abrirProjetoDaAcao(p, fid); // com projetos, a seção da ação também abre (senão a ação continua compacta); sem projetos não faz nada
+  }, undefined, () => rolarParaAcao(fid, mid));
+}
+function rolarParaAcao(fid, mid) {
   const acao = host.querySelector(`.acao[data-f="${CSS.escape(fid)}"]`);
   const alvo = (mid && host.querySelector(`.chk[data-id="${CSS.escape(mid)}"]`)) || acao;
   if (!alvo) return;
@@ -107,16 +110,12 @@ function irPara(pid, fid, mid) {
   setTimeout(fim, 2600);
 }
 function alternar(id) {
-  abertos[id] = abertos[id] !== true;
-  render();
-  desenharBarras();
+  const fechando = abertos[id] === true;
+  animarAbrirFechar(() => { abertos[id] = !fechando; }, fechando ? () => true : undefined);
 }
 // "Expandir tudo" / "Recolher tudo" (botões do topo e menu do botão direito): as ações do blueprint e, com projetos, todas as seções
 function abrirOuFecharTudo(id, aberto) {
-  abertos[id] = aberto;
-  abrirTodosProjetos(D.blueprints.find((p) => p.id === id), aberto);
-  render();
-  desenharBarras();
+  animarAbrirFechar(() => { abertos[id] = aberto; abrirTodosProjetos(D.blueprints.find((p) => p.id === id), aberto); }, aberto ? undefined : () => true);
 }
 $("b-abrir").onclick = () => { if (tela) abrirOuFecharTudo(tela, true); };
 $("b-fechar").onclick = () => { if (tela) abrirOuFecharTudo(tela, false); };

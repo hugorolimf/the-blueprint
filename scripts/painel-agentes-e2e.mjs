@@ -1,6 +1,6 @@
 // Confere os agentes na folha no navegador de verdade (Edge sem janela): liga o servidor Rust com uma cópia dos dados, simula três agentes pelo
 // /api/mcp e confere uma figura do Claude por agente, cada uma no plano dele (variante por papel), o deslocamento quando o agente muda de plano
-// (some a animação ao parar; sem animar com prefers-reduced-motion), o limite com o contador "+N", a folhinha ao clicar o repouso, o Claude esperando na próxima ação, o botão Iniciar com o Claude e o concluído que sai ao fechar a mensagem.
+// (some a animação ao parar; sem animar com prefers-reduced-motion), o agrupamento das figuras (sem contador "+N"), a folhinha ao clicar o repouso, o Claude esperando na próxima ação, o botão Iniciar com o Claude e o concluído que sai ao fechar a mensagem.
 // (O painel "Agentes trabalhando agora" saiu: as figuras estão na própria folha.) Grava a captura em target/painel-agentes.png.
 // Uso: node scripts/painel-agentes-e2e.mjs [blueprint.exe]   (precisa do Microsoft Edge)
 import assert from "node:assert/strict";
@@ -111,11 +111,12 @@ try {
   assert.equal((await parado()).animacoes, 0, "reduced-motion: aparece no destino, sem animação");
   await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }] });
 
-  // limite: o principal + 4 subagentes; o resto vira "+N"
+  // muitas figuras: o principal + 5 subagentes se juntam, sobrepostas, sem contador
   for (let i = 0; i < 5; i++) await avisa({ texto: `extra ${i}`, agente: `extra-${i}`, papel: ["explorador", "construtor", "revisor"][i % 3], estado: "lendo", acaoId: acao.id, planoId: plano.id });
   await dormir(1500);
   assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 5, "no máximo 5 figuras de agente (1 principal + 4 subagentes; a espera é à parte)");
-  assert.equal(await js(`document.querySelector("#claude-camada .claude-mais")?.textContent`), "+3", "os outros 3 viram o contador");
+  assert.equal(await js(`document.querySelector("#claude-camada .claude-mais")`), null, "nunca há contador +N");
+  assert(await js(`(() => { const r = [...document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])")].map((f) => f.getBoundingClientRect()); return Math.max(...r.map((q) => q.right)) - Math.min(...r.map((q) => q.left)) <= 5 * 48 + 16 + 2; })()`), "o grupo se junta: não passa da largura de 5 figuras");
 
   // clicar na figura abre a folhinha (só leitura)
   await js(`document.querySelector('#claude-camada [data-robo-nome="claude"]').click()`);
@@ -209,7 +210,7 @@ try {
   await dormir(60);
   assert(await js(`[...document.querySelectorAll("#claude-camada [data-saindo]")].every((e) => e.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.scale === "0")))`), "ao sair a figura encolhe até o centro");
   await dormir(700);
-  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig, #claude-camada .claude-mais").length`), 0, "e depois some da folha");
+  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig").length`), 0, "e depois some da folha");
   await js(`claudeCamadaAtualiza()`);
   await dormir(60);
   assert(await js(`[...document.querySelectorAll("#claude-camada .claude-fig")].some((e) => e.getAnimations().some((a) => a.effect.getKeyframes().some((k) => k.scale === "0")))`), "ao voltar a figura cresce a partir do centro");
@@ -235,5 +236,5 @@ try {
   assert.equal(await js(`document.querySelectorAll('.acao[data-f="${acao.id}"] .cota').length > 0`), true, "clicar na ação compacta abre o projeto e a ação aparece aberta");
   assert.equal(await js(`(() => { const r = document.querySelector('.acao[data-f="${acao.id}"]').getBoundingClientRect(); return r.bottom > 0 && r.top < innerHeight; })()`), true, "e a folha leva até ela");
   assert.deepEqual(erros, [], "sem erros de JavaScript na página");
-  console.log("agentes na folha: ok (uma figura por agente no plano dele, andar e parar, reduced-motion, +N, folhinha, expiração, checkpoint pelo MCP). Captura em target/painel-agentes.png");
+  console.log("agentes na folha: ok (uma figura por agente no plano dele, andar e parar, reduced-motion, figuras agrupadas, folhinha, expiração, checkpoint pelo MCP). Captura em target/painel-agentes.png");
 } finally { limpar(); }

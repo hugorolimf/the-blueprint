@@ -16,7 +16,7 @@ function abreFolhaDaAcao(pid, fid, ancora) {
 function iniciarMensagem(status, j, numero) {
   if (status === 200 || j?.ok) return `Terminal aberto: o Claude vai começar a ação ${numero}.`;
   if (j?.codigo === "sem-pasta" || status === 409) return "Esta pasta não está ligada a um blueprint. Em Editar, preencha “Pasta do projeto” neste blueprint e tente de novo.";
-  if (j?.codigo === "sem-terminal" || status === 501) return "Não encontrei um terminal para abrir (Windows Terminal ou o prompt do Windows).";
+  if (j?.codigo === "sem-terminal" || status === 501) return `Não encontrei um terminal para abrir (Windows Terminal ou o prompt do Windows).${j?.erro ? ` Motivo: ${j.erro}` : ""}`;
   if (status === 404) return "O app não achou esta ação. Recarregue a página e tente de novo.";
   return j?.erro || `Não foi possível iniciar a ação (erro ${status}).`;
 }

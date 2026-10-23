@@ -12,7 +12,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
 
 /// As rotas POST que valem guardar com o app fechado (o resto precisa dos dados ao vivo).
-pub const ROTAS: [&str; 4] = ["evento", "proposta", "prototipo", "pasta/vincular"];
+pub const ROTAS: [&str; 5] = ["evento", "proposta", "registro", "prototipo", "pasta/vincular"];
 const RECUSADOS: &str = "recusados";
 
 /// A pasta dos pendentes do banco em uso (a mesma para quem guarda e para o servidor que reenvia).

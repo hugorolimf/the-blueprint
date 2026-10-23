@@ -42,3 +42,18 @@ Medido com `node scripts/medir-animacoes.mjs` (Edge headless por CDP, `Performan
 - **Memória (6 figuras):** +3,4 a 5,9 MB de heap JS, +8.200 nós de DOM e 854 KB de HTML na camada (cada figura guarda todos os quadros da pose, até 5 SVGs de ~30 KB); com movimento reduzido cai para um quadro por figura.
 - **Teto de 5 figuras + espera:** o custo é por figura animada (~0,5% de um núcleo cada, no regime). Com o limite de 1 principal + 4 subagentes + a espera, o pior caso fica em ~3,5%.
 - **Ressalva do ambiente:** o Edge headless marca a página como oculta depois de uns 45 s sem foco; o script mantém a aba visível (`Emulation.setFocusEmulationEnabled` e `Page.bringToFront` a cada 3 s) e confere `document.visibilityState` no começo e no fim.
+
+## Abrir e fechar as ações (ação 1.13, 2026-10-23)
+
+Medido na seção (7) de `node scripts/medir-animacoes.mjs` (Edge headless, exe de debug, `BLUEPRINT_ASSETS_DIR` na pasta do repositório): um blueprint com 45 ações (180 planos e checkpoints na folha) recolhe e expande 6 vezes (12 cliques de `alternar`, 2,4 s entre eles). O movimento (350 ms de deslize, 150 ms de esmaecer, entrada de cima para baixo) está em `docs/expandir-recolher.md`.
+
+| Medida | Resultado | Teto do script |
+| --- | --- | --- |
+| Animações ao mesmo tempo (pico, 120 ms depois do clique) | 258 | 700 |
+| Maior trecho síncrono de um clique | 33,8 ms | |
+| Tarefas longas (> 50 ms) | nenhuma | 250 ms |
+| CPU média da página nos 12 cliques (inclui a pintura por software do Edge headless) | 10,8% de um núcleo | 15% |
+| Animações no fim de cada clique | 0 | 0 |
+
+- A maior parte das animações do pico é a de `desenharBarras` (barras da ação, já existente antes da ação 1.13); o deslize (`MAX_MOVIDOS`, 220) e a entrada (60) têm teto próprio e só valem para o que está na janela.
+- Com movimento reduzido ou aba oculta nenhuma animação é criada (`scripts/expandir-e2e.mjs` confere).

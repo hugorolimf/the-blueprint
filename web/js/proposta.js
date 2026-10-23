@@ -11,6 +11,7 @@ const previaMarca = (pecas, w = 330, h = 230, progresso = 1) => {
 function montaMcp() {
   if (!blueprintEd()) return;
   $("ag-mcp").hidden = !mcpFalhou; // só aparece se o servidor não responde
+  montaRegistros(); // o que o agente já fez fora do plano (painel próprio acima da proposta)
   montaProposta();
 }
 // como ligar o agente fica numa folha à parte (botão "Como conectar"): a tela do Planejar foca na proposta

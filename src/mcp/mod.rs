@@ -8,6 +8,8 @@ mod eventos;
 mod fila;
 mod hooks;
 mod iniciar;
+mod lembrete;
+mod registro;
 pub mod pendentes;
 pub(crate) mod permissao;
 pub mod rotas;
@@ -21,9 +23,13 @@ mod hooks_tests;
 #[cfg(test)]
 mod iniciar_tests;
 #[cfg(test)]
+mod lembrete_tests;
+#[cfg(test)]
 mod pendentes_tests;
 #[cfg(test)]
 mod projetos_tests;
+#[cfg(test)]
+mod registro_tests;
 #[cfg(test)]
 mod status_tests;
 #[cfg(test)]
@@ -54,6 +60,8 @@ pub struct Mcp {
     pub(super) pastas_avisadas: Mutex<HashSet<String>>,
     /// session_id do Claude Code → (workspace_id, blueprint_id), lembrado pelo hook de sessão (só memória; o próximo SessionStart refaz)
     sessoes: Mutex<HashMap<String, (String, String)>>,
+    /// sessões com edição sem plano ainda não registrada (o Stop devolve o lembrete; ver `lembrete`)
+    sem_registro: Mutex<lembrete::Pendentes>,
 }
 
 /// Quantas sessões lembrar; passou disso, esquece todas (cada hook seguinte volta a achar a pasta no banco).
@@ -61,7 +69,7 @@ const MAX_SESSOES: usize = 64;
 
 impl Mcp {
     pub fn novo(host: &str, rede: bool, arquivo: &str, url: &str, prototipos: PathBuf) -> Mcp {
-        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()) }
+        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), sem_registro: Mutex::new(HashMap::new()) }
     }
 
     pub fn lembrar_sessao(&self, session_id: &str, workspace_id: &str, blueprint_id: &str) {
@@ -104,6 +112,13 @@ impl Mcp {
         novo
     }
 
+    /// Põe o registro do trabalho já feito no fim da fila do alvo, com o próximo número de registro (a contagem é própria, separada da das propostas).
+    pub fn empurra_registro(&self, item: Map<String, Value>) -> Value {
+        let novo = self.fila.lock().unwrap_or_else(|e| e.into_inner()).empurra_registro(item);
+        self.avisar("fila");
+        novo
+    }
+
     /// A entrada guardada da proposta pendente `numero` do alvo; se não existir, os números que estão na fila dele.
     pub fn entrada_da_proposta(&self, workspace_id: &str, blueprint_id: &str, numero: i64) -> Result<Value, Vec<i64>> {
         let f = self.fila.lock().unwrap_or_else(|e| e.into_inner());
@@ -135,6 +150,14 @@ impl Mcp {
 
     pub fn ack(&self, ids: &HashSet<i64>) {
         self.fila.lock().unwrap_or_else(|e| e.into_inner()).ack(ids);
+    }
+
+    /// Tira da fila o registro que a página adicionou ou descartou; `registro` = {workspaceId, blueprintId, numero, criadaEm}.
+    pub fn ack_registro(&self, registro: &Value) {
+        let texto = |k: &str| registro[k].as_str().unwrap_or("").to_string();
+        if let Some(numero) = registro["numero"].as_i64() {
+            self.fila.lock().unwrap_or_else(|e| e.into_inner()).ack_registro(&texto("workspaceId"), &texto("blueprintId"), numero, &texto("criadaEm"));
+        }
     }
 
     /// Tira da fila a proposta que a página aplicou ou descartou; `proposta` = {workspaceId, blueprintId, numero, criadaEm}.

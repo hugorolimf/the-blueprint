@@ -19,7 +19,7 @@ pub fn id_prototipo_valido(id: &str) -> bool {
 }
 
 /// `String(v || "")` do JS, para ids vindos do corpo.
-fn texto_js(v: Option<&Value>) -> String {
+pub(super) fn texto_js(v: Option<&Value>) -> String {
     match v {
         Some(Value::String(s)) => s.clone(),
         Some(Value::Number(n)) if n.as_f64() != Some(0.0) => n.to_string(),
@@ -47,7 +47,7 @@ fn corta(t: &str, n: usize) -> String {
     if t.chars().count() > n { t.chars().take(n - 1).chain(std::iter::once('…')).collect() } else { t.to_string() }
 }
 
-struct Workspace<'a> {
+pub(super) struct Workspace<'a> {
     id: String,
     nome: String,
     blueprints: &'a [Value],
@@ -73,7 +73,7 @@ fn workspaces_de(dados: &Value) -> Vec<Workspace<'_>> {
 }
 
 /// `workspace_id` é obrigatório; `blueprint_id` vazio = blueprint que ainda não existe.
-fn localizar<'a>(dados: &'a Value, workspace_id: &str, blueprint_id: &str) -> R<(Workspace<'a>, Option<&'a Value>)> {
+pub(super) fn localizar<'a>(dados: &'a Value, workspace_id: &str, blueprint_id: &str) -> R<(Workspace<'a>, Option<&'a Value>)> {
     let ws = workspace_dos(dados, workspace_id).ok_or_else(|| falha(404, "Workspace não encontrado (veja listar_blueprints)."))?;
     if blueprint_id.is_empty() {
         return Ok((ws, None));

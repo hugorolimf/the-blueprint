@@ -1,0 +1,15 @@
+/* Registros do que o agente já fez (registrar_trabalho), na tela Planejar: um painel acima da proposta, só quando há registro esperando. */
+.cl{display:flex;flex-direction:column}
+.cl>.cl-prop{flex:1 1 0}
+#cl-reg{flex:0 1 auto;max-height:46%;overflow:auto;display:flex;flex-direction:column;gap:0}
+#cl-reg[hidden]{display:none}
+#cl-reg .rg{display:flex;flex-direction:column;min-height:0;border-top:1px solid var(--lo)}
+#cl-reg .rg .cl-prop-lista{overflow:visible;flex:none}
+.rg-cab{position:sticky;top:0;background:#0a3270;z-index:1}
+.rg-item{display:grid;gap:4px;padding:6px 0;border-bottom:1px dashed var(--faint)}
+.rg-item label{display:flex;align-items:center;gap:10px;cursor:pointer}
+.rg-item .rg-tit{flex:1;min-width:0}
+.rg-item.feito .rg-tit{color:var(--ink)}
+.rg-item:not(.feito) .rg-tit{color:var(--mid)}
+.rg-evid{margin:0 0 0 26px;font-size:11px;line-height:1.5;color:var(--mid)}
+.rg-evid b{letter-spacing:.08em;text-transform:uppercase;font-size:9px}

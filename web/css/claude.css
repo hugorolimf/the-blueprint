@@ -24,7 +24,7 @@
 .emblema .iso-line[data-tone="papel"]{stroke:#f6faff}
 /* a camada das figuras na folha (claude-camada.js): sobre o desenho, sem pegar o mouse; só a figura é clicável. Cada figura é movida por transform. */
 #claude-camada{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
-.claude-fig,.claude-mais{position:absolute;left:0;top:0;will-change:transform}
+.claude-fig{position:absolute;left:0;top:0;will-change:transform}
 .claude-fig{pointer-events:auto;cursor:pointer;line-height:0;filter:drop-shadow(0 2px 3px #02132ecc)}
 .claude-fig svg{display:block}.claude-fig span{display:block}.claude-fig span[hidden]{display:none}
 /* os quadros da animação ficam empilhados no mesmo lugar, cada um na sua camada composta, e o relógio só troca a classe `on` (opacity não é herdada e não repinta: com display:none ou
@@ -33,7 +33,6 @@
 .claude-fig span[data-q]{position:absolute;left:0;top:0;opacity:0;will-change:opacity}.claude-fig span[data-q].on{opacity:1}
 .claude-fig:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 .claude-fig.erro{filter:drop-shadow(0 0 4px var(--erro))}
-.claude-mais{pointer-events:auto;padding:1px 5px;border:1px solid var(--ink);background:#082b5ef5;color:var(--ink);font:700 10px/1.4 var(--mono)}
 #robo-agente svg{flex:none;width:44px;height:auto}
 /* o resultado de "Iniciar com o Claude", dentro da folha da ação (iniciar-acao.js) */
 .nota-folha .iniciar-aviso{margin:10px 0 0;color:var(--ink)}.nota-folha .iniciar-aviso.erro{color:var(--erro)}

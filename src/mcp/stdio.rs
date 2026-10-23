@@ -45,7 +45,8 @@ fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, St
     let lista = |chave: &str| dados.get(chave).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).collect::<Vec<_>>().join("\n- ")).unwrap_or_default();
     if dados.get("erros").is_some_and(Value::is_array) {
         let avisos = lista("avisos");
-        return Err(format!("A proposta tem erros; corrija e envie de novo:\n- {}{}", lista("erros"), if avisos.is_empty() { String::new() } else { format!("\nAvisos:\n- {avisos}") }));
+        let quem = if rota == "registro" { "O registro" } else { "A proposta" }; // registro não é proposta
+        return Err(format!("{quem} tem erros; corrija e envie de novo:\n- {}{}", lista("erros"), if avisos.is_empty() { String::new() } else { format!("\nAvisos:\n- {avisos}") }));
     }
     let motivo = dados.get("erro").and_then(Value::as_str).map(String::from).unwrap_or_else(|| texto.chars().take(200).collect());
     Err(format!("O The Blueprint recusou ({status}): {motivo}"))
@@ -181,6 +182,25 @@ fn chamar(nome: &str, a: &Value) -> R {
             let aviso = if avisos.is_empty() { String::new() } else { format!("\nAvisos (não impedem o envio, mas vale ajustar):\n- {}", avisos.join("\n- ")) };
             let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
             Ok(format!("Proposta nº {} na fila do app, para o usuário revisar e aplicar (uma de cada vez; as outras da fila não foram mexidas).{aviso}\n{}\nSe ele pedir mudanças, envie `ajustar: {}` só com o que muda (a ação, o plano ou o checkpoint pelo id acima); `substituir: {}` troca a proposta inteira.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
+        }
+        "registrar_trabalho" => {
+            let mut corpo = alvo(a);
+            for chave in ["mensagem", "acoes"] {
+                if let Some(v) = a.get(chave) {
+                    corpo.insert(chave.into(), v.clone());
+                }
+            }
+            texto(a, "blueprint_id")?; // um registro é sobre um blueprint que já existe
+            let r = servidor("registro", "POST", Some(&Value::Object(corpo)))?;
+            if r["offline"] == true {
+                return Ok("Registro guardado: o app está fechado. Quando ele abrir, entra na fila para o usuário decidir se adiciona ao blueprint (a validação é feita só então).".into());
+            }
+            let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
+            let aviso = if avisos.is_empty() { String::new() } else { format!("
+Avisos:
+- {}", avisos.join("
+- ")) };
+            Ok(format!("Registro nº {} na fila do app (não é proposta). Nada foi salvo: o usuário vê o que foi feito, com os checks, e decide se adiciona ao blueprint. Avise o usuário agora e pergunte se quer adicioná-lo.{aviso}", r["numero"]))
         }
         "vincular_pasta" => {
             // o servidor MCP roda na pasta da sessão do agente: é ela que fica ligada

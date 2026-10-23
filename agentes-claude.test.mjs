@@ -73,7 +73,7 @@ for (const papel of PAPEIS) {
   assert.equal(ps.find((p) => p.grupo === "base" && p.tipo === "laje").tom, COR[papel], `${papel}: a base não tem a cor de apoio`);
   assert(ps.some((p) => p.grupo === "ferramenta" && p.tom === COR[papel]), `${papel}: a ferramenta não usa a cor de apoio`);
 }
-assert(ESCALA.subagente === ESCALA.claude && MAX_SUBAGENTES === 4, "subagentes: do mesmo tamanho do Claude e no máximo 4 figuras");
+assert(ESCALA.subagente === ESCALA.claude && MAX_SUBAGENTES === 7, "subagentes: do mesmo tamanho do Claude e no máximo 7 figuras");
 
 // do contrato de registrar_progresso para a pose
 const esperado = { lendo: "trabalhando", escrevendo: "trabalhando", testando: "trabalhando", aguardando: "esperando", bloqueado: "bloqueado", concluido: "concluido" };

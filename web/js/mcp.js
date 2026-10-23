@@ -52,6 +52,15 @@ async function mcpAplica(itens) {
   for (const i of meus.filter((x) => !mcpVistos.has(chave(x)))) {
     mcpVistos.add(chave(i));
     if (i.tipo === "proposta" && filaJaVista(i)) continue; // a página recarregou e o servidor mandou de novo uma que já está aqui
+    if (i.tipo === "registro") { // o que o agente JÁ fez fora do plano (registrar_trabalho): espera aqui e na fila do servidor até o usuário adicionar ou descartar
+      if (registroRecebe(i)) {
+        notificar(i);
+        mcpFeed.push({ tipo: "registro", texto: `Registro nº ${i.numero} recebido: veja em ✦ Planejar e adicione ao blueprint o que quiser.` });
+        aviso("O seu agente enviou um registro do que fez: abra ✦ Planejar para adicioná-lo ao blueprint.");
+        if (!hub.hidden) montaHub();
+      }
+      continue;
+    }
     viu = true;
     notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
     agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? "Proposta enviada: revise em ✦ Planejar." : i.texto, em: Date.now() };
@@ -99,7 +108,7 @@ async function mcpAplica(itens) {
   if (muda) mudarComSaida(tela);
   else if (viu) render(); // o robô mudou de lugar ou de fala
   if (!hub.hidden && (viu || muda)) montaHub();
-  const ids = meus.filter((x) => !(x.tipo === "proposta" && x.numero != null && !soltar.has(x.id))).map((x) => x.id);
+  const ids = meus.filter((x) => x.tipo !== "registro" && !(x.tipo === "proposta" && x.numero != null && !soltar.has(x.id))).map((x) => x.id);
   if (ids.length) try { await fetch("/api/mcp/fila/ack", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids }) }); } catch {}
 }
 async function mcpConsulta() {

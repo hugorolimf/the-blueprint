@@ -41,11 +41,12 @@ try {
   await post("pasta/vincular", { cwd: dir, workspaceId: ws.id, blueprintId: ws.blueprints[0].id });
   const corpo = { session_id: "medicao", cwd: dir, tool_name: "Edit", tool_input: { file_path: join(dir, "exemplo.rs") } };
   const medicoes = {};
-  for (const rota of ["hook/sessao", "hook/edicao"]) {
+  const parada = { session_id: "medicao", hook_event_name: "Stop", stop_hook_active: false };
+  for (const [rota, enviado] of [["hook/sessao", corpo], ["hook/edicao", corpo], ["hook/parada", parada]]) {
     const tempos = [];
     for (let i = 0; i < 110; i++) {
       const inicio = performance.now();
-      const r = await post(rota, corpo);
+      const r = await post(rota, enviado);
       if (rota === "hook/sessao") assert.equal(r.vinculado, true);
       if (i >= 10) tempos.push(performance.now() - inicio);
     }

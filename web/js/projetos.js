@@ -74,10 +74,9 @@ function abrirTodosProjetos(p, aberto) {
 // alguma seção do blueprint está aberta? (decide se o menu oferece "Recolher" ou "Expandir")
 const algumProjetoAberto = (p) => [...(p.projetos || []).map((x) => x.id), ""].some((id) => projetosAbertos.has(chaveProjeto(p, id)));
 function alternarProjeto(chave) {
-  if (!projetosAbertos.delete(chave)) projetosAbertos.add(chave);
-  guardaProjetosAbertos();
-  render();
-  host.querySelector(`[data-projeto="${CSS.escape(chave)}"]`)?.focus({ preventScroll: true }); // o redesenho troca o elemento
+  const fechando = projetosAbertos.has(chave);
+  const dele = (el) => { const p = D.blueprints.find((x) => x.id === el.dataset.p), f = p?.acoes.find((x) => x.id === el.dataset.f); return !!f && chaveProjeto(p, projetoDaAcao(p, f)) === chave; }; // só os planos desta seção esmaecem
+  animarAbrirFechar(() => { if (!projetosAbertos.delete(chave)) projetosAbertos.add(chave); guardaProjetosAbertos(); }, fechando ? dele : undefined); // o foco volta ao cabeçalho (animarAbrirFechar)
 }
 host.addEventListener("click", (e) => { const t = e.target.closest("[data-projeto]"); if (t) alternarProjeto(t.dataset.projeto); });
 host.addEventListener("keydown", (e) => {

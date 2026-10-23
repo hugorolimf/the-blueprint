@@ -61,16 +61,18 @@ pub(super) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path
 /// O lançador de verdade: Windows Terminal (`wt -d <pasta> <exe> claude <prompt>`) se existir no PATH; senão um console novo, direto no processo (sem passar pelo
 /// cmd.exe, que leria `&` e `|` dos nomes). Não espera o filho. shortcut: só Windows (o app é só Windows); em outro sistema as flags não existem e abre sem elas.
 pub(super) fn abrir_terminal(pasta: &Path, exe: &Path, prompt: &str) -> Result<&'static str, String> {
+    let mut falha_wt = String::new();
     if let Some(wt) = crate::registrar::procurar("wt") {
-        let mut c = Command::new(wt);
+        let mut c = Command::new(&wt);
         c.arg("-d").arg(pasta).arg(exe).arg("claude").arg(prompt);
-        if sem_janela(&mut c).spawn().is_ok() {
-            return Ok("wt");
+        match sem_janela(&mut c).spawn() {
+            Ok(_) => return Ok("wt"),
+            Err(e) => falha_wt = format!("wt ({}): {e}; ", wt.display()),
         }
     }
     let mut c = Command::new(exe);
     c.arg("claude").arg(prompt).current_dir(pasta);
-    novo_console(&mut c).spawn().map(|_| "cmd").map_err(|e| format!("não consegui abrir um terminal: {e}"))
+    novo_console(&mut c).spawn().map(|_| "cmd").map_err(|e| format!("{falha_wt}console novo ({}) em {}: {e}", exe.display(), pasta.display()))
 }
 
 #[cfg(windows)]

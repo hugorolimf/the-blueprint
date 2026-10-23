@@ -1,5 +1,5 @@
 // A lógica pura do Claude na folha (web/js/claude-logica.js, script clássico carregado num contexto isolado, como o navegador faz):
-// principal, variante por papel, pose por estado, lugar de cada figura, limite com o contador "+N" e a ordem lado a lado. O DOM fica em claude-camada.js.
+// principal, variante por papel, pose por estado, lugar de cada figura, limite, agrupamento das figuras (sem contador) e a ordem lado a lado. O DOM fica em claude-camada.js.
 //   node claude-logica.test.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -77,27 +77,28 @@ assert.equal(A.claudeLugar(ag("a", { acaoId: "f9" }), aVista, onde), "cab:b1", "
 const doisProjetos = A.claudeItens([ag("a", { acaoId: "f1", em: 5 }), ag("b", { papel: "revisor", acaoId: "f2", em: 4 })], () => false, { barra: () => false, secao: onde.secao });
 assert.deepEqual(J(doisProjetos.map((i) => [i.lugar, i.indice])), [["secao:b1|p2", 0], ["secao:b1|p2", 1]], "duas ações do mesmo projeto: lado a lado no cabeçalho dele, sem empilhar no mesmo ponto");
 
-// ---- limite: 1 principal + 4 subagentes; o resto vira "+N"; ordem: principal, depois quem avisou há menos tempo
-const muitos = [ag("claude", { em: 100 }), ...[1, 2, 3, 4, 5, 6, 7].map((i) => ag(`sub${i}`, { papel: "construtor", em: 100 + i }))];
+// ---- limite: 1 principal + 7 subagentes (juntos, sobrepostos); o resto fica sob a pilha, sem contador; ordem: principal, depois quem avisou há menos tempo
+const muitos = [ag("claude", { em: 100 }), ...[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => ag(`sub${i}`, { papel: "construtor", em: 100 + i }))];
 let v = A.claudeVisiveis(muitos);
-assert.equal(v.visiveis.length, 5);
+assert.equal(v.visiveis.length, 8);
 assert.equal(v.extras, 3);
-assert.deepEqual(J(v.visiveis.map((a) => a.agente)), ["claude", "sub7", "sub6", "sub5", "sub4"], "os 4 mais recentes");
-v = A.claudeVisiveis(muitos.slice(0, 5));
-assert.deepEqual([v.visiveis.length, v.extras], [5, 0], "cinco cabem sem contador");
-v = A.claudeVisiveis(muitos.slice(0, 6));
-assert.deepEqual([v.visiveis.length, v.extras], [5, 1]);
+assert.deepEqual(J(v.visiveis.map((a) => a.agente)), ["claude", "sub10", "sub9", "sub8", "sub7", "sub6", "sub5", "sub4"], "os 7 mais recentes");
+v = A.claudeVisiveis(muitos.slice(0, 8));
+assert.deepEqual([v.visiveis.length, v.extras], [8, 0], "oito cabem");
+v = A.claudeVisiveis(muitos.slice(0, 9));
+assert.deepEqual([v.visiveis.length, v.extras], [8, 1]);
 assert.deepEqual(J(A.claudeVisiveis([])), { principal: null, visiveis: [], extras: 0 });
 
-// ---- itens lado a lado: dois agentes no mesmo plano ganham índices 0 e 1 (principal primeiro); o "+N" entra no lugar do último
+// ---- itens lado a lado: dois agentes no mesmo plano ganham índices 0 e 1 (principal primeiro); os extras entram no último
 const dois = A.claudeItens([ag("sub", { papel: "revisor", planoId: "t1", em: 9 }), ag("claude", { planoId: "t1", em: 1 })], aVista);
 assert.deepEqual(J(dois.map((i) => [i.a.agente, i.lugar, i.indice, i.papel])), [["claude", "plano:t1", 0, null], ["sub", "plano:t1", 1, "revisor"]]);
 const espalhados = A.claudeItens([ag("claude", { planoId: "t1" }), ag("s1", { papel: "explorador", planoId: "t2", em: 5 }), ag("s2", { papel: "revisor", planoId: "t2", em: 4 }), ag("s3", { papel: "revisor", planoId: "t77", em: 3 })], aVista);
 assert.deepEqual(J(espalhados.map((i) => [i.a.agente, i.lugar, i.indice])), [["claude", "plano:t1", 0], ["s1", "plano:t2", 0], ["s2", "plano:t2", 1], ["s3", "cab:b1", 0]]);
 const cheio = A.claudeItens(muitos.map((a) => ({ ...a, planoId: "t1" })), aVista);
-assert.equal(cheio.length, 6, "5 figuras + o contador");
-assert.deepEqual(J([cheio[5].mais, cheio[5].lugar, cheio[5].indice]), [3, "plano:t1", 5], "o contador fica no lugar do último, depois dele");
-assert.equal(A.claudeLarguraItem(cheio[5]), 26);
+assert.equal(cheio.length, 8, "8 figuras, sem item de contador");
+assert(cheio.every((i) => !i.mais), "nunca há um \"+N\"");
+assert.deepEqual(J([cheio[7].extras, cheio[7].lugar, cheio[7].indice]), [3, "plano:t1", 7], "os que ficam sob a pilha são contados no último");
+assert.equal(cheio.filter((i) => i.extras).length, 1);
 assert.equal(A.claudeLarguraItem(cheio[0]), 48);
 assert.equal(A.claudeLarguraItem(cheio[1]), 48, "subagente com o mesmo tamanho do Claude");
 assert.equal(A.claudeItens([], aVista).length, 0);
@@ -109,6 +110,12 @@ const posicoes = [0, 1, 2].map((i) => J(A.claudePosicao("plano", linha, i, larg)
 assert.deepEqual(posicoes.map((q) => q.base), [127, 127, 127], "os pés um pouco abaixo da linha do plano (a figura fica de pé ao lado dela)");
 assert.deepEqual(posicoes.map((q) => q.x), [146, 94, 42], "lado a lado, da direita para a esquerda");
 for (let i = 1; i < 3; i++) assert(posicoes[i].x + larg[i] + A.CLAUDE_FOLGA <= posicoes[i - 1].x, "sem sobrepor a figura vizinha");
+// muitas figuras: o grupo se junta (sobrepõe) e nunca passa da largura de 5 lado a lado; a primeira fica no mesmo lugar de sempre
+const larg8 = Array(8).fill(48), junto = larg8.map((_, i) => J(A.claudePosicao("plano", linha, i, larg8)).x);
+assert.equal(junto[0], 146, "a primeira não sai do lugar");
+assert.equal(Math.min(...junto), 146 - (5 * 48 + 4 * A.CLAUDE_FOLGA - 48), "o grupo ocupa no máximo a largura de 5 figuras");
+for (let i = 1; i < 8; i++) assert(junto[i] < junto[i - 1] && junto[i - 1] - junto[i] < 48, "cada uma sobrepõe a anterior");
+assert.deepEqual(larg8.slice(0, 5).map((_, i) => J(A.claudePosicao("plano", linha, i, larg8.slice(0, 5))).x), [146, 94, 42, -10, -62], "até 5 continuam lado a lado");
 const cab = J(A.claudePosicao("cab", { x: 62, y: 80, w: 800, h: 86 }, 0, [48]));
 assert(cab.x + 48 <= 62 + 800 - 100 && cab.base <= 80 + 86, "no cabeçalho a figura fica dentro da caixa, à esquerda do canto");
 const cartao = J(A.claudePosicao("cartao", { x: 70, y: 200, w: 330, h: 152 }, 0, [48]));
@@ -137,6 +144,6 @@ assert.equal(J(A.claudeItemEspera(p0, f0, "1.1", (id) => id === "a", itensCab)).
 const emCab = J(A.claudeItemEspera(p0, f0, "1.1", () => false, itensCab));
 assert.equal(J(A.claudeItemEspera(p0, f0, "1.1", () => false, [], () => "b1|p2")).lugar, "secao:b1|p2", "ação fora de vista: a espera fica no cabeçalho do projeto dela");
 assert.deepEqual([emCab.lugar, emCab.indice, emCab.papel, emCab.principal], ["cab:b1", 1, null, false], "fora de vista: no cabeçalho, depois do agente que já está lá");
-assert.equal(J(A.claudeItens([ag("claude")], () => false)).length, 1, "a espera não entra no limite nem no +N (é um item à parte)");
+assert.equal(J(A.claudeItens([ag("claude")], () => false)).length, 1, "a espera não entra no limite nem nos extras (é um item à parte)");
 
-console.log("claude-logica: ok (principal, variante por papel, pose por estado, lugar, limite + \"+N\" e ordem lado a lado)");
+console.log("claude-logica: ok (principal, variante por papel, pose por estado, lugar, limite, agrupamento e ordem lado a lado)");

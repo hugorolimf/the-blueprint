@@ -79,6 +79,7 @@ fn hooks(exe: &str) -> serde_json::Value {
         "SubagentStart": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/subagente", "timeout": 5 }] }],
         "SubagentStop": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/subagente", "timeout": 5 }] }],
         "Notification": [{ "hooks": [{ "type": "command", "command": exe, "args": ["hook", "notificacao"], "timeout": 5 }] }],
+        "Stop": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/parada", "timeout": 5 }] }],
     } })
 }
 

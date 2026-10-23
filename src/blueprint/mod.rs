@@ -6,6 +6,7 @@ mod mover;
 mod mover_acao;
 mod prazos;
 mod projetos;
+mod registro;
 mod remocoes;
 mod resumos;
 mod texto;
@@ -26,9 +27,13 @@ mod tests_numeros;
 #[cfg(test)]
 mod tests_prazos;
 
+#[cfg(test)]
+mod tests_registro;
+
 pub use datas::{dia_valido, dias_entre, ms_do_iso};
 pub use mover_acao::mover_acoes;
 pub use texto::verdade;
 pub use projetos::numeros_das_acoes;
+pub use registro::validar_registro;
 pub use resumos::{contexto_acao, contexto_blueprint, estrutura_blueprint, resumo_blueprint};
 pub use validar::{validar_proposta, Validacao};

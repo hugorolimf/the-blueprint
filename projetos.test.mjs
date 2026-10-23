@@ -10,10 +10,10 @@ let renders = 0, localStorageQuebrado = false;
 const ctx = vm.createContext({
   document: { getElementById: () => ({}), hidden: false }, matchMedia: () => ({ matches: false }), CSS: { escape: (s) => s },
   localStorage: { getItem: (k) => { if (localStorageQuebrado) throw new Error("bloqueado"); return guardado.get(k) ?? null; }, setItem: (k, v) => { if (localStorageQuebrado) throw new Error("bloqueado"); guardado.set(k, v); } },
-  host: { addEventListener() {}, querySelector: () => null }, agenteAqui: () => null, roboRolar: false, render: () => { renders++; },
+  host: { addEventListener() {}, querySelector: () => null }, agenteAqui: () => null, roboRolar: false, render: () => { renders++; }, desenharBarras: () => {},
 });
 const carrega = (arquivo) => vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", arquivo), "utf8"), ctx, { filename: arquivo });
-["base.js", "dados.js", "projetos.js"].forEach(carrega);
+["base.js", "dados.js", "projetos.js", "expandir.js"].forEach(carrega); // expandir.js: alternarProjeto passa por animarAbrirFechar (sem folha na tela, só muda e desenha)
 vm.runInContext("this.api = { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe };", ctx);
 const { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe } = ctx.api;
 

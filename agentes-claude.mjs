@@ -22,7 +22,7 @@ export const RITMO = { parado: 150, andando: 110, trabalhando: 110, esperando: 3
 export const GRUPOS = ["base", "pernas", "corpo", "bracos", "ferramenta", "adereco"];
 export const AZIMUTE = 30; // a frente do personagem (+x) fica virada para o leitor
 export const LIMITE = 400; // teto de peças da figura do agente (decisão da ação 3.7)
-export const MAX_SUBAGENTES = 4; // figuras de subagente na folha; os demais viram o contador "+N"
+export const MAX_SUBAGENTES = 7; // figuras de subagente na folha (1 principal + 7); passando de 5 elas se juntam, sobrepostas; as demais ficam sob a pilha (sem contador "+N")
 export const ESCALA = { claude: 1, subagente: 1 }; // largura do SVG do subagente = a do Claude (o enquadramento é o mesmo; foi 70% até 2026-10-22)
 // pontos que só entram na caixa do enquadramento (opção `enquadra` de desenhaEmblema): a câmera não muda entre poses nem papéis
 export const ENQUADRA = [[-20, -32, 0], [30, 32, 0], [0, 0, 60]];

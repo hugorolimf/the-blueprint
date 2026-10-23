@@ -133,7 +133,7 @@ fn o_servidor_stdio_se_apresenta_como_o_de_node() {
     assert_eq!(rpc("initialize", json!({"protocolVersion": "1999"}))["result"]["protocolVersion"], "2025-06-18");
     // o que o Codex lê: regras e nomes das ferramentas nos primeiros 512 caracteres
     let inicio: String = r["result"]["instructions"].as_str().unwrap().chars().take(512).collect();
-    for t in ["SEMPRE atualizado", "CLAUDE.md", "listar_blueprints", "propor_blueprint", "registrar_progresso", "marcar_concluido", "marcar_checkpoint_feito", "reportar_bloqueio"] {
+    for t in ["SEMPRE atualizado", "CLAUDE.md", "listar_blueprints", "propor_blueprint", "registrar_progresso", "marcar_concluido", "marcar_checkpoint_feito", "reportar_bloqueio", "registrar_trabalho", "nunca salva sozinho"] {
         assert!(inicio.contains(t), "instruções: {t} nos primeiros 512");
     }
     assert_eq!(rpc("ping", json!({}))["result"], json!({}));
@@ -145,7 +145,7 @@ fn as_ferramentas_do_mcp() {
     let nomes: Vec<&str> = r["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
     assert_eq!(
         nomes,
-        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "anexar_prototipo", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta"]
+        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "registrar_trabalho", "anexar_prototipo", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta"]
     );
     let propor = r["result"]["tools"].as_array().unwrap().iter().find(|t| t["name"] == "propor_blueprint").unwrap();
     assert!(propor["inputSchema"]["properties"].get("remover").is_some(), "a ferramenta já conhece mover e apagar");

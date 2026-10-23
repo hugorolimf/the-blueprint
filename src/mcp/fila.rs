@@ -14,6 +14,8 @@ pub struct Fila {
     numeros: HashMap<(String, String), i64>,
     /// o que o agente enviou em cada proposta pendente (id do item → entrada, com os ids provisórios), para `ajustar`
     entradas: HashMap<i64, Value>,
+    /// o último número dado a um REGISTRO de cada alvo: a contagem é própria, separada da das propostas (registro não é proposta)
+    registros: HashMap<(String, String), i64>,
 }
 
 fn alvo_de(i: &Value) -> (&str, &str) {
@@ -61,6 +63,18 @@ impl Fila {
         self.itens[i].clone()
     }
 
+    /// Registro do trabalho já feito: entra no fim com o próximo número de REGISTRO do alvo (separado das propostas) e não apaga nenhum outro.
+    pub fn empurra_registro(&mut self, mut item: Map<String, Value>) -> Value {
+        let alvo = (item.get("workspaceId").and_then(Value::as_str).unwrap_or("").to_string(), item.get("blueprintId").and_then(Value::as_str).unwrap_or("").to_string());
+        let n = self.registros.entry(alvo).or_insert(0);
+        *n += 1;
+        item.insert("numero".into(), Value::from(*n));
+        let novo = self.empurra(item);
+        let i = self.itens.len() - 1;
+        self.itens[i]["criadaEm"] = novo["em"].clone();
+        self.itens[i].clone()
+    }
+
     fn posicao(&self, ws: &str, bp: &str, numero: i64) -> Option<usize> {
         self.itens.iter().position(|i| i["tipo"] == "proposta" && alvo_de(i) == (ws, bp) && i["numero"] == numero)
     }
@@ -85,7 +99,16 @@ impl Fila {
     /// A página aplicou ou descartou a proposta (workspace, blueprint, número, criadaEm). Pela chave inteira, e não pelo id do item, uma proposta
     /// antiga de antes de o app reiniciar nunca tira uma nova que ficou com o mesmo id.
     pub fn ack_proposta(&mut self, ws: &str, bp: &str, numero: i64, criada_em: &str) {
-        let ids: HashSet<i64> = self.itens.iter().filter(|i| i["tipo"] == "proposta" && alvo_de(i) == (ws, bp) && i["numero"] == numero && i["criadaEm"] == criada_em).filter_map(|i| i["id"].as_i64()).collect();
+        self.ack_numerado("proposta", ws, bp, numero, criada_em);
+    }
+
+    /// A página adicionou ou descartou o registro (mesma chave inteira de `ack_proposta`).
+    pub fn ack_registro(&mut self, ws: &str, bp: &str, numero: i64, criada_em: &str) {
+        self.ack_numerado("registro", ws, bp, numero, criada_em);
+    }
+
+    fn ack_numerado(&mut self, tipo: &str, ws: &str, bp: &str, numero: i64, criada_em: &str) {
+        let ids: HashSet<i64> = self.itens.iter().filter(|i| i["tipo"] == tipo && alvo_de(i) == (ws, bp) && i["numero"] == numero && i["criadaEm"] == criada_em).filter_map(|i| i["id"].as_i64()).collect();
         self.ack(&ids);
     }
 }
