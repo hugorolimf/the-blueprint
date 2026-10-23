@@ -1,4 +1,4 @@
-// Confere no navegador (Edge sem janela) a tela Planejar com um registro do que o agente já fez fora do plano: os checks, o que fica pendente,
+// Fluxo completo: o agente envia o registro pelo MCP (registrar_trabalho, via `blueprint --mcp`), e confere no navegador (Edge sem janela) a tela Planejar com um registro do que o agente já fez fora do plano: os checks, o que fica pendente,
 // o Adicionar (grava o feito e a evidência como comentário do plano e recalcula o progresso) e o Descartar (não muda nada). Banco de exemplo, sem recompilar.
 // Uso: node scripts/registro-tela-e2e.mjs [exe] [pasta-com-web]   (precisa do Microsoft Edge; serve web/ da pasta dada, por padrão a do repositório)
 import assert from "node:assert/strict";
@@ -36,9 +36,20 @@ try {
 
   // o que o agente mandou: uma ação nova com um plano feito (com evidência), um plano pendente e um checkpoint pendente
   const NOME = "Ajuste fora do plano", EVIDENCIA = "node teste.mjs: 12 passam, 0 falham";
-  const registrar = (nome, mensagem) => fetch(url + "/api/mcp/registro", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "sm", blueprintId: blueprint.id, mensagem, acoes: [{ nome, inicio: "2026-10-20", fim: "2026-10-23", planos: [
-    { texto: "Corrigir o botão", descricao: "Escopo: o menu. Validação: o teste passa.", feito: true, evidencia: EVIDENCIA },
-    { texto: "Cobrir com teste", descricao: "Escopo: o menu. Validação: roda." }], checkpoints: [{ nome: "Revisão", data: "2026-10-30" }] }] }) });
+  // o agente chama a ferramenta registrar_trabalho pelo `blueprint --mcp` (stdio), como o Claude faria; devolve { isError, texto }
+  const registrar = async (nome, mensagem) => {
+    const filho = spawn(exe, ["--mcp"], { env: { ...process.env, BLUEPRINT_URL: url }, stdio: ["pipe", "pipe", "ignore"], windowsHide: true });
+    let buf = "", id = 0; const esp = new Map();
+    filho.stdout.on("data", (d) => { buf += d; for (let i; (i = buf.indexOf("\n")) >= 0;) { const l = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (l) { const m = JSON.parse(l); esp.get(m.id)?.(m); } } });
+    const rpc = (method, params) => new Promise((ok) => { esp.set(++id, ok); filho.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"); });
+    try {
+      await rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "registro-e2e", version: "1" } });
+      const r = await rpc("tools/call", { name: "registrar_trabalho", arguments: { workspace_id: "sm", blueprint_id: blueprint.id, mensagem, acoes: [{ nome, inicio: "2026-10-20", fim: "2026-10-23", planos: [
+        { texto: "Corrigir o botão", descricao: "Escopo: o menu. Validação: o teste passa.", feito: true, evidencia: EVIDENCIA },
+        { texto: "Cobrir com teste", descricao: "Escopo: o menu. Validação: roda." }], checkpoints: [{ nome: "Revisão", data: "2026-10-22" }] }] } });
+      return { isError: !!(r.error || r.result?.isError), texto: r.result?.content?.map((x) => x.text).join("\n") ?? JSON.stringify(r.error) };
+    } finally { filho.kill(); }
+  };
   const painel = () => js(`(() => { const b = document.getElementById("cl-reg"); return { oculto: b.hidden, texto: b.textContent, checks: [...b.querySelectorAll("input[data-rc=plano],input[data-rc=cp]")].map((i) => ({ tipo: i.dataset.rc, marcado: i.checked })), botoes: [...b.querySelectorAll("[data-ract]")].map((x) => x.textContent.trim()) }; })()`);
   const acaoNova = async () => (await (await fetch(url + "/api/dados")).json()).blueprints.find((x) => x.id === blueprint.id).acoes.find((f) => f.nome === NOME);
   const fila = async () => (await (await fetch(url + "/api/mcp/fila")).json()).itens.filter((i) => i.tipo === "registro");
@@ -46,7 +57,9 @@ try {
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(2500);
   const total = (await (await fetch(url + "/api/dados")).json()).blueprints.find((x) => x.id === blueprint.id).acoes.length;
-  assert.equal((await registrar(NOME, "Corrigi o menu fora do plano.")).status, 200);
+  const r1 = await registrar(NOME, "Corrigi o menu fora do plano.");
+  assert.equal(r1.isError, false, r1.texto);
+  assert.match(r1.texto, /Registro nº 1/i, "a resposta ao agente diz o número do registro e que ele deve perguntar ao usuário");
   await dormir(1200);
   await js(`document.getElementById("b-ia").click()`); // abre o Planejar: o registro aparece no painel acima da proposta
   await dormir(1500);
@@ -86,7 +99,7 @@ try {
   assert.equal((await fila()).length, 0, "o registro saiu da fila do servidor (ack)");
 
   // Descartar: o registro seguinte tem número próprio e, descartado, não muda o blueprint
-  assert.equal((await registrar("Outra coisa", "Outro registro.")).status, 200);
+  assert.equal((await registrar("Outra coisa", "Outro registro.")).isError, false);
   await dormir(1200);
   assert.match((await painel()).texto, /Registro nº 2/, "a numeração dos registros é própria");
   const antes = (await (await fetch(url + "/api/dados")).json()).blueprints.find((x) => x.id === blueprint.id).acoes.length;
