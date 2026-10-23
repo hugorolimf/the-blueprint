@@ -1,13 +1,8 @@
-/* robô do agente: só mostra onde o agente do usuário está (vem da fila do MCP); a antena pisca enquanto ele trabalha */
-.robo{pointer-events:none}.robo .ag-cx{fill:#0c3a78;stroke:var(--ink);stroke-width:1.4}.robo .ag-vz{fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round}.robo .ag-ol{fill:var(--ink)}.robo .ag-an{fill:none;stroke:var(--ink);stroke-width:1.2}.robo .ag-pt{fill:var(--ink);animation:robo-pisca 1.2s steps(2) infinite}
-.robo.ok .ag-cx{fill:var(--ink)}.robo.ok .ag-ol{fill:#0c3a78}.robo.ok .ag-vz{stroke:#0c3a78}.robo.ok .ag-pt{animation:none}
-.robo.erro .ag-cx,.robo.erro .ag-an{stroke:var(--erro)}.robo.erro .ag-pt{fill:var(--erro)}
-@keyframes robo-pisca{50%{opacity:.15}}
+/* agente na folha: o destaque do plano em que o agente trabalha e a faixa fixa com a última fala (as figuras do Claude estão em claude.css) */
 .robo-linha{fill:#eaf4ff14;stroke:var(--ink);stroke-width:1;stroke-dasharray:4 3;pointer-events:none}.robo-linha.erro{stroke:var(--erro)}.robo-linha.ok{stroke-dasharray:none}
 #robo-agente{position:fixed;left:16px;bottom:16px;z-index:25;display:flex;gap:10px;align-items:center;max-width:min(620px,calc(100vw - 32px));padding:8px 14px 8px 10px;border:1px solid var(--ink);background:#082b5ef5;color:var(--ink);font:11px/1.45 var(--mono);text-align:left;cursor:pointer;box-shadow:0 6px 24px #02132e99}
 #robo-agente[hidden]{display:none}#robo-agente.erro{border-color:var(--erro)}#robo-agente:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
 #robo-agente div{min-width:0}#robo-agente b{display:block;color:var(--mid);font-size:10px;letter-spacing:.1em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#robo-agente span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-@media(prefers-reduced-motion:reduce){.robo .ag-pt{animation:none}}
 .nota .ic{fill:#0c3a78;stroke:var(--ink);stroke-width:1.2}
 .nota .ic2{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round}
 .nota:hover .ic,.nota:focus-visible .ic{fill:var(--ink)}

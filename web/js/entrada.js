@@ -49,14 +49,15 @@ $("workspace-cancelar").onclick = () => { if (!salvandoWorkspace) location.hash 
 function atualizarCriacaoWorkspace() {
   $("workspace-erro").textContent = "";
   $("workspace-titulo").textContent = $("workspace-nome").value.trim() || "Novo workspace";
+  atualizaArte();
 }
 $("workspace-tela").onclick = () => alternarTelaCheia();
 $("workspace-nome").oninput = atualizarCriacaoWorkspace;
-async function criarWorkspace(nome, descricao = "", emblema = null) {
+async function criarWorkspace(nome, descricao = "", emblema = null, icone = "blueprint") {
   nome = nome.trim().slice(0, 80);
   if (!nome) throw new Error("Digite o nome do workspace.");
   if (workspacesDe(arquivo).some((c) => norm(c.nome) === norm(nome))) throw new Error("Já existe um workspace com esse nome.");
-  const workspace = limpa({ id: novoId(), nome, empresa: nome, descricao, emblema, icone: "blueprint", blueprints: [] });
+  const workspace = limpa({ id: novoId(), nome, empresa: nome, descricao, emblema, icone, blueprints: [] });
   arquivo.workspaces.push(workspace);
   try { await gravarDados(); return workspace; }
   catch (e) { arquivo.workspaces = arquivo.workspaces.filter((c) => c !== workspace); throw e; }
@@ -71,7 +72,8 @@ $("workspace-form").onsubmit = async (e) => {
   controles.forEach((c) => { c.disabled = true; });
   $("workspace-erro").textContent = "";
   try {
-    const novo = await criarWorkspace($("workspace-nome").value, $("workspace-descricao-manual").value.trim());
+    const arte = lerArte();
+    const novo = await criarWorkspace($("workspace-nome").value, $("workspace-descricao-manual").value.trim(), arte.pecas ? { pecas: arte.pecas } : null, arte.icone);
     location.hash = "/c/" + encodeURIComponent(novo.id);
   } catch (erro) {
     $("workspace-erro").textContent = erro.message === "Failed to fetch" ? "Não foi possível concluir. Tente novamente." : erro.message;
@@ -92,6 +94,18 @@ const workspacesDe = (a) => {
   const posicoes = new Map((Array.isArray(a.ordemWorkspaces) ? a.ordemWorkspaces : []).map((id, i) => [id, i]));
   return todas.sort((x, y) => (posicoes.get(x.id) ?? Infinity) - (posicoes.get(y.id) ?? Infinity));
 };
+async function excluirWorkspace(id) {
+  const w = (arquivo.workspaces || []).find((c) => c.id === id); // o workspace raiz (sm) é o próprio arquivo: não se remove
+  if (!w) return;
+  const n = (w.blueprints || []).length;
+  if (!(await confirmar({ titulo: "Excluir workspace?", texto: `O workspace "${w.nome || "Sem nome"}" será apagado${n ? `, junto com ${n} blueprint${n > 1 ? "s" : ""} e todas as ações` : ""}. Não dá para desfazer.`, rotulo: "Excluir workspace" }))) return;
+  const antes = { workspaces: arquivo.workspaces, ordem: arquivo.ordemWorkspaces };
+  arquivo.workspaces = arquivo.workspaces.filter((c) => c.id !== id);
+  if (Array.isArray(arquivo.ordemWorkspaces)) arquivo.ordemWorkspaces = arquivo.ordemWorkspaces.filter((x) => x !== id);
+  try { await gravarDados(); }
+  catch { arquivo.workspaces = antes.workspaces; arquivo.ordemWorkspaces = antes.ordem; $("entrada-status").textContent = "Não foi possível excluir o workspace."; return; }
+  render();
+}
 function salvarOrdemWorkspaces(ids, movido) {
   const visiveis = new Set(ids), ordem = workspacesDe(arquivo).map((c) => c.id);
   let i = 0;

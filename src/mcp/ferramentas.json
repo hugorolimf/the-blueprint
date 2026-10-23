@@ -27,7 +27,7 @@
  },
  {
   "name": "ler_blueprint",
-  "description": "Sem acao_id: a estrutura do blueprint (ações, planos e checkpoints com ids, datas e o que está feito), a data de hoje e os outros blueprints do workspace. Com acao_id: aquela ação inteira (instruções, descrições dos planos, protótipos). Leia a ação inteira antes de executá-la ou de reescrever suas instruções.",
+  "description": "Sem acao_id: a estrutura do blueprint (ações, planos e checkpoints com ids, datas e o que está feito), a data de hoje e os outros blueprints do workspace. Com acao_id: aquela ação inteira (instruções, descrições dos planos, protótipos). Leia a ação inteira antes de executá-la ou de reescrever suas instruções. Após aviso informativo do monitor ou canal, consulte aqui o estado persistido.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -52,7 +52,7 @@
  },
  {
   "name": "propor_blueprint",
-  "description": "Envia a proposta ao app para o usuário revisar e aplicar (nada muda antes disso). Inclua só as ações novas ou alteradas. Ação nova vai completa; ação existente vai com o id e só o que muda (o que não vier fica como está, nada é apagado). Mover: cite o id do plano/checkpoint na ação de destino. Apagar: lista `remover`, que o usuário aprova na tela. Sem blueprint_id, é um blueprint novo: inclua blueprint: {nome, descricao}. Devolve os erros de formato para você corrigir.",
+  "description": "Envia a proposta ao app para o usuário revisar e aplicar (nada muda antes disso). Cada envio entra na FILA do blueprint com um número e nunca apaga outra proposta; a resposta traz o número e os ids provisórios (+a1, +a1.p2…). Para corrigir uma proposta que ainda está na fila, use `ajustar: <número>` e mande só o que muda (ação, plano ou checkpoint pelo id provisório); `substituir: <número>` troca a proposta inteira. Inclua só as ações novas ou alteradas. Ação nova vai completa; ação existente vai com o id e só o que muda (o que não vier fica como está, nada é apagado). Mover: cite o id do plano/checkpoint na ação de destino. Apagar: lista `remover`, que o usuário aprova na tela. Sem blueprint_id, é um blueprint novo: inclua blueprint: {nome, descricao}. Devolve os erros de formato para você corrigir. Blueprint novo inclui a pasta da sessão; o vínculo só é criado quando o usuário aplica no app.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -68,6 +68,14 @@
      "type": "string",
      "description": "Resumo curto do que propõe e do que supôs."
     },
+    "ajustar": {
+     "type": "integer",
+     "description": "Número de uma proposta que ainda está na fila: só o que vier muda nela (nada some por omissão) e a proposta inteira é revalidada. Ação, plano e checkpoint novos dela se citam pelo id provisório (+a1, +a1.p2, +a1.c1) devolvido ao propor."
+    },
+    "substituir": {
+     "type": "integer",
+     "description": "Número de uma proposta da fila a trocar por esta, inteira (só quando o usuário quiser refazê-la do zero)."
+    },
     "blueprint": {
      "type": "object",
      "properties": {
@@ -76,9 +84,21 @@
       },
       "descricao": {
        "type": "string"
+      },
+      "projetos": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "nome": {
+          "type": "string"
+         }
+        }
+       },
+       "description": "Projetos (grupos de ações) que devem existir neste blueprint; um nome que já existe é o mesmo projeto. Vale também em blueprint existente."
       }
      },
-     "description": "Só em blueprint novo."
+     "description": "nome e descricao só em blueprint novo; projetos vale em qualquer blueprint."
     },
     "acoes": {
      "type": "array",
@@ -111,6 +131,10 @@
        "observacao": {
         "type": "string",
         "description": "INSTRUÇÕES DA AÇÃO: o que fazer, o roteiro completo desta ação (objetivo, entrega, passo a passo, dependências, decisões, riscos, critério de pronto). Pode ser longo (até 20000 caracteres)."
+       },
+       "projeto": {
+        "type": "string",
+        "description": "Projeto da ação: id ou nome de um projeto do blueprint (ou de blueprint.projetos desta proposta). Vazio ou \"Geral\" tira a ação do projeto; sem o campo ela fica onde está."
        },
        "planos": {
         "type": "array",
@@ -159,6 +183,25 @@
         }
        }
       }
+     }
+    },
+    "mover": {
+     "type": "array",
+     "description": "Leva ações inteiras de OUTRO blueprint do mesmo workspace para este (com planos, checkpoints, feito e protótipos). O usuário revisa na tela; use para unir blueprints.",
+     "items": {
+      "type": "object",
+      "properties": {
+       "acao_id": {
+        "type": "string",
+        "description": "id da ação em outro blueprint (de ler_blueprint)."
+       },
+       "motivo": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "acao_id"
+      ]
      }
     },
     "remover": {
@@ -515,6 +558,27 @@
    },
    "required": [
     "texto"
+   ]
+  }
+ },
+ {
+  "name": "vincular_pasta",
+  "description": "Liga a pasta em que você está a um blueprint. Depois disso, toda sessão do Claude aberta nessa pasta (ou numa subpasta) já começa sabendo o blueprint e a ação atual, e as edições viram progresso. Use quando o contexto da sessão disser que a pasta não está ligada, e só depois de o usuário confirmar qual blueprint é. Ligar de novo troca o blueprint.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id do blueprint (de listar_blueprints)."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id"
    ]
   }
  }

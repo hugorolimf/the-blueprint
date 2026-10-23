@@ -1,0 +1,4 @@
+/* Projetos dentro do blueprint: as linhas do Editar (nome e descrição). O cabeçalho da seção na folha é o de blueprint (cabecalho.js). */
+.projeto-ed{display:flex;gap:10px;align-items:center;margin-bottom:9px}
+.projeto-ed input[data-c="nome"]{flex:0 1 38%;min-width:0}.projeto-ed input[data-c="descricao"]{flex:1;min-width:0}
+.projeto-ed small{color:var(--mid);white-space:nowrap}

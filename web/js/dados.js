@@ -18,6 +18,13 @@ const acoesDe = (p) =>
     .map((f, idx) => ({ ...f, ...efetiva(f), idx, a: dia(f.inicio), b: dia(f.fim) }))
     .filter((f) => f.a === f.a && f.b === f.b)
     .map((f) => ({ ...f, b: Math.max(f.a, f.b) }));
+const soPendentes = {}; // por blueprint: filtro "Pendentes" ligado
+const soAndamento = {}; // por blueprint: filtro "Em andamento" ligado: só as ações em que há robô trabalhando
+// o que a folha desenha: com o filtro ligado, só as ações não concluídas e, nelas, só planos e checkpoints pendentes (o progresso continua calculado sobre tudo)
+const acoesVisiveis = (p) => {
+  const comRobo = soAndamento[p.id] ? new Set(agentesDoBlueprint(p.id).map((a) => a.acaoId)) : null, base = comRobo ? acoesDe(p).filter((f) => comRobo.has(f.id)) : acoesDe(p);
+  return soPendentes[p.id] ? base.filter((f) => f.status !== "concluido").map((f) => ({ ...f, planos: f.planos.filter((t) => !t.feito), checkpoints: f.checkpoints.filter((m) => !m.feito) })) : base;
+};
 const projConcluido = (p) => p.acoes.length > 0 && p.acoes.every((f) => efetiva(f).status === "concluido");
 const casa = (p, q) => norm(p.nome).includes(q) || norm(p.descricao).includes(q) || p.acoes.some((f) => norm(f.nome).includes(q));
 const resumo = (fs) => {
@@ -27,6 +34,7 @@ const resumo = (fs) => {
   return {
     geral: todas ? 1 : Math.min(media, 0.99), // só chega a 100% quando toda etapa está concluída
     concl: fs.filter((f) => f.status === "concluido").length,
+    horas: fs.reduce((t, f) => t + f.planos.reduce((s, x) => s + (Number(x.horas) || 0), 0), 0), // tempo de desenvolvimento do blueprint: soma das horas dos planos
     futuro: fs.length > 0 && fs.every((f) => f.status === "planejado"),
   };
 };
@@ -49,21 +57,26 @@ function janelaPeriodo(acoes, dataHoje, periodo) {
 function selecionarMes(mes) {
   if (!tela || !mesValido(mes)) return;
   const atual = periodos[tela];
-  periodos[tela] = atual?.aguardando
-    ? { inicio: [atual.inicio, mes].sort()[0], fim: [atual.inicio, mes].sort()[1] }
-    : { inicio: mes, fim: mes, aguardando: true, anterior: janelasRenderizadas[tela] };
-  render();
+  const muda = () => {
+    periodos[tela] = atual?.aguardando
+      ? { inicio: [atual.inicio, mes].sort()[0], fim: [atual.inicio, mes].sort()[1] }
+      : { inicio: mes, fim: mes, aguardando: true, anterior: janelasRenderizadas[tela] };
+  };
+  if (atual?.aguardando) trocarFiltro(muda); // o período mudou de fato (2º clique): as barras mudam de posição e largura, então a folha se recolhe e se escreve de novo
+  else { muda(); render(); } // 1º clique só marca o mês inicial: a janela não muda, sem animação
 }
-$("periodo-pendentes").onclick = () => {
-  const p = D.blueprints.find((p) => p.id === tela);
-  const acoes = p ? acoesDe(p).filter((f) => f.status !== "concluido") : [];
-  if (!acoes.length) return;
-  const janela = janelaPeriodo(acoes, hoje);
-  periodos[tela] = { inicio: mesIso(janela.inicio), fim: mesIso(janela.fim) };
-  render();
-};
-$("periodo-auto").onclick = () => { delete periodos[tela]; render(); };
-$("periodo-hoje").onclick = () => { const mes = local(new Date()).slice(0, 7); periodos[tela] = { inicio: mes, fim: mes, meses: [mes] }; render(); };
+// trocar o filtro: a folha se recolhe (inverso da abertura) e, só depois, o novo filtro é aplicado; a folha se escreve de novo e o que ficou desliza para o novo lugar
+let trocandoFiltro = false;
+async function trocarFiltro(muda) {
+  if (trocandoFiltro || !tela) return;
+  trocandoFiltro = true;
+  const antes = posicoesDaFolha();
+  try { await recolherFolha(); } finally { muda(); render(); trocandoFiltro = false; desenrolar(); organizarFolha(antes); }
+}
+$("periodo-pendentes").onclick = () => trocarFiltro(() => { soPendentes[tela] = !soPendentes[tela]; delete periodos[tela]; }); // liga/desliga: mostra só o que falta fazer
+$("periodo-andamento").onclick = () => trocarFiltro(() => { soAndamento[tela] = !soAndamento[tela]; delete periodos[tela]; }); // liga/desliga: só o que está em andamento, com os robôs
+$("periodo-auto").onclick = () => trocarFiltro(() => { delete periodos[tela]; delete soPendentes[tela]; delete soAndamento[tela]; }); // "Todo o blueprint" também tira os filtros
+$("periodo-hoje").onclick = () => trocarFiltro(() => { const mes = local(new Date()).slice(0, 7); periodos[tela] = { inicio: mes, fim: mes, meses: [mes] }; });
 
 // distribui itens em linhas sem sobreposição (largura de cada um dada por "ate")
 function linhas(itens, de, ate) {

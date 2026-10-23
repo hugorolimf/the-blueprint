@@ -64,7 +64,7 @@ try {
     ["03-blueprint", `#/p/${blueprint.id}`, async () => {}],
     ["04-planejar", `#/p/${blueprint.id}`, async () => { await js(`document.getElementById("b-ia").click()`); }],
     ["05-como-conectar", `#/p/${blueprint.id}`, async () => { await js(`document.getElementById("b-ia").click()`); await dormir(1500); await js(`document.getElementById("cu-abrir").click()`); }],
-    ["06-editar", `#/p/${blueprint.id}`, async () => { await js(`document.getElementById("b-editar").click()`); }],
+    ["06-editar", `#/p/${blueprint.id}`, async () => { await js(`editar(true)`); }],
     ["07-visor-de-prototipo", `#/p/${blueprint.id}`, async () => { await js(`abertos[${JSON.stringify(blueprint.id)}] = true; render(); abreProtos(${JSON.stringify(blueprint.id)}, ${JSON.stringify(acao.id)})`); }],
   ];
   const fotos = {};

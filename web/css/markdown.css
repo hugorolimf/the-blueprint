@@ -1,0 +1,37 @@
+/* texto em markdown (markdown.js): instruções da ação, legíveis e já abertas com todo o texto */
+.md{font:12.5px/1.65 var(--mono);color:var(--ink);overflow-wrap:anywhere}
+.md>:first-child{margin-top:0}.md>:last-child{margin-bottom:0}
+.md p{margin:0 0 .85em}
+.md .md-rot{color:var(--mid);letter-spacing:.04em}
+.md strong{color:#fff}.md em{color:var(--mid)}
+.md .md-h{margin:1.1em 0 .45em;font-weight:700;letter-spacing:.06em;text-transform:uppercase}.md .md-h1{font-size:15px}.md .md-h2{font-size:13.5px}.md .md-h3,.md .md-h4,.md .md-h5,.md .md-h6{font-size:12px;color:var(--mid)}
+.md ul,.md ol{margin:0 0 .85em;padding-left:1.5em}.md li{margin:.15em 0}.md li.md-n1{margin-left:1.2em}.md li.md-n2{margin-left:2.4em}.md li.md-n3{margin-left:3.6em}
+.md .md-cx{color:var(--mid)}
+.md code{padding:1px 5px;background:#082b5ecc;border:1px solid var(--faint);font-size:.95em}
+.md pre{margin:0 0 .85em;padding:10px 12px;overflow:auto;background:#082b5ecc;border:1px dashed var(--lo);white-space:pre}.md pre code{padding:0;border:0;background:none}
+.md blockquote{margin:0 0 .85em;padding:2px 0 2px 12px;border-left:3px solid var(--lo);color:var(--mid)}
+.md hr{border:0;border-top:1px dashed var(--lo);margin:1em 0}
+.md a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--lo);text-underline-offset:3px}.md a:hover{text-decoration-color:var(--ink)}
+.md .md-vazio{color:var(--mid)}
+/* instruções da ação na proposta: abre lida (visualização) e já inteira; "Editar" troca pelo campo, que cresce com o texto */
+.obs-bloco{display:grid;gap:8px}
+.obs-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.obs-abas{display:flex;gap:6px}.obs-abas .btn[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.obs-ver{padding:14px 16px;border:1px dashed var(--lo);background:#082b5e66}
+
+.obs-ver[hidden],.obs-ed[hidden]{display:none}
+/* a folha pequena da instrução: mais larga, abre lida e inteira; Editar/Salvar alternam */
+.nota-folha[data-modo]{width:min(760px,calc(100vw - 32px))}
+.nota-folha[data-modo=ver] [data-nmodo=editar],.nota-folha[data-modo=editar] [data-nmodo=ver]{display:none}
+.nota-folha .corpo.md{white-space:normal;max-height:min(70vh,640px)}
+.nota-folha[data-modo=editar] textarea{height:auto;min-height:160px;max-height:70vh}
+/* cada linha do texto é um bloco com espaço; linha em branco abre um espaço maior; "Passo a passo: 1) … 2) …" vira lista numerada */
+.md p{margin:0 0 .7em}.md p.md-sep{margin-top:1.2em}
+.md ol.md-passos{margin:-.2em 0 .9em;padding-left:1.7em}.md ol.md-passos li{margin:.3em 0;padding-left:.2em}.md ol.md-passos li::marker{color:var(--mid)}
+/* campo + prévia ao vivo (mdEdicao): lado a lado quando cabe, empilhados na folha pequena e em janela estreita */
+.obs-edicao{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}.obs-edicao[hidden]{display:none}
+.obs-edicao textarea{max-height:70vh;overflow:auto;resize:vertical;box-sizing:border-box}
+.obs-previa-bloco{display:grid;gap:6px;min-width:0}.obs-rot{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.obs-previa{padding:14px 16px;border:1px dashed var(--lo);background:#082b5e66;max-height:70vh;overflow:auto;min-height:6em}
+.nota-folha .obs-edicao{grid-template-columns:1fr}
+@media(max-width:1100px){.obs-edicao{grid-template-columns:1fr}}

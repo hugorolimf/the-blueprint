@@ -1,0 +1,35 @@
+/* a folha que se abre (folha.js): aviso do agente e tela Planejar. Papel de blueprint com grade, moldura dupla, cantos em cruz e a marca "em construção" atrás */
+#folha-fundo{position:fixed;inset:0;z-index:44;background:radial-gradient(ellipse at center,#02132e8c,#02132ed9);opacity:0;pointer-events:none;transition:opacity .35s}
+#folha-fundo.on{opacity:1}
+body.aviso-aberto #folha-fundo{z-index:46}/* com um aviso aberto a cortina fica sobre o Planejar e sob o aviso */
+.folha-aviso{background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/10px 10px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/10px 10px,#0c3a78;border:2px solid var(--ink);box-shadow:0 24px 70px #02132ef2,0 0 0 6px #082b5e,0 0 0 7px var(--lo)}
+.fa-marca{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;display:flex;align-items:flex-end;justify-content:flex-end}
+.fa-marca svg{display:block;width:min(560px,92%);height:auto;margin:0 -30px -24px 0;opacity:.3}
+.fa-rolo{position:absolute;left:-10px;right:-10px;top:0;height:18px;z-index:5;pointer-events:none;border-radius:9px;background:linear-gradient(#2a6cc0,#eaf4ff 35%,#9cc4ee 55%,#17539f);box-shadow:0 6px 16px #02132e99}
+/* aviso do agente: no meio da tela */
+.folha-aviso{position:fixed;inset:0;margin:auto;z-index:47;width:min(700px,calc(100vw - 32px));height:fit-content;max-height:min(84vh,720px);display:flex;flex-direction:column;color:var(--ink);font:12px/1.6 var(--mono)}
+.folha-aviso[hidden]{display:none}.folha-aviso.erro{border-color:var(--erro);box-shadow:0 24px 70px #02132ef2,0 0 0 6px #082b5e,0 0 0 7px var(--erro)}
+.folha-aviso::before,.folha-aviso::after{content:"+";position:absolute;font-size:25px;line-height:1;color:var(--mid);pointer-events:none}.folha-aviso::before{left:-9px;top:-14px}.folha-aviso::after{right:-9px;bottom:-14px}
+.folha-aviso>*:not(.fa-marca):not(.fa-rolo){position:relative;z-index:1}
+.folha-aviso header{padding:22px 26px 12px}
+.fa-rot{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--mid)}.folha-aviso.erro .fa-rot{color:var(--erro)}
+.folha-aviso h3{margin:6px 0 0;font-size:19px;letter-spacing:.05em;text-transform:uppercase;overflow-wrap:anywhere}
+.fa-msg{margin:0 26px;padding:14px 16px;min-height:3em;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;border:1px dashed var(--lo);background:#082b5e99;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.fa-msg:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.fa-carimbo{display:grid;grid-template-columns:auto 1fr;margin:14px 26px 0;border:1px solid var(--mid);background:#082b5ecc;font-size:10px}
+.fa-carimbo[hidden]{display:none}
+.fa-carimbo dt,.fa-carimbo dd{margin:0;padding:5px 10px;border-top:1px solid var(--faint)}.fa-carimbo dt:first-of-type,.fa-carimbo dd:first-of-type{border-top:0}
+.fa-carimbo dt{color:var(--mid);letter-spacing:.12em;text-transform:uppercase;border-right:1px solid var(--faint)}.fa-carimbo dd{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.folha-aviso .fa-acoes{display:flex;gap:8px;justify-content:flex-end;padding:14px 26px 20px}.notif-ir[hidden]{display:none}
+/* tela Planejar: abre como a folha, sobre o blueprint (o miolo continua o de #agente-tela) */
+#agente-tela.fa-planejar{inset:3vh 3vw;border:2px solid var(--ink);box-shadow:0 24px 70px #02132ef2,0 0 0 6px #082b5e,0 0 0 7px var(--lo);z-index:45}
+#agente-tela.fa-planejar>*:not(.fa-marca):not(.fa-rolo){position:relative;z-index:1}
+#agente-tela.fa-planejar .fa-marca svg{opacity:.14;margin:0}
+@media(prefers-reduced-motion:reduce){#folha-fundo{transition:none}}
+/* Planejar é só a proposta: sem lista lateral, sem "pronto", sem "Tela cheia" e sem "Como conectar" no topo (o vazio traz o botão); o título cabe numa linha */
+#agente-tela .ed-corpo{grid-template-columns:1fr}
+#agente-tela .ed-lateral,#ag-estado,#ag-tela,#cu-abrir{display:none}
+#agente-tela .ed-topo .tit{flex-direction:row;align-items:baseline;gap:10px}
+#agente-tela .ed-topo .tit span::after{content:" ·"}
+#ag-outras{display:flex;gap:8px;flex-wrap:wrap}#ag-outras:empty{display:none}
+#agente-tela .cl-prop-vazio{display:grid;gap:14px;justify-items:center;align-content:center;text-align:center}

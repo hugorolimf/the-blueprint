@@ -4,6 +4,7 @@ use super::datas::dia_valido;
 use super::itens::{checkpoints, planos, Cenario};
 use super::mover::movidas;
 use super::prazos::{avisos_da_acao, avisos_de_buracos, Nova};
+use super::projetos::{escolher, projetos_novos, Escolha};
 use super::remocoes::remocoes;
 use super::texto::{campo, entre_aspas, lista, ou, str_de, truncar, verdade};
 use serde_json::{json, Map, Value};
@@ -33,11 +34,15 @@ pub fn validar_proposta(entrada: &Value, blueprint: Option<&Value>, hoje: &str) 
         Some(_) if verdade(dados_blueprint.and_then(|p| p.get("nome"))) => avisos.push("`blueprint` é ignorado em blueprint existente (o nome só se define na criação).".into()),
         Some(_) => {}
     }
+    let projetos_novos = projetos_novos(dados_blueprint, blueprint, &mut erros);
+    if !projetos_novos.is_empty() {
+        proposta.insert("projetos".into(), Value::Array(projetos_novos.clone()));
+    }
     proposta.insert("mensagem".into(), Value::String(truncar(&campo(entrada, "mensagem"), 3000)));
     let pedidos = lista(entrada.get("remover"));
     let enviadas = lista(entrada.get("acoes"));
-    if enviadas.is_empty() && pedidos.is_empty() {
-        erros.push("`acoes` é obrigatório: uma lista com ao menos uma ação (ou `remover`).".into());
+    if enviadas.is_empty() && pedidos.is_empty() && lista(entrada.get("mover")).is_empty() {
+        erros.push("`acoes` é obrigatório: uma lista com ao menos uma ação (ou `remover`/`mover`).".into());
         return Validacao { erros, avisos, proposta: None };
     }
     if enviadas.len() > 20 {
@@ -93,11 +98,17 @@ pub fn validar_proposta(entrada: &Value, blueprint: Option<&Value>, hoje: &str) 
         if existente.is_none() {
             novas.push(Nova { inicio: inicio.clone(), fim: fim.clone(), rotulo: rotulo.clone() });
         }
-        acoes_ok.push(json!({
+        let mut acao_ok = json!({
             "id": existente.map(|e| str_de(e, "id")).unwrap_or_default(), "nome": truncar(&nome, 120), "inicio": inicio, "fim": fim,
             "status": if status_ok { status } else { "planejado".to_string() }, "observacao": truncar(&observacao, 20000),
             "planos": planos_ok, "checkpoints": checkpoints_ok,
-        }));
+        });
+        match escolher(f, blueprint, &projetos_novos, &rotulo, &mut erros) { // ausente = a ação fica onde está; null = sai do projeto
+            Escolha::Mantem => {}
+            Escolha::Nenhum => acao_ok["projeto"] = Value::Null,
+            Escolha::Projeto(projeto) => acao_ok["projeto"] = projeto,
+        }
+        acoes_ok.push(acao_ok);
     }
 
     avisos_de_buracos(novas.into_iter().filter(|n| dia_valido(&n.inicio) && dia_valido(&n.fim)).collect(), &mut avisos);

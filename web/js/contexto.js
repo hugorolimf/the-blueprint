@@ -26,6 +26,7 @@ document.addEventListener("contextmenu", (e) => {
   const idBlueprint = linhaBlueprint?.dataset.goto || acao?.dataset.p || plano?.dataset.p || nota?.dataset.obs.split("|")[0] || tela;
 
   if (cartaoWorkspace) add("Abrir workspace", () => { location.hash = cartaoWorkspace.getAttribute("href").slice(1); });
+  if (cartaoWorkspace && cartaoWorkspace.dataset.workspace !== "sm") add("Excluir workspace…", () => excluirWorkspace(cartaoWorkspace.dataset.workspace));
   if (novoWorkspace) add("Criar workspace", () => novoWorkspace.click());
   if (linhaBlueprint) {
     add("Abrir blueprint", () => irBlueprint(linhaBlueprint.dataset.goto));
@@ -62,6 +63,7 @@ document.addEventListener("contextmenu", (e) => {
       if (idBlueprint === tela) add(abertos[idBlueprint] ? "Recolher ações" : "Expandir ações", () => alternar(idBlueprint));
     } else {
       add("Editar dados", () => { editar(true); $("geral").open = true; });
+      add("Novo blueprint", () => editar(true, { novo: true }));
     }
     add(tela ? "Voltar aos blueprints" : "Voltar aos espaços", () => { if (tela) irHome(); else location.hash = ""; });
   } else if (nomeUsuario) {

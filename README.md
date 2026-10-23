@@ -4,22 +4,25 @@ Um roadmap local-first que o **seu agente** (Claude Code, Codex…) lê e atuali
 
 ![Folha de um blueprint](docs/img/blueprint.png)
 
-> **English, in short:** a local-first roadmap app (single Rust binary, SQLite, web UI in a native WebView2 window) that your own coding agent drives over MCP. Workspace → Blueprint → Action → Plan/Checkpoint. Agents *propose* changes (you review and apply them) and *mark* work done only with evidence. The app never launches or talks to agents itself. Windows is the primary target (window + tray + installer); `blueprint serve` runs the same app as a plain local web server.
+> **English, in short:** a local-first roadmap app (single Rust binary, SQLite, web UI in a native WebView2 window) that your own coding agent drives over MCP. Workspace → Blueprint → Action → Plan/Checkpoint. Agents *propose* changes (you review and apply them) and *mark* work done only with evidence. The app does not manage agent sessions; the explicit `blueprint claude` command starts Claude Code in the current terminal. Windows is the primary target (window + tray + installer); `blueprint serve` runs the same app as a plain local web server.
 
 ## O modelo
 
 ```
 Workspace
-└─ Blueprint            o escopo (era "projeto")
-   └─ Ação              início, fim, status, instruções (era "fase")
-      ├─ Plano          título, descrição, horas estimadas, feito (era "tarefa")
-      └─ Checkpoint     nome, data, feito, evidência (era "marco")
+└─ Blueprint            o escopo
+   └─ Projeto           agrupa ações dentro do blueprint (opcional; sem projeto, a ação fica em "Geral")
+      └─ Ação           início, fim, status, instruções (era "fase")
+         ├─ Plano       título, descrição, horas estimadas, feito (era "tarefa")
+         └─ Checkpoint  nome, data, feito, evidência (era "marco")
 ```
+
+Na folha, cada projeto é uma seção numerada (01, 02…) com o cabeçalho de um blueprint e as ações dele abaixo (nasce fechada); as ações são numeradas por projeto (02.3 = projeto 2, ação 3).
 
 - A porcentagem de cada ação e blueprint vem só dos planos e checkpoints marcados.
 - **Prazos no ritmo da IA:** plano de 0,5 a 4 h, ação de 1 a 3 dias; o validador avisa de prazo frouxo, apertado ou longo demais, e o app mede o tempo real de cada plano.
 - Tudo o que o agente envia é **proposta**: nada muda nos seus dados até você aplicar na tela **✦ Planejar**. Concluir um plano exige **evidência** (comando ou teste rodado e o resultado), que vira comentário do plano.
-- O app **não abre, não conversa e não executa agentes**. Ele só mostra o que o seu agente informa (painel de agentes e robô na folha).
+- O app não manda trabalho a ninguém por conta própria: **você** inicia uma ação, ou digitando `blueprint claude`, ou pelo botão **Iniciar com o Claude** na folha da ação, que pede confirmação (gasta tokens), abre um terminal novo na pasta do blueprint com o Claude Code e o prompt da ação como argumento da sessão nova (nunca por monitor ou canal, e nada vai para uma sessão já aberta). Fora isso o app só mostra o que os agentes informam: o Claude na folha (um por agente e subagente, no plano em que trabalha; o concluído fica até você clicar e ler a mensagem) e o Claude esperando na próxima ação.
 
 ## Instalar
 
@@ -39,18 +42,44 @@ cargo build --release
 
 Variáveis do `serve`: `HOST` (padrão 127.0.0.1), `PORT` (3000), `BLUEPRINT_DB` (banco), `DADOS_ARQ` (JSON importado na primeira execução com o banco vazio), `PROTOTIPOS_DIR`, `BLUEPRINT_ASSETS_DIR` (serve `web/` direto da pasta, sem recompilar) e `MCP_REDE=1` (veja [SECURITY.md](SECURITY.md) antes de usar).
 
-Comandos: `blueprint` (janela), `blueprint serve`, `blueprint --mcp` (MCP por stdio), `blueprint importar <json> <banco>`, `blueprint exportar <banco> <json>` e `blueprint registrar [--remover]` (liga ou desliga o MCP no Claude Code e no Codex).
+Comandos: `blueprint` (janela), `blueprint serve`, `blueprint --mcp` (MCP por stdio), `blueprint claude [args]` (abre uma sessão Claude com o plugin e a status line; ativa o agente quando a pasta está ligada), `blueprint importar <json> <banco>`, `blueprint exportar <banco> <json>`, `blueprint registrar [--remover]` (instala ou remove o plugin no Claude Code e o MCP no Codex), `blueprint registrar --status-line [--remover]` (status line global opcional) e `blueprint hook sessao|statusline|status|statusline-config` (usados pelo plugin; veja abaixo).
 
-## Conectar o seu agente (MCP)
+## Claude Code: o plugin do Blueprint
 
-**Com o instalador isso já vem feito:** ele liga o MCP `blueprint` no Claude Code e no Codex que achar no PATH (para o seu usuário, em qualquer pasta) e a desinstalação desliga; `blueprint registrar` repete o passo à mão. Sem o instalador, com o app aberto (ou `blueprint serve` rodando):
+**Com o instalador isso já vem feito**, e `blueprint registrar` repete o passo à mão. Ele instala no Claude Code, para o seu usuário e em qualquer pasta, o plugin `blueprint@blueprint-local`:
+
+- o **MCP** `blueprint` (as ferramentas da tabela abaixo; no Claude elas aparecem como `plugin:blueprint:blueprint`);
+- a **skill** `blueprint-planejamento` (o guia de planejar e executar, que o Claude carrega sozinho) e o **agente** `blueprint` (peça com `claude --agent blueprint:blueprint`; não vira o padrão das suas sessões);
+- **hooks**: ao abrir uma sessão, o Claude já sabe o blueprint da pasta e a ação atual; a cada edição de arquivo, e quando um subagente começa ou termina, o Claude na folha acompanha no app (só indicador: nada é marcado como concluído sozinho);
+- o comando **`/blueprint:status`**: o estado do blueprint da pasta (ação atual, planos e próximo checkpoint).
+
+**Pasta do projeto:** um blueprint novo proposto pelo agente liga a pasta da sessão quando você aplica. Numa pasta sem vínculo, o app oferece a escolha do blueprint; basta selecionar. Em **Editar → Dados do blueprint → Pasta do projeto** você vê, troca, adiciona e remove os vínculos, sem gravar arquivos na pasta.
+
+**Status line:** `blueprint claude` ativa só nessa sessão. Para todas as sessões, use `blueprint registrar --status-line` (opcional e desmarcado no instalador); `blueprint registrar --status-line --remover` restaura a anterior. A instalação guarda `settings.json.bak`, preserva as demais opções e repetições não duplicam a integração. Se já houver um comando, o wrapper executa os dois com o mesmo JSON, conservando sua saída; um pipe simples perderia a entrada da status line. Configura `~/.claude` e também `CLAUDE_CONFIG_DIR` quando definido. Fora das pastas ligadas o Blueprint não imprime nada.
+
+Para testar sem mexer na sua configuração: `node scripts/testar-plugin-claude.mjs <caminho do blueprint.exe>` instala e remove o plugin com pastas temporárias.
+
+**Terminal e avisos:** `blueprint claude` também carrega a marca do app (painel em terminais largos, faixa acima do prompt nos estreitos; `/blueprint-marca` reabre) e o monitor `blueprint watch`, que recebe propostas aplicadas e checkpoints marcados após o app salvar. Os avisos usam texto fixo, filtro pela pasta e limite de 20 por minuto. Veja [o mod](docs/mod-terminal.md) e [os testes e limites do monitor](docs/monitor-e-channels.md).
+
+| | Monitor (padrão) | Channels (opcional) |
+| --- | --- | --- |
+| Ativação | Plugin, sem flag de canal | `BLUEPRINT_CHANNEL=1` e flag de desenvolvimento |
+| Confirmação | Confiança normal do plugin | Confirmação em cada sessão |
+| Estabilidade | API experimental de monitors | Research preview |
+| Custo | Contexto quando recebe aviso | Contexto quando recebe aviso; substitui o monitor |
+
+Para experimentar com o plugin instalado no PowerShell: `$env:BLUEPRINT_CHANNEL='1'` e `blueprint claude --dangerously-load-development-channels plugin:blueprint@blueprint-local`. Use `Remove-Item Env:BLUEPRINT_CHANNEL` antes da próxima sessão normal. Para MCP registrado diretamente, o identificador é `server:blueprint`. O canal é informativo, sem ferramentas de resposta nem aprovação de permissões. [Comparação e validação real](docs/monitor-e-channels.md).
+
+## Conectar outros agentes (MCP)
+
+No **Codex** (e no Claude Code sem o plugin), ligue só o MCP. O instalador e o `blueprint registrar` já fazem isso no Codex que acharem no PATH. À mão, com o app aberto (ou `blueprint serve` rodando):
 
 ```
 claude mcp add blueprint -- <caminho>\blueprint.exe --mcp
 codex mcp add blueprint -- <caminho>\blueprint.exe --mcp
 ```
 
-Se o app não estiver em `http://127.0.0.1:3000`, passe `BLUEPRINT_URL` (`claude mcp add blueprint -e BLUEPRINT_URL=http://127.0.0.1:3917 -- …`). A tela **✦ Planejar → Como conectar** mostra o comando exato. Depois, grave na pasta do seu projeto, no `CLAUDE.md` ou `AGENTS.md`, a linha `Blueprint: workspace_id `…`, blueprint_id `…` (MCP `blueprint`).` (o agente descobre os ids com `listar_blueprints`).
+Se o app não estiver em `http://127.0.0.1:3000`, passe `BLUEPRINT_URL` (`claude mcp add blueprint -e BLUEPRINT_URL=http://127.0.0.1:3917 -- …`). A tela **✦ Planejar → Como conectar** mostra o comando exato. Sem o plugin do Claude Code, o agente não sabe sozinho de qual blueprint é a pasta: grave no `CLAUDE.md` ou `AGENTS.md` dela a linha `Blueprint: workspace_id `…`, blueprint_id `…` (MCP `blueprint`).` (o agente descobre os ids com `listar_blueprints`).
 
 Ferramentas:
 
@@ -60,10 +89,11 @@ Ferramentas:
 | `guia_de_planejamento` | o guia por partes (`planejar`, `editar`, `executar`, `prototipos`) |
 | `ler_blueprint` | só a estrutura, ou uma ação inteira (`acao_id`) |
 | `propor_blueprint` | propõe ações, planos e checkpoints (parciais completam o que existe; remover é pedido que você aprova) |
-| `registrar_progresso`, `reportar_bloqueio` | o que está fazendo agora; aparece no painel de agentes e no robô da folha |
+| `registrar_progresso`, `reportar_bloqueio` | o que está fazendo agora; aparece na folha como o Claude (uma figura por agente, no plano em que ele trabalha) |
 | `marcar_concluido`, `marcar_nao_concluido` | plano concluído (com evidência) ou não |
 | `marcar_checkpoint_feito`, `marcar_checkpoint_nao_feito` | idem para checkpoints |
 | `anexar_prototipo` | protótipo HTML autocontido de uma ação, visto num visor isolado |
+| `vincular_pasta` | liga a pasta da sessão a um blueprint (o app guarda o vínculo) |
 
 O guia que o agente lê está em [`skills/blueprint-planejamento/`](skills/blueprint-planejamento/SKILL.md).
 

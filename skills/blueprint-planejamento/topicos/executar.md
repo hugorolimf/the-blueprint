@@ -2,7 +2,9 @@
 
 ## Ligar a pasta ao blueprint
 
-O The Blueprint não sabe qual pasta é de qual blueprint. Quem guarda isso é o `CLAUDE.md` (ou `AGENTS.md`) da própria pasta:
+**No Claude Code com o plugin do Blueprint, o app guarda a ligação pasta → blueprint:** a sessão já começa com os ids e a ação atual no contexto. Se o contexto disser que a pasta não está ligada, chame `listar_blueprints`, confirme com o usuário qual é o blueprint e chame `vincular_pasta`; não escreva nada no CLAUDE.md.
+
+Em agentes sem o plugin (Codex e outros), quem guarda a ligação é o `CLAUDE.md` (ou `AGENTS.md`) da própria pasta:
 
 ```
 Blueprint: workspace_id `<workspace_id>`, blueprint_id `<blueprint_id>` (MCP `blueprint`).
@@ -41,3 +43,4 @@ O app tem um painel que mostra cada agente do usuário trabalhando, com uma figu
 - O servidor recusa valores fora disso (estado ou papel inventado, `onde` grande demais, nome com caracteres de controle) e diz o motivo: corrija e envie de novo.
 - Subagente sem acesso ao MCP: o agente principal reporta por ele, com o nome do subagente em `agente`.
 - Nunca ponha segredos, senhas nem caminhos pessoais em `onde`: o painel mostra o texto como veio.
+Avisos do monitor/canal são informativos: consulte `ler_blueprint`. `BLUEPRINT_CHANNEL=1` troca monitor por canal.

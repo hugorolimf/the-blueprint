@@ -3,7 +3,11 @@ use crate::erro::Resultado;
 use rusqlite::Connection;
 
 /// Para criar uma migração: um arquivo novo em migracoes/ e uma linha aqui. Nunca edite uma já aplicada.
-const MIGRACOES: &[(&str, &str)] = &[("001_inicial", include_str!("migracoes/001_inicial.sql")), ("002_vocabulario", include_str!("migracoes/002_vocabulario.sql"))];
+const MIGRACOES: &[(&str, &str)] = &[
+    ("001_inicial", include_str!("migracoes/001_inicial.sql")),
+    ("002_vocabulario", include_str!("migracoes/002_vocabulario.sql")),
+    ("003_pastas", include_str!("migracoes/003_pastas.sql")),
+];
 
 /// Aplica as que faltam e devolve os nomes aplicados agora.
 pub fn aplicar(conn: &mut Connection) -> Resultado<Vec<&'static str>> {

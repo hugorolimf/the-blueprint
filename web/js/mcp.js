@@ -26,10 +26,15 @@ function mcpProposta(i) {
   const p = i.blueprintId ? D.blueprints.find((x) => x.id === i.blueprintId) : null;
   if (i.blueprintId && !p) return false;
   const c = conv(p ? p.id : NOVO);
-  c.proposta = normalizaProposta(i.proposta.acoes, p || { acoes: [] });
-  c.remover = (i.proposta.remover || []).map((r) => ({ ...r, inc: false })); // apagar nunca vem marcado: o usuário aprova item a item
-  c.dadosBlueprint = p ? null : { nome: i.proposta.blueprint.nome, descricao: i.proposta.blueprint.descricao };
-  c.mensagem = i.proposta.mensagem || "";
+  filaRecebe(c, i, { // a proposta entra na fila do blueprint (fila-propostas.js); a aberta é a que o usuário está revisando
+    proposta: normalizaProposta(i.proposta.acoes, p || { acoes: [] }),
+    remover: (i.proposta.remover || []).map((r) => ({ ...r, inc: false })), // apagar nunca vem marcado: o usuário aprova item a item
+    projetosNovos: (i.proposta.projetos || []).filter((x) => !x.id).map((x) => x.nome), // projetos que a proposta cria (projetos-editor.js)
+    mover: (i.proposta.mover || []).map((r) => ({ ...r, inc: true })), // mover só leva a ação inteira, sem apagar nada: vem marcado, e o usuário desmarca o que não quer
+    dadosBlueprint: p ? null : { nome: i.proposta.blueprint.nome, descricao: i.proposta.blueprint.descricao },
+    pasta: p ? null : i.pasta || null,
+    mensagem: i.proposta.mensagem || "",
+  });
   c.emblema = c.lote = null;
   return true;
 }
@@ -41,10 +46,13 @@ async function mcpAplica(itens) {
   if (!ws || !carregado) return; // sem workspace aberto, a fila espera: nada é aplicado a outro workspace
   const meus = itens.filter((i) => i.workspaceId === ws);
   let muda = false, viu = false;
+  const soltar = new Set(); // propostas que não servem (blueprint que não existe mais): confirmadas já; as outras ficam na fila do servidor até o usuário aplicar ou descartar (filaConclui)
   const chave = (x) => `${x.id}|${x.em}`; // a fila é da memória do servidor: ao reiniciar, os números voltam a 1, e só o id faria a página ignorar eventos novos
   for (const i of meus.filter((x) => !mcpVistos.has(chave(x)))) {
     mcpVistos.add(chave(i));
+    if (i.tipo === "proposta" && filaJaVista(i)) continue; // a página recarregou e o servidor mandou de novo uma que já está aqui
     viu = true;
+    notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
     agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? "Proposta enviada: revise em ✦ Planejar." : i.texto, em: Date.now() };
     const nomeProj = D.blueprints.find((x) => x.id === i.blueprintId)?.nome;
     if (i.tipo === "progresso" && i.planoId) { // o primeiro aviso de progresso com o plano marca o início do tempo real
@@ -52,7 +60,7 @@ async function mcpAplica(itens) {
       if (t0 && !t0.feito && !t0.agente?.inicioEm) { t0.agente = { ...normalizaAgente(t0.agente || {}), inicioEm: i.em }; muda = true; }
     }
     if (i.tipo === "proposta") {
-      if (!mcpProposta(i)) continue;
+      if (!mcpProposta(i)) { soltar.add(i.id); continue; }
       mcpFeed.push({ tipo: "proposta", texto: `Proposta recebida para ${i.blueprintId ? `“${nomeProj}”` : "um blueprint novo"}: revise ao lado e aplique.` });
       aviso("O seu agente enviou uma proposta: abra ✦ Planejar para revisar.");
       muda = true;
@@ -87,10 +95,11 @@ async function mcpAplica(itens) {
   }
   mcpFeed.splice(0, Math.max(0, mcpFeed.length - 50));
   if (!meus.length) return;
-  if (muda) mudou();
+  if (muda) mudarComSaida(tela);
   else if (viu) render(); // o robô mudou de lugar ou de fala
-  if (!hub.hidden) montaHub();
-  try { await fetch("/api/mcp/fila/ack", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids: meus.map((x) => x.id) }) }); } catch {}
+  if (!hub.hidden && (viu || muda)) montaHub();
+  const ids = meus.filter((x) => !(x.tipo === "proposta" && x.numero != null && !soltar.has(x.id))).map((x) => x.id);
+  if (ids.length) try { await fetch("/api/mcp/fila/ack", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids }) }); } catch {}
 }
 async function mcpConsulta() {
   try {
@@ -99,6 +108,11 @@ async function mcpConsulta() {
     const { itens } = await r.json();
     const voltou = mcpFalhou;
     mcpFalhou = false;
+    for (const i of itens.filter((i) => i.tipo === "pasta-sem-blueprint" && !mcpVistos.has(`${i.id}|${i.em}`))) {
+      await import("/web/js/pastas.js").then((m) => m.avisarPasta(i.cwd));
+      mcpVistos.add(`${i.id}|${i.em}`);
+      await fetch("/api/mcp/fila/ack", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids: [i.id] }) });
+    }
     if (itens.length) await mcpAplica(itens);
     else if (voltou && !hub.hidden) montaMcp();
     if (agenteAgora && Date.now() - agenteAgora.em >= ROBO_VIDA) { agenteAgora = null; render(); }

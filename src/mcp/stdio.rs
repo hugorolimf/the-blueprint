@@ -19,12 +19,12 @@ const REGRA: &str = "Mantenha este blueprint sempre atualizado: planos e mudanç
 
 /// só ao criar blueprint: as instruções do servidor já dizem para manter a linha nas sessões seguintes
 fn vinculo(w: &str) -> String {
-    format!("\nO blueprint novo só ganha blueprint_id quando o usuário aplicar: depois, chame listar_blueprints, ache-o e grave no CLAUDE.md (ou AGENTS.md) da pasta, se ainda não estiver lá:\nBlueprint: workspace_id `{w}`, blueprint_id `<id>` (MCP `blueprint`).\n{REGRA}")
+    format!("\nAo aplicar o blueprint novo, o app liga a pasta desta sessão automaticamente. Workspace: {w}. {REGRA}")
 }
 
 type R = Result<String, String>;
 
-fn base() -> String {
+pub(crate) fn base() -> String {
     std::env::var("BLUEPRINT_URL").ok().filter(|u| !u.is_empty()).unwrap_or_else(|| "http://127.0.0.1:3000".into()).trim_end_matches('/').to_string()
 }
 
@@ -103,6 +103,17 @@ fn sem_cabecalho(t: &str) -> String {
     }
 }
 
+/// Os ids provisórios da proposta, em poucas linhas: ação (id real ou "+aN") e os planos e checkpoints novos dela.
+pub(super) fn ids_provisorios(ids: &Value) -> String {
+    let item = |x: &Value, k: &str| format!("{} {:?}", x["id"].as_str().unwrap_or(""), x[k].as_str().unwrap_or(""));
+    let lista = |a: &Value, chave: &str, nome: &str| -> String { a[chave].as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|x| item(x, nome)).collect::<Vec<_>>().join(", ") };
+    let linhas: Vec<String> = ids.as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|a| {
+        let (planos, cps) = (lista(a, "planos", "texto"), lista(a, "checkpoints", "nome"));
+        format!("- ação {}{}{}", item(a, "nome"), if planos.is_empty() { String::new() } else { format!("; planos: {planos}") }, if cps.is_empty() { String::new() } else { format!("; checkpoints: {cps}") })
+    }).collect();
+    format!("Ids provisórios (valem enquanto a proposta está na fila):\n{}", linhas.join("\n"))
+}
+
 fn chamar(nome: &str, a: &Value) -> R {
     match nome {
         "listar_blueprints" => {
@@ -133,16 +144,28 @@ fn chamar(nome: &str, a: &Value) -> R {
         }
         "propor_blueprint" => {
             let mut corpo = alvo(a);
-            for (de, para) in [("mensagem", "mensagem"), ("blueprint", "blueprint"), ("acoes", "acoes"), ("remover", "remover")] {
+            for (de, para) in [("mensagem", "mensagem"), ("blueprint", "blueprint"), ("acoes", "acoes"), ("remover", "remover"), ("mover", "mover"), ("ajustar", "ajustar"), ("substituir", "substituir")] {
                 if let Some(v) = a.get(de) {
                     corpo.insert(para.into(), v.clone());
+                }
+            }
+            if opcional(a, "blueprint_id").is_empty() {
+                if let Ok(pasta) = std::env::current_dir() {
+                    corpo.insert("pasta".into(), json!(pasta.display().to_string()));
                 }
             }
             let r = servidor("proposta", "POST", Some(&Value::Object(corpo)))?;
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
             let aviso = if avisos.is_empty() { String::new() } else { format!("\nAvisos (não impedem o envio, mas vale ajustar):\n- {}", avisos.join("\n- ")) };
             let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
-            Ok(format!("Proposta enviada ao app para o usuário revisar e aplicar.{aviso}\nSe ele pedir mudanças, envie de novo só o que muda.{ligar}"))
+            Ok(format!("Proposta nº {} na fila do app, para o usuário revisar e aplicar (uma de cada vez; as outras da fila não foram mexidas).{aviso}\n{}\nSe ele pedir mudanças, envie `ajustar: {}` só com o que muda (a ação, o plano ou o checkpoint pelo id acima); `substituir: {}` troca a proposta inteira.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
+        }
+        "vincular_pasta" => {
+            // o servidor MCP roda na pasta da sessão do agente: é ela que fica ligada
+            let pasta = std::env::current_dir().map_err(|e| format!("Não sei em que pasta estou: {e}"))?;
+            let corpo = com(alvo(a), &[("cwd", json!(pasta.display().to_string()))]);
+            servidor("pasta/vincular", "POST", Some(&Value::Object(corpo)))?;
+            Ok(format!("Pasta {} ligada ao blueprint. As próximas sessões nela já começam com o blueprint e a ação atual.", pasta.display()))
         }
         "anexar_prototipo" => {
             let corpo = com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("titulo", json!(texto(a, "titulo")?)), ("html", json!(texto(a, "html")?)), ("prototipoId", json!(opcional(a, "prototipo_id")))]);
@@ -197,7 +220,7 @@ pub fn tratar(msg: &Value) -> Option<Value> {
         "initialize" => {
             let pedida = params["protocolVersion"].as_str().unwrap_or("");
             let versao = VERSOES.iter().find(|v| **v == pedida).unwrap_or(&VERSOES[0]);
-            resposta(id, json!({"result": {"protocolVersion": versao, "capabilities": {"tools": {}}, "serverInfo": {"name": "blueprint", "version": "2.0.0"}, "instructions": INSTRUCOES}}))
+            resposta(id, json!({"result": {"protocolVersion": versao, "capabilities": {"tools": {}, "experimental": {"claude/channel": {}}}, "serverInfo": {"name": "blueprint", "version": "2.0.0"}, "instructions": INSTRUCOES}}))
         }
         "ping" => resposta(id, json!({"result": {}})),
         "tools/list" => {
@@ -223,12 +246,23 @@ pub fn tratar(msg: &Value) -> Option<Value> {
 /// Lê mensagens de stdin (uma por linha) até o agente fechar a conversa.
 pub fn executar() -> i32 {
     let saida = std::io::stdout();
+    let mut canal_iniciado = false;
     for linha in std::io::stdin().lock().lines().map_while(Result::ok) {
         if linha.trim().is_empty() {
             continue;
         }
         let r = match serde_json::from_str::<Value>(&linha) {
-            Ok(msg) => tratar(&msg),
+            Ok(msg) => {
+                if !canal_iniciado && msg["method"] == "notifications/initialized" && std::env::var("BLUEPRINT_CHANNEL").as_deref() == Ok("1") {
+                    canal_iniciado = true;
+                    std::thread::spawn(|| crate::watch::observar(|texto| {
+                        let mut saida = std::io::stdout().lock();
+                        writeln!(saida, "{}", notificacao_canal(texto))?;
+                        saida.flush()
+                    }));
+                }
+                tratar(&msg)
+            },
             Err(_) => Some(json!({"jsonrpc": "2.0", "id": null, "error": {"code": -32700, "message": "JSON inválido"}})),
         };
         if let Some(r) = r {
@@ -239,4 +273,8 @@ pub fn executar() -> i32 {
         }
     }
     0
+}
+
+pub(super) fn notificacao_canal(texto: &str) -> Value {
+    json!({"jsonrpc":"2.0", "method":"notifications/claude/channel", "params":{"content":texto}})
 }

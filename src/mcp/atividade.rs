@@ -1,9 +1,10 @@
 //! Quem está trabalhando agora: a presença dos agentes do usuário (Claude Code, Codex e seus subagentes), só em memória.
-//! É presença, não histórico: some ao reiniciar e cada agente expira sozinho sem sinal (o histórico fica nos comentários do plano).
+//! É presença, não histórico: some ao reiniciar (o histórico fica nos comentários do plano). O agente NÃO sai por falta de sinal: a página o põe em
+//! repouso (parado no cabeçalho do blueprint) depois de `VIDA_MS` e ele só deixa a lista quando o limite de `MAX_AGENTES` o substitui.
 //! O app não abre, não conversa e não executa agentes: isto só guarda o que eles mesmos reportam pelo MCP.
 use serde_json::{Map, Value};
 
-/// Sem sinal por tanto tempo, o agente sai da lista.
+/// Sem sinal por tanto tempo, a página considera o agente em repouso (ele continua na lista).
 pub const VIDA_MS: i64 = 10 * 60 * 1000;
 /// Regra do limite: com a lista cheia, o agente novo substitui o que está há mais tempo sem sinal.
 pub const MAX_AGENTES: usize = 32;
@@ -29,7 +30,6 @@ impl Atividade {
     /// Anota o aviso do agente `nome`. O que o aviso trouxe (papel, estado, onde, percentual) substitui o anterior; o que não trouxe fica
     /// como estava, e os campos do plano sempre refletem o último aviso.
     pub fn registrar(&mut self, agora_ms: i64, nome: &str, mut novos: Map<String, Value>) {
-        self.registros.retain(|r| agora_ms - r.em_ms < VIDA_MS);
         self.seq += 1;
         for c in DA_PLANO {
             novos.entry(c).or_insert(Value::Null);
@@ -48,11 +48,25 @@ impl Atividade {
         self.registros.push(Registro { nome: nome.to_string(), dados: novos, em_ms: agora_ms, seq: self.seq });
     }
 
-    /// Os agentes ativos em `agora_ms`, do mais recente ao mais antigo, cada um com `agente` e `em` (ISO).
-    pub fn lista(&self, agora_ms: i64) -> Vec<Value> {
-        let mut vivos: Vec<&Registro> = self.registros.iter().filter(|r| agora_ms - r.em_ms < VIDA_MS).collect();
-        vivos.sort_by_key(|r| std::cmp::Reverse((r.em_ms, r.seq)));
-        vivos
+    /// Um plano foi marcado como concluído (a ferramenta não diz quem é o agente): quem avisou por último que trabalhava nele passa a `concluido`,
+    /// com a evidência como mensagem. Devolve se achou alguém.
+    pub fn concluir_plano(&mut self, agora_ms: i64, blueprint_id: &str, plano_id: &str, mensagem: &Value) -> bool {
+        if plano_id.is_empty() {
+            return false;
+        }
+        let Some(r) = self.registros.iter_mut().filter(|r| r.dados.get("blueprintId").and_then(Value::as_str) == Some(blueprint_id) && r.dados.get("planoId").and_then(Value::as_str) == Some(plano_id)).max_by_key(|r| (r.em_ms, r.seq)) else { return false };
+        self.seq += 1;
+        r.dados.insert("estado".into(), Value::String("concluido".into()));
+        r.dados.insert("mensagem".into(), mensagem.clone());
+        (r.em_ms, r.seq) = (agora_ms, self.seq);
+        true
+    }
+
+    /// Os agentes conhecidos, do mais recente ao mais antigo, cada um com `agente` e `em` (ISO).
+    pub fn lista(&self) -> Vec<Value> {
+        let mut todos: Vec<&Registro> = self.registros.iter().collect();
+        todos.sort_by_key(|r| std::cmp::Reverse((r.em_ms, r.seq)));
+        todos
             .into_iter()
             .map(|r| {
                 let mut o = r.dados.clone();
@@ -79,9 +93,9 @@ mod tests {
         a.registrar(1_000, "principal", dados(json!({"estado": "lendo", "papel": "explorador"})));
         a.registrar(2_000, "revisor", dados(json!({"estado": "testando", "papel": "revisor", "onde": ["src/"]})));
         a.registrar(3_000, "construtor", dados(json!({"estado": "escrevendo", "percentual": 40})));
-        let nomes: Vec<String> = a.lista(4_000).iter().map(|x| x["agente"].as_str().unwrap().to_string()).collect();
+        let nomes: Vec<String> = a.lista().iter().map(|x| x["agente"].as_str().unwrap().to_string()).collect();
         assert_eq!(nomes, ["construtor", "revisor", "principal"]);
-        assert_eq!(a.lista(4_000)[1]["onde"], json!(["src/"]));
+        assert_eq!(a.lista()[1]["onde"], json!(["src/"]));
     }
 
     #[test]
@@ -89,7 +103,7 @@ mod tests {
         let mut a = Atividade::default();
         a.registrar(1_000, "ana", dados(json!({"estado": "lendo", "papel": "explorador", "onde": ["a.rs"], "percentual": 10, "planoId": "t1", "plano": "Criar"})));
         a.registrar(2_000, "ana", dados(json!({"mensagem": "só texto"})));
-        let l = a.lista(3_000);
+        let l = a.lista();
         assert_eq!(l.len(), 1);
         assert_eq!((l[0]["estado"].as_str(), l[0]["papel"].as_str(), l[0]["onde"].clone(), l[0]["percentual"].clone()), (Some("lendo"), Some("explorador"), json!(["a.rs"]), json!(10)), "o que não veio fica");
         assert_eq!((l[0]["planoId"].clone(), l[0]["plano"].clone()), (Value::Null, Value::Null), "o plano é a do último aviso");
@@ -100,19 +114,16 @@ mod tests {
     fn quem_so_manda_texto_aparece_trabalhando() {
         let mut a = Atividade::default();
         a.registrar(1_000, "agente", dados(json!({"mensagem": "lendo o código"})));
-        assert_eq!(a.lista(1_000)[0]["estado"], "escrevendo");
+        assert_eq!(a.lista()[0]["estado"], "escrevendo");
     }
 
     #[test]
-    fn sem_sinal_o_agente_expira() {
+    fn sem_sinal_o_agente_continua_na_lista() {
         let mut a = Atividade::default();
         a.registrar(0, "velho", dados(json!({})));
-        a.registrar(VIDA_MS - 1, "novo", dados(json!({})));
-        assert_eq!(a.lista(VIDA_MS - 1).len(), 2);
-        let depois: Vec<String> = a.lista(VIDA_MS).iter().map(|x| x["agente"].as_str().unwrap().to_string()).collect();
-        assert_eq!(depois, ["novo"], "o que passou de VIDA_MS sem sinal sai");
-        a.registrar(VIDA_MS + 5, "outro", dados(json!({})));
-        assert_eq!(a.registros.len(), 2, "o expirado também sai da memória no próximo registro");
+        a.registrar(VIDA_MS + 5, "novo", dados(json!({})));
+        let nomes: Vec<String> = a.lista().iter().map(|x| x["agente"].as_str().unwrap().to_string()).collect();
+        assert_eq!(nomes, ["novo", "velho"], "quem passou de VIDA_MS sem sinal não sai: a página o põe em repouso");
     }
 
     #[test]
@@ -123,15 +134,28 @@ mod tests {
         }
         a.registrar(5_000, "a0", dados(json!({}))); // o a0 ganha sinal novo: o mais antigo passa a ser o a1
         a.registrar(5_001, "novo", dados(json!({})));
-        let nomes: Vec<String> = a.lista(5_002).iter().map(|x| x["agente"].as_str().unwrap().to_string()).collect();
+        let nomes: Vec<String> = a.lista().iter().map(|x| x["agente"].as_str().unwrap().to_string()).collect();
         assert_eq!(nomes.len(), MAX_AGENTES);
         assert!(nomes.contains(&"novo".to_string()) && nomes.contains(&"a0".to_string()) && !nomes.contains(&"a1".to_string()));
+    }
+
+    #[test]
+    fn plano_concluido_deixa_o_agente_dele_concluido_com_a_evidencia() {
+        let mut a = Atividade::default();
+        a.registrar(1_000, "um", dados(json!({"blueprintId": "b", "planoId": "t1", "estado": "escrevendo"})));
+        a.registrar(2_000, "outro", dados(json!({"blueprintId": "b", "planoId": "t2", "estado": "lendo"})));
+        assert!(a.concluir_plano(3_000, "b", "t1", &json!("cargo test passou")));
+        let l = a.lista();
+        let um = l.iter().find(|x| x["agente"] == "um").unwrap();
+        assert_eq!((um["estado"].as_str(), um["mensagem"].as_str()), (Some("concluido"), Some("cargo test passou")));
+        assert_eq!(l.iter().find(|x| x["agente"] == "outro").unwrap()["estado"], "lendo", "quem está em outro plano não muda");
+        assert!(!a.concluir_plano(4_000, "b", "t9", &json!("x")) && !a.concluir_plano(4_000, "b", "", &json!("x")), "sem agente no plano, nada muda");
     }
 
     #[test]
     fn a_hora_sai_em_iso() {
         let mut a = Atividade::default();
         a.registrar(1_000_000_000_123, "x", dados(json!({})));
-        assert_eq!(a.lista(1_000_000_000_123)[0]["em"], "2001-09-09T01:46:40.123Z");
+        assert_eq!(a.lista()[0]["em"], "2001-09-09T01:46:40.123Z");
     }
 }

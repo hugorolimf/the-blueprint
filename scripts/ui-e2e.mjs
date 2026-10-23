@@ -44,7 +44,7 @@ try {
   await dormir(3000);
 
   // 1) Editar: acrescenta um plano à ação e renomeia
-  await js(`document.getElementById("b-editar").click()`);
+  await js(`editar(true)`);
   await dormir(800);
   await js(`document.querySelector('.mn-item[data-sel=${JSON.stringify(acao.id)}]').click()`);
   await dormir(500);
@@ -78,7 +78,7 @@ try {
   console.log("Planejar: a proposta do agente foi aplicada (1 ação, 3 planos, 1 checkpoint)");
 
   // Editar mostra a estimativa de cada plano da ação e aceita editar
-  await js(`document.getElementById("b-editar").click()`);
+  await js(`editar(true)`);
   await dormir(800);
   await js(`document.querySelector('.mn-item[data-sel=${JSON.stringify(nova.id)}]').click()`);
   await dormir(500);

@@ -7,6 +7,7 @@
 - `status`: `planejado` ou `andamento` (andamento só se o trabalho já começou).
 - `observacao` (no app: **Instruções da ação**): o **roteiro completo da ação**. Pode ser longo (até 20000 caracteres) e deve trazer: objetivo, entrega, passo a passo na ordem, **dependências** ("depende da ação X"), decisões e suposições, riscos e critério de pronto. Os planos são os itens marcáveis; as instruções contam como e por quê.
 - De 3 a 8 planos e de 1 a 3 checkpoints por ação.
+- `projeto` (opcional): grupo da ação no blueprint, por nome ou id; declare-os em `blueprint.projetos` (`[{ "nome": "Interface" }]`, vale também em blueprint existente). Só com frentes distintas (2 a 5); sem o campo a ação fica em "Geral" (nome reservado). Detalhes: tópico `editar`.
 
 ## Planos
 

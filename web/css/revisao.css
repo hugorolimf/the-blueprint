@@ -1,0 +1,26 @@
+/* revisão da proposta em leitura (web/js/proposta-vista.js): o que muda, antes e depois; a edição continua em planejar.css */
+.pv{gap:8px}
+.pv-topo{display:flex;align-items:center;gap:12px}
+.pv-nome{flex:1;min-width:0;font-size:14px;letter-spacing:.06em;text-transform:uppercase;overflow-wrap:anywhere}
+.pv-meta{margin:0;padding-left:32px;font-size:11px;color:var(--mid)}
+.pv-chips,.pv-resumo{margin:0;display:flex;flex-wrap:wrap;gap:6px}.pv-chips{padding-left:32px}
+.pv-resumo{padding:0 2px 2px}
+.badge.alt{border-style:dashed;color:var(--ink)}
+.badge.novo{background:var(--ink);color:var(--paper)}
+.badge.alterado{border-style:dashed}
+.pv-msg>summary{cursor:pointer;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.pv-bloco{margin-top:6px;padding-top:6px;border-top:1px solid var(--faint)}
+.pv-bloco>summary,.pv-igual>summary,.pv-ant>summary{cursor:pointer;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.pv-igual,.pv-ant{margin-top:6px}
+.pv-plano{border-left:2px solid transparent;padding-left:8px;margin-top:4px}
+.pv-plano.novo{border-left-color:var(--ink)}.pv-plano.alterado{border-left:2px dashed var(--ink)}.pv-plano.movido{border-left:2px dashed var(--lo)}
+.pv-plano>summary{display:flex;align-items:baseline;gap:10px;padding:5px 2px;cursor:pointer;list-style:none;line-height:1.5}
+.pv-plano>summary::-webkit-details-marker,.pv-bloco>summary::-webkit-details-marker{display:none}
+.pv-plano:not(.novo):not(.alterado):not(.movido) .pv-tit{color:var(--mid)}
+.pv-marca{flex:none;width:14px;text-align:center;color:var(--mid)}.pv-plano.novo .pv-marca{color:var(--ink);font-weight:700}
+.pv-tit{flex:1;min-width:0;font-size:13px;overflow-wrap:anywhere}
+.pv-antes{display:block;font-size:11px;color:var(--mid);text-decoration:line-through}
+.pv-desc{margin:0 0 8px 24px;max-width:110ch;font-size:12px;line-height:1.6;color:var(--mid);overflow-wrap:anywhere}
+.pv-plano>summary:focus-visible,.pv-bloco>summary:focus-visible,.pv-igual>summary:focus-visible,.pv-msg>summary:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.pv-obs .md{margin-top:8px;max-height:46vh;overflow:auto}
+.pv-meta .pv-antes{display:inline}

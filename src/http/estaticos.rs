@@ -30,7 +30,7 @@ fn segmento_valido(s: &str) -> bool {
 
 /// A lista do servidor Node: /blueprint.html, /emblemas.mjs, /web/**/*.css|js e /kit/**/*.mjs, sem ".." possível.
 pub fn permitido(caminho: &str) -> bool {
-    if matches!(caminho, "/blueprint.html" | "/emblemas.mjs" | "/agentes-figura.mjs") {
+    if matches!(caminho, "/blueprint.html" | "/emblemas.mjs" | "/agentes-figura.mjs" | "/agentes-claude.mjs") {
         return true;
     }
     let (prefixo, extensoes): (&str, &[&str]) = if caminho.starts_with("/web/") { ("/web/", &["css", "js"]) } else if caminho.starts_with("/kit/") { ("/kit/", &["mjs"]) } else { return false };

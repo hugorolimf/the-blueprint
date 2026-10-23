@@ -6,9 +6,18 @@ function montaHub() {
   hub.querySelector(".ed-topo .tit span").textContent = novo ? "Planejar · blueprint novo" : "Planejar";
   $("ag-proj").textContent = p ? p.nome || (novo ? "Novo blueprint" : "Sem nome") : "Nenhum blueprint";
   montaLateral();
+  montaOutras();
   $("ag-vazio").hidden = !!p;
   $("painel-claude").hidden = !p;
   if (p) montaMcp();
+}
+// A tela abre já na proposta do blueprint em que o usuário está. A lista de blueprints fica escondida: só aparece, no topo, o que tem proposta esperando em OUTRO blueprint.
+function montaOutras() {
+  let el = $("ag-outras");
+  if (!el) { el = document.createElement("span"); el.id = "ag-outras"; hub.querySelector(".ed-topo .tit").after(el); el.onclick = (e) => { const b = e.target.closest("[data-ep]"); if (b) { edProj = b.dataset.ep; montaHub(); } }; }
+  const pref = (workspaceAtual?.id || "sm") + ":", aqui = contextoChat(edProj);
+  const ids = (arquivo.chats || []).filter((c) => c.contexto?.startsWith(pref) && c.contexto !== aqui && (c.proposta?.length || c.fila?.length)).map((c) => c.contexto.slice(pref.length));
+  el.replaceChildren(...ids.map((id) => { const b = document.createElement("button"); b.className = "btn mini"; b.type = "button"; b.dataset.ep = id; b.textContent = id === NOVO ? "Proposta de blueprint novo" : `Proposta em «${D.blueprints.find((x) => x.id === id)?.nome || "outro blueprint"}»`; return b; }));
 }
 function agenteTela(abre, op = {}) {
   if (abre === !hub.hidden) { if (abre) montaHub(); return; }
@@ -16,15 +25,15 @@ function agenteTela(abre, op = {}) {
     if (!ed.hidden) editar(false, { semAnim: true });
     if (op.novo) { rascunho = { id: NOVO, nome: "", descricao: "", obs: "", links: [], acoes: [], emblema: null }; edProj = NOVO; }
     else edProj = op.proj ?? tela ?? D.blueprints.find((x) => x.id === edProj)?.id ?? D.blueprints[0]?.id ?? null;
+    hub.classList.add("fa-planejar");
     hub.hidden = false;
     document.body.classList.add("editando");
     document.documentElement.classList.add("editando");
     $("folha").inert = true;
     dizer("pronto");
     montaHub();
-    desenrolar(hub, hub);
+    folhaAbre(hub); // abre como o aviso do agente: o papel se revela de cima para baixo e a marca em construção monta atrás
   } else {
-    hub.hidden = true;
     if (edProj === NOVO) edProj = null;
     hub.getAnimations().forEach((a) => a.cancel());
     document.body.classList.remove("editando");
@@ -32,7 +41,8 @@ function agenteTela(abre, op = {}) {
     $("folha").inert = false;
     $("b-ia").focus({ preventScroll: true });
     carregar();
-    if (!op.semAnim) desenrolar();
+    const fim = () => { hub.hidden = true; }; // a folha de baixo continua desenhada: fechar o Planejar não a anima de novo
+    if (op.semAnim) { folhaFundo(false); hub.hidden = true; } else folhaFecha(hub, fim);
   }
 }
 const fechaTelas = () => { if (!hub.hidden) agenteTela(false, { semAnim: true }); if (!ed.hidden) editar(false, { semAnim: true }); };

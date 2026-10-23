@@ -4,6 +4,7 @@ pub mod cli;
 pub mod contexto;
 pub mod dados;
 pub mod erro;
+pub mod hook;
 pub mod http;
 #[cfg(windows)]
 pub mod janela;
@@ -11,3 +12,4 @@ pub mod mcp;
 pub mod blueprint;
 pub mod registrar;
 pub mod tempo;
+pub mod watch;

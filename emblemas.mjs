@@ -5,7 +5,8 @@
 import * as k from "./kit/iso-kit.mjs";
 import * as G from "./kit/lathe.mjs";
 
-const TONS = new Set(["hi", "mid", "lo", "faint", "lit"]);
+// além dos tons de azul do blueprint, os do Claude (agentes-claude.mjs): corpo laranja, olho escuro, a cor de apoio de cada papel e aço/papel das ferramentas (web/css/claude.css)
+const TONS = new Set(["hi", "mid", "lo", "faint", "lit", "claude", "olho", "exp", "con", "rev", "aco", "papel"]);
 const TIPOS = new Set(["laje", "cilindro", "prisma", "anel", "serrilha", "linha", "risco", "pontos", "texto", "roda", "aro", "quadro"]);
 // `libre` marca a ponta de uma linha que é feita para terminar no ar (ponteiro, traço de texto, régua); só para isso (o `lines.mjs` do anatomy confere o resto)
 const livre = (v) => (v === true || v === "start" || v === "end" ? { libre: v } : {});
@@ -42,9 +43,9 @@ export function sanitizaPecas(lista, limite = LIMITE_PADRAO) {
 
 // Desenha a marca: devolve { svg, largura, altura, feitas, total } com o miolo do SVG (câmera isométrica ajustada à caixa da peça).
 // progresso (0 a 1): fração das peças, na ordem da lista, que aparecem prontas; as demais ficam só no traço.
-export function desenhaEmblema(pecas, { largura = 420, altura = 320, pad = 10, azimute = 45, progresso = 1, sombra = true, limite = LIMITE_PADRAO } = {}) {
+export function desenhaEmblema(pecas, { largura = 420, altura = 320, pad = 10, azimute = 45, progresso = 1, sombra = true, limite = LIMITE_PADRAO, enquadra = [] } = {}) {
   const ps = sanitizaPecas(pecas, limite);
-  const pts = [];
+  const pts = enquadra.map(([x, y, z]) => [num(x, 0, -320, 320), num(y, 0, -320, 320), num(z, 0, 0, 420)]); // pontos que só entram na caixa do enquadramento (a câmera não muda entre poses)
   for (const p of ps) {
     if (p.tipo === "laje") pts.push(...k.boxCorners({ x: p.x, y: p.y, w: p.w, d: p.d }, p.z, p.z + p.h));
     else if (p.tipo === "cilindro" || p.tipo === "serrilha") pts.push(...k.boxCorners({ x: p.cx - p.r, y: p.cy - p.r, w: 2 * p.r, d: 2 * p.r }, p.z, p.z + p.h));

@@ -4,44 +4,40 @@ function abrirEntrada() {
   desenrolar($("entrada"), $("entrada"));
 }
 
-// a folha se abre como um rolo: o papel, já desenhado, se revela de cima para baixo com o rolo descendo à frente
+// a abertura da folha é sempre a "escrita" (a de rolo e o seletor saíram); `cont` só existe porque os chamadores ainda o passam
 function desenrolar(alvo = host.querySelector("svg.desenho"), cont = host) {
   if (!alvo || reduz()) return;
-  if (animPref() === "escrita") return escrever(alvo);
-  const h = alvo.getBoundingClientRect().height, dur = Math.min(1500, 650 + h * 0.3), ease = "cubic-bezier(.45,.05,.2,1)";
-  const fim = Math.max(0, h - 30);
-  alvo.getAnimations().forEach((a) => a.cancel());
-  alvo.animate([{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)" }], { duration: dur, easing: ease });
-  const rolo = document.createElement("div");
-  rolo.className = "rolo";
-  cont.appendChild(rolo);
-  rolo.animate([{ transform: "translateY(0)", opacity: 1 }, { transform: `translateY(${fim}px)`, opacity: 1, offset: 0.97 }, { transform: `translateY(${fim}px)`, opacity: 0 }], { duration: dur, easing: ease }).finished.then(() => rolo.remove(), () => rolo.remove());
+  escrever(alvo);
+  desenharBarras(alvo);
 }
-const animPref = () => { try { return localStorage.getItem("blueprint.anim") === "escrita" ? "escrita" : "rolo"; } catch { return "rolo"; } };
-$("b-anim").value = animPref();
-$("b-anim").onchange = () => { try { localStorage.setItem("blueprint.anim", $("b-anim").value); } catch {} desenrolar(); };
-// folha dupla: o texto está na de baixo e a água vai deixando a de cima transparente. Cada texto surge em três trechos (ponta, meio, ponta) numa ordem sorteada
+// folha dupla: o texto está na de baixo e a água vai deixando a de cima transparente. Cada texto surge em três trechos (ponta, meio, ponta) numa ordem sorteada.
+// Leve: primeiro lê todas as posições, depois escreve (sem forçar o layout a cada texto); são 3 animações por texto em vez de uma por letra; e há teto de textos.
+const MAX_TEXTOS = 400;
 function escrever(alvo) {
-  const T = 700, PASSO = 55;
-  alvo.querySelectorAll("text, h1, h2, h3, h4, p, label, .corpo").forEach((el) => {
+  const T = 700, PASSO = 55, lidos = [];
+  for (const el of alvo.querySelectorAll("text, h1, h2, h3, h4, p, label, .corpo")) {
     const r = el.getBoundingClientRect();
-    if (!r.width || r.bottom < 0 || r.top > innerHeight) return; // o que está fora da janela não precisa esperar
-    const svg = el instanceof SVGElement, original = el.textContent, u = Math.max(r.top, 0) / innerHeight * 0.7 + Math.random() * 0.3, ini = T * u * u; // u: vez do texto (de cima para baixo, com sorteio); u² junta os começos no início e espaça os últimos
-    const fade = (x, delay) => x.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200 + 450 * u, delay, easing: "cubic-bezier(.2,.6,.3,1)", fill: "backwards" }); // chega devagar ao opaco
-    if (el.children.length) return fade(el, ini); // texto já com partes (tspan etc.): não dá para separar as letras, aparece inteiro
-    el.textContent = "";
-    const letras = [];
-    for (const c of original) {
-      if (!c.trim()) { el.append(c); continue; }
-      const l = svg ? document.createElementNS("http://www.w3.org/2000/svg", "tspan") : document.createElement("span");
-      l.textContent = c;
-      el.append(l);
-      letras.push(l);
-    }
+    if (!r.width || r.bottom < 0 || r.top > innerHeight) continue; // o que está fora da janela não precisa esperar
+    lidos.push([el, Math.max(r.top, 0)]);
+    if (lidos.length >= MAX_TEXTOS) break; // o excedente aparece sem animação
+  }
+  for (const [el, topo] of lidos) {
+    const svg = el instanceof SVGElement, original = el.textContent, u = topo / innerHeight * 0.7 + Math.random() * 0.3, ini = T * u * u; // u: vez do texto (de cima para baixo, com sorteio); u² junta os começos no início e espaça os últimos
+    const quadros = svg ? [{ fillOpacity: 0, strokeOpacity: 0 }, { fillOpacity: 1, strokeOpacity: 1 }] : [{ opacity: 0 }, { opacity: 1 }]; // texto SVG com contorno: fill/stroke-opacity evitam uma camada de composição por texto
+    const fade = (x, delay) => x.animate(quadros, { duration: 200 + 450 * u, delay, easing: "cubic-bezier(.2,.6,.3,1)", fill: "backwards" }); // chega devagar ao opaco
+    const n = original.length;
+    if (el.children.length || n < 6) { fade(el, ini); continue; } // texto já com partes (tspan etc.) ou curto demais para dividir: aparece inteiro
     const ordem = [0, 1, 2];
     for (let i = 2; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [ordem[i], ordem[j]] = [ordem[j], ordem[i]]; }
-    letras.forEach((l, i) => fade(l, ini + (ordem[Math.floor((i * 3) / letras.length)] + Math.random()) * PASSO * (1 + u)));
-  });
+    const cortes = [0, Math.round(n / 3), Math.round((2 * n) / 3), n];
+    el.textContent = "";
+    for (let k = 0; k < 3; k++) {
+      const parte = svg ? document.createElementNS("http://www.w3.org/2000/svg", "tspan") : document.createElement("span");
+      parte.textContent = original.slice(cortes[k], cortes[k + 1]);
+      el.append(parte);
+      fade(parte, ini + (ordem[k] + Math.random()) * PASSO * (1 + u));
+    }
+  }
 }
 // voltar também abre: nada se enrola de volta, a tela de destino se abre de novo
 function irHome() {
@@ -83,13 +79,17 @@ function alternarItem(pid, fid, tipo, id) {
   const f = D.blueprints.find((x) => x.id === pid)?.acoes.find((x) => x.id === fid);
   const it = f && (tipo === "t" ? f.planos : f.checkpoints).find((x) => x.id === id);
   if (!it) return;
-  it.feito = !it.feito;
-  if (document.body.classList.contains("editando")) montaEditor();
-  mudou();
+  mudarComSaida(pid, () => {
+    it.feito = !it.feito;
+    if (tipo !== "t" && it.feito) avisarMonitor("checkpoint-marcado", pid, id);
+    if (document.body.classList.contains("editando")) montaEditor();
+  });
 }
 // clique numa ação ou checkpoint da folha recolhida: abre as ações, leva até o item e o destaca por um instante
 function irPara(pid, fid, mid) {
   abertos[pid] = true;
+  const p = D.blueprints.find((x) => x.id === pid);
+  if (p) abrirProjetoDaAcao(p, fid); // com projetos, a seção da ação também abre (senão a ação continua compacta); sem projetos não faz nada
   render();
   const acao = host.querySelector(`.acao[data-f="${CSS.escape(fid)}"]`);
   const alvo = (mid && host.querySelector(`.chk[data-id="${CSS.escape(mid)}"]`)) || acao;
@@ -109,9 +109,10 @@ function irPara(pid, fid, mid) {
 function alternar(id) {
   abertos[id] = abertos[id] !== true;
   render();
+  desenharBarras();
 }
-$("b-abrir").onclick = () => { if (tela) { abertos[tela] = true; render(); } };
-$("b-fechar").onclick = () => { if (tela) { abertos[tela] = false; render(); } };
+$("b-abrir").onclick = () => { if (tela) { abertos[tela] = true; abrirTodosProjetos(D.blueprints.find((p) => p.id === tela), true); render(); desenharBarras(); } };
+$("b-fechar").onclick = () => { if (tela) { abertos[tela] = false; abrirTodosProjetos(D.blueprints.find((p) => p.id === tela), false); render(); desenharBarras(); } };
 
 host.addEventListener("click", (e) => { const mes = e.target.closest("[data-mes]"); if (mes) selecionarMes(mes.dataset.mes); });
 host.addEventListener("keydown", (e) => { const mes = e.target.closest("[data-mes]"); if (mes && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); selecionarMes(mes.dataset.mes); } });
@@ -133,7 +134,7 @@ host.addEventListener("click", (e) => {
   if (semClique) { semClique = false; return; }
   const ck = e.target.closest(".chk");
   if (ck) { alternarItem(ck.dataset.p, ck.dataset.f, ck.dataset.tipo, ck.dataset.id); return; }
-  if (e.target.closest("[data-adicionar-blueprint]")) { $("b-novo-proj").click(); return; }
+  if (e.target.closest("[data-adicionar-blueprint]")) { editar(true, { novo: true }); return; }
   const ir = e.target.closest(".acao[data-ir]");
   if (ir) { irPara(ir.dataset.p, ir.dataset.f, e.target.closest(".checkpoint")?.dataset.m); return; }
   const pr = e.target.closest(".nota[data-proto]");

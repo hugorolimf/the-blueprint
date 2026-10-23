@@ -30,7 +30,7 @@ Tudo abaixo já foi preparado localmente; **nada** foi enviado. Cada passo cria 
 5. **Release v0.1.0 como pré-lançamento (beta).** O instalador sai de `cargo build --release` e `ISCC instalador\blueprint.iss` (Inno Setup 6.3 ou mais novo; fica em `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe`), na pasta `target\instalador` **do repositório privado**, não da cópia pública. Teste antes (`node scripts/testar-instalador.mjs`, leva mais de 1 minuto) e, de dentro da cópia pública:
 
    ```
-   gh release create v0.1.0 ../roadmap-sm/target/instalador/Blueprint-0.1.0-instalador.exe --prerelease --title "The Blueprint v0.1.0 (beta)" --notes-file docs/release-v0.1.0.md
+   gh release create v0.1.0 <pasta-onde-você-compilou>/target/instalador/Blueprint-0.1.0-instalador.exe --prerelease --title "The Blueprint v0.1.0 (beta)" --notes-file docs/release-v0.1.0.md
    ```
 
 6. **Issues iniciais** (`good first issue`): `docs/issues-iniciais.md` traz o texto de cada uma; crie com `gh issue create --label "good first issue" --title … --body …`.

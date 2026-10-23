@@ -1,10 +1,13 @@
-//! `blueprint registrar [--remover]`: liga (ou desliga) o MCP `blueprint` no Claude Code e no Codex da pessoa. O instalador chama isto ao
-//! instalar e ao desinstalar, então ninguém precisa digitar `claude mcp add …` nem `codex mcp add …`.
+//! `blueprint registrar [--remover]`: liga (ou desliga) o `blueprint` no Claude Code (plugin com skill, agente e MCP) e no Codex (só o MCP).
+//! O instalador chama isto ao instalar e ao desinstalar, então ninguém precisa digitar `claude mcp add …` nem `codex mcp add …`.
 //! Usa as próprias CLIs (elas sabem onde e como guardam a configuração) e só mexe no servidor chamado `blueprint`; o que não achar no PATH
 //! é dito com o comando a rodar à mão. shortcut: no PATH só procura .exe, .cmd e .bat (o `codex` do npm é .cmd); sem PATHEXT inteiro.
+pub(crate) mod plugin;
+pub mod statusline;
 #[cfg(test)]
 mod tests;
 
+use crate::http::config::pasta_do_app;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -34,12 +37,12 @@ fn montar(modelo: &[&str], exe: &Path) -> Vec<String> {
 }
 
 /// O arquivo da CLI dentro de `dirs`, na ordem em que o Windows tentaria (`claude.exe` antes de `claude.cmd`).
-fn procurar_em(cli: &str, dirs: &[PathBuf]) -> Option<PathBuf> {
+pub(crate) fn procurar_em(cli: &str, dirs: &[PathBuf]) -> Option<PathBuf> {
     let extensoes: &[&str] = if cfg!(windows) { &["exe", "cmd", "bat"] } else { &[""] };
     dirs.iter().flat_map(|d| extensoes.iter().map(move |e| if e.is_empty() { d.join(cli) } else { d.join(format!("{cli}.{e}")) })).find(|p| p.is_file())
 }
 
-fn procurar(cli: &str) -> Option<PathBuf> {
+pub(crate) fn procurar(cli: &str) -> Option<PathBuf> {
     let path = std::env::var_os("PATH")?;
     procurar_em(cli, &std::env::split_paths(&path).collect::<Vec<_>>())
 }
@@ -69,15 +72,30 @@ pub fn executar(remover: bool) -> (String, i32) {
         };
         // idempotente: tira o que já existe com o mesmo nome (falha se não existia, e tudo bem) antes de registrar de novo
         let _ = rodar(&cli, &montar(agente.remover, &exe));
+        let e_claude = agente.cli == "claude";
         if remover {
-            linhas.push(format!("{}: MCP removido", agente.titulo));
-        } else {
-            match rodar(&cli, &montar(agente.registrar, &exe)) {
-                Ok(()) => linhas.push(format!("{}: MCP `{NOME}` registrado", agente.titulo)),
-                Err(e) => {
-                    codigo = 1;
-                    linhas.push(format!("{}: não registrou ({e})", agente.titulo));
+            if e_claude {
+                plugin::remover(&cli);
+            }
+            linhas.push(format!("{}: {} removido", agente.titulo, if e_claude { "plugin e MCP" } else { "MCP" }));
+            continue;
+        }
+        if e_claude {
+            let pasta = pasta_do_app().join("claude-plugin");
+            match plugin::gravar(&pasta, &exe).map_err(|e| e.to_string()).and_then(|()| plugin::instalar(&cli, &pasta)) {
+                Ok(()) => {
+                    linhas.push(format!("{}: plugin `{NOME}` instalado (skill, agente e MCP)", agente.titulo));
+                    continue;
                 }
+                // sem o plugin a pessoa ainda fica com o MCP
+                Err(e) => linhas.push(format!("{}: plugin não instalado ({e}); registrando só o MCP", agente.titulo)),
+            }
+        }
+        match rodar(&cli, &montar(agente.registrar, &exe)) {
+            Ok(()) => linhas.push(format!("{}: MCP `{NOME}` registrado", agente.titulo)),
+            Err(e) => {
+                codigo = 1;
+                linhas.push(format!("{}: não registrou ({e})", agente.titulo));
             }
         }
     }

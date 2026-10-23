@@ -142,7 +142,7 @@ const recarregar = (arquivos) => {
   log(`${arquivos.join(", ")} → ${soCss ? "estilo trocado" : "página recarregada"}`);
   enviar({ tipo: soCss ? "css" : "reload" });
 };
-const nomesDaInterface = ["blueprint.html", "emblemas.mjs", "agentes-figura.mjs"];
+const nomesDaInterface = ["blueprint.html", "emblemas.mjs", "agentes-figura.mjs", "agentes-claude.mjs"];
 const nomesDoRust = ["Cargo.toml", "build.rs"];
 for (const p of ["web", "kit"]) vigiar(p, true, (n) => /\.(css|js|mjs)$/.test(n), 120, recarregar);
 vigiar("src", true, (n) => /\.(rs|sql|json|txt)$/.test(n), 400, (a) => reconstruir(a[0]));

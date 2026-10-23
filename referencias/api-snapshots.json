@@ -1,21 +1,21 @@
 {
-  "data": "2026-10-22T15:51:41.912Z",
+  "data": "2026-10-23T06:17:27.854Z",
   "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
   "respostas": {
     "GET pagina": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "b5559cee0e21c12e"
+      "sha256": "edab14cde956cb0c"
     },
     "GET pagina-html": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "b5559cee0e21c12e"
+      "sha256": "edab14cde956cb0c"
     },
     "GET emblemas": {
       "status": 200,
       "tipo": "text/javascript",
-      "sha256": "3139a94cfce9c756"
+      "sha256": "6bbc7aaaa3b59352"
     },
     "GET kit-iso": {
       "status": 200,
@@ -282,6 +282,38 @@
       "tipo": "text/plain",
       "corpo": "não encontrado"
     },
+    "iniciar ação inexistente": {
+      "status": 404,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Ação não encontrada neste blueprint."
+      }
+    },
+    "iniciar sem pasta ligada": {
+      "status": 409,
+      "tipo": "application/json",
+      "corpo": {
+        "codigo": "sem-pasta",
+        "erro": "Este blueprint não tem uma pasta ligada (ou ela não existe mais)."
+      }
+    },
+    "iniciar sem acaoId": {
+      "status": 400,
+      "tipo": "application/json",
+      "corpo": {
+        "erro": "Informe workspaceId, blueprintId e acaoId."
+      }
+    },
+    "iniciar host falso": {
+      "status": 403,
+      "tipo": "text/plain",
+      "corpo": "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"
+    },
+    "hook de subagente sem agent_id": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {}
+    },
     "mcp corpo grande demais": {
       "status": 413,
       "tipo": "application/json",
@@ -504,6 +536,33 @@
         "avisos": [
           "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
         ],
+        "ids": [
+          {
+            "checkpoints": [
+              {
+                "id": "+a1.c1",
+                "nome": "Pronto"
+              }
+            ],
+            "id": "+a1",
+            "nome": "Nova",
+            "planos": [
+              {
+                "id": "+a1.p1",
+                "texto": "Criar item 1"
+              },
+              {
+                "id": "+a1.p2",
+                "texto": "Criar item 2"
+              },
+              {
+                "id": "+a1.p3",
+                "texto": "Criar item 3"
+              }
+            ]
+          }
+        ],
+        "numero": 1,
         "ok": true
       }
     },
@@ -514,6 +573,33 @@
         "avisos": [
           "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
         ],
+        "ids": [
+          {
+            "checkpoints": [
+              {
+                "id": "+a1.c1",
+                "nome": "Pronto"
+              }
+            ],
+            "id": "+a1",
+            "nome": "Nova",
+            "planos": [
+              {
+                "id": "+a1.p1",
+                "texto": "Criar item 1"
+              },
+              {
+                "id": "+a1.p2",
+                "texto": "Criar item 2"
+              },
+              {
+                "id": "+a1.p3",
+                "texto": "Criar item 3"
+              }
+            ]
+          }
+        ],
+        "numero": 2,
         "ok": true
       }
     },
@@ -524,6 +610,33 @@
         "avisos": [
           "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
         ],
+        "ids": [
+          {
+            "checkpoints": [
+              {
+                "id": "+a1.c1",
+                "nome": "Pronto"
+              }
+            ],
+            "id": "+a1",
+            "nome": "Nova",
+            "planos": [
+              {
+                "id": "+a1.p1",
+                "texto": "Criar item 1"
+              },
+              {
+                "id": "+a1.p2",
+                "texto": "Criar item 2"
+              },
+              {
+                "id": "+a1.p3",
+                "texto": "Criar item 3"
+              }
+            ]
+          }
+        ],
+        "numero": 1,
         "ok": true
       }
     },
@@ -535,6 +648,15 @@
           "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
           "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
         ],
+        "ids": [
+          {
+            "checkpoints": [],
+            "id": "+a1",
+            "nome": "Nova",
+            "planos": []
+          }
+        ],
+        "numero": 3,
         "ok": true
       }
     },
@@ -545,6 +667,8 @@
         "avisos": [
           "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
         ],
+        "ids": [],
+        "numero": 4,
         "ok": true
       }
     },
@@ -568,9 +692,113 @@
             "avisos": [
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.775Z",
+            "em": "<mascarado>",
+            "id": 1,
+            "numero": 1,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-30",
+                      "id": "",
+                      "nome": "Pronto"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 1"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 2"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 3"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "v1",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.777Z",
+            "em": "<mascarado>",
+            "id": 2,
+            "numero": 2,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-30",
+                      "id": "",
+                      "nome": "Pronto"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 1"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 2"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 3"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "v2",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
             "blueprintId": "",
+            "criadaEm": "2026-10-23T06:17:27.779Z",
             "em": "<mascarado>",
             "id": 3,
+            "numero": 1,
             "proposta": {
               "acoes": [
                 {
@@ -611,6 +839,51 @@
                 "nome": "Novo"
               },
               "mensagem": "",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.780Z",
+            "em": "<mascarado>",
+            "id": 4,
+            "numero": 3,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-10",
+                      "de": "f1",
+                      "id": "m1",
+                      "nome": "Rota no ar"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "de": "f1",
+                      "descricao": "x",
+                      "id": "t1",
+                      "texto": "Criar rota"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "",
+              "mover": [],
               "remover": []
             },
             "tipo": "proposta",
@@ -621,11 +894,14 @@
               "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
             ],
             "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.782Z",
             "em": "<mascarado>",
             "id": 5,
+            "numero": 4,
             "proposta": {
               "acoes": [],
               "mensagem": "",
+              "mover": [],
               "remover": [
                 {
                   "acao": "Base",
@@ -785,9 +1061,113 @@
             "avisos": [
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.775Z",
+            "em": "<mascarado>",
+            "id": 1,
+            "numero": 1,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-30",
+                      "id": "",
+                      "nome": "Pronto"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 1"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 2"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 3"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "v1",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.777Z",
+            "em": "<mascarado>",
+            "id": 2,
+            "numero": 2,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-30",
+                      "id": "",
+                      "nome": "Pronto"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 1"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 2"
+                    },
+                    {
+                      "descricao": "Validação: roda.",
+                      "id": "",
+                      "texto": "Criar item 3"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "v2",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
             "blueprintId": "",
+            "criadaEm": "2026-10-23T06:17:27.779Z",
             "em": "<mascarado>",
             "id": 3,
+            "numero": 1,
             "proposta": {
               "acoes": [
                 {
@@ -828,6 +1208,51 @@
                 "nome": "Novo"
               },
               "mensagem": "",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
+              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.780Z",
+            "em": "<mascarado>",
+            "id": 4,
+            "numero": 3,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-10",
+                      "de": "f1",
+                      "id": "m1",
+                      "nome": "Rota no ar"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "de": "f1",
+                      "descricao": "x",
+                      "id": "t1",
+                      "texto": "Criar rota"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "",
+              "mover": [],
               "remover": []
             },
             "tipo": "proposta",
@@ -838,11 +1263,14 @@
               "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
             ],
             "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.782Z",
             "em": "<mascarado>",
             "id": 5,
+            "numero": 4,
             "proposta": {
               "acoes": [],
               "mensagem": "",
+              "mover": [],
               "remover": [
                 {
                   "acao": "Base",
@@ -941,14 +1369,61 @@
         "itens": [
           {
             "avisos": [
+              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
+              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+            ],
+            "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.780Z",
+            "em": "<mascarado>",
+            "id": 4,
+            "numero": 3,
+            "proposta": {
+              "acoes": [
+                {
+                  "checkpoints": [
+                    {
+                      "data": "2030-01-10",
+                      "de": "f1",
+                      "id": "m1",
+                      "nome": "Rota no ar"
+                    }
+                  ],
+                  "fim": "2030-01-31",
+                  "id": "",
+                  "inicio": "2030-01-01",
+                  "nome": "Nova",
+                  "observacao": "",
+                  "planos": [
+                    {
+                      "de": "f1",
+                      "descricao": "x",
+                      "id": "t1",
+                      "texto": "Criar rota"
+                    }
+                  ],
+                  "status": "planejado"
+                }
+              ],
+              "mensagem": "",
+              "mover": [],
+              "remover": []
+            },
+            "tipo": "proposta",
+            "workspaceId": "sm"
+          },
+          {
+            "avisos": [
               "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
             ],
             "blueprintId": "p1",
+            "criadaEm": "2026-10-23T06:17:27.782Z",
             "em": "<mascarado>",
             "id": 5,
+            "numero": 4,
             "proposta": {
               "acoes": [],
               "mensagem": "",
+              "mover": [],
               "remover": [
                 {
                   "acao": "Base",

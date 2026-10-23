@@ -33,3 +33,8 @@ body:not(.em-blueprint) .so-blueprint{display:none}
 select.btn option{background:#0c3a78;color:var(--ink)}
 .btn.perigo{border-color:var(--erro);color:var(--erro)}
 .btn.perigo:hover,.btn.perigo:focus-visible{background:var(--erro);color:#5a1208}
+.confirmar{width:min(440px,92vw);padding:0;border:1px solid var(--erro);background:#0a3270;color:var(--ink)}
+.confirmar::backdrop{background:#041a3acc}
+.confirmar .cu-corpo{margin:0;padding:6px 18px 18px;line-height:1.5}
+.confirmar-acoes{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
+.btn[aria-pressed=true]{background:var(--ink);color:var(--paper)}

@@ -1,6 +1,7 @@
 //! As rotas /api/mcp/* (porte de `rota` do mcp.mjs): só esta máquina, JSON em todo POST, e erros sempre como `{ "erro": "..." }`.
 use super::acoes::{self, id_prototipo_valido};
-use super::permissao::permitido;
+use super::hooks;
+use super::permissao::{permitido, so_loopback};
 use super::{FluxoSse, Mcp};
 use crate::contexto::Contexto;
 use crate::dados::Dados;
@@ -18,6 +19,9 @@ pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
         return Resposta::texto(403, "text/plain", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)");
     }
     let recurso = pedido.caminho.trim_start_matches("/api/mcp/");
+    if recurso == "iniciar" && !so_loopback(mcp, pedido) {
+        return Resposta::texto(403, "text/plain", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)");
+    }
     match executar(mcp, dados, pedido, recurso) {
         Ok(resposta) => resposta,
         Err(e) => Resposta::json(e.status, &json!({"erro": e.mensagem})),
@@ -38,6 +42,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
                 let p = |nome: &str| pedido.parametro(nome).unwrap_or_default();
                 Resposta::json(200, &com_dados(dados, |d| acoes::blueprint(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref()))?)
             }
+            "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens()})),
             "agentes" => Resposta::json(200, &mcp.agentes()), // quem está trabalhando agora (presença, só memória)
             "info" => Resposta::json(200, &json!({"arquivo": mcp.arquivo, "url": mcp.url, "exe": true})), // a página mostra como registrar o servidor MCP no agente
@@ -58,7 +63,19 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             Resposta::json(status, &resposta)
         }
         "evento" => Resposta::json(200, &com_dados(dados, |d| acoes::evento(mcp, d, &corpo))?),
+        "aviso" => Resposta::json(200, &com_dados(dados, |d| super::eventos::aviso(mcp, d, &corpo))?),
         "prototipo" => Resposta::json(200, &com_dados(dados, |d| acoes::prototipo(mcp, d, &corpo))?),
+        // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
+        "hook/sessao" => Resposta::json(200, &hooks::sessao(mcp, dados, &corpo)?),
+        "hook/edicao" => Resposta::json(200, &hooks::edicao(mcp, dados, &corpo)?),
+        "hook/subagente" => Resposta::json(200, &hooks::subagente(mcp, dados, &corpo)?),
+        "hook/status" => Resposta::json(200, &super::status::status(mcp, dados, &corpo)?),
+        "pasta/desvincular" => Resposta::json(200, &hooks::desvincular(dados, &corpo)?),
+        "pasta/vincular" => Resposta::json(200, &hooks::vincular(dados, &corpo)?),
+        "iniciar" => {
+            let (status, resposta) = super::iniciar::iniciar(dados, &corpo, &super::iniciar::abrir_terminal)?; // abre o terminal de verdade; os testes usam um lançador falso
+            Resposta::json(status, &resposta)
+        }
         "prototipo/remover" => {
             // chamado pela página ao excluir; só mexe em arquivos com id gerado por aqui
             let id = corpo.get("prototipoId").and_then(Value::as_str).filter(|i| id_prototipo_valido(i)).ok_or_else(|| falha(400, "prototipoId inválido"))?;
@@ -68,6 +85,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
         "fila/ack" => {
             let ids: HashSet<i64> = corpo.get("ids").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_i64).collect()).unwrap_or_default();
             mcp.ack(&ids);
+            corpo.get("propostas").and_then(Value::as_array).into_iter().flatten().for_each(|p| mcp.ack_proposta(p)); // propostas pela chave: ver `Fila::ack_proposta`
             Resposta::json(200, &json!({"ok": true}))
         }
         _ => nao_encontrado(),

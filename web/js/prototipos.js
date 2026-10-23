@@ -32,7 +32,7 @@ function fechaProtos() {
 }
 async function excluirProto() {
   const f = protoAlvo && acaoDe(protoAlvo.pid, protoAlvo.fid), x = f?.prototipos.find((y) => y.id === protoAlvo.id);
-  if (!x || !confirm(`Excluir o protótipo "${x.titulo}"?`)) return;
+  if (!x || !(await confirmar({ titulo: "Excluir protótipo?", texto: `O protótipo "${x.titulo}" será apagado. Não dá para desfazer.`, rotulo: "Excluir protótipo" }))) return;
   f.prototipos = f.prototipos.filter((y) => y.id !== x.id);
   try { await fetch("/api/mcp/prototipo/remover", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ prototipoId: x.id }) }); } catch {}
   mudou();

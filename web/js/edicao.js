@@ -63,7 +63,6 @@ function editar(abre, op = {}) {
     document.body.classList.add("editando");
     document.documentElement.classList.add("editando");
     $("folha").inert = true;
-    $("b-editar").setAttribute("aria-expanded", "true");
     dizer("pronto");
     montaEditor(); // já montada: a animação só abre a folha, o conteúdo está lá
     sugereF11(op.novo ? "novo" : "editar");
@@ -76,12 +75,9 @@ function editar(abre, op = {}) {
     document.body.classList.remove("editando");
     document.documentElement.classList.remove("editando");
     $("folha").inert = false;
-    $("b-editar").setAttribute("aria-expanded", "false");
-    $("b-editar").focus({ preventScroll: true });
     carregar();
-    if (!op.semAnim) desenrolar(); // voltar também abre: a tela de baixo se abre de novo, já desenhada
+    // a tela de baixo continua desenhada: fechar o editor não a anima de novo
   }
 }
-$("b-editar").onclick = () => editar(ed.hidden);
 $("ed-fechar").onclick = () => editar(false);
 

@@ -47,7 +47,7 @@ try {
   const ler = await chamar(4, "tools/call", { name: "ler_blueprint", arguments: { workspace_id: alvo.id, blueprint_id: alvo.blueprints[0].id } });
   assert(!ler.result.isError && JSON.parse(ler.result.content[0].text).blueprint.id === alvo.blueprints[0].id);
   const plano = await chamar(5, "tools/call", { name: "propor_blueprint", arguments: { workspace_id: alvo.id, blueprint_id: alvo.blueprints[0].id, mensagem: "fumaça", acoes: [{ nome: "Ação de fumaça", inicio: "2030-01-01", fim: "2030-01-31", planos: [1, 2, 3].map((n) => ({ texto: `Criar item ${n}`, descricao: "Validação: roda." })), checkpoints: [{ nome: "Pronto", data: "2030-01-30" }] }] } });
-  assert(!plano.result.isError && plano.result.content[0].text.includes("Proposta enviada"), plano.result.content[0].text);
+  assert(!plano.result.isError && /Proposta (enviada|nº \d+ na fila)/.test(plano.result.content[0].text), plano.result.content[0].text);
   const fila = await (await fetch(url + "/api/mcp/fila")).json();
   assert(fila.itens.some((i) => i.tipo === "proposta" && i.proposta.mensagem === "fumaça"), "a proposta chegou na fila do servidor");
   mcp.kill();

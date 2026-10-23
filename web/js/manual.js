@@ -23,17 +23,20 @@ function htmlDetBlueprint(p, pi) {
   return `<div class="det-topo"><span class="rot" style="margin:0">Blueprint ${pad(pi + 1)}${projConcluido(p) ? " · ✓ concluído" : ""}</span><div class="acoes-topo"><button class="btn mini" data-act="up-blueprint" type="button">↑ Subir na lista</button><button class="btn mini" data-act="down-blueprint" type="button">↓ Descer na lista</button></div></div>
   <label class="f grande">Nome do blueprint<input data-c="nome" value="${esc(p.nome)}" placeholder="Nome do blueprint"></label>
   <div class="card"><h3>Descrição e observações</h3><div class="campos"><label class="f">Descrição curta<input data-c="descricao" value="${esc(p.descricao)}" placeholder="Para que serve este blueprint"></label><label class="f">Observações do blueprint<textarea data-c="obs" placeholder="Anotações gerais, decisões, riscos…">${esc(p.obs)}</textarea></label></div></div>
+  <div class="card" data-pasta-blueprint><h3>Pasta do projeto</h3><p role="status">Carregando vínculo…</p></div>
   <div class="card"><h3>Marca da folha<small>${p.emblema ? p.emblema.pecas.length + " peças" : "sem marca"}</small></h3><div class="marca-previa">${p.emblema ? previaMarca(p.emblema.pecas, 330, 230, progressoDe(p)) : '<p class="vazio">Este blueprint ainda não tem marca. A IA desenha uma marca para o blueprint.</p>'}</div>${p.emblema ? '<label class="f" style="margin-top:8px">Prévia do progresso da marca<input type="range" min="0" max="100" step="5" data-prev-marca value="' + Math.round(progressoDe(p) * 100) + '"></label>' : ""}<div class="acoes">${p.emblema ? '<button class="btn mini perigo" data-act="marca-remover" type="button">Remover marca</button>' : ""}</div></div>
+  ${htmlProjetosEd(p)}
   <div class="card"><h3>Links<small>${p.links.length || ""}</small></h3>${p.links.length ? p.links.map(htmlLinkEd).join("") : `<p class="vazio">Nenhum link. Adicione o site, o ambiente de homologação, a documentação…</p>`}<div class="acoes"><button class="btn mini" data-act="add-link" type="button">+ Link</button></div></div>
   <div class="card"><h3>Zona de perigo</h3><button class="btn perigo" data-act="del-blueprint" type="button">Excluir este blueprint…</button></div>`;
 }
 function htmlDetAcao(p, pi, f, fi) {
   const e = efetiva(f);
-  return `<div class="det-topo"><span class="rot" style="margin:0">Ação ${pi + 1}.${fi + 1}</span><div class="acoes-topo"><button class="btn mini perigo" data-act="del-acao" type="button">Excluir ação</button></div></div>
+  return `<div class="det-topo"><span class="rot" style="margin:0">Ação ${numeroDaAcao(p, f, pi)}</span><div class="acoes-topo"><button class="btn mini perigo" data-act="del-acao" type="button">Excluir ação</button></div></div>
   <label class="f grande">Nome da ação<input data-c="nome" value="${esc(f.nome)}" placeholder="Ex.: Homologação"></label>
   <div class="card det-acao"><h3>Período e situação<small class="dur">${durTxt(f)}</small></h3>
     <div class="grade2"><label class="f">Início<input type="date" data-c="inicio" value="${esc(f.inicio)}"></label><label class="f">Fim<input type="date" data-c="fim" value="${esc(f.fim)}"></label></div>
     <p class="erro" hidden>A data final é anterior à inicial.</p>
+    ${htmlProjetoDaAcao(p, f)}
     <div class="seg" role="group" aria-label="Situação">${SIT.map(([v, t]) => `<button type="button" data-set="status" data-v="${v}" aria-pressed="${(e.it[1] ? e.status : f.status) === v}"${v === "concluido" && e.it[1] ? ' disabled title="Conclui sozinha quando todos os planos e checkpoints estiverem marcados"' : ""}>${t}</button>`).join("")}</div>
     <div class="prog-bloco">${htmlProg(f)}</div></div>
   <div class="card"><h3>Planos<small class="cnt-t">${e.tf[1] ? `${e.tf[0]} de ${e.tf[1]}` : ""}</small></h3>
@@ -45,7 +48,7 @@ function htmlDetAcao(p, pi, f, fi) {
     ${f.checkpoints.length ? f.checkpoints.map(htmlCheckpoint).join("") : `<p class="vazio">Nenhum checkpoint. Use-os para checkpoints verificáveis, como “Homologação aprovada”.</p>`}
     <div class="acoes"><button class="btn mini" data-act="add-checkpoint" type="button">+ Checkpoint</button><button class="btn mini" data-act="toggle-varias" data-alvo="m" type="button">Colar lista…</button></div>
     <div class="varias" hidden><textarea data-varias="m" placeholder="Um checkpoint por linha (a data será o fim da ação)"></textarea><div class="acoes" style="margin:0"><button class="btn mini cheio" data-act="aplicar-varias" data-alvo="m" type="button">Adicionar checkpoints</button></div></div></div>
-  <div class="card"><h3>Instruções da ação<small>o que fazer: o roteiro desta ação</small></h3><textarea data-c="obs" rows="14" placeholder="O que fazer nesta ação, passo a passo: o plano, as decisões, as dependências e os riscos…">${esc(f.obs)}</textarea></div>${f.prototipos?.length ? `
+  <div class="card"><h3>Instruções da ação<small>o que fazer: o roteiro desta ação</small></h3>${mdEdicao('data-c="obs"', f.obs, { rows: 14, placeholder: "O que fazer nesta ação, passo a passo: o plano, as decisões, as dependências e os riscos…" })}</div>${f.prototipos?.length ? `
   <div class="card"><h3>Protótipos<small>anexados pelo agente (MCP)</small></h3>${f.prototipos.map((x) => `<div class="acoes" style="margin:0 0 8px"><button class="btn mini cheio" type="button" data-act="ver-proto" data-id="${esc(x.id)}">▶ ${esc(x.titulo)}</button></div>`).join("")}</div>` : ""}`;
 }
 function montaListaManual() {
@@ -54,7 +57,7 @@ function montaListaManual() {
   const pi = D.blueprints.indexOf(p);
   const acoes = p.acoes.map((f, fi) => {
     const e = efetiva(f);
-    return `<button class="mn-item" type="button" data-sel="${esc(f.id)}" aria-current="${edSel === f.id}"><span class="n">${pi + 1}.${fi + 1}</span><span class="nome">${esc(f.nome || "Ação sem nome")}</span><span class="sub"><span class="chip">${ROTULO[e.status]}</span><span>${Math.round(e.pct * 100)}%</span>${e.it[1] ? `<span>${e.it[0]}/${e.it[1]}</span>` : ""}</span></button>`;
+    return `<button class="mn-item" type="button" data-sel="${esc(f.id)}" aria-current="${edSel === f.id}"><span class="n">${numeroDaAcao(p, f, pi)}</span><span class="nome">${esc(f.nome || "Ação sem nome")}</span><span class="sub"><span class="chip">${ROTULO[e.status]}</span><span>${Math.round(e.pct * 100)}%</span>${nomeDoProjeto(p, f.projetoId) ? `<span>${esc(nomeDoProjeto(p, f.projetoId))}</span>` : ""}${e.it[1] ? `<span>${e.it[0]}/${e.it[1]}</span>` : ""}</span></button>`;
   }).join("");
   $("mn-lista").innerHTML = `<button class="mn-item" type="button" data-sel="blueprint" aria-current="${edSel === "blueprint"}"><span class="n">◈</span><span class="nome">Dados do blueprint</span><span class="sub"><span>nome · links · observações</span></span></button><p class="rot">Ações (${p.acoes.length})</p>${acoes || `<p class="vazio">Nenhuma ação ainda.</p>`}<button class="btn" type="button" data-act="add-acao">+ Nova ação</button>`;
 }
@@ -74,6 +77,7 @@ function montaManual() {
   montaListaManual();
   const pi = D.blueprints.indexOf(p), f = edSel === "blueprint" ? null : acaoEd(p);
   det.innerHTML = f ? htmlDetAcao(p, pi, f, p.acoes.indexOf(f)) : htmlDetBlueprint(p, pi);
+  if (!f) import("/web/js/pastas.js").then((m) => m.editorPasta(det.querySelector("[data-pasta-blueprint]"), workspaceAtual?.id, p.id));
   det.dataset.chave = edSel + p.id; // não pode se chamar data-sel: o clique da lista de ações procura esse atributo
   det.scrollTop = mesma ? topo : 0;
   det.querySelectorAll(".link-ed").forEach(validarLink);
@@ -97,6 +101,9 @@ pm.addEventListener("input", (e) => {
   const p = blueprintEd();
   if (!el || !p) return;
   const c = el.dataset.c, val = el.type === "checkbox" ? el.checked : el.value;
+  if (c === "obs" && el.matches("textarea")) mdPrevia(el); // prévia em markdown ao lado do campo
+  const pj = el.closest(".projeto-ed");
+  if (pj) { renomearProjeto(p, pj.dataset.pj, val, c); montaListaManual(); return mudou(); }
   const lr = el.closest(".link-ed");
   if (lr) { p.links.find((x) => x.id === lr.dataset.l)[c] = val; validarLink(lr); return mudou(); }
   if (edSel === "blueprint") {
@@ -116,6 +123,7 @@ pm.addEventListener("input", (e) => {
   }
   if (checkpoint) {
     f.checkpoints.find((x) => x.id === checkpoint.dataset.m)[c] = val;
+    if (c === "feito" && val) avisarMonitor("checkpoint-marcado", p.id, checkpoint.dataset.m);
     if (c === "feito") refrescaAcao(f);
     return mudou();
   }
@@ -127,7 +135,7 @@ pm.addEventListener("input", (e) => {
     montaListaManual();
     return mudou();
   }
-  f[c] = val;
+  if (c === "projetoId" && !val) delete f.projetoId; else f[c] = val; // Geral = sem o campo
   if (c === "inicio" || c === "fim") { validarAcao(); const d = $("mn-detalhe").querySelector(".dur"); if (d) d.textContent = durTxt(f); }
   montaListaManual();
   mudou();
@@ -138,19 +146,20 @@ function novaPlanoApos(f, idx) {
   return t;
 }
 // remove uma ação; pede confirmação se ela tem planos ou checkpoints (ou sempre, com `sempre`). Devolve se removeu.
-function excluirAcao(pid, fid, sempre = false) {
+async function excluirAcao(pid, fid, sempre = false) {
   const p = D.blueprints.find((x) => x.id === pid), f = p?.acoes.find((x) => x.id === fid);
   if (!f) return false;
-  if ((sempre || f.planos.length || f.checkpoints.length) && !confirm(`Excluir a ação "${f.nome || "sem nome"}"${f.planos.length || f.checkpoints.length ? " com seus planos e checkpoints" : ""}?`)) return false;
+  const com = f.planos.length || f.checkpoints.length;
+  if ((sempre || com) && !(await confirmar({ titulo: "Excluir ação?", texto: `A ação "${f.nome || "sem nome"}" será apagada${com ? ", junto com seus planos e checkpoints" : ""}. Não dá para desfazer.`, rotulo: "Excluir ação" }))) return false;
   p.acoes = p.acoes.filter((x) => x.id !== f.id);
   if (edProj === pid) edSel = "blueprint";
   if (!ed.hidden) montaManual();
   mudou();
   return true;
 }
-function excluirBlueprint(id) {
+async function excluirBlueprint(id) {
   const p = D.blueprints.find((x) => x.id === id);
-  if (!p || !confirm(`Excluir o blueprint "${p.nome || "Sem nome"}" e todas as suas ações?`)) return;
+  if (!p || !(await confirmar({ titulo: "Excluir blueprint?", texto: `O blueprint "${p.nome || "Sem nome"}" será apagado, junto com todas as suas ações. Não dá para desfazer.`, rotulo: "Excluir blueprint" }))) return;
   D.blueprints = D.blueprints.filter((x) => x.id !== id);
   if (tela === id) { tela = null; location.hash = "/c/" + encodeURIComponent(workspaceAtual.id); }
   edProj = D.blueprints[0]?.id ?? null;
@@ -180,6 +189,9 @@ pm.addEventListener("keydown", (e) => {
     mudou();
   }
 });
+// plano, checkpoint e link: apagam só depois da confirmação (o `mudou()` do fim do clique roda antes, sem efeito)
+const apagar = (titulo, texto, fn) => confirmar({ titulo, texto, rotulo: "Excluir" }).then((ok) => { if (ok) { fn(); montaManual(); mudou(); } });
+const nomeDe = (v, vazio) => String(v || vazio).trim() || vazio;
 pm.addEventListener("click", (e) => {
   const sel = e.target.closest("[data-sel]");
   if (sel) { edSel = sel.dataset.sel; montaManual(); return; }
@@ -215,16 +227,16 @@ pm.addEventListener("click", (e) => {
     montaManual();
     foca(`[data-t="${t.id}"] [data-c=texto]`);
   } else if (a === "del-plano" && f) {
-    f.planos = f.planos.filter((x) => x.id !== b.closest(".item-ed").dataset.t);
-    montaManual();
+    const id = b.closest(".item-ed").dataset.t, t = f.planos.find((x) => x.id === id);
+    apagar("Excluir plano?", `O plano "${nomeDe(t?.texto, "sem texto")}" será apagado.`, () => { f.planos = f.planos.filter((x) => x.id !== id); });
   } else if (a === "add-checkpoint" && f) {
     const m = { id: novoId(), nome: "", data: f.fim || local(new Date()), feito: false };
     f.checkpoints.push(m);
     montaManual();
     foca(`[data-m="${m.id}"] [data-c=nome]`);
   } else if (a === "del-checkpoint" && f) {
-    f.checkpoints = f.checkpoints.filter((x) => x.id !== b.closest(".checkpoint-ed").dataset.m);
-    montaManual();
+    const id = b.closest(".checkpoint-ed").dataset.m, c = f.checkpoints.find((x) => x.id === id);
+    apagar("Excluir checkpoint?", `O checkpoint "${nomeDe(c?.nome, "sem nome")}" será apagado.`, () => { f.checkpoints = f.checkpoints.filter((x) => x.id !== id); });
   } else if (a === "toggle-varias") {
     const v = b.closest(".card").querySelector(".varias");
     v.hidden = !v.hidden;
@@ -242,8 +254,15 @@ pm.addEventListener("click", (e) => {
     montaManual();
     foca(".link-ed:last-of-type [data-c=rotulo]");
   } else if (a === "del-link") {
-    p.links = p.links.filter((l) => l.id !== b.closest(".link-ed").dataset.l);
+    const id = b.closest(".link-ed").dataset.l, l = p.links.find((x) => x.id === id);
+    apagar("Excluir link?", `O link "${nomeDe(l?.rotulo || l?.url, "sem rótulo")}" será apagado.`, () => { p.links = p.links.filter((x) => x.id !== id); });
+  } else if (a === "add-projeto") {
+    const x = novoProjeto(p);
     montaManual();
+    foca(`[data-pj="${x.id}"] [data-c=nome]`);
+  } else if (a === "del-projeto") {
+    const id = b.closest(".projeto-ed").dataset.pj, n = contaAcoesDoProjeto(p, id);
+    apagar("Remover projeto?", `O projeto "${nomeDe(nomeDoProjeto(p, id), "sem nome")}" será removido${n ? `; as ${n} ação(ões) dele voltam ao Geral (nenhuma ação é apagada)` : ""}.`, () => removerProjeto(p, id));
   } else if (a === "up-blueprint" || a === "down-blueprint") {
     const i = D.blueprints.indexOf(p), j = i + (a === "up-blueprint" ? -1 : 1);
     if (j < 0 || j >= D.blueprints.length) return;
@@ -251,6 +270,7 @@ pm.addEventListener("click", (e) => {
     montaEditor();
   } else if (a === "del-blueprint") {
     excluirBlueprint(p.id);
+    return;
   } else if (a === "marca-remover") {
     p.emblema = null;
     montaManual();

@@ -21,8 +21,10 @@ const limpa = (d) => {
   o.blueprints = (Array.isArray(d?.blueprints) ? d.blueprints : []).map((p) => ({
     id: p.id || novoId(), nome: p.nome || "", descricao: p.descricao || "", obs: p.obs || "", emblema: p.emblema && Array.isArray(p.emblema.pecas) ? { pecas: p.emblema.pecas } : null,
     links: (Array.isArray(p.links) ? p.links : []).map((l) => ({ id: l.id || novoId(), rotulo: l.rotulo || "", url: l.url || "" })),
+    // projetos (opcionais): só existem os campos quando há projeto, então os dados antigos abrem e voltam iguais
+    ...(Array.isArray(p.projetos) && p.projetos.some((x) => x && x.id) ? { projetos: p.projetos.filter((x) => x && x.id).map((x) => ({ id: String(x.id), nome: String(x.nome || "") })) } : {}),
     acoes: (Array.isArray(p.acoes) ? p.acoes : []).map((f) => ({
-      id: f.id || novoId(), nome: f.nome || "", inicio: f.inicio || "", fim: f.fim || "", obs: f.obs || "",
+      id: f.id || novoId(), nome: f.nome || "", inicio: f.inicio || "", fim: f.fim || "", obs: f.obs || "", ...(f.projetoId ? { projetoId: String(f.projetoId) } : {}),
       status: ROTULO[f.status] ? f.status : "planejado", progresso: Number(f.progresso) || 0,
       planos: (Array.isArray(f.planos) ? f.planos : []).map((t) => ({ id: t.id || novoId(), texto: t.texto || "", ...(typeof t.descricao === "string" ? { descricao: t.descricao } : {}), feito: !!t.feito, ...(Number.isFinite(t.horas) && t.horas > 0 ? { horas: t.horas } : {}), ...(t.agente && typeof t.agente === "object" ? { agente: normalizaAgente(t.agente) } : {}) })),
       checkpoints: (Array.isArray(f.checkpoints) ? f.checkpoints : []).map((m) => ({ id: m.id || novoId(), nome: m.nome || "", data: m.data || "", feito: !!m.feito, ...(m.feito && typeof m.evidencia === "string" ? { evidencia: m.evidencia.slice(0, 2000), feitoEm: String(m.feitoEm || "") } : {}) })),
@@ -67,11 +69,23 @@ async function carregar() {
     if (!falhou) { falhou = true; render(); }
   }
 }
+const avisosDoMonitor = new Map();
+function avisarMonitor(tipo, blueprintId, checkpointId = "") {
+  if (avisosDoMonitor.size >= 100) return;
+  const evento = { tipo, workspaceId: workspaceAtual.id, blueprintId, checkpointId };
+  avisosDoMonitor.set(JSON.stringify(evento), evento);
+}
 async function gravarDados() {
+  const avisos = [...avisosDoMonitor.entries()];
   const corpo = JSON.stringify({ ...arquivo, chats: (arquivo.chats || []).map(({ pensando, ...c }) => c) }, null, 2);
   const r = await fetch("/api/dados", { method: "PUT", headers: { "content-type": "application/json" }, body: corpo });
   if (!r.ok) throw new Error(r.status);
   ultimo = corpo;
+  // Só avisar depois de persistir: receber a proposta na fila ainda não significa aplicá-la.
+  await Promise.all(avisos.map(async ([chave, evento]) => {
+    avisosDoMonitor.delete(chave);
+    try { await fetch("/api/mcp/aviso", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(evento) }); } catch {}
+  }));
 }
 let timer = 0;
 function salvar() {

@@ -15,7 +15,7 @@ use std::time::Duration;
 use tao::dpi::LogicalSize;
 use tao::event::{Event, StartCause, WindowEvent};
 use tao::event_loop::{ControlFlow, EventLoopBuilder, EventLoopProxy};
-use tao::window::{Fullscreen, Icon, Window, WindowBuilder};
+use tao::window::{Fullscreen, Window, WindowBuilder};
 use wry::{NewWindowResponse, PageLoadEvent, WebContext, WebView, WebViewBuilder};
 
 /// O que o laço da janela recebe de fora (bandeja, servidor, carregamento da página).
@@ -134,7 +134,7 @@ fn preparar(dev: bool) -> Resultado<()> {
         let _ = mostrar.send_event(Evento::Mostrar);
     }));
 
-    let icone = Icon::from_rgba(icone::rgba(32), 32, 32).map_err(falha)?;
+    let icone = icone::janela().map_err(falha)?;
     let window = WindowBuilder::new()
         .with_title(if dev { "The Blueprint (beta) · dev" } else { "The Blueprint (beta)" })
         .with_inner_size(LogicalSize::new(1280.0, 800.0))

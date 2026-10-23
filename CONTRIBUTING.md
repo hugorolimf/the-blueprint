@@ -4,7 +4,7 @@ Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra
 
 ## Vocabulário (importante)
 
-O modelo é **Workspace → Blueprint → Ação → Plano / Checkpoint**. Não use "projeto", "fase", "tarefa" nem "marco" no código, na interface, no MCP ou nos documentos (existem só no script de migração e na migração SQL `002_vocabulario.sql`). Em português, "plano" é o item marcável; a proposta inteira do agente é uma **proposta** (`propor_blueprint`).
+O modelo é **Workspace → Blueprint → Projeto (opcional) → Ação → Plano / Checkpoint**. "Projeto" é o grupo de ações dentro de um blueprint (campos `projetos`, `projetoId` e `projeto`); não o use como nome do blueprint. Não use "fase", "tarefa" nem "marco" no código, na interface, no MCP ou nos documentos (existem só no script de migração e na migração SQL `002_vocabulario.sql`). Em português, "plano" é o item marcável; a proposta inteira do agente é uma **proposta** (`propor_blueprint`).
 
 ## Regras de código
 

@@ -1,9 +1,23 @@
 //! Linha de comando. A janela nativa (sem argumentos) entra na ação 3.5.
+mod claude;
 use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
 use crate::http::{self, Config};
 use std::path::Path;
 
-const USO: &str = "uso:\n  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n  blueprint dev                              o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n  blueprint serve                          liga o servidor (HOST, PORT, BLUEPRINT_DB, DADOS_ARQ, PROTOTIPOS_DIR, MCP_REDE)\n  blueprint --mcp                             servidor MCP por stdio, para o agente (claude mcp add blueprint -- blueprint --mcp)\n  blueprint importar <data.json> <banco.db>   copia o data.json para o banco (o arquivo não é alterado)\n  blueprint exportar <banco.db> <saida.json>  grava o banco como data.json\n  blueprint registrar [--remover]            liga (ou desliga) o MCP no Claude Code e no Codex; o instalador faz isto";
+const USO: &str = concat!(
+    "uso:\n",
+    "  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n",
+    "  blueprint dev                              o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n",
+    "  blueprint serve                          liga o servidor (HOST, PORT, BLUEPRINT_DB, DADOS_ARQ, PROTOTIPOS_DIR, MCP_REDE)\n",
+    "  blueprint --mcp                             servidor MCP por stdio, para o agente (claude mcp add blueprint -- blueprint --mcp)\n",
+    "  blueprint watch                             acompanha avisos do blueprint desta pasta (BLUEPRINT_URL)\n",
+    "  blueprint claude [args]                    abre o Claude Code com o plugin; ativa o agente se a pasta estiver ligada\n",
+    "  blueprint importar <data.json> <banco.db>   copia o data.json para o banco (o arquivo não é alterado)\n",
+    "  blueprint exportar <banco.db> <saida.json>  grava o banco como data.json\n",
+    "  blueprint hook sessao|statusline|status|notificacao  comandos do Claude Code registrados pelo plugin\n",
+    "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
+    "  blueprint registrar [--remover]           instala (ou remove) o plugin no Claude Code (skill, agente e MCP) e o MCP no Codex; o instalador faz isto",
+);
 
 /// Devolve o código de saída do processo.
 pub fn executar(args: Vec<String>) -> i32 {
@@ -12,7 +26,16 @@ pub fn executar(args: Vec<String>) -> i32 {
         [] => return abrir_janela(false),
         ["dev"] => return abrir_janela(true),
         ["--mcp"] => return crate::mcp::stdio::executar(),
+        ["watch"] => return crate::watch::executar(),
+        ["claude", ..] => return claude::executar(&args[1..]),
         ["serve"] => serve(),
+        ["hook", evento] => return crate::hook::executar(evento),
+        ["hook", "statusline", "--anterior", comando] => return crate::hook::combinar(comando),
+        ["registrar", "--status-line"] | ["registrar", "--status-line", "--remover"] => {
+            let (texto, codigo) = crate::registrar::statusline::executar(a.len() == 3);
+            println!("{texto}");
+            return codigo;
+        }
         ["registrar"] | ["registrar", "--remover"] => {
             let (texto, codigo) = crate::registrar::executar(a.len() == 2);
             println!("{texto}");

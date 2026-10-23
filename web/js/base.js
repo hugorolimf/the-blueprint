@@ -21,6 +21,6 @@ const rotuloDe = (l) => l.rotulo || new URL(urlSegura(l.url)).hostname.replace(/
 const pad = (n) => String(n).padStart(2, "0");
 const corta = (s, max) => (s.length > max ? s.slice(0, Math.max(1, max - 1)) + "…" : s);
 const umaLinha = (s, max) => corta(String(s ?? "").replace(/\s+/g, " ").trim(), max);
-const reduz = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduz = () => matchMedia("(prefers-reduced-motion: reduce)").matches || document.hidden; // sem animação com movimento reduzido ou com a aba/janela oculta
 
 const $ = (id) => document.getElementById(id);

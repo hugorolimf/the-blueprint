@@ -10,9 +10,13 @@
 <link rel="stylesheet" href="/web/css/controles.css">
 <link rel="stylesheet" href="/web/css/edicao.css">
 <link rel="stylesheet" href="/web/css/planejar.css">
-<link rel="stylesheet" href="/web/css/agentes.css">
+<link rel="stylesheet" href="/web/css/revisao.css">
 <link rel="stylesheet" href="/web/css/marca.css">
+<link rel="stylesheet" href="/web/css/claude.css">
 <link rel="stylesheet" href="/web/css/entrada.css">
+<link rel="stylesheet" href="/web/css/folha.css">
+<link rel="stylesheet" href="/web/css/projetos.css">
+<link rel="stylesheet" href="/web/css/markdown.css">
 </head>
 <body class="carregando">
 <section class="login" id="login" aria-label="Entrar">
@@ -29,11 +33,11 @@
 </section>
 <section id="workspace-nova" role="dialog" aria-modal="true" aria-label="Criar workspace" hidden>
   <form id="workspace-form">
-    <header class="ed-topo"><button class="btn" id="workspace-cancelar" type="button">← Workspaces</button><div class="tit"><span>Criar workspace</span><b id="workspace-titulo">Novo workspace</b></div><span class="estado" id="workspace-estado" role="status">pronto</span><button class="btn" id="workspace-tela" type="button">⛶ Tela cheia</button></header>
+    <header class="ed-topo"><button class="btn" id="workspace-cancelar" type="button">← Workspaces</button><div class="tit"><b id="workspace-titulo">Novo workspace</b></div><span class="estado" id="workspace-estado" role="status">pronto</span><button class="btn" id="workspace-tela" type="button">⛶ Tela cheia</button></header>
     <p class="ed-aviso" id="workspace-erro" role="status"></p>
     <div class="ed-corpo">
       <main class="ed-main">
-        <div class="ed-painel" id="workspace-manual"><div class="card"><h3>Criar workspace</h3><div class="campos"><div id="workspace-manual-nome"><label class="f" id="workspace-nome-campo">Nome do workspace<input id="workspace-nome" maxlength="80" autocomplete="organization" placeholder="Nome do workspace"></label></div><label class="f">Descrição (opcional)<textarea id="workspace-descricao-manual" maxlength="3000" rows="3" placeholder="Breve descrição do workspace"></textarea></label></div><div class="acoes" id="workspace-manual-acoes"><button class="btn cheio" id="workspace-criar" type="submit">Criar workspace</button></div></div></div>
+        <div class="ed-painel" id="workspace-manual"><div class="card ws-card"><div class="ws-grade"><div class="campos ws-campos"><div id="workspace-manual-nome"><label class="f grande" id="workspace-nome-campo">Nome do workspace<input id="workspace-nome" maxlength="80" autocomplete="organization" placeholder="Nome do workspace"></label></div><label class="f">Descrição (opcional)<textarea id="workspace-descricao-manual" maxlength="3000" rows="3" placeholder="Breve descrição do workspace"></textarea></label><label class="f">Arte do projeto<select id="workspace-arte-modo"><option value="marca">Marca pronta</option><option value="texto">Texto (sigla)</option><option value="json">Peças em texto (JSON)</option></select></label><label class="f" id="ws-arte-marca">Marca<select id="workspace-arte-marca"></select></label><label class="f" id="ws-arte-texto" hidden>Texto da arte (até 12 caracteres)<input id="workspace-arte-texto" maxlength="12" autocomplete="off" placeholder="Ex.: SM"></label><label class="f" id="ws-arte-json" hidden>Peças da arte (JSON)<textarea id="workspace-arte-json" rows="7" spellcheck="false" placeholder='[{"tipo":"laje","x":-100,"y":-60,"w":200,"d":120,"h":12}]'></textarea></label></div><aside class="ws-previa" aria-label="Prévia da arte"><div id="workspace-previa" role="status"></div><small>Prévia da arte</small></aside></div><div class="acoes" id="workspace-manual-acoes"><button class="btn cheio" id="workspace-criar" type="submit">Criar workspace</button></div></div></div>
       </main>
     </div>
   </form>
@@ -44,16 +48,13 @@
     <button class="btn so-blueprint" id="b-voltar" type="button">← Blueprints</button>
     <button class="btn so-blueprint" id="b-abrir" type="button">Expandir tudo</button>
     <button class="btn so-blueprint" id="b-fechar" type="button">Recolher tudo</button>
-    <button class="btn cheio so-home" id="b-novo-proj" type="button">+ Novo blueprint</button>
-    <select class="btn" id="b-anim" aria-label="Animação de abertura da folha"><option value="rolo">Abertura: rolo</option><option value="escrita">Abertura: escrita</option></select>
     <button class="btn" id="b-tela" type="button">⛶ Tela cheia</button>
-    <button class="btn" id="b-editar" type="button" aria-expanded="false" aria-controls="editor">Editar</button>
-    <button class="btn" id="b-agentes" type="button" aria-haspopup="dialog" hidden>Agentes · <span id="b-agentes-n">0</span></button>
     <button class="btn" id="b-ia" type="button" aria-haspopup="dialog">✦ Planejar</button>
   </div>
-  <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button></div></div>
+  <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button><button class="btn mini" id="periodo-andamento" type="button" aria-pressed="false">Em andamento · <span id="periodo-andamento-n">0</span></button></div></div>
   <div class="busca"><input id="busca" type="search" placeholder="Pesquisar blueprint ou ação…" aria-label="Pesquisar por nome de blueprint ou ação" autocomplete="off"><span id="busca-n" role="status"></span></div>
   <div id="desenho"></div>
+  <div id="claude-camada"></div>
   <div class="nota-folha" id="nota-folha" role="dialog" aria-label="Detalhes" hidden></div>
 </main></div>
 <div class="dica-f11" id="dica-f11" role="status" hidden></div>
@@ -75,10 +76,8 @@
       <button class="btn" id="b-novo" type="button">+ Novo blueprint (outra tela)</button>
       <details id="geral"><summary>Dados gerais</summary>
         <div class="campos">
-          <label class="f">Empresa<input data-g="empresa"></label>
-          <label class="f">Título do desenho<input data-g="titulo"></label>
-          <label class="f">Revisão<input data-g="rev"></label>
-          <label style="display:flex;gap:10px;align-items:center;font-size:12px"><input type="checkbox" data-g="exemplo"> Dados de exemplo (marca o carimbo)</label>
+          <label class="f">Workspace<input data-g="empresa"></label>
+          <label class="f">Título da lista<input data-g="titulo"></label>
         </div>
       </details>
     </nav>
@@ -125,12 +124,6 @@
   </div>
 </section>
 
-<dialog id="agentes-painel" aria-label="Agentes trabalhando agora">
-  <div class="cu-topo"><h3>Agentes trabalhando agora</h3><button class="btn" id="ag-painel-fechar" type="button">Fechar</button></div>
-  <div class="ag-lista" id="ag-cartoes"></div>
-  <p class="ag-rodape">Só mostra o que os seus agentes reportam pelo MCP; o app não abre nem conversa com agentes.</p>
-</dialog>
-
 <dialog id="como-usar" aria-label="Como conectar o seu agente">
   <div class="cu-topo"><h3>Como conectar o seu agente</h3><button class="btn" id="cu-fechar" type="button">Fechar</button></div>
   <p class="cu-corpo" id="cu-corpo"></p>
@@ -148,21 +141,38 @@
 </section>
 
 <script src="/web/js/base.js"></script>
+<script src="/web/js/confirmar.js"></script>
 <script src="/web/js/entrada.js"></script>
+<script src="/web/js/arte.js"></script>
 <script src="/web/js/dados.js"></script>
+<script src="/web/js/projetos.js"></script>
+<script src="/web/js/cabecalho.js"></script>
 <script src="/web/js/render.js"></script>
 <script src="/web/js/navegacao.js"></script>
+<script src="/web/js/barras.js"></script>
+<script src="/web/js/saida.js"></script>
 <script src="/web/js/arrastar.js"></script>
 <script src="/web/js/rede.js"></script>
 <script src="/web/js/prototipos.js"></script>
 <script src="/web/js/robo.js"></script>
+<script src="/web/js/claude-logica.js"></script>
+<script src="/web/js/claude-vida.js"></script>
+<script src="/web/js/claude-camada.js"></script>
+<script src="/web/js/markdown.js"></script>
+<script src="/web/js/folha.js"></script>
+<script src="/web/js/notificacao-regras.js"></script>
+<script src="/web/js/notificacao.js"></script>
 <script src="/web/js/mcp.js"></script>
 <script src="/web/js/agentes.js"></script>
 <script src="/web/js/edicao.js"></script>
 <script src="/web/js/planejar.js"></script>
+<script src="/web/js/projetos-editor.js"></script>
 <script src="/web/js/manual.js"></script>
+<script src="/web/js/proposta-vista.js"></script>
 <script src="/web/js/proposta.js"></script>
+<script src="/web/js/fila-propostas.js"></script>
 <script src="/web/js/nota.js"></script>
+<script src="/web/js/iniciar-acao.js"></script>
 <script src="/web/js/rolagem.js"></script>
 <script src="/web/js/contexto.js"></script>
 <script src="/web/js/inicio.js"></script>

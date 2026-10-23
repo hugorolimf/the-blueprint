@@ -1,5 +1,5 @@
-// Confere o robô do agente no navegador de verdade (Edge sem janela): progresso com plano leva o robô e a linha realçada ao plano, a faixa mostra a última fala,
-// concluído e bloqueio mudam a cor, o cartão do blueprint na lista ganha o robô e o robô some depois de 10 minutos sem notícia. Captura em target/robo-folha.png.
+// Confere o agente na folha no navegador de verdade (Edge sem janela): progresso com plano leva a figura do Claude (camada #claude-camada) e a linha realçada ao plano, a faixa mostra a última fala,
+// concluído e bloqueio mudam a cor da faixa, o cartão do blueprint na lista ganha a figura e ela repousa (parada, no cabeçalho) depois de 10 minutos sem notícia, em vez de sumir. Captura em target/robo-folha.png.
 // Uso: node scripts/robo-e2e.mjs [blueprint.exe]   (precisa do Microsoft Edge)
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -50,12 +50,12 @@ try {
   await dormir(1200); // chega por SSE
   assert.equal(await js(`document.getElementById("robo-agente").hidden`), false, "a faixa aparece");
   assert((await js(`document.getElementById("robo-agente").textContent`)).includes("Escrevendo o teste do robô"), "a faixa traz a última fala");
-  assert(await js(`document.querySelectorAll("[data-robo]:not(#robo-agente *)").length`) >= 1, "o cartão do blueprint na lista ganha o robô");
+  assert(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`) >= 1, "o cartão do blueprint na lista ganha a figura do Claude");
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(1500);
   await js(`abertos[${JSON.stringify(blueprint.id)}] = true; render()`);
   await dormir(500);
-  assert.equal(await js(`document.querySelectorAll("[data-robo]:not(#robo-agente *)").length`), 1, "um robô só na folha");
+  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 1, "uma figura só na folha");
   assert.equal(await js(`document.querySelectorAll(".robo-linha").length`), 1, "a linha do plano fica realçada");
   mkdirSync(join(raiz, "target"), { recursive: true });
   writeFileSync(join(raiz, "target", "robo-folha.png"), Buffer.from((await cdp("Page.captureScreenshot", { format: "png" })).result.data, "base64"));
@@ -63,15 +63,15 @@ try {
   // concluído: verde; bloqueio: vermelho
   await aviso("concluir", { texto: "Concluí com evidência", acaoId: acao.id, planoId: plano.id, evidencia: "teste" });
   await dormir(1200);
-  assert(await js(`!!document.querySelector("#robo-agente.ok")`), "concluído deixa o robô na cor de ok");
+  assert(await js(`!!document.querySelector("#robo-agente.ok")`), "concluído deixa a faixa na cor de ok");
   await aviso("bloqueio", { texto: "Travei: falta acesso" });
   await dormir(1200);
-  assert(await js(`!!document.querySelector("#robo-agente.erro")`), "bloqueio deixa o robô vermelho");
+  assert(await js(`!!document.querySelector("#robo-agente.erro")`), "bloqueio deixa a faixa vermelha");
 
-  // 10 minutos sem notícia: o robô sai da folha
+  // 10 minutos sem notícia: a faixa some, mas a figura NÃO sai da folha: repousa parada (o servidor segue com o agente)
   await js(`agenteAgora.em = Date.now() - 11 * 60 * 1000; render(); montaRobo()`);
   assert.equal(await js(`document.getElementById("robo-agente").hidden`), true, "depois de 10 min a faixa some");
-  assert.equal(await js(`document.querySelectorAll("[data-robo]:not(#robo-agente *)").length`), 0, "e o robô sai da folha");
+  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 1, "a figura repousa na folha (sem evento da fila, só a lista do servidor a mantém)");
   assert.deepEqual(erros, [], "sem erro no console");
-  console.log("robô do agente: ok (plano certo, faixa, ok/erro, cartão da lista, expiração em 10 min). Captura em target/robo-folha.png");
+  console.log("agente na folha: ok (plano certo, faixa, ok/erro, cartão da lista, repouso após 10 min). Captura em target/robo-folha.png");
 } finally { limpar(); }

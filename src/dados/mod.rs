@@ -8,6 +8,7 @@ mod importar;
 mod itens;
 mod linhas;
 pub mod migracoes;
+mod pastas;
 
 #[cfg(test)]
 mod tests;
@@ -76,6 +77,29 @@ impl Dados {
         itens::marcar_plano(&self.conn, plano_id, feito)?;
         self.cache = None;
         Ok(())
+    }
+
+    /// Liga a pasta a um blueprint (quem chama já conferiu que ele existe). Fora do data.json: não invalida o cache.
+    pub fn vincular_pasta(&mut self, ctx: &Contexto, caminho: &str, workspace_id: &str, blueprint_id: &str) -> Resultado<()> {
+        ctx.exige_editar()?;
+        pastas::vincular(&self.conn, caminho, workspace_id, blueprint_id)
+    }
+
+    pub fn blueprint_da_pasta(&self, _ctx: &Contexto, caminho: &str) -> Resultado<Option<(String, String)>> {
+        pastas::procurar(&self.conn, caminho)
+    }
+
+    pub fn pasta_do_blueprint(&self, _ctx: &Contexto, workspace_id: &str, blueprint_id: &str) -> Resultado<Option<String>> {
+        pastas::pasta_do_blueprint(&self.conn, workspace_id, blueprint_id)
+    }
+
+    pub fn listar_pastas(&self, _ctx: &Contexto) -> Resultado<Value> {
+        pastas::listar(&self.conn)
+    }
+
+    pub fn desvincular_pasta(&mut self, ctx: &Contexto, caminho: &str) -> Resultado<()> {
+        ctx.exige_editar()?;
+        pastas::desvincular(&self.conn, caminho)
     }
 
     pub fn adicionar_comentario(&mut self, ctx: &Contexto, plano_id: &str, comentario: &Value) -> Resultado<()> {

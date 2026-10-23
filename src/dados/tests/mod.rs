@@ -3,6 +3,8 @@
 mod ida_e_volta;
 mod itens;
 mod migracoes;
+mod pastas;
+mod projetos;
 mod queda;
 
 use serde_json::Value;

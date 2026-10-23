@@ -20,6 +20,9 @@ const notaEl = $("nota-folha");
 let notaFechando = 0;
 function fechaNota(rapido) {
   if (notaEl.hidden || notaEl.dataset.fechando) return;
+  const visto = notaEl._aoFechar; // quem abriu a folha pode querer saber que ela foi lida e fechada (ex.: o concluído do agente)
+  notaEl._aoFechar = null;
+  visto?.();
   const id = ++notaFechando;
   if (rapido === true || reduz()) { notaEl.hidden = true; notaEl._acoes = []; return; }
   notaEl.dataset.fechando = "1";
@@ -37,14 +40,40 @@ function fechaNota(rapido) {
     rolo.remove();
   }, () => {});
 }
-function abreNota({ rotulo, titulo, texto, barra, acoes = [], editar }, ancora) {
+// a folha da instrução abre lida; "Editar" mostra o campo, já na altura do texto (até 70% da janela), e "Visualizar" volta ao texto lido com o que foi digitado
+function notaModo(modo) {
+  const ta = notaEl.querySelector("textarea"), ed = notaEl.querySelector(".obs-edicao"), ver = notaEl.querySelector("[data-nver]");
+  if (!ta || !ver) return;
+  if (modo === "ver") ver.innerHTML = mdHtml(ta.value) || '<p class="md-vazio">Sem texto ainda.</p>';
+  notaEl.dataset.modo = modo;
+  ver.hidden = modo === "editar"; ed.hidden = modo !== "editar";
+  notaEl.querySelector(".dica-ed").hidden = modo !== "editar";
+  if (modo === "editar") { ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight + 2, innerHeight * 0.7) + "px"; mdPrevia(ta); ta.focus({ preventScroll: true }); }
+}
+// abrir é o fechar ao contrário: o papel se revela de cima para baixo e o rolo desce na frente (movimento reduzido: aparece pronta)
+function revelaNota() {
+  if (reduz()) return;
+  const h = notaEl.getBoundingClientRect().height, dur = 560, ease = "cubic-bezier(.25,.7,.2,1)";
+  const rolo = document.createElement("div");
+  rolo.className = "rolo";
+  notaEl.appendChild(rolo);
+  notaEl.animate([{ clipPath: "inset(0 0 100% 0)" }, { clipPath: "inset(0 0 0% 0)" }], { duration: dur, easing: ease });
+  rolo.animate([{ transform: "translateY(0)" }, { transform: "translateY(" + Math.max(0, h - 30) + "px)" }], { duration: dur, easing: ease, fill: "forwards" }).finished.then(() => rolo.remove(), () => rolo.remove());
+}
+function abreNota({ rotulo, titulo, texto, barra, acoes = [], editar, aoFechar }, ancora) {
+  const chave = rotulo + "|" + titulo;
+  if (!notaEl.hidden && !notaEl.dataset.fechando && notaEl._chave === chave) return; // já aberta com este conteúdo: clicar de novo não faz nada (e não perde o que estiver sendo editado)
+  const substituida = notaEl._aoFechar; // outra folha tomou o lugar desta: a anterior também foi vista
+  notaEl._chave = chave;
+  notaEl._aoFechar = aoFechar || null;
   notaFechando++; // cancela um fechamento em andamento
   delete notaEl.dataset.fechando;
   notaEl.getAnimations().forEach((a) => a.cancel());
   const r = ancora.getBoundingClientRect();
   notaEl._sujo = false;
-  if (editar) acoes = [{ rotulo: "Salvar", fn: () => { editar.salvar(notaEl.querySelector("textarea").value); notaEl._sujo = false; fechaNota(); } }, ...acoes];
-  notaEl.innerHTML = `<h4>${esc(rotulo)}</h4><h3>${esc(titulo)}</h3>${editar ? `<textarea aria-label="${esc(rotulo)}" placeholder="${esc(editar.dica)}">${esc(texto)}</textarea><p class="dica-ed">Você edita aqui mesmo. Ctrl+Enter salva; clicar fora não descarta o que você escreveu.</p>` : `<div class="corpo${texto ? "" : " vazio"}">${esc(texto || "Sem texto ainda.")}</div>`}${barra !== undefined ? `<div class="med" style="margin-top:14px"><i style="width:${barra}%"></i></div>` : ""}<div class="acoes">${acoes.map((a, i) => `<button class="btn mini cheio" type="button" data-nacao="${i}">${esc(a.rotulo)}</button>`).join("")}<button class="btn mini" type="button" data-nfecha>Fechar</button></div>`;
+  notaEl.dataset.modo = editar ? "ver" : "";
+  if (editar) acoes = [{ rotulo: "Editar", modo: "ver", fn: () => notaModo("editar") }, { rotulo: "Salvar", modo: "editar", fn: () => { editar.salvar(notaEl.querySelector("textarea").value); notaEl._sujo = false; fechaNota(); } }, ...acoes];
+  notaEl.innerHTML = `<h4>${esc(rotulo)}</h4><h3>${esc(titulo)}</h3>${editar ? `<div class="corpo md" data-nver>${mdHtml(texto) || '<p class="md-vazio">Sem texto ainda.</p>'}</div>${mdEdicao(`aria-label="${esc(rotulo)}"`, texto, { rows: 10, placeholder: editar.dica, oculto: true })}<p class="dica-ed" hidden>Você edita aqui mesmo. Ctrl+Enter salva; clicar fora não descarta o que você escreveu.</p>` : `<div class="corpo${texto ? "" : " vazio"}">${esc(texto || "Sem texto ainda.")}</div>`}${barra !== undefined ? `<div class="med" style="margin-top:14px"><i style="width:${barra}%"></i></div>` : ""}<div class="acoes">${acoes.map((a, i) => `<button class="btn mini cheio" type="button" data-nacao="${i}"${a.modo ? ` data-nmodo="${a.modo}"` : ""}>${esc(a.rotulo)}</button>`).join("")}<button class="btn mini" type="button" data-nfecha>Fechar</button></div>`;
   notaEl._acoes = acoes;
   notaEl.hidden = false;
   const larg = notaEl.offsetWidth, alt = notaEl.offsetHeight, janela = document.documentElement.clientWidth;
@@ -53,20 +82,11 @@ function abreNota({ rotulo, titulo, texto, barra, acoes = [], editar }, ancora) 
   const topo = Math.max(scrollY + 12, Math.min(r.top + scrollY - 10, scrollY + innerHeight - alt - 16));
   notaEl.style.left = esq + "px";
   notaEl.style.top = topo + "px";
-  desenrolar(notaEl, notaEl); // a folha pequena também se abre como papel, já escrita
-  (notaEl.querySelector("textarea") || notaEl.querySelector("[data-nfecha]")).focus({ preventScroll: true });
+  revelaNota(); // a folha pequena abre como o papel se desenrolando, do mesmo jeito que fecha
+  notaEl.querySelector("[data-nacao]:not([data-nmodo=editar])")?.focus({ preventScroll: true }) ?? notaEl.querySelector("[data-nfecha]").focus({ preventScroll: true });
+  substituida?.();
 }
-function abreNotaObs(el) {
-  const [pid, fid] = el.dataset.obs.split("|");
-  const p = D.blueprints.find((x) => x.id === pid), f = fid && p?.acoes.find((x) => x.id === fid);
-  if (!p) return;
-  const pi = D.blueprints.indexOf(p) + 1;
-  abreNota({
-    rotulo: f ? "Instruções da ação" : "Observação do blueprint", titulo: f ? `${pi}.${p.acoes.indexOf(f) + 1} · ${f.nome || "sem nome"}` : p.nome || "Sem nome", texto: (f ? f.obs : p.obs) || "",
-    editar: { dica: f ? "O que fazer nesta ação, passo a passo: o roteiro, as decisões, as dependências e os riscos…" : "Anotações do blueprint…", salvar: (v) => { const novo = v.trim() ? v : ""; if (novo === ((f ? f.obs : p.obs) || "")) return; if (f) f.obs = novo; else p.obs = novo; mudou(); } },
-    acoes: [],
-  }, el);
-}
+function abreNotaObs(el) { const [pid, fid] = el.dataset.obs.split("|"); abreFolhaDaAcao(pid, fid, el); } // a folha da ação/do blueprint: iniciar-acao.js
 function abreNotaMarca(el) {
   const d = el.dataset, pct = Number(d.pct), p = d.proj ? D.blueprints.find((x) => x.id === d.proj) : null;
   abreNota({
@@ -75,14 +95,14 @@ function abreNotaMarca(el) {
     acoes: [],
   }, el);
 }
-notaEl.addEventListener("input", () => { notaEl._sujo = true; });
-notaEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && e.target.matches("textarea")) { e.preventDefault(); notaEl.querySelector("[data-nacao]")?.click(); } });
+notaEl.addEventListener("input", (e) => { notaEl._sujo = true; const ta = e.target.closest("textarea"); if (ta) mdPrevia(ta); });
+notaEl.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && e.target.matches("textarea")) { e.preventDefault(); notaEl.querySelector("[data-nmodo=editar]")?.click(); } });
 notaEl.addEventListener("click", (e) => {
   if (e.target.closest("[data-nfecha]")) return fechaNota();
   const b = e.target.closest("[data-nacao]");
   if (b) notaEl._acoes[+b.dataset.nacao]?.fn();
 });
-document.addEventListener("pointerdown", (e) => { if (!notaEl.hidden && !notaEl._sujo && !notaEl.contains(e.target) && !e.target.closest(".nota, .marca")) fechaNota(); });
+document.addEventListener("pointerdown", (e) => { if (!notaEl.hidden && !notaEl._sujo && !notaEl.contains(e.target) && !e.target.closest(".nota, .marca, [data-robo-nome], dialog")) fechaNota(); }); // o diálogo de confirmação (iniciar-acao.js) não fecha a folha por baixo
 addEventListener("keydown", (e) => { if (e.key === "Escape" && !notaEl.hidden && menuContexto.hidden) { e.stopImmediatePropagation(); fechaNota(); } }, true);
 $("busca").addEventListener("input", fechaNota);
 

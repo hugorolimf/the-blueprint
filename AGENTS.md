@@ -1,6 +1,6 @@
 # AGENTS.md — guia para agentes que trabalham neste repositório
 
-The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interface web. Vocabulário fixo: **Workspace → Blueprint → Ação → Plano / Checkpoint** (nada de "projeto", "fase", "tarefa", "marco").
+The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interface web. Vocabulário fixo: **Workspace → Blueprint → Projeto (opcional) → Ação → Plano / Checkpoint** (nada de "fase", "tarefa", "marco"; **única exceção, pedida pelo usuário em 2026-10-23:** o aviso na tela de que o agente concluiu um plano se chama "Tarefa concluída" ("Tarefa não concluída"), porque "plano" também é a proposta que o agente envia e o aviso confundia; "projeto" é só o grupo de ações dentro do blueprint, nunca o nome do blueprint).
 
 ## Mapa
 
@@ -12,7 +12,7 @@ The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interfac
 | `src/http/` | servidor HTTP síncrono (`tiny_http`), rotas puras, estáticos com ETag e gzip |
 | `src/janela/` | janela WebView2, bandeja e instância única (só Windows) |
 | `web/`, `blueprint.html` | interface: CSS em `web/css`, scripts clássicos em `web/js` na ordem listada em `blueprint.html` |
-| `kit/`, `emblemas.mjs`, `agentes-figura.mjs` | kit isométrico (anatomy) e figuras; rodam no navegador |
+| `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | kit isométrico (anatomy) e figuras; rodam no navegador |
 | `skills/blueprint-planejamento/` | o guia que o agente lê pelo MCP (`guia_de_planejamento`) |
 | `scripts/` | verificações de ponta a ponta (contrato HTTP, e2e com Edge, mutações, medições, instalador) |
 
@@ -21,7 +21,7 @@ The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interfac
 ```
 cargo test                        # testes Rust (um tests.rs por módulo)
 cargo build --release             # target/release/blueprint.exe
-node emblemas.test.mjs && node agentes-figura.test.mjs && node scripts/migrar-vocabulario.test.mjs
+node emblemas.test.mjs && node agentes-figura.test.mjs && node agentes-claude.test.mjs && node scripts/migrar-vocabulario.test.mjs
 node scripts/contrato-http.mjs    # API contra referencias/api-snapshots.json
 node scripts/ui-e2e.mjs           # interface no Edge sem janela
 node scripts/capturas.mjs --comparar

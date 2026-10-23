@@ -15,6 +15,35 @@ fn item(tipo: &str) -> Map<String, Value> {
 }
 
 #[test]
+fn canal_declara_apenas_eventos_informativos() {
+    let r = tratar(&json!({"jsonrpc":"2.0", "id":1, "method":"initialize", "params":{}})).unwrap();
+    assert_eq!(r["result"]["capabilities"]["experimental"]["claude/channel"], json!({}));
+    assert!(r["result"]["capabilities"]["experimental"].get("claude/channel/permission").is_none());
+    let n = super::stdio::notificacao_canal("aviso");
+    assert_eq!(n, json!({"jsonrpc":"2.0", "method":"notifications/claude/channel", "params":{"content":"aviso"}}));
+}
+
+#[test]
+fn aviso_so_aceita_alvo_existente_e_checkpoint_persistido() {
+    let m = mcp();
+    let rx = m.assinar();
+    let dados = json!({"blueprints": [{"id":"p1", "nome":"Teste", "acoes":[{"id":"a1", "checkpoints":[{"id":"c1", "feito":true}]}]}]});
+    let mut corpo = json!({"tipo":"checkpoint-marcado", "workspaceId":"sm", "blueprintId":"p1", "checkpointId":"c1", "texto":"lixo"});
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_ok());
+    let evento = rx.recv().unwrap();
+    assert_eq!(evento.nome, "checkpoint-marcado");
+    assert_eq!(evento.dados.unwrap(), json!({"workspaceId":"sm", "blueprintId":"p1"}));
+    corpo["checkpointId"] = json!("inexistente");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_err());
+    corpo["tipo"] = json!("proposta-aplicada");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_ok());
+    corpo["blueprintId"] = json!("outro");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_err());
+    corpo["tipo"] = json!("arbitrario");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_err());
+}
+
+#[test]
 fn a_fila_numera_carimba_e_so_guarda_200() {
     let m = mcp();
     let primeiro = m.empurra(item("progresso"));
@@ -31,19 +60,32 @@ fn a_fila_numera_carimba_e_so_guarda_200() {
 }
 
 #[test]
-fn a_proposta_nova_tira_a_pendente_do_mesmo_alvo_e_so_dele() {
+fn a_proposta_nova_entra_no_fim_com_numero_por_alvo_e_nao_apaga_nenhuma() {
     let m = mcp();
-    let de = |tipo: &str, blueprint: &str| {
-        let mut i = item(tipo);
+    let de = |blueprint: &str| {
+        let mut i = item("proposta");
         i.insert("blueprintId".into(), json!(blueprint));
         i
     };
-    m.empurra_proposta(de("proposta", "p1"), "sm", "p1"); // id 1
-    m.empurra_proposta(de("proposta", "p2"), "sm", "p2"); // id 2
+    let numero = |v: Value| v["numero"].as_i64().unwrap();
+    assert_eq!(numero(m.empurra_proposta(de("p1"), json!({"n": "a"}), None)), 1); // id 1
+    assert_eq!(numero(m.empurra_proposta(de("p2"), json!({}), None)), 1); // id 2: outro alvo, outra fila
     m.empurra(item("progresso")); // id 3
-    m.empurra_proposta(de("proposta", "p1"), "sm", "p1"); // id 4: tira o 1, deixa o 2 e o 3
+    assert_eq!(numero(m.empurra_proposta(de("p1"), json!({"n": "b"}), None)), 2); // id 4: não tira o 1
     let ids: Vec<i64> = m.itens().iter().map(|i| i["id"].as_i64().unwrap()).collect();
-    assert_eq!(ids, vec![2, 3, 4]);
+    assert_eq!(ids, vec![1, 2, 3, 4]);
+    // com número, a proposta toma o lugar daquela (mesmo número e mesma criadaEm), sem mexer nas outras
+    let criada = m.itens()[0]["criadaEm"].clone();
+    let troca = m.empurra_proposta(de("p1"), json!({"n": "c"}), Some(1));
+    assert_eq!((troca["numero"].as_i64(), troca["criadaEm"].clone(), troca["id"].as_i64()), (Some(1), criada, Some(5)));
+    let numeros: Vec<i64> = m.itens().iter().filter(|i| i["blueprintId"] == "p1" && i["tipo"] == "proposta").map(|i| i["numero"].as_i64().unwrap()).collect();
+    assert_eq!(numeros, vec![2, 1]);
+    assert_eq!(m.entrada_da_proposta("sm", "p1", 1).unwrap(), json!({"n": "c"}));
+    // só o ack da página tira a proposta (e a entrada guardada junto); o número seguinte não volta atrás
+    m.ack(&HashSet::from([5]));
+    assert_eq!(m.entrada_da_proposta("sm", "p1", 1).unwrap_err(), vec![2]);
+    assert_eq!(numero(m.empurra_proposta(de("p1"), json!({}), None)), 3);
+    assert_eq!(m.entrada_da_proposta("sm", "p9", 1).unwrap_err(), Vec::<i64>::new(), "fila vazia");
 }
 
 #[test]
@@ -98,15 +140,35 @@ fn o_servidor_stdio_se_apresenta_como_o_de_node() {
 }
 
 #[test]
-fn as_ferramentas_sao_as_mesmas_do_node() {
+fn as_ferramentas_do_mcp() {
     let r = rpc("tools/list", json!({}));
     let nomes: Vec<&str> = r["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
     assert_eq!(
         nomes,
-        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "anexar_prototipo", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio"]
+        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "anexar_prototipo", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta"]
     );
     let propor = r["result"]["tools"].as_array().unwrap().iter().find(|t| t["name"] == "propor_blueprint").unwrap();
     assert!(propor["inputSchema"]["properties"].get("remover").is_some(), "a ferramenta já conhece mover e apagar");
+}
+
+#[test]
+fn propor_blueprint_conhece_a_fila_e_o_agente_aprende_a_ajustar() {
+    let r = rpc("tools/list", json!({}));
+    let propor = r["result"]["tools"].as_array().unwrap().iter().find(|t| t["name"] == "propor_blueprint").unwrap();
+    for campo in ["ajustar", "substituir"] {
+        assert_eq!(propor["inputSchema"]["properties"][campo]["type"], "integer", "{campo}");
+    }
+    assert!(propor["description"].as_str().unwrap().contains("FILA"));
+    let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
+    let editar = editar["result"]["content"][0]["text"].as_str().unwrap();
+    assert!(editar.contains("ajustar: <número>") && editar.contains("+a1.p2") && editar.contains("substituir"), "o guia explica o ajuste");
+    let instrucoes = rpc("initialize", json!({}))["result"]["instructions"].as_str().unwrap().to_string();
+    assert!(instrucoes.contains("ajustar: <número>"), "as instruções falam do ajuste");
+    let inicio: String = instrucoes.chars().take(512).collect();
+    assert!(inicio.contains("propor_blueprint") && inicio.contains("SEMPRE atualizado"), "a regra e os nomes continuam nos primeiros 512");
+    let ids = json!([{"id": "+a1", "nome": "Nova", "planos": [{"id": "+a1.p1", "texto": "Criar a tela"}], "checkpoints": []}, {"id": "f1", "nome": "Base", "planos": [], "checkpoints": [{"id": "+f1.c1", "nome": "Pronto"}]}]);
+    let texto = super::stdio::ids_provisorios(&ids);
+    assert!(texto.contains("- ação +a1 \"Nova\"; planos: +a1.p1 \"Criar a tela\"") && texto.contains("- ação f1 \"Base\"; checkpoints: +f1.c1 \"Pronto\""), "{texto}");
 }
 
 #[test]

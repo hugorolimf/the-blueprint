@@ -1,0 +1,39 @@
+/* tons do Claude na folha (agentes-claude.mjs): corpo laranja da marca, olho escuro e a cor de apoio de cada papel (exp = explorador, con = construtor, rev = revisor; aco e papel são das ferramentas).
+   Cada tom define a paleta (--k0..--k3 = lados, --kt = topo, --ke = contorno, --kc = vinco) e as regras abaixo a aplicam a todo sólido desse tom. Sobre o papel azul do blueprint. */
+.emblema .iso-solid:has(>.iso-edge[data-tone="claude"]){--k0:#a8472a;--k1:#bd5733;--k2:#cf6a45;--k3:#d97757;--kt:#f0a07f;--ke:#ffc9b0;--kc:#8e3a21}
+.emblema .iso-solid:has(>.iso-edge[data-tone="olho"]){--k0:#150e0b;--k1:#1c130f;--k2:#241812;--k3:#2c1f18;--kt:#3a2a22;--ke:#6b5246;--kc:#150e0b}
+.emblema .iso-solid:has(>.iso-edge[data-tone="exp"]){--k0:#1c7686;--k1:#278a9c;--k2:#32a1b5;--k3:#40b8cd;--kt:#78e0f0;--ke:#bdf4fb;--kc:#145966}
+.emblema .iso-solid:has(>.iso-edge[data-tone="con"]){--k0:#926212;--k1:#ad761b;--k2:#c98c27;--k3:#e0a238;--kt:#ffd47d;--ke:#ffe8b4;--kc:#74500d}
+.emblema .iso-solid:has(>.iso-edge[data-tone="rev"]){--k0:#2a8041;--k1:#379653;--k2:#47ae64;--k3:#5ac677;--kt:#9eeeb4;--ke:#cdf8da;--kc:#1f6532}
+.emblema .iso-solid:has(>.iso-edge[data-tone="aco"]){--k0:#51667c;--k1:#617890;--k2:#748ca4;--k3:#889fb6;--kt:#b9c9d9;--ke:#e1ebf5;--kc:#3d4f62}
+.emblema .iso-solid:has(>.iso-edge[data-tone="papel"]){--k0:#b3c3d6;--k1:#c4d2e3;--k2:#d4e0ee;--k3:#e2ebf5;--kt:#f6faff;--ke:#ffffff;--kc:#8da3bd}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >.iso-shade[data-shade="0"]{fill:var(--k0)}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >.iso-shade[data-shade="1"]{fill:var(--k1)}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >.iso-shade[data-shade="2"]{fill:var(--k2)}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >.iso-shade[data-shade="3"]{fill:var(--k3)}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >.iso-top{fill:var(--kt)}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >.iso-edge{stroke:var(--ke)}
+.emblema .iso-solid:has(>.iso-edge:is([data-tone="claude"],[data-tone="olho"],[data-tone="exp"],[data-tone="con"],[data-tone="rev"],[data-tone="aco"],[data-tone="papel"])) >:is(.iso-crease,.iso-bevel){stroke:var(--kc)}
+/* linhas soltas (raios, sobrancelhas, ranhura): o "olho" vira um traço marrom fino, legível sobre o laranja e sobre as cores de apoio */
+.emblema .iso-line[data-tone="olho"]{stroke:#4a2f22;stroke-width:.7px}
+.emblema .iso-line[data-tone="claude"]{stroke:#f3a37f}
+.emblema .iso-line[data-tone="exp"]{stroke:#78e0f0}
+.emblema .iso-line[data-tone="con"]{stroke:#ffd47d}
+.emblema .iso-line[data-tone="rev"]{stroke:#9eeeb4}
+.emblema .iso-line[data-tone="aco"]{stroke:#b9c9d9}
+.emblema .iso-line[data-tone="papel"]{stroke:#f6faff}
+/* a camada das figuras na folha (claude-camada.js): sobre o desenho, sem pegar o mouse; só a figura é clicável. Cada figura é movida por transform. */
+#claude-camada{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.claude-fig,.claude-mais{position:absolute;left:0;top:0;will-change:transform}
+.claude-fig{pointer-events:auto;cursor:pointer;line-height:0;filter:drop-shadow(0 2px 3px #02132ecc)}
+.claude-fig svg{display:block}.claude-fig span{display:block}.claude-fig span[hidden]{display:none}
+/* os quadros da animação ficam empilhados no mesmo lugar, cada um na sua camada composta, e o relógio só troca a classe `on` (opacity não é herdada e não repinta: com display:none ou
+   visibility cada quadro custava reestilizar e refazer o layout/pintura dos ~1500 nós do SVG) */
+.claude-fig{contain:layout style}
+.claude-fig span[data-q]{position:absolute;left:0;top:0;opacity:0;will-change:opacity}.claude-fig span[data-q].on{opacity:1}
+.claude-fig:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.claude-fig.erro{filter:drop-shadow(0 0 4px var(--erro))}
+.claude-mais{pointer-events:auto;padding:1px 5px;border:1px solid var(--ink);background:#082b5ef5;color:var(--ink);font:700 10px/1.4 var(--mono)}
+#robo-agente svg{flex:none;width:44px;height:auto}
+/* o resultado de "Iniciar com o Claude", dentro da folha da ação (iniciar-acao.js) */
+.nota-folha .iniciar-aviso{margin:10px 0 0;color:var(--ink)}.nota-folha .iniciar-aviso.erro{color:var(--erro)}

@@ -7,6 +7,6 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "dev": "node dev.mjs",
-    "test": "node emblemas.test.mjs && node agentes-figura.test.mjs && node scripts/migrar-vocabulario.test.mjs"
+    "test": "node emblemas.test.mjs && node agentes-figura.test.mjs && node agentes-claude.test.mjs && node claude-logica.test.mjs && node projetos.test.mjs && node projetos-editor.test.mjs && node fila-propostas.test.mjs && node scripts/migrar-vocabulario.test.mjs"
   }
 }

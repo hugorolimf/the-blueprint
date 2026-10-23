@@ -25,7 +25,7 @@ function atualizaRolagem() {
   const topo = (trilho - alt) * frac;
   polegar.style.height = alt + "px";
   polegar.style.transform = `translateY(${topo}px)`;
-  rotuloRol.textContent = `${host.dataset.rotulo || ""} · ${Math.round(frac * 100)}%`;
+  rotuloRol.textContent = `${Math.round(frac * 100)}%`;
   rotuloRol.style.transform = `translateY(${Math.max(0, topo + alt / 2 - 12)}px)`;
   rol.setAttribute("aria-valuenow", String(Math.round(frac * 100)));
   rol.setAttribute("aria-valuetext", rotuloRol.textContent);

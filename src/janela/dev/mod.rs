@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 /// Arquivos soltos na raiz que a interface serve; o resto vem de `web/` e `kit/`.
-const NA_RAIZ: [&str; 3] = ["blueprint.html", "emblemas.mjs", "agentes-figura.mjs"];
+const NA_RAIZ: [&str; 4] = ["blueprint.html", "emblemas.mjs", "agentes-figura.mjs", "agentes-claude.mjs"];
 const EXTENSOES: [&str; 4] = ["css", "js", "mjs", "html"];
 
 /// A pasta do projeto onde este binário foi compilado (`cargo run -- dev`).

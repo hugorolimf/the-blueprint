@@ -1,0 +1,8 @@
+[
+  {
+    "name": "blueprint",
+    "command": "blueprint watch",
+    "description": "Avisos do blueprint desta pasta",
+    "when": "always"
+  }
+]

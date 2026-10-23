@@ -106,19 +106,47 @@ fn proposta_invalida_volta_com_erros_e_nao_entra_na_fila() {
 }
 
 #[test]
-fn reenviar_a_proposta_substitui_a_pendente_e_o_ack_limpa() {
+fn proposta_nova_entra_na_fila_do_alvo_sem_apagar_outra_e_o_ack_tira_so_a_confirmada() {
     let e = estado(false);
-    assert_eq!(post(&e, "proposta", proposta_valida()).status, 200);
-    assert_eq!(post(&e, "proposta", com(proposta_valida(), json!({"mensagem": "Versão 2"}))).status, 200);
+    let primeira = json_de(&post(&e, "proposta", proposta_valida()));
+    let segunda = json_de(&post(&e, "proposta", com(proposta_valida(), json!({"mensagem": "Versão 2"}))));
+    assert_eq!((primeira["numero"].as_i64(), segunda["numero"].as_i64()), (Some(1), Some(2)), "cada proposta tem o seu número no alvo");
+    assert_eq!(primeira["ids"][0]["id"], "+a1");
+    assert_eq!(primeira["ids"][0]["planos"][1]["id"], "+a1.p2");
     let fila = json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)));
-    assert_eq!(fila["itens"].as_array().unwrap().len(), 1);
-    assert_eq!(fila["itens"][0]["proposta"]["mensagem"], "Versão 2");
-    assert_eq!(fila["itens"][0]["tipo"], "proposta");
-    let novo = post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "", "blueprint": {"nome": "Novo", "descricao": "d"}, "acoes": proposta_valida()["acoes"]}));
-    assert_eq!(novo.status, 200);
-    assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)))["itens"].as_array().unwrap().len(), 2);
-    assert_eq!(json_de(&post(&e, "fila/ack", json!({"ids": [2, 3, 99]}))), json!({"ok": true}));
-    assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)))["itens"].as_array().unwrap().len(), 0);
+    assert_eq!(fila["itens"].as_array().unwrap().len(), 2, "a segunda não apaga a primeira");
+    assert_eq!((fila["itens"][0]["numero"].as_i64(), fila["itens"][0]["proposta"]["mensagem"].as_str()), (Some(1), Some("pelo teste")));
+    assert_eq!((fila["itens"][1]["numero"].as_i64(), fila["itens"][1]["tipo"].as_str()), (Some(2), Some("proposta")));
+    let novo = json_de(&post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "", "blueprint": {"nome": "Novo", "descricao": "d"}, "acoes": proposta_valida()["acoes"]})));
+    assert_eq!(novo["numero"], 1, "o blueprint novo tem a sua própria fila");
+    assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)))["itens"].as_array().unwrap().len(), 3);
+    let (criada, outra) = (fila["itens"][0]["criadaEm"].clone(), json!({"workspaceId": "sm", "blueprintId": "p1", "numero": 1}));
+    let ack = |criada: Value| post(&e, "fila/ack", json!({"ids": [], "propostas": [com(outra.clone(), json!({"criadaEm": criada}))]}));
+    ack(json!("2000-01-01T00:00:00.000Z"));
+    assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)))["itens"].as_array().unwrap().len(), 3, "criadaEm de outra proposta não tira nada");
+    assert_eq!(json_de(&ack(criada)), json!({"ok": true}));
+    let resto = json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)));
+    assert_eq!(resto["itens"].as_array().unwrap().iter().map(|i| i["numero"].as_i64().unwrap()).collect::<Vec<_>>(), vec![2, 1]);
+    let apos = json_de(&post(&e, "proposta", proposta_valida()));
+    assert_eq!(apos["numero"], 3, "o número nunca volta atrás, mesmo depois de a primeira sair");
+}
+
+#[test]
+fn ajustar_e_substituir_pela_rota() {
+    let e = estado(false);
+    post(&e, "proposta", proposta_valida());
+    let ajuste = json_de(&post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "p1", "ajustar": 1, "acoes": [{"id": "+a1", "nome": "Nome corrigido"}]})));
+    assert_eq!(ajuste["numero"], 1);
+    let fila = json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)));
+    assert_eq!(fila["itens"].as_array().unwrap().len(), 1, "o ajuste atualiza a mesma proposta");
+    assert_eq!(fila["itens"][0]["proposta"]["acoes"][0]["nome"], "Nome corrigido");
+    assert_eq!(fila["itens"][0]["proposta"]["acoes"][0]["planos"].as_array().unwrap().len(), 3, "o que não veio fica");
+    let sem = post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "p1", "ajustar": 7, "acoes": [{"id": "+a1", "nome": "x"}]}));
+    assert_eq!(sem.status, 404);
+    assert!(json_de(&sem)["erro"].as_str().unwrap().contains("nº 1"));
+    assert_eq!(post(&e, "proposta", com(proposta_valida(), json!({"substituir": 1, "mensagem": "Troca"}))).status, 200);
+    let fila = json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)));
+    assert_eq!((fila["itens"].as_array().unwrap().len(), fila["itens"][0]["proposta"]["mensagem"].as_str(), fila["itens"][0]["numero"].as_i64()), (1, Some("Troca"), Some(1)));
 }
 
 #[test]

@@ -2,7 +2,7 @@
 //! Lê os dados (`dados` é o data.json inteiro) e põe itens na fila; nada aqui altera o banco.
 use super::Mcp;
 use crate::http::pedido::{falha, ErroHttp};
-use crate::blueprint::{contexto_acao, estrutura_blueprint, resumo_blueprint, validar_proposta};
+use crate::blueprint::{contexto_acao, estrutura_blueprint, mover_acoes, resumo_blueprint, validar_proposta};
 use crate::tempo::hoje_local;
 use serde_json::{json, Map, Value};
 use std::collections::hash_map::RandomState;
@@ -82,6 +82,11 @@ fn localizar<'a>(dados: &'a Value, workspace_id: &str, blueprint_id: &str) -> R<
     Ok((ws, Some(blueprint)))
 }
 
+/// O número do blueprint na folha (a posição dele no workspace, a partir de 1): o "2" de "ação 2.5". 0 se não achar.
+pub fn numero_do_blueprint(dados: &Value, workspace_id: &str, blueprint_id: &str) -> usize {
+    workspace_dos(dados, workspace_id).and_then(|w| w.blueprints.iter().position(|p| p.get("id").and_then(Value::as_str) == Some(blueprint_id))).map_or(0, |i| i + 1)
+}
+
 pub fn blueprints(dados: &Value) -> Value {
     let ws: Vec<Value> = workspaces_de(dados).iter().map(|w| json!({"id": w.id, "nome": w.nome, "blueprints": w.blueprints.iter().map(resumo_blueprint).collect::<Vec<_>>()})).collect();
     json!({"hoje": hoje_local(), "workspaces": ws})
@@ -99,20 +104,34 @@ pub fn blueprint(dados: &Value, workspace_id: &str, blueprint_id: &str, acao_id:
     Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprint": estrutura_blueprint(p), "outros": outros}))
 }
 
-/// Valida e guarda; o usuário revisa e aplica na página. Reenviar para o mesmo alvo substitui a proposta pendente.
-pub fn proposta(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<(u16, Value)> {
-    let (workspace_id, blueprint_id) = (texto_js(corpo.get("workspaceId")), texto_js(corpo.get("blueprintId")));
-    let (_, p) = localizar(dados, &workspace_id, &blueprint_id)?;
-    let r = validar_proposta(corpo, p, &hoje_local());
+/// Valida e guarda; o usuário revisa e aplica na página. Cada alvo tem uma fila de propostas numeradas: a nova entra no fim e não apaga outra.
+/// Com `ajustar: <número>` só o que vier muda naquela proposta; com `substituir: <número>` ela é trocada por inteiro (ver `ajuste`).
+pub fn proposta(mcp: &Mcp, dados: &Value, chamada: &Value) -> R<(u16, Value)> {
+    let (workspace_id, blueprint_id) = (texto_js(chamada.get("workspaceId")), texto_js(chamada.get("blueprintId")));
+    let (ws, p) = localizar(dados, &workspace_id, &blueprint_id)?;
+    let (entrada, numero) = super::ajuste::preparar(mcp, chamada, &workspace_id, &blueprint_id)?;
+    let corpo = &super::ajuste::corpo_validavel(&entrada, chamada);
+    let mut r = validar_proposta(corpo, p, &hoje_local());
+    let apagando: Vec<String> = lista(corpo.get("remover")).iter().filter(|x| str_de(x, "plano_id").is_empty() && str_de(x, "checkpoint_id").is_empty()).map(|x| str_de(x, "acao_id")).collect();
+    let mover = mover_acoes(lista(corpo.get("mover")), p, ws.blueprints, &apagando, &mut r.erros, &mut r.avisos);
     if !r.erros.is_empty() {
         return Ok((422, json!({"erros": r.erros, "avisos": r.avisos})));
+    }
+    if let Some(Value::Object(m)) = r.proposta.as_mut() {
+        m.insert("mover".into(), Value::Array(mover));
     }
     let mut item = Map::new();
     for (k, v) in [("tipo", json!("proposta")), ("workspaceId", json!(workspace_id)), ("blueprintId", json!(blueprint_id)), ("proposta", r.proposta.unwrap_or(Value::Null)), ("avisos", json!(r.avisos))] {
         item.insert(k.into(), v);
     }
-    mcp.empurra_proposta(item, &workspace_id, &blueprint_id);
-    Ok((200, json!({"ok": true, "avisos": r.avisos})))
+    if blueprint_id.is_empty() {
+        if let Some(pasta) = corpo["pasta"].as_str().filter(|p| super::hooks::caminho_valido(p)) {
+            item.insert("pasta".into(), json!(pasta));
+        }
+    }
+    let ids = super::ajuste::ids(&entrada);
+    let guardada = mcp.empurra_proposta(item, entrada, numero);
+    Ok((200, json!({"ok": true, "avisos": r.avisos, "numero": guardada["numero"], "ids": ids})))
 }
 
 fn por_id<'a>(itens: &'a [Value], id: &Value) -> Option<&'a Value> {
@@ -227,6 +246,8 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
         atividade.insert("tipo".into(), json!(tipo));
         atividade.insert("mensagem".into(), item["texto"].clone());
         mcp.registrar_atividade(agente.as_deref().unwrap_or("agente"), atividade);
+    } else if tipo == "concluir" {
+        mcp.concluir_plano(&blueprint_id, item.get("planoId").and_then(Value::as_str).unwrap_or(""), &item["texto"]);
     }
     Ok(mcp.empurra(item))
 }

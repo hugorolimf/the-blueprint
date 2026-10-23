@@ -19,6 +19,9 @@
 @keyframes pulsa{0%,80%,100%{opacity:.2}40%{opacity:1}}
 .cl-prop-topo{padding:14px 18px;border-bottom:1px solid var(--lo);display:flex;justify-content:space-between;align-items:center;gap:12px;flex:none}
 .cl-prop-topo b{font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+.cl-prop-fila{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 18px;border-bottom:1px solid var(--lo);flex:none}
+.cl-prop-fila .btn[aria-pressed="true"]{border-color:var(--accent,currentColor);font-weight:700}
+.cl-prop-fila .dica{margin:0 0 0 auto;font-size:11px;opacity:.7}
 .cl-prop-lista{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:16px;min-height:0}
 .cl-prop-vazio{margin:auto;max-width:340px;text-align:center;color:var(--mid);line-height:1.6}
 .cl-prop-acoes{padding:14px 18px;border-top:1px solid var(--lo);display:flex;gap:10px;flex-wrap:wrap;flex:none}

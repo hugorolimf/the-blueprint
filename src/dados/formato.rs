@@ -1,5 +1,6 @@
 //! Como o data.json vira linhas: o nome de cada lista no JSON e as colunas "de primeira classe" de cada tabela.
 //! O resto de cada objeto vai inteiro na coluna `extra` (JSON), então um campo novo nunca se perde na ida e volta.
+//! Projetos (`blueprints[].projetos`, `acoes[].projetoId`) não têm coluna nem tabela: vão em `extra` (ver tests/projetos.rs).
 //! O vocabulário do JSON é o novo (workspaces, blueprints, acoes, planos, checkpoints); se mudar de novo, só este arquivo (e uma migração das `listas`) muda.
 
 #[derive(Clone, Copy, PartialEq, Eq)]

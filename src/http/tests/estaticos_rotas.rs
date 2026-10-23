@@ -6,7 +6,7 @@ use std::io::Read;
 
 #[test]
 fn a_lista_do_que_pode_sair_e_a_do_servidor_node() {
-    for ok in ["/blueprint.html", "/emblemas.mjs", "/agentes-figura.mjs", "/web/css/tokens.css", "/web/js/inicio.js", "/kit/iso-kit.mjs", "/kit/lathe/torno.mjs"] {
+    for ok in ["/blueprint.html", "/emblemas.mjs", "/agentes-figura.mjs", "/agentes-claude.mjs", "/web/css/tokens.css", "/web/js/inicio.js", "/kit/iso-kit.mjs", "/kit/lathe/torno.mjs"] {
         assert!(permitido(ok), "{ok}");
     }
     for fora in ["/", "/server.mjs", "/data.json", "/Cargo.toml", "/web/js/../../server.mjs", "/kit/../server.mjs", "/web/x.html", "/web/js/", "/kit/iso-kit.js", "/web//x.js", "/kit/a b.mjs", "/src/main.rs", "/prototipos/x.html"] {
@@ -17,7 +17,7 @@ fn a_lista_do_que_pode_sair_e_a_do_servidor_node() {
 #[test]
 fn a_pagina_e_os_estaticos_saem_com_o_tipo_certo() {
     let e = estado(false);
-    for (url, tipo) in [("/", "text/html"), ("/blueprint.html", "text/html"), ("/emblemas.mjs", "text/javascript"), ("/agentes-figura.mjs", "text/javascript"), ("/kit/iso-kit.mjs", "text/javascript"), ("/kit/lathe/torno.mjs", "text/javascript"), ("/web/js/inicio.js", "text/javascript"), ("/web/css/tokens.css", "text/css")] {
+    for (url, tipo) in [("/", "text/html"), ("/blueprint.html", "text/html"), ("/emblemas.mjs", "text/javascript"), ("/agentes-figura.mjs", "text/javascript"), ("/agentes-claude.mjs", "text/javascript"), ("/kit/iso-kit.mjs", "text/javascript"), ("/kit/lathe/torno.mjs", "text/javascript"), ("/web/js/inicio.js", "text/javascript"), ("/web/css/tokens.css", "text/css")] {
         let r = despachar(&e, &pedido("GET", url, &[], None));
         assert_eq!(r.status, 200, "{url}");
         assert!(r.cabecalho("content-type").unwrap().starts_with(tipo), "{url}");

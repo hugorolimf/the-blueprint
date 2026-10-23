@@ -49,3 +49,14 @@ body.na-entrada #folha,body.na-entrada #rolagem,body.na-entrada #dica-f11,body.s
 @media(prefers-reduced-motion:reduce){.blueprint-cartao{transition:none}.blueprint-cartao:hover{transform:none}}
 @media(max-width:650px){.entrada{padding:28px 24px 48px}.blueprint-cartao{flex-basis:min(320px,100%)}.entrada-acoes{margin-top:24px}}
 @media print{.entrada,.login{display:none}}
+#workspace-manual{align-items:center;padding:28px 24px}#workspace-manual .card{flex:none;width:min(1240px,100%);padding:30px 34px}
+#workspace-nova [hidden]{display:none!important}
+.ws-grade{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,560px);gap:36px;align-items:start}
+.ws-campos{display:flex;flex-direction:column;gap:16px}
+.ws-previa{position:sticky;top:0;display:flex;flex-direction:column;gap:8px;align-items:center;padding:22px;border:1px dashed var(--lo);background:#082b5e99;min-height:420px;justify-content:center}
+.ws-previa small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.ws-previa .emblema{max-width:100%;height:auto}
+#workspace-manual-acoes{margin-top:22px;display:flex;justify-content:flex-end}
+@media(max-width:820px){.ws-grade{grid-template-columns:minmax(0,1fr)}.ws-previa{position:static;order:-1}}
+#workspace-manual .card{margin:auto}#workspace-manual .card>h3{text-align:center}
+#workspace-manual-acoes{justify-content:center}
