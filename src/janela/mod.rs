@@ -26,6 +26,12 @@ pub enum Evento {
     /// a página terminou de carregar: pode mostrar a janela
     Carregou,
     Sair,
+    /// o estado da atualização mudou (baixando, pronta…): a bandeja o reflete
+    Atualizacao,
+    /// o clique em "Atualizar para X…" na bandeja
+    Atualizar,
+    VerificarAtualizacao,
+    AlternarAutomatica,
     /// o botão "Tela cheia" da página (IPC): liga/desliga a tela cheia do Windows
     TelaCheia,
     /// só no modo dev: um arquivo da interface mudou (`so_css`: basta trocar o estilo)
@@ -129,6 +135,16 @@ fn preparar(dev: bool) -> Resultado<()> {
     }
     let servidor = iniciar_servidor(config)?;
     instancia::registrar_porta(servidor.porta);
+    let (a, sair) = (proxy.clone(), proxy.clone());
+    servidor.estado.atualizador.ouvir(move |_| {
+        let _ = a.send_event(Evento::Atualizacao);
+    });
+    *servidor.estado.ao_sair.lock().unwrap_or_else(|e| e.into_inner()) = Some(Box::new(move || {
+        let _ = sair.send_event(Evento::Sair); // o instalador já foi lançado: o app sai para soltar o .exe e a porta
+    }));
+    if !dev {
+        servidor.estado.atualizador.ao_abrir(); // recupera o instalador já baixado e verifica em segundo plano (no máximo uma vez por dia)
+    }
     let mostrar = proxy.clone();
     *servidor.estado.ao_mostrar.lock().unwrap_or_else(|e| e.into_inner()) = Some(Box::new(move || {
         let _ = mostrar.send_event(Evento::Mostrar);
@@ -165,7 +181,23 @@ fn preparar(dev: bool) -> Resultado<()> {
     event_loop.run(move |evento, _, fluxo| {
         *fluxo = ControlFlow::Wait; // zero trabalho em repouso: só acorda com um evento
         match evento {
-            Event::NewEvents(StartCause::Init) => bandeja = bandeja::criar(proxy.clone()).ok(),
+            Event::NewEvents(StartCause::Init) => bandeja = bandeja::criar(proxy.clone(), &servidor.estado.atualizador.json()).ok(),
+            Event::UserEvent(Evento::Atualizacao) => {
+                if let Some(b) = &bandeja {
+                    b.refletir(&servidor.estado.atualizador.json());
+                }
+            }
+            Event::UserEvent(Evento::Atualizar) => {
+                // o clique na bandeja é a autorização; se for recusado (fila do MCP cheia), a janela abre e mostra o motivo
+                if crate::http::atualizacao::instalar_agora(&servidor.estado).is_err() {
+                    let _ = proxy.send_event(Evento::Mostrar);
+                }
+            }
+            Event::UserEvent(Evento::VerificarAtualizacao) => servidor.estado.atualizador.verificar_em_segundo_plano(true),
+            Event::UserEvent(Evento::AlternarAutomatica) => {
+                let a = &servidor.estado.atualizador;
+                a.definir_automatica(!a.automatica());
+            }
             Event::UserEvent(Evento::Carregou) => {
                 if !window.is_visible() {
                     window.set_visible(true);

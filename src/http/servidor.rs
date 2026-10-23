@@ -5,6 +5,7 @@ use super::estado::{abrir_dados, Estado};
 use super::estaticos::Assets;
 use super::pedido::{Corpo, Pedido, Resposta};
 use super::rotas::{corpo_grande_demais, despachar, limite_corpo};
+use crate::atualizador::Atualizador;
 use crate::erro::{Erro, Resultado};
 use crate::mcp::Mcp;
 use std::io::{Read, Write};
@@ -27,7 +28,16 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let porta = servidor.server_addr().to_ip().map_or(config.porta, |a| a.port());
     let url = config.url(porta);
     let mcp = Mcp::novo(&config.host, config.rede_mcp, &config.exe.to_string_lossy(), &url, config.prototipos.clone());
-    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), mcp, config });
+    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), mcp, config });
+    // cada mudança do updater (baixando, pronta…) chega à página pelo mesmo SSE da fila
+    let fraco = Arc::downgrade(&estado);
+    estado.atualizador.ouvir(move |estado_json| {
+        if let Some(e) = fraco.upgrade() {
+            e.mcp.notificar("atualizacao", Some(estado_json.clone()));
+        }
+    });
+    // o que o agente registrou com o app fechado entra na fila antes de o primeiro pedido chegar (src/mcp/pendentes.rs)
+    crate::mcp::pendentes::reenviar_todos(&estado.mcp, &estado.dados, &crate::mcp::pendentes::pasta_do_banco(&estado.config.banco));
     let servidor = Arc::new(servidor);
     let fio = {
         let (servidor, estado) = (servidor.clone(), estado.clone());

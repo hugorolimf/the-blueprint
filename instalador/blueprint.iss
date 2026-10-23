@@ -6,7 +6,10 @@
 
 #define Nome "The Blueprint (beta)"
 #define Pasta "Blueprint"
-#define Versao "0.1.0"
+; a versão vem do Cargo.toml: `node scripts/gerar-release.mjs` passa ISCC /DVersao=<versão>; este valor só vale se alguém rodar o ISCC direto
+#ifndef Versao
+  #define Versao "0.1.0"
+#endif
 #define Exe "blueprint.exe"
 ; de onde vem o blueprint.exe; para outra pasta de build: ISCC /DOrigem=C:\caminho\release instalador\blueprint.iss
 #ifndef Origem
@@ -62,6 +65,8 @@ Name: "{autostartup}\{#Nome}"; Filename: "{app}\{#Exe}"; Tasks: iniciar
 ; runasoriginaluser: numa instalação "para todos", registra para quem instalou, não para a conta de administrador.
 Filename: "{app}\{#Exe}"; Parameters: "registrar"; StatusMsg: "Conectando ao Claude Code e ao Codex..."; Flags: runhidden runasoriginaluser; Tasks: conectar
 Filename: "{app}\{#Exe}"; Parameters: "registrar --status-line"; StatusMsg: "Configurando a status line..."; Flags: runhidden runasoriginaluser; Tasks: statusline
+; atualização feita pelo próprio app (blueprint atualizar / botão Atualizar): ele passa /ATUALIZACAO=1, sai para soltar o .exe, e o instalador o abre de novo no fim
+Filename: "{app}\{#Exe}"; Flags: nowait runasoriginaluser; Check: AtualizacaoPeloApp
 Filename: "{app}\{#Exe}"; Description: "Abrir o The Blueprint (beta)"; Flags: nowait postinstall skipifsilent
 
 [UninstallRun]
@@ -83,6 +88,12 @@ begin
             RegQueryStringValue(HKLM64, ChaveWebView2, 'pv', Versao) or
             RegQueryStringValue(HKCU, ChaveWebView2, 'pv', Versao);
   Result := Result and (Versao <> '') and (Versao <> '0.0.0.0');
+end;
+
+{ O app se atualiza chamando o instalador com /ATUALIZACAO=1 (src/atualizador/instalar.rs). }
+function AtualizacaoPeloApp: Boolean;
+begin
+  Result := ExpandConstant('{param:ATUALIZACAO|0}') = '1';
 end;
 
 function InitializeSetup: Boolean;

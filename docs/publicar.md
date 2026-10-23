@@ -1,6 +1,8 @@
 # Publicar no GitHub (passo a passo)
 
-Tudo abaixo já foi preparado localmente; **nada** foi enviado. Cada passo cria algo público ou irreversível, por isso é seu o comando.
+> Estado em 2026-11: o repositório `hugorolimf/the-blueprint` já existe (passos 1 a 4 feitos). Para as próximas versões use **"Publicar uma versão nova"** no fim deste arquivo; os passos 1 a 7 ficam como histórico e para quem for publicar a partir de um clone novo.
+
+Cada passo cria algo público ou irreversível, por isso é seu o comando.
 
 1. **Gere o repositório limpo** (um commit, sem dados pessoais; a pasta de destino não pode existir):
 
@@ -38,3 +40,14 @@ Tudo abaixo já foi preparado localmente; **nada** foi enviado. Cada passo cria 
 7. **Divulgação:** `docs/anuncio.md` tem um texto curto para adaptar ao canal que você escolher.
 
 O repositório atual (privado, com os seus dados) continua só local e sem remote.
+
+## Publicar uma versão nova (o que o updater do app enxerga)
+
+O updater (`src/atualizador/`) lê a lista de releases do repositório, pega a primeira que não é rascunho, é mais nova que a instalada e traz **os dois arquivos** `Blueprint-<versão>-instalador.exe` e `SHA256SUMS`. Release sem os dois é ignorada. Pré-lançamentos contam (o app é beta), salvo `BLUEPRINT_ATUALIZACAO_SO_ESTAVEL=1`.
+
+1. Suba a versão em `Cargo.toml` (`version = "0.1.1"`): é a que o app mostra, a que ele compara e a que o instalador recebe (`ISCC /DVersao`).
+2. Commit na `main` com os testes verdes (`cargo test`, `node atualizacao.test.mjs`, `node scripts/atualizador-e2e.mjs`).
+3. Crie a tag `v0.1.1` (igual à versão do Cargo). O workflow `.github/workflows/release.yml` compila, gera o instalador e o `SHA256SUMS` com `node scripts/gerar-release.mjs` e os anexa a uma release de pré-lançamento. Sem o CI: rode `node scripts/gerar-release.mjs` (arquivos em `target/release-arquivos/`; leva alguns minutos e precisa do Inno Setup 6) e `gh release create v0.1.1 target/release-arquivos/* --prerelease --generate-notes`.
+4. Os apps instalados baixam sozinhos em até 24 h depois de abrirem (ou na hora, em "Verificar atualizações" na bandeja) e perguntam antes de instalar.
+
+Autenticidade: o `SHA256SUMS` vem da mesma release do instalador, então prova que o download não corrompeu, mas não quem publicou. Assinar (ed25519 com a chave pública embutida no app, ou Authenticode no instalador) é a melhoria para quando houver uma chave.

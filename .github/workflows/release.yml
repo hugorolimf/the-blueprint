@@ -1,0 +1,54 @@
+name: release
+
+# Ao criar uma tag vX.Y.Z, gera o instalador e o SHA256SUMS (o que o updater do app procura) e os anexa à release.
+# A tag precisa ser igual à versão do Cargo.toml. A release sai como pré-lançamento (o app é beta); o updater a enxerga assim mesmo.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag a publicar (ex.: v0.1.1); precisa existir"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  instalador:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: conferir a tag contra o Cargo.toml
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          versao=$(grep -m1 '^version' Cargo.toml | sed 's/.*"\(.*\)".*/\1/')
+          if [ "$tag" != "v$versao" ]; then echo "a tag $tag não bate com a versão $versao do Cargo.toml"; exit 1; fi
+      - name: instalar o Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+      - name: testes
+        run: cargo test --lib --locked
+      - name: gerar o instalador e o SHA256SUMS
+        run: node scripts/gerar-release.mjs
+        env:
+          ISCC: C:\Program Files (x86)\Inno Setup 6\ISCC.exe
+      - name: anexar à release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" target/release-arquivos/* --clobber
+          else
+            gh release create "$tag" target/release-arquivos/* --title "The Blueprint (beta) $tag" --prerelease --generate-notes
+          fi

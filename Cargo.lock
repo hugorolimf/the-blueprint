@@ -101,6 +101,7 @@ dependencies = [
  "flate2",
  "rusqlite",
  "serde_json",
+ "sha2",
  "tao",
  "tiny_http",
  "tray-icon",

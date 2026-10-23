@@ -1,16 +1,16 @@
 {
-  "data": "2026-10-23T06:17:27.854Z",
+  "data": "2026-10-23T12:19:54.090Z",
   "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
   "respostas": {
     "GET pagina": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "edab14cde956cb0c"
+      "sha256": "7fd8c2290aeed483"
     },
     "GET pagina-html": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "edab14cde956cb0c"
+      "sha256": "7fd8c2290aeed483"
     },
     "GET emblemas": {
       "status": 200,
@@ -30,7 +30,7 @@
     "GET web-js": {
       "status": 200,
       "tipo": "text/javascript",
-      "sha256": "daf6bef5ac877262"
+      "sha256": "3c7736b267192852"
     },
     "GET web-css": {
       "status": 200,
@@ -693,7 +693,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.775Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 1,
             "numero": 1,
@@ -744,7 +744,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.777Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 2,
             "numero": 2,
@@ -795,7 +795,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "",
-            "criadaEm": "2026-10-23T06:17:27.779Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 3,
             "numero": 1,
@@ -851,7 +851,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.780Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 4,
             "numero": 3,
@@ -894,7 +894,7 @@
               "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.782Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 5,
             "numero": 4,
@@ -1062,7 +1062,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.775Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 1,
             "numero": 1,
@@ -1113,7 +1113,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.777Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 2,
             "numero": 2,
@@ -1164,7 +1164,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "",
-            "criadaEm": "2026-10-23T06:17:27.779Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 3,
             "numero": 1,
@@ -1220,7 +1220,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.780Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 4,
             "numero": 3,
@@ -1263,7 +1263,7 @@
               "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.782Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 5,
             "numero": 4,
@@ -1373,7 +1373,7 @@
               "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.780Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 4,
             "numero": 3,
@@ -1416,7 +1416,7 @@
               "Remoção 1: apaga trabalho já marcado como feito em \"Base\"; confirme que é isso mesmo."
             ],
             "blueprintId": "p1",
-            "criadaEm": "2026-10-23T06:17:27.782Z",
+            "criadaEm": "<mascarado>",
             "em": "<mascarado>",
             "id": 5,
             "numero": 4,

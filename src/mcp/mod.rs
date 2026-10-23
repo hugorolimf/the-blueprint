@@ -8,7 +8,8 @@ mod eventos;
 mod fila;
 mod hooks;
 mod iniciar;
-mod permissao;
+pub mod pendentes;
+pub(crate) mod permissao;
 pub mod rotas;
 mod status;
 pub mod stdio;
@@ -19,6 +20,8 @@ mod ajuste_tests;
 mod hooks_tests;
 #[cfg(test)]
 mod iniciar_tests;
+#[cfg(test)]
+mod pendentes_tests;
 #[cfg(test)]
 mod projetos_tests;
 #[cfg(test)]

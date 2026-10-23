@@ -17,7 +17,7 @@ pub fn permitido(mcp: &Mcp, pedido: &Pedido) -> bool {
 }
 
 /// Host e Origin em loopback, com ou sem MCP_REDE: as rotas que abrem processo (iniciar) nunca saem desta máquina.
-pub(super) fn so_loopback(mcp: &Mcp, pedido: &Pedido) -> bool {
+pub(crate) fn so_loopback(mcp: &Mcp, pedido: &Pedido) -> bool {
     let host = pedido.cabecalho("host").unwrap_or("");
     if !LOOPBACK.contains(&sem_porta(host)) || !LOOPBACK.contains(&mcp.host.as_str()) {
         return false;

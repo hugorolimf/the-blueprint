@@ -40,7 +40,7 @@ function pedir(base, metodo, caminho, { cabecalhos = {}, corpo, json } = {}) {
   });
 }
 
-const MASCARAS = new Set(["em", "hoje", "prototipoId", "arquivo", "url"]);
+const MASCARAS = new Set(["em", "criadaEm", "hoje", "prototipoId", "arquivo", "url"]);
 const EXTENSOES_DO_RUST = new Set(["exe"]); // campos que só o Rust acrescenta (o contrato compara o que o Node já devolvia)
 const mascara = (v) => Array.isArray(v) ? v.map(mascara) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().filter((k) => !EXTENSOES_DO_RUST.has(k)).map((k) => [k, MASCARAS.has(k) ? "<mascarado>" : mascara(v[k])])) : v;
 const SEM_PROTO = (t) => t.replace(/\/prototipos\/[a-f0-9]{16}\.html/g, "/prototipos/<id>.html");

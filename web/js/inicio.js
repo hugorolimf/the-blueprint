@@ -4,4 +4,5 @@ carregar();
 mcpConsulta();
 mcpAssina();
 agentesBusca();
+atualizacaoBusca();
 fetch("/api/mcp/info").then((r) => r.json()).then((j) => { mcpInfo = j; if (!hub.hidden) montaMcp(); }).catch(() => {});

@@ -1,4 +1,5 @@
 //! Linha de comando. A janela nativa (sem argumentos) entra na ação 3.5.
+mod atualizar;
 mod claude;
 use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
 use crate::http::{self, Config};
@@ -16,6 +17,8 @@ const USO: &str = concat!(
     "  blueprint exportar <banco.db> <saida.json>  grava o banco como data.json\n",
     "  blueprint hook sessao|statusline|status|notificacao  comandos do Claude Code registrados pelo plugin\n",
     "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
+    "  blueprint atualizar [--verificar|--instalar]  procura e baixa a versão nova (--verificar só consulta; --instalar instala a baixada: é o seu clique em Atualizar)\n",
+    "  blueprint --version                       mostra a versão\n",
     "  blueprint registrar [--remover]           instala (ou remove) o plugin no Claude Code (skill, agente e MCP) e o MCP no Codex; o instalador faz isto",
 );
 
@@ -28,6 +31,11 @@ pub fn executar(args: Vec<String>) -> i32 {
         ["--mcp"] => return crate::mcp::stdio::executar(),
         ["watch"] => return crate::watch::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
+        ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),
+        ["--version"] | ["-V"] => {
+            println!("blueprint {}", crate::atualizador::VERSAO);
+            return 0;
+        }
         ["serve"] => serve(),
         ["hook", evento] => return crate::hook::executar(evento),
         ["hook", "statusline", "--anterior", comando] => return crate::hook::combinar(comando),

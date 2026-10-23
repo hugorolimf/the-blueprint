@@ -31,6 +31,9 @@ pub fn despachar(estado: &Estado, pedido: &Pedido) -> Resposta {
     if caminho.starts_with("/api/mcp/") {
         return crate::mcp::rotas::rota(&estado.mcp, &estado.dados, pedido);
     }
+    if caminho.starts_with("/api/atualizacao") {
+        return super::atualizacao::rota(estado, pedido);
+    }
     if caminho == "/api/app/mostrar" {
         return mostrar_janela(estado, pedido);
     }

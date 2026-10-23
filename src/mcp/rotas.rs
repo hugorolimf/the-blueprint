@@ -28,6 +28,14 @@ pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
     }
 }
 
+/// Reenvia um registro guardado com o app fechado (`pendentes.rs`) à mesma rota POST que o agente usaria ao vivo, com a mesma validação. Não confere Host nem
+/// Origin: quem escreveu o arquivo já tinha acesso à pasta de dados do usuário.
+pub fn reenviar(mcp: &Mcp, dados: &Mutex<Dados>, recurso: &str, corpo: &Value) -> (u16, Value) {
+    let pedido = Pedido::novo("POST", &format!("/api/mcp/{recurso}"), vec![("content-type".into(), "application/json".into())], corpo.to_string().into_bytes());
+    let resposta = executar(mcp, dados, &pedido, recurso).unwrap_or_else(|e| Resposta::json(e.status, &json!({"erro": e.mensagem})));
+    (resposta.status, serde_json::from_slice(resposta.bytes()).unwrap_or(Value::Null))
+}
+
 /// Roda `f` com o data.json inteiro em mãos (a cópia em memória da camada de dados).
 fn com_dados<T>(dados: &Mutex<Dados>, f: impl FnOnce(&Value) -> Result<T, ErroHttp>) -> Result<T, ErroHttp> {
     let mut d = dados.lock().unwrap_or_else(|e| e.into_inner());

@@ -12,6 +12,7 @@ function mcpAssina() {
   es.onopen = () => { mcpSse = es; mcpConsulta(); };
   es.addEventListener("fila", () => mcpConsulta());
   es.addEventListener("agentes", () => agentesBusca()); // a presença dos agentes mudou: o painel atualiza o cartão que mudou
+  es.addEventListener("atualizacao", (e) => { try { atualizacaoRecebe(JSON.parse(e.data)); } catch {} }); // o updater: baixando, pronta (atualizacao.js)
   es.onerror = () => { mcpSse = null; mcpConsulta(); };
 }
 // a fila só é aplicada ao workspace aberto: ao entrar num workspace (ou quando os dados chegam depois da conexão SSE), consulta de novo,

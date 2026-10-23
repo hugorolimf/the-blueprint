@@ -4,6 +4,7 @@
 use super::cliente::{codificar, requisitar};
 use serde_json::{json, Map, Value};
 use std::io::{BufRead, Write};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 caracteres são autossuficientes: é o que o Codex lê
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
@@ -30,7 +31,13 @@ pub(crate) fn base() -> String {
 
 /// Chama uma rota do servidor; se ele recusar, devolve o motivo como o agente precisa lê-lo.
 fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, String> {
-    let (status, texto) = requisitar(&base(), metodo, rota, corpo.map(Value::to_string).as_deref())?;
+    let enviado = requisitar(&base(), metodo, rota, corpo.map(Value::to_string).as_deref());
+    let (status, texto) = match (enviado, corpo) {
+        (Ok(resposta), _) => resposta,
+        // app fechado: o registro fica em arquivo e entra no app quando ele abrir (pendentes.rs); só as rotas que não precisam dos dados ao vivo
+        (Err(_), Some(corpo)) if metodo == "POST" && super::pendentes::ROTAS.contains(&rota) => return guardar_offline(rota, corpo),
+        (Err(e), _) => return Err(e),
+    };
     let dados: Value = serde_json::from_str(&texto).unwrap_or_else(|_| json!({}));
     if (200..300).contains(&status) {
         return Ok(dados);
@@ -43,6 +50,18 @@ fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, St
     let motivo = dados.get("erro").and_then(Value::as_str).map(String::from).unwrap_or_else(|| texto.chars().take(200).collect());
     Err(format!("O The Blueprint recusou ({status}): {motivo}"))
 }
+
+/// A última ferramenta foi guardada em arquivo porque o app estava fechado (a resposta ao agente avisa; o stdio atende uma ferramenta por vez).
+static GUARDADO_OFFLINE: AtomicBool = AtomicBool::new(false);
+
+fn guardar_offline(rota: &str, corpo: &Value) -> Result<Value, String> {
+    let pasta = super::pendentes::pasta_do_banco(&crate::http::Config::do_app().banco);
+    let pendentes = super::pendentes::guardar(&pasta, rota, corpo).map_err(|e| format!("O The Blueprint não está aberto e não consegui guardar o registro: {e}"))?;
+    GUARDADO_OFFLINE.store(true, Ordering::Relaxed);
+    Ok(json!({"offline": true, "pendentes": pendentes}))
+}
+
+const AVISO_OFFLINE: &str = "\n(O The Blueprint está fechado: o registro ficou guardado e entra no app quando ele abrir, sem você precisar repetir. A validação (ids, formato) só acontece então; se algo for recusado, o arquivo fica em pendentes/recusados, ao lado do banco.)";
 
 fn texto(a: &Value, chave: &str) -> Result<String, String> {
     match a.get(chave).and_then(Value::as_str).map(str::trim) {
@@ -155,6 +174,9 @@ fn chamar(nome: &str, a: &Value) -> R {
                 }
             }
             let r = servidor("proposta", "POST", Some(&Value::Object(corpo)))?;
+            if r["offline"] == true {
+                return Ok("Proposta guardada: o app está fechado. Quando ele abrir, ela entra na fila para o usuário revisar e aplicar (ids e formato são validados só então).".into());
+            }
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
             let aviso = if avisos.is_empty() { String::new() } else { format!("\nAvisos (não impedem o envio, mas vale ajustar):\n- {}", avisos.join("\n- ")) };
             let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
@@ -170,6 +192,9 @@ fn chamar(nome: &str, a: &Value) -> R {
         "anexar_prototipo" => {
             let corpo = com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("titulo", json!(texto(a, "titulo")?)), ("html", json!(texto(a, "html")?)), ("prototipoId", json!(opcional(a, "prototipo_id")))]);
             let r = servidor("prototipo", "POST", Some(&Value::Object(corpo)))?;
+            if r["offline"] == true {
+                return Ok("Protótipo guardado: o app está fechado. Ele é anexado à ação quando o app abrir.".into());
+            }
             let acao = if r["atualizado"] == true { "atualizado" } else { "anexado" };
             Ok(format!("Protótipo \"{}\" {acao} à ação (prototipo_id: {}); o usuário o vê na folha do blueprint, no ícone de protótipo da ação. Para revisar, chame de novo com este prototipo_id.", r["titulo"].as_str().unwrap_or(""), r["prototipoId"].as_str().unwrap_or("")))
         }
@@ -234,8 +259,14 @@ pub fn tratar(msg: &Value) -> Option<Value> {
                 return Some(erro(-32602, format!("Ferramenta desconhecida: {nome}")));
             }
             let argumentos = if params["arguments"].is_object() { params["arguments"].clone() } else { json!({}) };
+            GUARDADO_OFFLINE.store(false, Ordering::Relaxed);
             match chamar(nome, &argumentos) {
-                Ok(texto) => resposta(id, json!({"result": {"content": [{"type": "text", "text": texto}]}})),
+                Ok(mut texto) => {
+                    if GUARDADO_OFFLINE.swap(false, Ordering::Relaxed) {
+                        texto.push_str(AVISO_OFFLINE);
+                    }
+                    resposta(id, json!({"result": {"content": [{"type": "text", "text": texto}]}}))
+                }
                 Err(texto) => resposta(id, json!({"result": {"isError": true, "content": [{"type": "text", "text": texto}]}})), // o erro volta ao modelo, que pode corrigir
             }
         }

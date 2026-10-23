@@ -1,6 +1,7 @@
 //! O que todas as rotas compartilham: configuração, camada de dados, MCP e arquivos estáticos.
 use super::config::Config;
 use super::estaticos::Assets;
+use crate::atualizador::Atualizador;
 use crate::contexto::Contexto;
 use crate::dados::Dados;
 use crate::erro::Resultado;
@@ -11,6 +12,10 @@ use std::sync::Mutex;
 pub struct Estado {
     /// o que traz a janela à frente: só existe no app com janela (o servidor puro não tem)
     pub ao_mostrar: Mutex<Option<Box<dyn Fn() + Send>>>,
+    /// o que encerra o app depois de o instalador da atualização ser lançado (só a janela o define)
+    pub ao_sair: Mutex<Option<Box<dyn Fn() + Send>>>,
+    /// acha, baixa e confere a versão nova; só instala quando o usuário clica (src/atualizador)
+    pub atualizador: Atualizador,
     pub config: Config,
     pub dados: Mutex<Dados>,
     /// o data.json já serializado, para GET /api/dados não refazer o texto a cada pedido; limpo a cada gravação

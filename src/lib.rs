@@ -1,5 +1,6 @@
 //! The Blueprint (beta): dados em SQLite, validação da proposta de blueprint e contexto do usuário.
 //! O servidor HTTP e o MCP entram na ação 3.4; a janela nativa, na 3.5.
+pub mod atualizador;
 pub mod cli;
 pub mod contexto;
 pub mod dados;

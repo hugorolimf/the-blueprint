@@ -33,6 +33,12 @@ Na folha, cada projeto é uma seção numerada (01, 02…) com o cabeçalho de u
 
 Os dados ficam em `%APPDATA%\Blueprint\` (banco SQLite `blueprint.db` e `prototipos\`). Para começar com dados de exemplo: `blueprint importar data.exemplo.json %APPDATA%\Blueprint\blueprint.db`.
 
+**Atualizar**
+
+O app procura sozinho uma versão nova nas Releases do GitHub (ao abrir, no máximo uma vez por dia), **baixa o instalador em segundo plano** e confere o SHA-256 contra o `SHA256SUMS` da release. **Nada é instalado sem o seu clique:** quando o instalador está pronto aparece o aviso na janela (e o item "Atualizar para X…" na bandeja); só ao clicar em **Atualizar** o app copia o banco para `%APPDATA%\Blueprintackups`, roda o instalador em silêncio, fecha e abre de novo. Se houver aviso do agente que a tela ainda não aplicou, ele recusa e diz o porquê (fechar o app o perderia). Na linha de comando: `blueprint atualizar` (procura e baixa), `blueprint atualizar --verificar` (só consulta) e `blueprint atualizar --instalar` (o clique, pelo terminal).
+
+O app só faz um `GET` ao GitHub (sem token, sem identificador, sem telemetria), pelo `curl.exe` do Windows. Para desligar: item "Verificar sozinho ao abrir" na bandeja ou `BLUEPRINT_SEM_ATUALIZACAO=1`; desligado, o app não verifica nem baixa nada. `BLUEPRINT_ATUALIZACAO_SO_ESTAVEL=1` ignora as releases marcadas como pré-lançamento.
+
 **Qualquer sistema (só o servidor)**
 
 ```
@@ -42,7 +48,7 @@ cargo build --release
 
 Variáveis do `serve`: `HOST` (padrão 127.0.0.1), `PORT` (3000), `BLUEPRINT_DB` (banco), `DADOS_ARQ` (JSON importado na primeira execução com o banco vazio), `PROTOTIPOS_DIR`, `BLUEPRINT_ASSETS_DIR` (serve `web/` direto da pasta, sem recompilar) e `MCP_REDE=1` (veja [SECURITY.md](SECURITY.md) antes de usar).
 
-Comandos: `blueprint` (janela), `blueprint serve`, `blueprint --mcp` (MCP por stdio), `blueprint claude [args]` (abre uma sessão Claude com o plugin e a status line; ativa o agente quando a pasta está ligada), `blueprint importar <json> <banco>`, `blueprint exportar <banco> <json>`, `blueprint registrar [--remover]` (instala ou remove o plugin no Claude Code e o MCP no Codex), `blueprint registrar --status-line [--remover]` (status line global opcional) e `blueprint hook sessao|statusline|status|statusline-config` (usados pelo plugin; veja abaixo).
+Comandos: `blueprint` (janela), `blueprint --version`, `blueprint atualizar [--verificar|--instalar]`, `blueprint serve`, `blueprint --mcp` (MCP por stdio), `blueprint claude [args]` (abre uma sessão Claude com o plugin e a status line; ativa o agente quando a pasta está ligada), `blueprint importar <json> <banco>`, `blueprint exportar <banco> <json>`, `blueprint registrar [--remover]` (instala ou remove o plugin no Claude Code e o MCP no Codex), `blueprint registrar --status-line [--remover]` (status line global opcional) e `blueprint hook sessao|statusline|status|statusline-config` (usados pelo plugin; veja abaixo).
 
 ## Claude Code: o plugin do Blueprint
 
@@ -80,6 +86,8 @@ codex mcp add blueprint -- <caminho>\blueprint.exe --mcp
 ```
 
 Se o app não estiver em `http://127.0.0.1:3000`, passe `BLUEPRINT_URL` (`claude mcp add blueprint -e BLUEPRINT_URL=http://127.0.0.1:3917 -- …`). A tela **✦ Planejar → Como conectar** mostra o comando exato. Sem o plugin do Claude Code, o agente não sabe sozinho de qual blueprint é a pasta: grave no `CLAUDE.md` ou `AGENTS.md` dela a linha `Blueprint: workspace_id `…`, blueprint_id `…` (MCP `blueprint`).` (o agente descobre os ids com `listar_blueprints`).
+
+**Com o app fechado** o agente continua registrando: `registrar_progresso`, `marcar_concluido`, `marcar_checkpoint_feito`, `propor_blueprint`, `anexar_prototipo` e `vincular_pasta` ficam guardados em arquivos em `%APPDATA%\Blueprint\pendentes\` e, quando o app abre, entram na fila, na ordem, com a mesma validação (a tela os aplica ao abrir o workspace). O que o app recusar na abertura fica em `pendentesecusados\` com o motivo. As ferramentas de leitura (`ler_blueprint`, `listar_blueprints`) precisam do app aberto.
 
 Ferramentas:
 
