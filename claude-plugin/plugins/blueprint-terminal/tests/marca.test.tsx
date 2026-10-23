@@ -3,25 +3,22 @@ import { register } from "../hooks/register";
 
 describe("marca Blueprint", () => {
   for (const columns of [100, 160]) {
-    test(`Raster e superfície terminal em ${columns} colunas`, async ($, on) => {
+    test(`faixa sobre o prompt em ${columns} colunas, sem painel lateral`, async ($, on) => {
       let abriu = 0;
       on("session.start", ($, e) => ({ cwd: e.cwd }));
       on("ui.open", () => { abriu++; return { value: undefined }; });
       on("env.get", () => ({ value: undefined }));
       on("command.register", () => ({ value: undefined }));
-      on("ui.panes", () => ({ value: [] }));
       await $.session.start({ surface: "terminal", isInteractive: true, cwd: "/work" });
-      expect(abriu).toBe(1);
-      const component = columns < 144 ? "AbovePrompt" : "Pane";
+      expect(abriu).toBe(0);
       const ui = await $.ui.mount({
-        plugin: "blueprint-terminal", surface: "terminal", component,
-        requestId: component === "Pane" ? "blueprint-marca" : undefined,
+        plugin: "blueprint-terminal", surface: "terminal", component: "AbovePrompt",
         viewport: { columns, rows: 50 },
-        props: { hasSurvey: false, bodyColumns: columns < 144 ? columns : 38,
-          title: "The Blueprint", isFocused: false, placement: "dock" },
+        props: { hasSurvey: false, bodyColumns: columns },
       } as any);
       expect(await ui.find({ type: "Text", text: /The Blueprint/ })).toBeDefined();
       expect(await ui.find({ type: "Raster" })).toBeDefined();
+      expect(await ui.find({ type: "Button", text: /fechar/ })).toBeDefined();
       await ui.unmount();
     });
   }
@@ -36,26 +33,25 @@ describe("marca Blueprint", () => {
     await $.classic.Notification({ hook_event_name: "Notification", cwd: "/work", session_id: "test", transcript_path: "", message: "Preciso da sua resposta", notification_type: "permission_prompt" });
     expect(avisos.length).toBe(1); // o aviso padrão (hook OSC 9) basta: o mod não o repete em outro canto
   });
-  test("fechar preserva a escolha durante recarga e comando reabre", async () => {
+  test("fechar esconde a faixa, preserva a escolha na recarga e o comando reabre", async () => {
     const handlers = new Map<string, Function>();
     register((event, matcher, hook) => {
       handlers.set(event, hook ?? matcher);
       return { catch() {} };
     });
-    let abriu = 0;
     const state = new Map<string, unknown>();
     const $ = {
       state: { get: async ({ key }) => ({ value: state.get(key) }), set: async ({ key }, value) => { state.set(key, value); } },
       env: { get: async () => undefined }, command: { register: async () => {} },
-      ui: { open: async () => { abriu++; } },
     };
     const start = () => handlers.get("session.start")!($, { surface: "terminal", isInteractive: true }, async () => ({}));
     await start();
-    await handlers.get("ui.close")!($, { id: "blueprint-marca", origin: { kind: "person" } }, async () => ({}));
+    expect(state.get("visible")).toBe(true);
+    state.set("visible", false); // o clique em "fechar"
     await start();
-    expect(abriu).toBe(1);
+    expect(state.get("visible")).toBe(false);
     await handlers.get("command.run")!($);
-    expect(abriu).toBe(2);
+    expect(state.get("visible")).toBe(true);
   });
   test("kitty usa PNG em vez de Raster", async ($, on) => {
     on("session.start", ($, e) => ({ cwd: e.cwd }));
@@ -63,7 +59,7 @@ describe("marca Blueprint", () => {
     on("env.get", ($, e) => ({ value: e.name === "KITTY_WINDOW_ID" ? "1" : undefined }));
     on("command.register", () => ({ value: undefined }));
     await $.session.start({ surface: "terminal", isInteractive: true, cwd: "/work" });
-    const ui = await $.ui.mount({ plugin: "blueprint-terminal", surface: "terminal", component: "Pane", requestId: "blueprint-marca", props: { bodyColumns: 38, title: "The Blueprint", isFocused: false, placement: "dock" }, viewport: { columns: 160, rows: 50 } } as any);
+    const ui = await $.ui.mount({ plugin: "blueprint-terminal", surface: "terminal", component: "AbovePrompt", props: { hasSurvey: false, bodyColumns: 100 }, viewport: { columns: 160, rows: 50 } } as any);
     expect(await ui.find({ type: "Image" })).toBeDefined();
     await ui.unmount();
   });
@@ -83,8 +79,8 @@ Próximo checkpoint: 29/10 · Revisão`, linha: `Blueprint · ação 2.5 · Noti
     on("turn.complete", () => ({ text: "" }));
     on("ui.toast", ($, e) => { avisos.push(e.text); return { value: undefined }; });
     await $.session.start({ surface: "terminal", isInteractive: true, cwd: "/work" });
-    const ui = await $.ui.mount({ plugin: "blueprint-terminal", surface: "terminal", component: "Pane", requestId: "blueprint-marca", props: { bodyColumns: 38, title: "The Blueprint", isFocused: false, placement: "dock" }, viewport: { columns: 160, rows: 50 } } as any);
-    expect(await ui.find({ type: "Text", text: /Ação 2.5/ })).toBeDefined();
+    const ui = await $.ui.mount({ plugin: "blueprint-terminal", surface: "terminal", component: "AbovePrompt", props: { hasSurvey: false, bodyColumns: 100 }, viewport: { columns: 160, rows: 50 } } as any);
+    expect(await ui.find({ type: "Text", text: /ação 2.5/ })).toBeDefined();
     await ui.unmount();
     feitos = 3;
     await $.turn.complete({ reason: "answer", answer: "feito", durationMs: 1 } as any);

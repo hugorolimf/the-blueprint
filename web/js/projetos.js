@@ -71,6 +71,8 @@ function abrirTodosProjetos(p, aberto) {
   for (const id of [...p.projetos.map((x) => x.id), ""]) { const c = chaveProjeto(p, id); if (aberto) projetosAbertos.add(c); else projetosAbertos.delete(c); }
   guardaProjetosAbertos();
 }
+// alguma seção do blueprint está aberta? (decide se o menu oferece "Recolher" ou "Expandir")
+const algumProjetoAberto = (p) => [...(p.projetos || []).map((x) => x.id), ""].some((id) => projetosAbertos.has(chaveProjeto(p, id)));
 function alternarProjeto(chave) {
   if (!projetosAbertos.delete(chave)) projetosAbertos.add(chave);
   guardaProjetosAbertos();

@@ -1,0 +1,16 @@
+/* O menu do botão direito: cabeçalho com o alvo, itens em grupos separados por linha, ícone à esquerda, "excluir" em tom de alerta. */
+.menu-contextual{position:fixed;z-index:100;display:grid;gap:1px;min-width:240px;max-width:min(360px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;padding:5px;background:#082b5ef5;border:1px solid var(--ink);box-shadow:0 12px 36px #02132ecc;color:var(--ink)}
+.menu-contextual[hidden]{display:none}
+.mc-topo{padding:6px 12px 8px;margin-bottom:3px;border-bottom:1px solid var(--faint);font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-sep{height:1px;margin:4px 6px;background:var(--faint)}
+.menu-contextual button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 12px;border:1px solid transparent;background:transparent;color:inherit;text-align:left;font:11px var(--mono);letter-spacing:.04em;cursor:pointer}
+.mc-ic{flex:none;display:grid;place-items:center;width:16px;height:16px;color:var(--mid)}
+.mc-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+.mc-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.menu-contextual button:hover,.menu-contextual button:focus-visible{background:var(--ink);border-color:var(--ink);color:var(--paper);outline:none}
+.menu-contextual button:hover .mc-ic,.menu-contextual button:focus-visible .mc-ic{color:inherit}
+.menu-contextual button.perigo,.menu-contextual button.perigo .mc-ic{color:var(--erro)}
+.menu-contextual button.perigo:hover,.menu-contextual button.perigo:focus-visible{background:var(--erro);border-color:var(--erro);color:#3b0d06}
+.menu-contextual button.perigo:hover .mc-ic,.menu-contextual button.perigo:focus-visible .mc-ic{color:inherit}
+.menu-contextual button[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+.menu-contextual button[aria-disabled="true"]:hover,.menu-contextual button[aria-disabled="true"]:focus-visible{background:transparent;border-color:var(--faint);color:inherit}

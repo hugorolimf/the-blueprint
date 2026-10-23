@@ -111,8 +111,15 @@ function alternar(id) {
   render();
   desenharBarras();
 }
-$("b-abrir").onclick = () => { if (tela) { abertos[tela] = true; abrirTodosProjetos(D.blueprints.find((p) => p.id === tela), true); render(); desenharBarras(); } };
-$("b-fechar").onclick = () => { if (tela) { abertos[tela] = false; abrirTodosProjetos(D.blueprints.find((p) => p.id === tela), false); render(); desenharBarras(); } };
+// "Expandir tudo" / "Recolher tudo" (botões do topo e menu do botão direito): as ações do blueprint e, com projetos, todas as seções
+function abrirOuFecharTudo(id, aberto) {
+  abertos[id] = aberto;
+  abrirTodosProjetos(D.blueprints.find((p) => p.id === id), aberto);
+  render();
+  desenharBarras();
+}
+$("b-abrir").onclick = () => { if (tela) abrirOuFecharTudo(tela, true); };
+$("b-fechar").onclick = () => { if (tela) abrirOuFecharTudo(tela, false); };
 
 host.addEventListener("click", (e) => { const mes = e.target.closest("[data-mes]"); if (mes) selecionarMes(mes.dataset.mes); });
 host.addEventListener("keydown", (e) => { const mes = e.target.closest("[data-mes]"); if (mes && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); selecionarMes(mes.dataset.mes); } });

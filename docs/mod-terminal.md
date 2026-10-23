@@ -4,10 +4,11 @@ O lançador `blueprint claude` extrai e carrega `blueprint-terminal` com um segu
 `--plugin-dir`. O plugin principal continua fornecendo skill, agente, MCP e hooks.
 A marca não consulta dados do app, não inicia processos e não usa polling.
 
-O painel automático fica disponível a partir de 144 colunas; em telas menores a
-marca aparece acima do prompt. `/blueprint-marca` abre o painel a pedido. Fechar o
-painel preserva a escolha na sessão, inclusive durante recarga do mod. A marca
-contém somente imagem e “The Blueprint”; os dados ficam na status line.
+A marca aparece só numa faixa acima do prompt, em qualquer largura (decisão de
+2026-10-23: sem painel lateral). O botão “fechar ×” da faixa a esconde;
+`/blueprint-marca` a reabre. Fechar preserva a escolha na sessão, inclusive durante
+recarga do mod. A faixa mostra a imagem, “The Blueprint” e a linha curta do
+blueprint da pasta.
 
 Raster usa células com blocos de meia altura e cores reais em qualquer terminal.
 Image usa o mesmo PNG em kitty, Ghostty e iTerm2 3.5 ou posterior. O PNG tem
