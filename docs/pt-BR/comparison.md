@@ -9,7 +9,7 @@ Uma comparação honesta, com o que foi possível verificar nas páginas dos pro
 | Em uma frase | roadmap local-first que o seu agente lê e atualiza pelo MCP, numa folha de blueprint | gerenciador de tarefas em Markdown e quadro kanban para qualquer repositório Git, para humanos e agentes | sistema de tarefas para desenvolvimento com IA, para usar em Cursor, Windsurf e outros | quadro kanban para coordenar agentes de código | alternativa open source ao Jira e ao Linear |
 | Licença | MIT | MIT | "Other" (ler o LICENSE) | Apache-2.0 | AGPL-3.0 |
 | Estrelas | 3 | ~7 mil | ~28 mil | ~28 mil | ~61 mil |
-| Última release | v0.2.2 | v1.55.3 (23/10/2026) | 0.43.1 (31/03/2026) | v0.1.44 (24/04/2026) | v1.4.3-rc2 (23/10/2026) |
+| Última release | v0.2.3 | v1.55.3 (23/10/2026) | 0.43.1 (31/03/2026) | v0.1.44 (24/04/2026) | v1.4.3-rc2 (23/10/2026) |
 | Onde ficam os dados | banco SQLite no seu computador | arquivos Markdown no repositório | veja o repositório | veja o repositório | servidor próprio ou nuvem |
 | Sistemas | Windows (janela, bandeja, instalador); o servidor roda em qualquer sistema | npm, bun, brew, nix | npm | npx | Docker ou nuvem |
 

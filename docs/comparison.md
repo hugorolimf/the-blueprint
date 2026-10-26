@@ -9,7 +9,7 @@ An honest comparison, with what could be verified on the projects' own pages on 
 | In one sentence | a local-first roadmap your agent reads and updates over MCP, on a blueprint-style sheet | a Markdown task manager and kanban board for any Git repository, for humans and agents | a task system for AI-driven development, to use in Cursor, Windsurf and others | a kanban board to coordinate coding agents | an open source alternative to Jira and Linear |
 | License | MIT | MIT | "Other" (read the LICENSE) | Apache-2.0 | AGPL-3.0 |
 | Stars | 3 | ~7k | ~28k | ~28k | ~61k |
-| Latest release | v0.2.2 | v1.55.3 (23 Oct 2026) | 0.43.1 (31 Mar 2026) | v0.1.44 (24 Apr 2026) | v1.4.3-rc2 (23 Oct 2026) |
+| Latest release | v0.2.3 | v1.55.3 (23 Oct 2026) | 0.43.1 (31 Mar 2026) | v0.1.44 (24 Apr 2026) | v1.4.3-rc2 (23 Oct 2026) |
 | Where the data lives | a SQLite database on your computer | Markdown files in the repository | see the repository | see the repository | your own server or the cloud |
 | Systems | Windows (window, tray, installer); the server runs on any system | npm, bun, brew, nix | npm | npx | Docker or cloud |
 
