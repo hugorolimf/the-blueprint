@@ -29,6 +29,12 @@ try {
   const off = await A.js(`(() => { const c = document.querySelector('#roadmap-tela .rm-faixa[data-tema="${tema.id}"] .rm-anel-feito'); return { off: parseFloat(getComputedStyle(c).strokeDashoffset.replace(/[^0-9.]/g, "")), c: parseFloat(getComputedStyle(c).getPropertyValue("--c")) }; })()`);
   assert(Math.abs(off.off - off.c * (1 - p)) < 1.5, `o anel do tema '${tema.id}' encheu até ${(p * 100).toFixed(0)}% (offset ${off.off.toFixed(1)} de ${off.c.toFixed(1)})`);
 
+  // repouso: depois que as animações de entrada acabam, a tela não gasta CPU (TaskDuration do DevTools numa janela de 3 s)
+  await A.cdp("Performance.enable"); await dormir(6500);
+  const tarefa = async () => (await A.cdp("Performance.getMetrics")).result.metrics.find((m) => m.name === "TaskDuration").value;
+  const t0 = await tarefa(); await dormir(3000); const gasto = (await tarefa()) - t0;
+  assert(gasto < 0.09, `em repouso a tela gasta menos de 3% de CPU (gastou ${(gasto / 3 * 100).toFixed(2)}%)`);
+
   // filtro por estado (botão) e por tema
   await A.clicarEm('#roadmap-tela .rm-filtros [data-estado="proximo"]'); await dormir(300);
   assert.deepEqual((await visiveis(A)).sort(), R.itens.filter((i) => i.estado === "proximo").map((i) => i.id).sort(), "filtra 'Next'");
