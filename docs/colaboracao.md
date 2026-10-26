@@ -396,6 +396,27 @@ impl Contexto {
 // Acesso também expõe: fn sessao_ativa(&self, ctx: &Contexto) -> bool (lida da memória, para o SSE fechar quem foi removido)
 ```
 
+#### Como a ACESSO ficou (desvios e acréscimos, 2026-10-26)
+
+- **Contexto:** além do contrato, `Contexto::membro(id, nome, acessos)`, `Contexto::visitante(convite, ws, bp, abre)`, `Contexto::anonimo()`,
+  `autenticado()`, `papel_em(ws, bp)` e `Papel::texto`/`de_texto`; `Papel` é ordenado (visitante < supervisor < colaborador < dono). O
+  `usuario` do visitante é `visitante:<convite>`, o do anônimo é vazio e o `nome` do local é `local`. `pode_editar`/`exige_editar` ficam
+  (compatíveis); `pode_ler` passa a ser `local || tem acessos`.
+- **Assinatura:** o roteador resolve o contexto uma vez (`acesso::despachar` no hospedado, `Contexto::local()` no local) e chama
+  `rotear(estado, pedido, ctx)`. As rotas do MCP ficam com `rota(mcp, dados, pedido)` (o local, que os testes usam) mais
+  `rota_com(mcp, dados, pedido, ctx)`; `api_dados::rota` e as rotas novas têm a forma `rota(estado, pedido, ctx)`.
+- **Só locais, além da lista da seção 1:** `GET /api/mcp/sessoes`, `GET /api/mcp/pastas` e `POST /api/mcp/pasta/*` também respondem 404
+  `so-local` no hospedado (o vínculo pasta → blueprint é da máquina local e expunha caminhos de todos).
+- **Origin:** no hospedado, todo pedido do navegador que não é `GET`/`HEAD` precisa da `Origin` pública, com ou sem cookie (inclusive
+  `/api/convite/*`, contra login forjado por outro site). A chave de MCP só vale em `/api/mcp/*`; nas outras rotas vale só o cookie.
+- **Visitante e o MCP:** visitante recebe 403 em todo `/api/mcp/*` (fila, agentes, linha do tempo, info e o SSE do MCP).
+- **Limites conhecidos:** o SSE do MCP (`/api/mcp/eventos`, só ids) não fecha por `sessao_ativa`; quem foi removido para de receber ao
+  reconectar. Mudar o papel não fecha fluxos abertos (só remover e revogar fecham). `convites/trocar` dá ao link novo a validade padrão (168 h).
+- **Outros:** `/api/pessoas` lista também o dono de todos (`'*'`), que não pode ser mudado nem removido por essa rota (403); `GET /api/mcp/info`
+  devolve `arquivo: "blueprint"` no hospedado (sem o caminho do servidor); `POST /api/sessao/sair` grava a atividade `saiu`; no hospedado o
+  `DADOS_ARQ` só vale definido de propósito. Para regras de rota dentro de uma transação, `Dados::transacao` e a variante `Erro::Http`.
+  `BLUEPRINT_MCP_CURL=1` (testes) força o curl também em `http://`.
+
 ### Frente SINCRONIA (ações "Gravação por mudança e conflitos", "Presença e mudanças ao vivo")
 
 Faz: `POST /api/mudancas` com a regra de conflito, `historico_campos` e `GET /api/historico`, `GET /api/eventos` com buffer e retomada, `POST
