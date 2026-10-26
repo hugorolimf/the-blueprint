@@ -53,5 +53,7 @@ Object.assign(I18N.catalogos.en, {
   // situação e prazo da ação (menu)
   "Conclui sozinha quando todos os planos e checkpoints estiverem marcados": "Completes by itself when all plans and checkpoints are ticked",
   "Marcar como em andamento": "Mark as in progress", "Marcar como concluída": "Mark as completed",
+  "{n} ação concluída": ["{n} action completed", "{n} actions completed"], "{n} ação em andamento ({pct}% feito)": ["{n} action in progress ({pct}% done)", "{n} actions in progress ({pct}% done)"],
+  "{n} ação a fazer": ["{n} action to do", "{n} actions to do"], "{feitos} de {n} checkpoints feitos": "{feitos} of {n} checkpoints done",
   "Prorrogar o fim em 1 dia": "Extend the end by 1 day", "Prorrogar o fim em 1 semana": "Extend the end by 1 week",
 });

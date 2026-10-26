@@ -215,7 +215,7 @@ function render() {
         const ini = Math.min(...fs.map((f) => f.a)), fim = Math.max(...fs.map((f) => f.b + 1));
         const px = (d) => x0 + ((d - ini) / (fim - ini || 1)) * (x1 - x0), fmt = (d) => deDia(d).slice(8) + "/" + deDia(d).slice(5, 7);
         // uma célula por ação, juntas por situação (concluídas | em andamento | a fazer), com um divisor mais largo entre os grupos; a largura é a quantidade de itens
-        const ordem = { concluido: 0, andamento: 1, planejado: 2 }, cel = [...fs].sort((u, v) => ordem[u.status] - ordem[v.status] || u.a - v.a);
+        const ordem = { concluido: 0, andamento: 1, planejado: 2 }, cel = capaCelulas([...fs].sort((u, v) => ordem[u.status] - ordem[v.status] || u.a - v.a), x1 - x0); // muitas ações: um bloco por situação (capa-agrupa.js)
         const vao = (i) => (i && cel[i].status !== cel[i - 1].status ? 7 : 2), peso = (f) => Math.max(1, f.it[1]);
         const total = cel.reduce((t, f) => t + peso(f), 0), util = x1 - x0 - cel.reduce((t, _, i) => t + (i ? vao(i) : 0), 0);
         let cx = x0;
@@ -223,11 +223,11 @@ function render() {
           if (i) { cx += vao(i); if (vao(i) > 2) out.push(`<path class="eixo" style="stroke-dasharray:none" d="M${cx - 3.5} ${yb - 3}V${yb + 15}"/>`); }
           const w = util * peso(f) / total, estilo = f.status === "concluido" ? "" : f.status === "andamento" ? ' style="stroke-width:1.8"' : ' style="stroke-dasharray:6 4"';
           const miolo = f.status === "concluido" ? `<rect class="hach" x="${cx + 1}" y="${yb + 1}" width="${Math.max(0, w - 2)}" height="10"/>` : f.pct > 0 ? `<rect class="prog" x="${cx + 1}" y="${yb + 1}" width="${Math.max(0, (w - 2) * f.pct)}" height="10"/>` : "";
-          out.push(`<g><title>${esc(`${numeroDaAcao(p, f, pi)} ${f.nome || tr("SEM NOME")} · ${f.status === "concluido" ? tr("concluída") : f.status === "andamento" ? tr("em andamento, {pct}% feito", { pct: Math.round(f.pct * 100) }) : tr("a fazer")}`)}</title><rect class="ln${f.status === "planejado" ? " m" : ""}"${estilo} x="${cx}" y="${yb}" width="${w}" height="12"/>${miolo}</g>`);
+          out.push(`<g><title>${esc(capaTitulo(f, () => numeroDaAcao(p, f, pi)))}</title><rect class="ln${f.status === "planejado" ? " m" : ""}"${estilo} x="${cx}" y="${yb}" width="${w}" height="12"/>${miolo}</g>`);
           cx += w;
         });
         out.push(`<path class="ln l" d="M${x0} ${yc}H${x1}M${x0} ${yc - 4}V${yc + 4}M${x1} ${yc - 4}V${yc + 4}"/>`);
-        fs.forEach((f) => f.checkpoints.forEach((m) => { const d = dia(m.data); if (d >= ini && d <= fim) out.push(`<path class="dm${m.feito ? " ok" : ""}" d="M${px(d)} ${yc - 5}l4 5l-4 5l-4 -5z"/>`); }));
+        capaMarcos(fs.flatMap((f) => f.checkpoints).filter((m) => dia(m.data) >= ini && dia(m.data) <= fim).map((m) => ({ x: px(dia(m.data)), feito: !!m.feito }))).forEach((g) => out.push(capaMarcoSvg(g, yc)));
         if (hojeD >= ini && hojeD <= fim) out.push(`<path class="eixo" style="stroke-dasharray:none" d="M${px(hojeD)} ${yc - 7}V${yc + 7}"/>`);
         out.push(`<text class="mid" x="${x0}" y="${ty + 146}" font-size="8">${fmt(ini)}</text><text class="mid" x="${x1}" y="${ty + 146}" font-size="8" text-anchor="end">${fmt(fim - 1)}</text>`);
       }
