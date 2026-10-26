@@ -28,17 +28,20 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let porta = servidor.server_addr().to_ip().map_or(config.porta, |a| a.port());
     let url = config.url(porta);
     let mcp = Mcp::novo(&config.host, config.rede_mcp, &config.exe.to_string_lossy(), &url, config.prototipos.clone());
-    let (versao_dados, sincronia) = super::estado::versao_e_sincronia(crate::sincronia::presenca_do_ambiente());
-    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), config });
-    // cada mudança do updater (baixando, pronta…) chega à página pelo mesmo SSE da fila
-    let fraco = Arc::downgrade(&estado);
-    estado.atualizador.ouvir(move |estado_json| {
-        if let Some(e) = fraco.upgrade() {
-            e.mcp.notificar("atualizacao", Some(estado_json.clone()));
-        }
-    });
-    // o que o agente registrou com o app fechado entra na fila antes de o primeiro pedido chegar (src/mcp/pendentes.rs)
-    crate::mcp::pendentes::reenviar_todos(&estado.mcp, &estado.dados, &crate::mcp::pendentes::pasta_do_banco(&estado.config.banco));
+    let (versao_dados, sincronia) = super::estado::versao_e_sincronia(config.hospedagem.is_some()); // presença só no modo hospedado
+    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), acesso: crate::acesso::Acesso::novo(), config });
+    // o modo hospedado não tem atualizador nem pendentes do agente local (quem hospeda atualiza o binário; o agente fala pela chave)
+    if estado.config.hospedagem.is_none() {
+        // cada mudança do updater (baixando, pronta…) chega à página pelo mesmo SSE da fila
+        let fraco = Arc::downgrade(&estado);
+        estado.atualizador.ouvir(move |estado_json| {
+            if let Some(e) = fraco.upgrade() {
+                e.mcp.notificar("atualizacao", Some(estado_json.clone()));
+            }
+        });
+        // o que o agente registrou com o app fechado entra na fila antes de o primeiro pedido chegar (src/mcp/pendentes.rs)
+        crate::mcp::pendentes::reenviar_todos(&estado.mcp, &estado.dados, &crate::mcp::pendentes::pasta_do_banco(&estado.config.banco));
+    }
     let servidor = Arc::new(servidor);
     let fio = {
         let (servidor, estado) = (servidor.clone(), estado.clone());
@@ -78,7 +81,9 @@ fn atender(estado: &Estado, mut req: Request) {
             return escrever(req, corpo_grande_demais(&caminho));
         }
     }
-    let resposta = despachar(estado, &Pedido::novo(&metodo, &url, cabecalhos, corpo));
+    let mut pedido = Pedido::novo(&metodo, &url, cabecalhos, corpo);
+    pedido.ip = req.remote_addr().map(|a| a.ip().to_string()).unwrap_or_default();
+    let resposta = despachar(estado, &pedido);
     escrever(req, resposta);
 }
 

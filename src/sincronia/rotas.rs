@@ -1,6 +1,6 @@
 //! As rotas da sincronização: `POST /api/mudancas`, `GET /api/eventos`, `POST /api/presenca` e `GET /api/historico` (docs/colaboracao.md,
 //! seções 5 e 6). Recebem o `Contexto` resolvido no despacho; autoria e permissão passam só por `super::{autor, exige_gravar, pode_ler}`.
-use super::{autor, exige_gravar, operacoes, pode_ler, Fluxo, Onde};
+use super::{autor, exige_gravar, operacoes, pode_ler, Evento, Fluxo, Onde};
 use crate::contexto::Contexto;
 use crate::dados::Falha;
 use crate::http::pedido::{falha, Corpo, ErroHttp, Pedido, Resposta};
@@ -73,10 +73,17 @@ fn mudancas(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Result<Resposta
                 None => grupos.push((a.workspace_id.clone(), a.blueprint_id.clone(), vec![op])),
             }
         }
+        // um `mover` que caiu em mais de um grupo cruza blueprints: para o visitante, o evento vira `recarregar`
+        let cruzam: Vec<usize> = saida.aplicadas.iter().map(|a| a.indice).filter(|i| saida.aplicadas.iter().filter(|b| b.indice == *i).count() > 1).collect();
         let eventos = grupos
             .into_iter()
-            .map(|(ws, bp, ops)| (ws.clone(), json!({"versao": nova, "workspaceId": ws, "blueprintId": bp, "autor": {"id": quem.id, "nome": quem.nome}, "cliente": lote.cliente, "ops": ops})))
+            .map(|(ws, bp, ops)| {
+                let cruza = ops.iter().any(|op| cruzam.iter().any(|i| lote.brutas[*i] == *op));
+                let dados = json!({"versao": nova, "workspaceId": ws, "blueprintId": bp, "autor": {"id": quem.id, "nome": quem.nome}, "cliente": lote.cliente, "ops": ops});
+                Evento { workspace_id: ws, blueprint_id: bp, dados, cruza }
+            })
             .collect();
+        estado.sincronia.podar(|c| estado.acesso.sessao_ativa(c)); // quem foi removido não recebe mais nada
         estado.sincronia.publicar(nova, eventos);
     }
     drop(guardado);
@@ -88,9 +95,9 @@ fn eventos(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Result<Resposta,
     // o navegador manda Last-Event-ID sozinho ao reconectar; na primeira conexão a página manda ?desde= (o x-dados-versao do GET)
     let numero = |v: &str| v.trim().parse::<u64>().ok();
     let desde = pedido.cabecalho("last-event-id").and_then(numero).or_else(|| pedido.parametro("desde").as_deref().and_then(numero));
-    let quem = autor(ctx);
     let cliente = pedido.parametro("cliente").filter(|c| !c.is_empty() && c.len() <= 40);
-    let (rx, guarda) = estado.sincronia.assinar(&ws, desde, cliente.as_deref().map(|c| (&quem, c)));
+    estado.sincronia.podar(|c| estado.acesso.sessao_ativa(c));
+    let (rx, guarda) = estado.sincronia.assinar(&ws, desde, ctx, cliente.as_deref());
     let cabecalhos = vec![("content-type".into(), "text/event-stream; charset=utf-8".into()), ("cache-control".into(), "no-store".into())];
     Ok(Resposta { status: 200, cabecalhos, corpo: Corpo::Fluxo(Box::new(Fluxo::novo(rx, guarda))) })
 }
@@ -98,8 +105,11 @@ fn eventos(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Result<Resposta,
 fn presenca(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Result<Resposta, ErroHttp> {
     let corpo: Value = serde_json::from_slice(&pedido.corpo).map_err(|_| falha(400, crate::tr!("invalid JSON", "JSON inválido")).codigo("json-invalido"))?;
     let texto = |k: &str| corpo[k].as_str().unwrap_or("").chars().take(80).collect::<String>();
-    let ws = texto("workspaceId");
-    if !pode_ler(ctx, &ws, None) {
+    let (ws, bp) = (texto("workspaceId"), texto("blueprintId"));
+    if ctx.visitante {
+        return Ok(Resposta::json(200, &json!({"ok": true}))); // visitante não aparece na presença
+    }
+    if !pode_ler(ctx, &ws, None) && (bp.is_empty() || !pode_ler(ctx, &ws, Some(&bp))) {
         return Err(falha(403, crate::tr!("forbidden", "proibido")));
     }
     let editando = match &corpo["editando"] {
@@ -108,7 +118,7 @@ fn presenca(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Result<Resposta
         }
         _ => None,
     };
-    estado.sincronia.atualizar_presenca(&autor(ctx), &texto("cliente"), Onde { blueprint_id: texto("blueprintId"), acao_id: texto("acaoId"), editando });
+    estado.sincronia.atualizar_presenca(&autor(ctx), &texto("cliente"), Onde { blueprint_id: bp, acao_id: texto("acaoId"), editando });
     Ok(Resposta::json(200, &json!({"ok": true})))
 }
 
@@ -117,6 +127,9 @@ fn texto_de(v: &Value) -> String {
 }
 
 fn historico(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Result<Resposta, ErroHttp> {
+    if ctx.visitante {
+        return Err(falha(403, crate::tr!("forbidden", "proibido"))); // o histórico tem nomes e valores antigos: visitante nunca lê
+    }
     let ws = workspace(pedido, ctx)?;
     let filtro = |k: &str| pedido.parametro(k).filter(|v| !v.is_empty());
     let limite = pedido.parametro("limite").and_then(|v| v.parse::<i64>().ok()).unwrap_or(100).clamp(1, 500);

@@ -82,7 +82,7 @@ impl Presencas {
 fn enviar_lista(i: &mut Interno, ws: &str) {
     i.presenca.envio.insert(ws.to_string(), Instant::now());
     let texto = sse(None, "presenca", &json!({"workspaceId": ws, "pessoas": i.presenca.lista(ws)}));
-    i.enviar(Some(ws), &texto);
+    i.enviar(|a| a.workspace_id == ws && !a.ctx.visitante, &texto); // visitante não vê presença
 }
 
 /// Manda a lista do workspace agora ou, se a última foi há menos de `INTERVALO`, agenda uma só para o fim do intervalo.

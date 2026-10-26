@@ -30,6 +30,8 @@ pub struct Estado {
     /// acha, baixa e confere a versão nova; só instala quando o usuário clica (src/atualizador)
     pub atualizador: Atualizador,
     pub config: Config,
+    /// o acesso do modo hospedado: sessões encerradas e tentativas inválidas, só memória (src/acesso)
+    pub acesso: crate::acesso::Acesso,
     pub dados: Mutex<Dados>,
     /// o data.json já serializado, para GET /api/dados não refazer o texto a cada pedido; limpo a cada gravação
     pub dados_json: Mutex<Option<Vec<u8>>>,

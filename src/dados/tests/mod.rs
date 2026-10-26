@@ -1,5 +1,6 @@
 //! Testes da camada de dados, um arquivo por assunto. `exemplo()` cobre os casos difíceis da ida e volta:
 //! lista ausente x vazia, null, número inteiro x fracionário, campo desconhecido e campo mapeado com tipo inesperado.
+mod acesso;
 mod ida_e_volta;
 mod itens;
 mod linha_do_tempo;

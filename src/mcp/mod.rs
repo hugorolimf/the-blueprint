@@ -4,9 +4,12 @@ pub mod acoes;
 mod ajuste;
 pub mod atividade;
 pub(crate) mod cliente;
+mod cliente_curl;
+#[cfg(test)]
+mod cliente_curl_tests;
 mod conversa;
 mod eventos;
-mod fila;
+pub(crate) mod fila;
 mod hooks;
 pub(crate) mod iniciar;
 mod lembrete;

@@ -1,6 +1,7 @@
 //! O roteador: a mesma ordem do servidor Node (página, estáticos, protótipos, /api/mcp, /api/dados, 404).
 use super::pedido::{Pedido, Resposta};
 use super::{api_dados, prototipos, Estado};
+use crate::contexto::Contexto;
 
 const LIMITE_PADRAO: usize = 256 * 1024;
 const LIMITE_DADOS: usize = 10 * 1024 * 1024;
@@ -27,17 +28,33 @@ pub fn despachar(estado: &Estado, pedido: &Pedido) -> Resposta {
     crate::idioma::com(crate::idioma::do_pedido(pedido), || despachar_no_idioma(estado, pedido))
 }
 
+/// O Contexto é resolvido uma vez aqui e entregue às rotas; toda rota nova tem a forma `fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta`.
+/// No modo hospedado, `crate::acesso::despachar` confere HTTPS, Host e Origin e resolve o contexto pela sessão ou pela chave.
 fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
+    match &estado.config.hospedagem {
+        Some(h) => crate::acesso::despachar(estado, pedido, h, |ctx| rotear(estado, pedido, ctx)),
+        None => rotear(estado, pedido, &Contexto::local()),
+    }
+}
+
+fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let caminho = pedido.caminho.as_str();
-    let pagina = if caminho == "/" { "/blueprint.html" } else { caminho };
+    // `/convite` (modo hospedado) é a própria página: ela lê o segredo do fragmento, que nunca chega aqui
+    let pagina = if caminho == "/" || (caminho == "/convite" && !ctx.local) { "/blueprint.html" } else { caminho };
     if let Some(r) = estado.assets.responder(pagina, pedido) {
         return r;
+    }
+    if !ctx.local && caminho.starts_with("/prototipos/") && !prototipo_visivel(estado, caminho, ctx) {
+        return Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"));
     }
     if let Some(r) = prototipos::rota(estado, caminho) {
         return r;
     }
+    if crate::acesso::rotas::eh_rota(caminho) {
+        return crate::acesso::rotas::rota(estado, pedido, ctx);
+    }
     if caminho.starts_with("/api/mcp/") {
-        return crate::mcp::rotas::rota(&estado.mcp, &estado.dados, pedido);
+        return crate::mcp::rotas::rota_com(&estado.mcp, &estado.dados, pedido, ctx);
     }
     if caminho.starts_with("/api/terminal/") {
         return crate::terminal::rotas::rota(estado, pedido);
@@ -49,13 +66,21 @@ fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
         return mostrar_janela(estado, pedido);
     }
     if caminho == "/api/dados" {
-        return api_dados::rota(estado, pedido);
+        return api_dados::rota(estado, pedido, ctx);
     }
     // frente SINCRONIA: mudanças por item, eventos, presença e histórico (o Contexto do pedido chega pronto à rota)
-    if let Some(r) = crate::sincronia::rotas::rota(estado, pedido, &crate::contexto::Contexto::local()) {
+    if let Some(r) = crate::sincronia::rotas::rota(estado, pedido, ctx) {
         return r;
     }
     Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))
+}
+
+/// Modo hospedado: o protótipo só sai para quem lê o blueprint da ação que o anexou.
+fn prototipo_visivel(estado: &Estado, caminho: &str, ctx: &Contexto) -> bool {
+    let id = caminho.trim_start_matches("/prototipos/").trim_end_matches(".html");
+    let mut dados = estado.dados.lock().unwrap_or_else(|e| e.into_inner());
+    let Ok(arquivo) = dados.ler_tudo(&Contexto::local()) else { return false };
+    crate::acesso::filtro::blueprint_do_prototipo(arquivo, id).is_some_and(|(ws, bp)| ctx.pode(crate::contexto::Acao::Ler, &ws, Some(&bp)))
 }
 
 /// A segunda execução do app pede à primeira que traga a janela à frente. Só POST vindo desta máquina e sem Origin (página de outro

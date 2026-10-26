@@ -40,7 +40,7 @@ impl Origem {
 }
 
 /// O curl do Windows (System32), senão o do PATH; se não houver nenhum, o erro aparece ao rodar ("não consegui rodar o curl").
-fn curl() -> PathBuf {
+pub(crate) fn curl() -> PathBuf {
     let sistema = std::env::var_os("SystemRoot").map(|r| Path::new(&r).join("System32").join("curl.exe")).filter(|p| p.is_file());
     sistema.or_else(|| crate::registrar::procurar("curl")).unwrap_or_else(|| PathBuf::from("curl"))
 }

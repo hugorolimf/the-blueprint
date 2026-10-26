@@ -18,6 +18,42 @@ pub struct Config {
     pub assets_dir: Option<PathBuf>,
     /// o executável, que o agente registra com `--mcp`
     pub exe: PathBuf,
+    /// `blueprint serve --hospedar`: o servidor de equipe atrás de um proxy HTTPS (None = o app local de sempre)
+    pub hospedagem: Option<Hospedagem>,
+}
+
+/// O modo hospedado (docs/colaboracao.md, seção 4). TLS fica com o proxy reverso; o app confia nos cabeçalhos dele só vindos do próprio proxy.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Hospedagem {
+    /// `https://equipe.exemplo.com`, sem barra no fim: também é a única Origin aceita
+    pub url_publica: String,
+    /// o host da URL pública (com a porta, se houver): o único `Host` aceito
+    pub host_publico: String,
+    /// BLUEPRINT_PROXY: o IP do proxy quando ele não está nesta máquina
+    pub proxy: Option<String>,
+    /// BLUEPRINT_HSTS=1
+    pub hsts: bool,
+    /// `--novo-link-dono`: revoga o link do dono pendente e imprime outro
+    pub novo_link_dono: bool,
+}
+
+impl Hospedagem {
+    /// Confere a configuração; o texto de erro diz o que falta (nunca contém segredo: não há segredo aqui).
+    pub fn de(url: &str, host: &str, proxy: Option<&str>, hsts: bool) -> Result<Hospedagem, String> {
+        let resto = url.strip_prefix("https://").ok_or_else(|| crate::tr!("BLUEPRINT_URL_PUBLICA must start with https:// (TLS is done by the reverse proxy)", "BLUEPRINT_URL_PUBLICA precisa começar com https:// (o TLS fica com o proxy reverso)"))?;
+        if resto.is_empty() || resto.contains(['/', '?', '#', '@', ' ']) {
+            return Err(crate::tr!("BLUEPRINT_URL_PUBLICA must be only the origin, like https://team.example.com (no path and no trailing slash)", "BLUEPRINT_URL_PUBLICA precisa ser só a origem, como https://equipe.exemplo.com (sem caminho e sem barra no fim)"));
+        }
+        let proxy = proxy.map(str::trim).filter(|p| !p.is_empty());
+        if let Some(p) = proxy {
+            p.parse::<std::net::IpAddr>().map_err(|_| crate::tr!("BLUEPRINT_PROXY must be an IP address", "BLUEPRINT_PROXY precisa ser um endereço IP"))?;
+        }
+        let loopback = matches!(host, "127.0.0.1" | "::1" | "localhost");
+        if !loopback && proxy.is_none() {
+            return Err(crate::tr!("HOST={host} listens outside this machine: set BLUEPRINT_PROXY to the proxy IP (or use HOST=127.0.0.1 with the proxy on this machine)", "HOST={host} escuta fora desta máquina: defina BLUEPRINT_PROXY com o IP do proxy (ou use HOST=127.0.0.1 com o proxy nesta máquina)"));
+        }
+        Ok(Hospedagem { url_publica: url.to_string(), host_publico: resto.to_ascii_lowercase(), proxy: proxy.map(String::from), hsts, novo_link_dono: false })
+    }
 }
 
 fn pasta_de(var: &str, padrao: &str) -> PathBuf {
@@ -35,7 +71,24 @@ impl Config {
             prototipos: pasta_de("PROTOTIPOS_DIR", "prototipos"),
             assets_dir: env::var("BLUEPRINT_ASSETS_DIR").ok().filter(|v| !v.is_empty()).map(PathBuf::from),
             exe: env::current_exe().unwrap_or_else(|_| PathBuf::from("blueprint")),
+            hospedagem: None,
         }
+    }
+
+    /// `blueprint serve --hospedar`: o ambiente de `do_ambiente` mais BLUEPRINT_URL_PUBLICA (obrigatória), BLUEPRINT_PROXY e BLUEPRINT_HSTS.
+    /// O MCP sem token por loopback e MCP_REDE não valem aqui: a sessão ou a chave substituem o loopback.
+    pub fn hospedado(novo_link_dono: bool) -> Result<Config, String> {
+        let mut c = Config::do_ambiente();
+        let url = env::var("BLUEPRINT_URL_PUBLICA").unwrap_or_default();
+        if url.is_empty() {
+            return Err(crate::tr!("set BLUEPRINT_URL_PUBLICA (for example https://team.example.com) to host The Blueprint", "defina BLUEPRINT_URL_PUBLICA (por exemplo https://equipe.exemplo.com) para hospedar o The Blueprint"));
+        }
+        let mut h = Hospedagem::de(&url, &c.host, env::var("BLUEPRINT_PROXY").ok().as_deref(), env::var("BLUEPRINT_HSTS").as_deref() == Ok("1"))?;
+        h.novo_link_dono = novo_link_dono;
+        // só importa um data.json pedido com DADOS_ARQ (nunca um que estiver por acaso na pasta atual)
+        let importar = env::var("DADOS_ARQ").ok().filter(|v| !v.is_empty()).map(PathBuf::from);
+        (c.hospedagem, c.rede_mcp, c.importar_de) = (Some(h), false, importar);
+        Ok(c)
     }
 
     /// O app instalado: dados em %APPDATA%\Blueprint\ (banco e protótipos), porta 3000 e, na primeira execução com o banco vazio, uma cópia do

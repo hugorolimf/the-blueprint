@@ -364,7 +364,7 @@ banco novo ignora a tabela nova. Sem plano B silencioso: se o lote falha, a pág
 - **Versão.** Só sobe se alguma operação mudou o banco; um lote todo ignorado (ou sem mudança de fato) responde a versão atual.
 - **`mover` entre blueprints (ou workspaces)** entra no evento da origem e no do destino, para quem acompanha cada lado.
 - **O SSE do MCP não avisa `dados` para `/api/mudancas`**, só para o `PUT` (como antes). A página ignora esse `dados` quando o `/api/eventos` está aberto.
-- **Presença.** Ligada por `BLUEPRINT_HOSPEDAR=1` (`sincronia::presenca_do_ambiente()`); a ACESSO troca pela configuração do modo hospedado.
+- **Presença.** Ligada só no modo hospedado (`config.hospedagem`); o visitante não aparece, não manda e não recebe presença.
   `POST /api/presenca` aceita também `cliente` (a aba) e cada pessoa em `presenca.pessoas[]` leva `cliente`: a página esconde só a própria aba e
   junta as abas do mesmo membro num avatar. A saída de quem fechou a aba aparece no próximo batimento (até 25 s), quando a escrita falha.
   O `editando` vencido (120 s) é cortado ao montar a próxima lista (sem relógio em repouso). Uma thread curta espera o resto dos 500 ms só
@@ -378,9 +378,17 @@ banco novo ignora a tabela nova. Sem plano B silencioso: se o lote falha, a pág
 - **Arquivos a mais:** `src/dados/item.rs` (ler e reescrever uma linha, achar workspace/blueprint, ordenar irmãos), `web/js/sinc-avisos.js`
   (os avisos com Desfazer e Copiar o texto), `scripts/lib-e2e-edge.mjs` (a página no Edge para os e2e) e os testes das rotas em
   `src/http/tests/sincronia_rotas.rs`. Erros de método e tipo nessas rotas: 405 `metodo` e 415 `json`.
-- **Antes da ACESSO:** todas as páginas são o membro `local`, então os avisos saem como "outra janela" e o `duas-pessoas-e2e` usa duas abas do
-  mesmo membro. Pontos de troca ao integrar: `sincronia::{autor, exige_gravar, pode_ler, presenca_do_ambiente}` (src/sincronia/mod.rs),
-  `aoVivoEu()` em `web/js/ao-vivo.js` (o id do membro da sessão) e o `Contexto::local()` do despacho em `src/http/rotas.rs`.
+- **Integração com a ACESSO (feita):** as rotas recebem o Contexto do despacho. Autoria e permissão ficam em `sincronia::{autor, exige_gravar,
+  pode_ler}`: autor = `ctx.usuario` + `ctx.nome`; gravar = `ctx.exige(Gravar, ws, bp)` por operação; criar/apagar workspace e mudar o raiz =
+  `ctx.exige(Administrar, "*")`. Cada assinante guarda o próprio Contexto e cada evento passa por `ctx.pode(Ler, ws, bp)`; o visitante recebe o
+  evento sem `agente.comentarios` (`acesso::filtro::para_visitante`) e, se o lote tem um `mover` entre blueprints, `recarregar`. `GET
+  /api/eventos` aceita `&blueprint=` (quem só lê um blueprint assina só ele; a página manda o blueprint aberto) e `GET /api/historico` é 403 para
+  o visitante. **`sessao-encerrada` é preguiçoso:** sem um gancho em `Acesso::encerrar`, as rotas da sincronia chamam `Sincronia::podar(|c|
+  acesso.sessao_ativa(c))` antes de abrir uma conexão e antes de publicar um lote; quem foi removido recebe `sessao-encerrada` e a conexão
+  fecha nesse momento, e nenhum lote chega a ele depois da remoção (teste `acesso::tests::sincronia`). Na página, `aoVivoEu()` lê
+  `sessao.membro.id` (de `web/js/sessao.js`, frente TELAS) com guarda `typeof sessao !== "undefined"`. O `duas-pessoas-e2e` usa dois membros de
+  verdade (link do dono + convite de colaborador) atrás de um proxy de teste que, além do que o `scripts/proxy-teste.mjs` faz, troca a `Origin`
+  do navegador pela pública (como o domínio real).
 
 ## 7. Divisão de trabalho e arquivos
 
@@ -422,6 +430,27 @@ impl Contexto {
 // toda rota nova: fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta
 // Acesso também expõe: fn sessao_ativa(&self, ctx: &Contexto) -> bool (lida da memória, para o SSE fechar quem foi removido)
 ```
+
+#### Como a ACESSO ficou (desvios e acréscimos, 2026-10-26)
+
+- **Contexto:** além do contrato, `Contexto::membro(id, nome, acessos)`, `Contexto::visitante(convite, ws, bp, abre)`, `Contexto::anonimo()`,
+  `autenticado()`, `papel_em(ws, bp)` e `Papel::texto`/`de_texto`; `Papel` é ordenado (visitante < supervisor < colaborador < dono). O
+  `usuario` do visitante é `visitante:<convite>`, o do anônimo é vazio e o `nome` do local é `local`. `pode_editar`/`exige_editar` ficam
+  (compatíveis); `pode_ler` passa a ser `local || tem acessos`.
+- **Assinatura:** o roteador resolve o contexto uma vez (`acesso::despachar` no hospedado, `Contexto::local()` no local) e chama
+  `rotear(estado, pedido, ctx)`. As rotas do MCP ficam com `rota(mcp, dados, pedido)` (o local, que os testes usam) mais
+  `rota_com(mcp, dados, pedido, ctx)`; `api_dados::rota` e as rotas novas têm a forma `rota(estado, pedido, ctx)`.
+- **Só locais, além da lista da seção 1:** `GET /api/mcp/sessoes`, `GET /api/mcp/pastas` e `POST /api/mcp/pasta/*` também respondem 404
+  `so-local` no hospedado (o vínculo pasta → blueprint é da máquina local e expunha caminhos de todos).
+- **Origin:** no hospedado, todo pedido do navegador que não é `GET`/`HEAD` precisa da `Origin` pública, com ou sem cookie (inclusive
+  `/api/convite/*`, contra login forjado por outro site). A chave de MCP só vale em `/api/mcp/*`; nas outras rotas vale só o cookie.
+- **Visitante e o MCP:** visitante recebe 403 em todo `/api/mcp/*` (fila, agentes, linha do tempo, info e o SSE do MCP).
+- **Limites conhecidos:** o SSE do MCP (`/api/mcp/eventos`, só ids) não fecha por `sessao_ativa`; quem foi removido para de receber ao
+  reconectar. Mudar o papel não fecha fluxos abertos (só remover e revogar fecham). `convites/trocar` dá ao link novo a validade padrão (168 h).
+- **Outros:** `/api/pessoas` lista também o dono de todos (`'*'`), que não pode ser mudado nem removido por essa rota (403); `GET /api/mcp/info`
+  devolve `arquivo: "blueprint"` no hospedado (sem o caminho do servidor); `POST /api/sessao/sair` grava a atividade `saiu`; no hospedado o
+  `DADOS_ARQ` só vale definido de propósito. Para regras de rota dentro de uma transação, `Dados::transacao` e a variante `Erro::Http`.
+  `BLUEPRINT_MCP_CURL=1` (testes) força o curl também em `http://`.
 
 ### Frente SINCRONIA (ações "Gravação por mudança e conflitos", "Presença e mudanças ao vivo")
 

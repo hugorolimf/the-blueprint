@@ -9,7 +9,7 @@ let aoVivoBase = null; // o servidor como esta página o conhece (a BASE das ope
 const aoVivoVisto = new Map(); // workspace -> última versão aplicada dele (o que veio antes disso é eco ou repetição)
 let aoVivoVersaoGet = 0; // a versão do último GET inteiro: o ponto de partida de todo workspace
 let aoVivoMinhas = []; // {versao, ops, em} das gravações desta janela: um lote mais velho que o meu não pisa nos campos que eu gravei depois
-const aoVivoEu = () => (typeof sessaoAtual === "object" && sessaoAtual?.membro?.id) || "local"; // a frente TELAS expõe a sessão; sem ela é o modo local
+const aoVivoEu = () => (typeof sessao !== "undefined" && sessao?.membro?.id) || "local"; // a sessão vem de sessao.js (frente TELAS); sem ela é o modo local
 
 /** Um retrato do arquivo como vai ao servidor (sem o estado só da tela). */
 const instantaneoDe = (a) => JSON.parse(JSON.stringify({ ...a, chats: (a.chats || []).map(({ pensando, ...c }) => c) }));
@@ -31,7 +31,9 @@ function aoVivoConectar(forcar = false) {
   aoVivoES?.close();
   aoVivoWs = ws;
   const desde = aoVivoVisto.get(ws) || aoVivoVersaoGet;
-  const es = new EventSource(`/api/eventos?workspace=${encodeURIComponent(ws)}&desde=${desde}&cliente=${CLIENTE}`);
+  // `blueprint`: quem só lê um blueprint (o visitante do link) assina só ele; quem lê o workspace recebe o workspace todo de qualquer jeito
+  const bp = typeof tela === "string" && tela ? `&blueprint=${encodeURIComponent(tela)}` : "";
+  const es = new EventSource(`/api/eventos?workspace=${encodeURIComponent(ws)}${bp}&desde=${desde}&cliente=${CLIENTE}`);
   aoVivoES = es;
   es.addEventListener("mudancas", (e) => aoVivoLote(JSON.parse(e.data)));
   es.addEventListener("substituido", () => aoVivoRecarregar());

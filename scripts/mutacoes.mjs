@@ -37,6 +37,28 @@ const MUTACOES = [
   M("proposta: nunca propor status concluído", "src/blueprint/validar.rs", 'let status_ok = status == "planejado" || status == "andamento";', "let status_ok = true;"),
   M("gravação do banco é atômica (transação)", "src/dados/mod.rs", "let tx = self.conn.transaction()?;\n        importar::importar(&tx, dados)?;\n        tx.commit()?;", "importar::importar(&self.conn, dados)?;"),
   M("só dono e colaborador editam", "src/contexto/mod.rs", "matches!(self.papel, Papel::Dono | Papel::Colaborador)", "true"),
+  // modo hospedado (docs/colaboracao.md): rode só estas com `node scripts/mutacoes.mjs acesso:`
+  M("acesso: só HTTPS pelo proxy (X-Forwarded-Proto)", "src/acesso/cabecalhos.rs", '!proto.is_some_and(|p| p.eq_ignore_ascii_case("https"))', "false"),
+  M("acesso: só o par confiável (o proxy) diz que é HTTPS", "src/acesso/cabecalhos.rs", "if !par_confiavel(h, &pedido.ip) || !proto", "if !proto"),
+  M("acesso: só o Host público", "src/acesso/cabecalhos.rs", 'if !pedido.cabecalho("host").is_some_and(|host| host.eq_ignore_ascii_case(&h.host_publico)) {', "if false {"),
+  M("acesso: Origin pública em todo POST do navegador", "src/acesso/mod.rs", "&& !cabecalhos::origem_ok(h, pedido)", "&& false"),
+  M("acesso: Referrer-Policy no-referrer", "src/acesso/cabecalhos.rs", '.com("referrer-policy", "no-referrer")', '.com("referrer-policy", "origin")'),
+  M("acesso: rotas só locais não existem no servidor", "src/acesso/mod.rs", "if so_local(caminho) {", "if false {"),
+  M("acesso: sem sessão só a página e o convite (401)", "src/acesso/mod.rs", "if !publica && !ctx.autenticado() {", "if false {"),
+  M("acesso: só o hash do convite no banco", "src/acesso/convites.rs", "convites::criar(conn, &c, &segredo::hash(&valor))?;", "convites::criar(conn, &c, &valor)?;"),
+  M("acesso: convite revogado, vencido ou esgotado não entra", "src/dados/convites.rs", "self.revogado_em.is_none() && self.expira_em.as_str() > agora && self.usos_max.is_none_or(|m| self.usos < m)", "true"),
+  M("acesso: limite de tentativas por IP", "src/acesso/limite.rs", "if let Some(f) = ip_fila.filter(|f| f.len() >= POR_IP) {", "if let Some(f) = ip_fila.filter(|_| false) {"),
+  M("acesso: cookie HttpOnly", "src/acesso/sessoes.rs", '"{COOKIE}={valor}; HttpOnly; SameSite=Lax;', '"{COOKIE}={valor}; SameSite=Lax;'),
+  M("acesso: supervisor e visitante não gravam", "src/contexto/mod.rs", "Acao::Gravar => matches!(papel, Papel::Dono | Papel::Colaborador),", "Acao::Gravar => true,"),
+  M("acesso: só o dono administra", "src/contexto/mod.rs", "Acao::Administrar => papel == Papel::Dono,", "Acao::Administrar => true,"),
+  M("acesso: o acesso de um blueprint não alcança outro", "src/contexto/mod.rs", "(self.blueprint_id.is_empty() || Some(self.blueprint_id.as_str()) == blueprint)", "true"),
+  M("acesso: GET /api/dados filtrado pelo papel", "src/http/api_dados.rs", '"GET" if !crate::acesso::filtro::le_tudo(ctx) => {', '"GET" if false => {'),
+  M("acesso: PUT inteiro só do dono de todos (use-mudancas)", "src/http/api_dados.rs", '"PUT" if !crate::acesso::filtro::le_tudo(ctx) =>', '"PUT" if false =>'),
+  M("acesso: o MCP confere o papel no modo hospedado", "src/mcp/rotas.rs", "} else if let Err(e) = exige_hospedado(dados, pedido, recurso, ctx) {", "} else if let Err(e) = Ok::<(), ErroHttp>(()) {"),
+  M("acesso: a fila do MCP só mostra o que o papel lê", "src/mcp/rotas.rs", "mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i))", "mcp.itens().into_iter().filter(|_| true)"),
+  M("acesso: visitante não lê os comentários do agente", "src/acesso/filtro.rs", 'agente.remove("comentarios");', 'agente.get("comentarios");'),
+  M("acesso: nunca rebaixar o último dono", "src/acesso/rotas_pessoas.rs", "if papel != Papel::Dono && era_dono(t, membro, ws)? && membros::donos_do_workspace(t, ws, membro)? == 0 {", "if false {"),
+  M("acesso: protótipo só para quem lê o blueprint", "src/http/rotas.rs", 'if !ctx.local && caminho.starts_with("/prototipos/") && !prototipo_visivel(estado, caminho, ctx) {', "if false {"),
 ];
 
 const filtro = process.argv[2] || "";

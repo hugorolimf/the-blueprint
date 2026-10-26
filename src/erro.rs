@@ -12,6 +12,8 @@ pub enum Erro {
     NaoEncontrado(String),
     /// o contexto do usuário não pode fazer isso (403)
     Proibido(String),
+    /// erro de rota já com status e código próprios, levantado dentro de uma transação (`Dados::transacao`)
+    Http(Box<crate::http::pedido::ErroHttp>),
 }
 
 pub type Resultado<T> = Result<T, Erro>;
@@ -23,6 +25,7 @@ impl fmt::Display for Erro {
             Erro::Json(e) => write!(f, "JSON inválido: {e}"),
             Erro::Io(e) => write!(f, "arquivo: {e}"),
             Erro::Formato(m) | Erro::NaoEncontrado(m) | Erro::Proibido(m) => f.write_str(m),
+            Erro::Http(e) => f.write_str(&e.mensagem),
         }
     }
 }

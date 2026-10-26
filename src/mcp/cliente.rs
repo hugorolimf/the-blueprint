@@ -1,5 +1,6 @@
-//! Cliente HTTP mínimo para o modo `--mcp` falar com o servidor local (http://127.0.0.1:3000 ou BLUEPRINT_URL), sem biblioteca de rede.
-//! Só http: o servidor do The Blueprint é local; para outro endereço use um proxy ou um túnel.
+//! Cliente HTTP mínimo para o modo `--mcp` falar com o servidor (http://127.0.0.1:3000 ou BLUEPRINT_URL), sem biblioteca de rede.
+//! `http://` vai direto pelo socket; `https://` (servidor hospedado) vai pelo curl do sistema (`cliente_curl`). Com BLUEPRINT_CHAVE, todo
+//! pedido leva `Authorization: Bearer` (a chave de MCP do membro).
 use std::io::{Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
@@ -15,7 +16,7 @@ pub fn codificar(s: &str) -> String {
 }
 
 fn dividir(url: &str) -> Result<(String, String), String> {
-    let resto = url.strip_prefix("http://").ok_or_else(|| crate::tr!("BLUEPRINT_URL must start with http:// (got \"{url}\"); The Blueprint server is local and does not use https.", "BLUEPRINT_URL precisa começar com http:// (recebido \"{url}\"); o servidor do The Blueprint é local e não usa https."))?;
+    let resto = url.strip_prefix("http://").ok_or_else(|| crate::tr!("BLUEPRINT_URL must start with http:// or https:// (got \"{url}\").", "BLUEPRINT_URL precisa começar com http:// ou https:// (recebido \"{url}\")."))?;
     let host = resto.trim_end_matches('/').split('/').next().unwrap_or("");
     let com_porta = if host.rsplit_once(':').is_some_and(|(_, p)| p.bytes().all(|c| c.is_ascii_digit()) && !p.is_empty()) { host.to_string() } else { format!("{host}:80") };
     Ok((host.to_string(), com_porta))
@@ -42,12 +43,20 @@ pub fn requisitar(base: &str, metodo: &str, rota: &str, corpo: Option<&str>) -> 
 /// Qualquer caminho do servidor local.
 pub fn requisitar_em(base: &str, metodo: &str, caminho: &str, corpo: Option<&str>) -> Result<(u16, String), String> {
     let sem_resposta = || crate::tr!("Could not reach The Blueprint at {base}. Is it running (blueprint serve)? If it uses another port, set BLUEPRINT_URL.", "Não consegui falar com o The Blueprint em {base}. Ele está rodando (blueprint serve)? Se usa outra porta, defina BLUEPRINT_URL.");
+    let chave = std::env::var("BLUEPRINT_CHAVE").ok().filter(|c| !c.trim().is_empty());
+    // BLUEPRINT_MCP_CURL=1 força o curl também em http:// (é como os testes cobrem o caminho do https sem certificado)
+    if base.starts_with("https://") || std::env::var("BLUEPRINT_MCP_CURL").as_deref() == Ok("1") {
+        return super::cliente_curl::requisitar(&format!("{base}{caminho}"), metodo, corpo, chave.as_deref().map(str::trim), sem_resposta);
+    }
     let (host, com_porta) = dividir(base)?;
     let endereco = com_porta.to_socket_addrs().ok().and_then(|mut a| a.next()).ok_or_else(sem_resposta)?;
     let mut conexao = TcpStream::connect_timeout(&endereco, PRAZO).map_err(|_| sem_resposta())?;
     let _ = (conexao.set_read_timeout(Some(PRAZO)), conexao.set_write_timeout(Some(PRAZO)));
     let dados = corpo.unwrap_or("");
-    let envio = if corpo.is_some() { format!("Content-Type: application/json\r\nContent-Length: {}\r\n", dados.len()) } else { String::new() };
+    let mut envio = if corpo.is_some() { format!("Content-Type: application/json\r\nContent-Length: {}\r\n", dados.len()) } else { String::new() };
+    if let Some(c) = chave.as_deref().map(str::trim).filter(|c| !c.contains(['\r', '\n'])) {
+        envio.push_str(&format!("Authorization: Bearer {c}\r\n"));
+    }
     // o idioma desta thread: inglês no `--mcp` (texto para o agente), o do usuário no `blueprint hook` (texto para a pessoa)
     let idioma = crate::idioma::atual().codigo();
     let pedido = format!("{metodo} {caminho} HTTP/1.1\r\nHost: {host}\r\n{envio}Accept: application/json\r\nAccept-Language: {idioma}\r\nConnection: close\r\n\r\n{dados}");

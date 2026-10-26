@@ -7,8 +7,9 @@ import { dormir, portaLivre } from "./lib-e2e-rust.mjs";
 
 const edgeExe = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe"].find(existsSync);
 
-/** Abre `pasta.url + caminho` num perfil próprio; devolve `js(expr)` (avalia na página), `cdp` e os erros do console. O processo vai para `filhos`. */
-export async function janela(pasta, nome, caminho, filhos) {
+/** Abre `pasta.url + caminho` num perfil próprio; devolve `js(expr)` (avalia na página), `cdp` e os erros do console. O processo vai para `filhos`.
+ *  `cookie`: o valor de `bp_sessao` (modo hospedado), posto antes de recarregar a página. */
+export async function janela(pasta, nome, caminho, filhos, { cookie } = {}) {
   assert(edgeExe, "o teste precisa do Microsoft Edge");
   const porta = await portaLivre();
   const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${porta}`, `--user-data-dir=${join(pasta.dir, "perfil-" + nome)}`, "--window-size=1200,800", pasta.url + caminho], { stdio: "ignore" });
@@ -22,6 +23,10 @@ export async function janela(pasta, nome, caminho, filhos) {
   ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.method === "Runtime.exceptionThrown") erros.push(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text); pend.get(d.id)?.(d); pend.delete(d.id); };
   const cdp = (method, params = {}) => new Promise((r) => { const id = ++n; pend.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
   await cdp("Runtime.enable");
+  if (cookie) { // modo hospedado: a sessão de quem entrou pelo convite (sem Secure: o proxy de teste é http) e a página de novo, já com ela
+    await cdp("Network.setCookie", { name: "bp_sessao", value: cookie, url: pasta.url, httpOnly: true, sameSite: "Lax" });
+    await cdp("Page.reload");
+  }
   const js = async (expr) => { const r = await cdp("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result.exceptionDetails) throw new Error(`${nome}: ${JSON.stringify(r.result.exceptionDetails).slice(0, 300)}`); return r.result.result.value; };
   return { js, cdp, erros };
 }
