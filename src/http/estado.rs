@@ -30,6 +30,8 @@ pub struct Estado {
     /// uma versão velha é recusada (409), em vez de apagar o que outra janela gravou
     pub versao_dados: AtomicU64,
     pub mcp: Mcp,
+    /// as sessões do terminal do app (pseudoconsoles com o claude), só na memória: ver src/terminal
+    pub terminais: crate::terminal::Terminais,
     pub assets: Assets,
 }
 

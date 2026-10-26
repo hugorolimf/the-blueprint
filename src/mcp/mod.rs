@@ -7,7 +7,7 @@ pub(crate) mod cliente;
 mod eventos;
 mod fila;
 mod hooks;
-mod iniciar;
+pub(crate) mod iniciar;
 mod lembrete;
 mod registro;
 pub mod pendentes;

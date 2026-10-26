@@ -29,7 +29,7 @@ fn recusa(status: u16, erro: &str, codigo: &str) -> (u16, Value) {
 }
 
 /// `lancar` abre o terminal na pasta (1º argumento) rodando o exe (2º) com `claude` e o prompt (3º) e devolve qual abriu ("wt" ou "cmd"); os testes passam um falso.
-pub(super) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path, &Path, &str) -> Result<&'static str, String>) -> Result<(u16, Value), ErroHttp> {
+pub(crate) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path, &Path, &str) -> Result<&'static str, String>) -> Result<(u16, Value), ErroHttp> {
     let (ws, bp, acao_id) = (texto(corpo, "workspaceId"), texto(corpo, "blueprintId"), texto(corpo, "acaoId"));
     if ![ws, bp, acao_id].iter().all(|i| id_valido(i)) {
         return Err(falha(400, "Informe workspaceId, blueprintId e acaoId."));
