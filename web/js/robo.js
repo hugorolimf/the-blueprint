@@ -15,6 +15,7 @@ const roboClasse = (a) => (a.tipo === "bloqueio" || a.tipo === "nao-concluida" |
 const ROBO_ROTULO = { progresso: "trabalhando", concluir: "concluiu", "nao-concluida": "não concluiu", "checkpoint-feito": "atingiu um checkpoint", "checkpoint-nao-feito": "não atingiu um checkpoint", bloqueio: "travou", proposta: "enviou uma proposta", prototipo: "anexou um protótipo" };
 function montaRobo() {
   claudeCamadaAtualiza(); // as figuras da folha seguem o estado: toda vez que a folha é desenhada
+  if (typeof focoDepoisDoRender === "function") focoDepoisDoRender(); // o modo foco segue o agente depois de cada render (foco.js)
   const a = agenteAqui(), el = $("robo-agente");
   el.hidden = !a || !!a.visto; // depois de clicar e ir até ele, o aviso some; o robô fica na folha até chegar notícia nova
   if (el.hidden) return;
@@ -35,7 +36,8 @@ function abreNotaRobo(el) {
   const visto = () => { fechaNota(); if (ag) agenteMarcaVisto(ag); else { a.visto = true; render(); } };
   const parado = ["aguardando", "ocioso"].includes(ag?.estado); // aguardando ou em repouso: o mesmo botão o dispensa até ele avisar de novo
   const dispensavel = concluiu || parado || (!ag && a === agenteAgora && a.tipo === "concluir");
-  abreNota({ rotulo: concluiu ? "Agente concluiu" : "Agente trabalhando", titulo: nome || "Agente", texto: linhas.join("\n"), acoes: dispensavel ? [{ rotulo: "Concluído", fn: visto }] : [] }, el);
+  const acompanhar = ag ? [{ rotulo: tr("Acompanhar este agente"), fn: () => { fechaNota(true); focoAbre(ag.agente); } }] : []; // a visão de acompanhamento, no cartão dele (foco.js)
+  abreNota({ rotulo: concluiu ? "Agente concluiu" : "Agente trabalhando", titulo: nome || "Agente", texto: linhas.join("\n"), acoes: [...(dispensavel ? [{ rotulo: "Concluído", fn: visto }] : []), ...acompanhar] }, el);
 }
 $("robo-agente").onclick = () => {
   const a = agenteAqui(), pid = a && D.blueprints.some((x) => x.id === a.blueprintId) ? a.blueprintId : "";

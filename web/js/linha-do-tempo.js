@@ -71,6 +71,7 @@ function ldtNaFolha(p, f) {
 
 // o servidor avisou (SSE) que a linha do tempo de uma ação mudou: só busca se a folha dela estiver aberta
 function ldtAviso(d) {
+  if (typeof focoLinhaDoTempo === "function") focoLinhaDoTempo(d); // a faixa do plano acompanhado (foco-faixa.js)
   const chave = `${d?.workspaceId}|${d?.blueprintId}|${d?.acaoId}`;
   if (!ldtSecao(chave)) return;
   const p = D.blueprints.find((x) => x.id === d.blueprintId), f = p?.acoes.find((x) => x.id === d.acaoId);

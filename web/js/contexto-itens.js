@@ -28,6 +28,7 @@ function itensDoContexto(alvo) {
   const nota = alvo?.closest(".nota[data-obs]");
   const marca = alvo?.closest(".marca");
   const link = alvo?.closest("a.lk[href]");
+  const figura = alvo?.closest("#claude-camada [data-robo-nome]"); // a figura do Claude: o plano em que ele trabalha (claude-camada.js põe os ids)
   const criandoWorkspace = location.hash === "#/workspace/novo";
   const idBlueprint = linhaBlueprint?.dataset.goto || acao?.dataset.p || plano?.dataset.p || nota?.dataset.obs.split("|")[0] || tela;
 
@@ -56,7 +57,10 @@ function itensDoContexto(alvo) {
     const feito = plano.getAttribute("aria-checked") === "true";
     add("estado", feito ? "circulo" : "check", feito ? "Marcar como pendente" : "Marcar como feito", () => alternarItem(plano.dataset.p, plano.dataset.f, plano.dataset.tipo, plano.dataset.id));
     if (plano.dataset.tipo === "t") add("estado", "doc", tr("Enviar comentário ao agente…"), () => enviarComentarioAoAgente(plano.dataset.p, plano.dataset.f, plano.dataset.id)); // comentario-agente.js
+    const noPlano = plano.dataset.tipo === "t" && agentesAtivos().find((a) => a.planoId === plano.dataset.id); // o agente que trabalha neste plano, se houver
+    if (noPlano) add("abrir", "alvo", tr("Acompanhar este agente"), () => focoAbre(noPlano.agente)); // foco.js
   }
+  if (figura && !figura.dataset.espera) add("abrir", "alvo", tr("Acompanhar este agente"), () => focoAbre(figura.dataset.roboNome));
   if (nota) add("abrir", "doc", nota.dataset.obs.split("|")[1] ? "Abrir instruções" : "Abrir observações", () => abreNotaObs(nota));
   if (marca) add("abrir", "losango", "Ver marca", () => abreNotaMarca(marca));
   if (link) add("abrir", "externo", tr("Abrir link em nova aba"), () => link.click());

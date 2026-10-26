@@ -1,0 +1,61 @@
+/* modo foco (web/js/foco*.js): a visão de acompanhamento dos agentes, uma tela sobre a folha no mesmo papel de plotagem das telas Editar e Planejar. Sem animação em repouso. */
+#b-foco[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+#foco-vista{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;overflow:auto;overscroll-behavior:contain;color:var(--ink);font:12px/1.5 var(--mono);scrollbar-width:thin;scrollbar-color:var(--lo) transparent;
+  background:
+    linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/60px 60px,
+    linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,
+    linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
+    linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
+    radial-gradient(ellipse at 50% 30%,#1250a0 0,#0c3a78 62%,#082b5e 100%)}
+#foco-vista .ed-topo{position:sticky;top:0;z-index:2}
+#foco-vista .foco-conta{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);white-space:nowrap}
+#foco-vista .foco-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px;padding:24px;align-items:start}
+#foco-vista .foco-detalhe{padding:24px;width:min(100%,920px);margin:0 auto;box-sizing:border-box}
+#foco-vista .foco-vazio{margin:auto;padding:48px 24px;max-width:520px;text-align:center}
+#foco-vista .foco-vazio p{margin:0 0 10px;font-size:14px}
+#foco-vista .foco-vazio .dica{font-size:11px;color:var(--mid)}
+
+/* o cartão de um agente: a figura do Claude na pose do estado e, ao lado, quem é, onde trabalha e o que disse */
+.foco-cartao{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px;border:1px solid var(--mid);background:#082b5ecc;min-width:0;cursor:pointer}
+.foco-cartao:hover{border-color:var(--ink)}
+.foco-cartao.principal{border-color:var(--ink)}
+.foco-cartao.em-foco{box-shadow:0 0 0 1px var(--ink),0 6px 24px #02132e99}
+.foco-cartao.est-bloqueado{border-color:var(--erro)}
+.foco-cartao.est-ocioso,.foco-cartao.est-concluido{background:#082b5e99}
+.foco-cartao.grande{cursor:default;grid-template-columns:auto 1fr;gap:22px;padding:22px;border-color:var(--ink)}
+.foco-cartao.grande:hover{border-color:var(--ink)}
+.foco-fig{display:block;width:84px;flex:none}
+.foco-cartao.grande .foco-fig{width:132px}
+.foco-fig svg{display:block;width:100%;height:auto}
+.foco-fig.vazia{height:65px}
+.foco-info{min-width:0;display:flex;flex-direction:column;gap:3px}
+.foco-info header{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-bottom:4px}
+.foco-abrir{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;min-width:0}
+.foco-abrir:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+.foco-nome{font-size:14px;letter-spacing:.04em;overflow-wrap:anywhere}
+.foco-chip{font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:1px 7px;border:1px solid var(--lo);color:var(--mid);white-space:nowrap}
+.foco-chip.est{color:var(--ink);border-color:var(--mid)}
+.foco-cartao.est-bloqueado .foco-chip.est{color:var(--erro);border-color:var(--erro)}
+.foco-info p{margin:0;overflow-wrap:anywhere}
+.foco-onde{color:var(--mid)}
+.foco-plano{font-weight:700}
+.foco-plano span,.foco-linha span{color:var(--mid);text-transform:uppercase;font-size:10px;letter-spacing:.1em;margin-right:6px;font-weight:400}
+.foco-acoes{display:flex;gap:8px;margin-top:8px}
+
+/* os eventos da linha do tempo: o mesmo desenho da folha da ação (linha-do-tempo.css), aqui dentro do cartão */
+.foco-cartao .ldt{margin:8px 0 0}
+.foco-cartao .ldt h5{margin:0 0 4px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);font-weight:400}
+.foco-cartao .ldt ol{list-style:none;margin:0;padding:0 4px 0 0;max-height:168px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.foco-cartao.grande .ldt ol{max-height:340px}
+.foco-cartao .ldt li{position:relative;display:grid;grid-template-columns:auto 1fr;gap:10px;padding:2px 0 2px 16px;font-size:11px}
+.foco-cartao .ldt li::before{content:"";position:absolute;left:3px;top:0;bottom:0;border-left:1px dashed var(--lo)}
+.foco-cartao .ldt li::after{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;box-sizing:border-box;background:var(--paper);border:1px solid var(--mid)}
+.foco-cartao .ldt li.ldt-concluir::after,.foco-cartao .ldt li.ldt-checkpoint-feito::after{background:var(--ink);border-color:var(--ink)}
+.foco-cartao .ldt li.ldt-bloqueio::after,.foco-cartao .ldt li.ldt-nao-concluida::after{background:var(--erro);border-color:var(--erro)}
+.foco-cartao .ldt li.ldt-bloqueio div{color:var(--erro)}
+.foco-cartao .ldt time{color:var(--mid);white-space:nowrap;font-variant-numeric:tabular-nums}
+.foco-cartao .ldt div{min-width:0;overflow-wrap:anywhere}
+.foco-cartao .ldt .ldt-ag{color:var(--mid)}
+.foco-cartao .ldt .ldt-alvo{display:none} /* todos os eventos são do plano do cartão */
+.foco-cartao .ldt-vazio{margin:0;color:var(--mid);font-size:11px}
+@media (max-width:560px){#foco-vista .foco-grade,#foco-vista .foco-detalhe{padding:12px}.foco-cartao,.foco-cartao.grande{grid-template-columns:1fr}.foco-fig,.foco-cartao.grande .foco-fig{width:72px}}
