@@ -42,8 +42,12 @@ pub fn requisitar(base: &str, metodo: &str, rota: &str, corpo: Option<&str>) -> 
 
 /// Qualquer caminho do servidor local.
 pub fn requisitar_em(base: &str, metodo: &str, caminho: &str, corpo: Option<&str>) -> Result<(u16, String), String> {
+    let equipe = super::equipe::conexao();
+    if super::equipe::ligado() && equipe.is_none() {
+        return Err(crate::tr!("Not connected to a shared workspace: run blueprint conectar <address> <key> (the command is in the My key screen).", "Sem conexão com um workspace compartilhado: rode blueprint conectar <endereço> <chave> (o comando está na tela Minha chave)."));
+    }
     let sem_resposta = || crate::tr!("Could not reach The Blueprint at {base}. Is it running (blueprint serve)? If it uses another port, set BLUEPRINT_URL.", "Não consegui falar com o The Blueprint em {base}. Ele está rodando (blueprint serve)? Se usa outra porta, defina BLUEPRINT_URL.");
-    let chave = std::env::var("BLUEPRINT_CHAVE").ok().filter(|c| !c.trim().is_empty());
+    let chave = equipe.map(|c| c.chave).or_else(|| std::env::var("BLUEPRINT_CHAVE").ok()).filter(|c| !c.trim().is_empty());
     // BLUEPRINT_MCP_CURL=1 força o curl também em http:// (é como os testes cobrem o caminho do https sem certificado)
     if base.starts_with("https://") || std::env::var("BLUEPRINT_MCP_CURL").as_deref() == Ok("1") {
         return super::cliente_curl::requisitar(&format!("{base}{caminho}"), metodo, corpo, chave.as_deref().map(str::trim), sem_resposta);

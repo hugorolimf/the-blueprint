@@ -6,7 +6,7 @@
 // os comandos do contrato (seção 4); o servidor manda os dele em "comandos" e eles têm preferência
 export function comandosDaChave(url, chave) {
   const env = `--env BLUEPRINT_URL=${url} --env BLUEPRINT_CHAVE=${chave}`;
-  return { claude: `claude mcp add blueprint-equipe ${env} -- blueprint --mcp`, codex: `codex mcp add blueprint-equipe ${env} -- blueprint --mcp` };
+  return { conectar: `blueprint conectar ${url} ${chave}`, claude: `claude mcp add blueprint-equipe ${env} -- blueprint --mcp`, codex: `codex mcp add blueprint-equipe ${env} -- blueprint --mcp` };
 }
 const dataCurta = (iso) => { const d = new Date(iso || ""); return Number.isFinite(d.getTime()) ? d.toLocaleString(I18N.ativo, { dateStyle: "short", timeStyle: "short" }) : tr("nunca"); };
 
@@ -36,11 +36,13 @@ async function gerar() {
   if (!$("eq-chave-revogar").hidden && !(await confirmar({ titulo: tr("Trocar a chave?"), texto: tr("A chave atual deixa de valer na hora; o agente que a usa precisa da nova."), rotulo: tr("Trocar chave") }))) return;
   try {
     const j = await equipeApi("/api/chave", {});
-    const c = j.comandos?.claude && j.comandos?.codex ? j.comandos : comandosDaChave(location.origin, j.chave);
+    const c = j.comandos?.conectar && j.comandos?.claude && j.comandos?.codex ? j.comandos : comandosDaChave(location.origin, j.chave);
     const n = $("eq-chave-nova");
     n.hidden = false;
     n.innerHTML = `<small>${tr("A chave só aparece agora. Copie o comando do seu agente e rode no terminal.")}</small>
       <b>${tr("Chave")}</b><code>${esc(j.chave)}</code><button class="btn mini" type="button" data-copiar="${esc(j.chave)}">${tr("Copiar")}</button>
+      <b>${tr("Um comando")}</b><code>${esc(c.conectar)}</code><button class="btn mini" type="button" data-copiar="${esc(c.conectar)}">${tr("Copiar")}</button>
+      <small>${tr("Liga o seu Claude Code (com o progresso automático na folha) e o Codex. Precisa do The Blueprint instalado neste computador. Se o endereço mudar, rode o comando de novo com o endereço novo.")}</small>
       <b>Claude Code</b><code>${esc(c.claude)}</code><button class="btn mini" type="button" data-copiar="${esc(c.claude)}">${tr("Copiar")}</button>
       <b>Codex</b><code>${esc(c.codex)}</code><button class="btn mini" type="button" data-copiar="${esc(c.codex)}">${tr("Copiar")}</button>`;
     n.querySelectorAll("[data-copiar]").forEach((b) => b.addEventListener("click", async () => {

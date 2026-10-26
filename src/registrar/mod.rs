@@ -2,6 +2,9 @@
 //! O instalador chama isto ao instalar e ao desinstalar, então ninguém precisa digitar `claude mcp add …` nem `codex mcp add …`.
 //! Usa as próprias CLIs (elas sabem onde e como guardam a configuração) e só mexe no servidor chamado `blueprint`; o que não achar no PATH
 //! é dito com o comando a rodar à mão. shortcut: no PATH só procura .exe, .cmd e .bat (o `codex` do npm é .cmd); sem PATHEXT inteiro.
+pub mod conectar;
+#[cfg(test)]
+mod conectar_tests;
 pub(crate) mod plugin;
 pub mod statusline;
 #[cfg(test)]

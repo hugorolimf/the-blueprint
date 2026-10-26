@@ -1,5 +1,6 @@
 //! Testes do compartilhamento: as rotas pelas duas portas (sem socket), a API, o túnel falso (um script que imprime a URL) e o hash.
 mod api;
+mod hooks;
 mod portas;
 mod tunel;
 

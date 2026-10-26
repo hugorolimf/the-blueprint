@@ -29,6 +29,10 @@ fn vinculo(w: &str) -> String {
 type R = Result<String, String>;
 
 pub(crate) fn base() -> String {
+    if super::equipe::ligado() {
+        // o plugin do convidado: o endereço do `blueprint conectar` (vazio = não conectado; o cliente explica)
+        return super::equipe::conexao().map(|c| c.url).unwrap_or_default();
+    }
     std::env::var("BLUEPRINT_URL").ok().filter(|u| !u.is_empty()).unwrap_or_else(|| "http://127.0.0.1:3000".into()).trim_end_matches('/').to_string()
 }
 
@@ -38,7 +42,8 @@ fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, St
     let (status, texto) = match (enviado, corpo) {
         (Ok(resposta), _) => resposta,
         // app fechado: o registro fica em arquivo e entra no app quando ele abrir (pendentes.rs); só as rotas que não precisam dos dados ao vivo
-        (Err(_), Some(corpo)) if metodo == "POST" && super::pendentes::ROTAS.contains(&rota) => return guardar_offline(rota, corpo),
+        // servidor remoto fora do ar: não guarda (o app desta máquina reenviaria como dono, nos dados dele)
+        (Err(_), Some(corpo)) if metodo == "POST" && super::pendentes::ROTAS.contains(&rota) && !super::equipe::remoto() => return guardar_offline(rota, corpo),
         (Err(e), _) => return Err(e),
     };
     let dados: Value = serde_json::from_str(&texto).unwrap_or_else(|_| json!({}));

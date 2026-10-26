@@ -105,6 +105,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
         return Ok(Resposta::texto(415, "text/plain", crate::tr!("send application/json", "envie application/json")));
     }
     let corpo: Value = if pedido.corpo.is_empty() { json!({}) } else { serde_json::from_slice(&pedido.corpo).map_err(|e| falha(400, crate::tr!("invalid JSON: {e}", "JSON inválido: {e}")).codigo("json-invalido"))? };
+    let corpo = super::membro::do_membro(corpo, recurso, ctx); // de um membro: o agente com o nome dele, a sessão separada (membro.rs)
     if recurso.starts_with("hook/") {
         mcp.sinal_sessao(hooks::texto(&corpo, "session_id")); // qualquer hook da sessão prova que ela está viva (expiração em sessoes.rs)
     }
@@ -132,10 +133,11 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
         "aviso" => Resposta::json(200, &com_dados(dados, ctx, |d| super::eventos::aviso(mcp, d, &corpo))?),
         "prototipo" => Resposta::json(200, &com_dados(dados, ctx, |d| acoes::prototipo(mcp, d, &corpo))?),
         // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
-        "hook/sessao" => Resposta::json(200, &hooks::sessao(mcp, dados, &corpo)?),
-        "hook/fim" => Resposta::json(200, &super::sessoes::fim(mcp, &corpo)), // o SessionEnd tira a sessão da lista
-        "hook/edicao" => Resposta::json(200, &hooks::edicao(mcp, dados, &corpo)?),
-        "hook/subagente" => Resposta::json(200, &hooks::subagente(mcp, dados, &corpo)?),
+        "hook/sessao" => Resposta::json(200, &hooks::sessao_de(mcp, dados, &corpo, ctx)?),
+        // o SessionEnd tira a sessão da lista (de membro nunca entra nela: Iniciar é só local)
+        "hook/fim" => Resposta::json(200, &if ctx.local { super::sessoes::fim(mcp, &corpo) } else { json!({}) }),
+        "hook/edicao" => Resposta::json(200, &hooks::edicao_de(mcp, dados, &corpo, ctx)?),
+        "hook/subagente" => Resposta::json(200, &hooks::subagente_de(mcp, dados, &corpo, ctx)?),
         "hook/status" => Resposta::json(200, &super::status::status(mcp, dados, &corpo)?),
         "pasta/desvincular" => Resposta::json(200, &hooks::desvincular(dados, &corpo)?),
         "pasta/vincular" => Resposta::json(200, &hooks::vincular(dados, &corpo)?),

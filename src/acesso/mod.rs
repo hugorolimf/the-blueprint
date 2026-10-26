@@ -72,17 +72,23 @@ pub fn so_local(caminho: &str) -> bool {
         || mcp.starts_with("pasta/")
 }
 
+/// Os hooks do Claude Code que o Claude de um membro manda pelo `blueprint hook <evento> --equipe` (progresso, subagentes, lembrete do Stop).
+/// Só existem com a chave do membro (`Authorization`); sem ela continuam só locais. O status e as sessões nunca saem do app local.
+pub fn hook_de_membro(caminho: &str) -> bool {
+    matches!(caminho.strip_prefix("/api/mcp/").unwrap_or(""), "hook/sessao" | "hook/edicao" | "hook/subagente" | "hook/parada" | "hook/fim")
+}
+
 /// O despacho do modo hospedado: confere HTTPS e Host, resolve o Contexto, confere a Origin e entrega a `proximo` (o roteador de sempre);
 /// toda resposta sai com os cabeçalhos de segurança.
 pub fn despachar(estado: &Estado, pedido: &Pedido, h: &Hospedagem, proximo: impl Fn(&Contexto) -> Resposta) -> Resposta {
     let caminho = pedido.caminho.as_str();
     let resposta = (|| {
         cabecalhos::conferir(h, pedido)?;
-        if so_local(caminho) {
+        let autorizacao = pedido.cabecalho("authorization").filter(|_| caminho.starts_with("/api/mcp/"));
+        if so_local(caminho) && !(hook_de_membro(caminho) && autorizacao.is_some()) {
             return Err(falha(404, crate::tr!("this route only exists in the local app", "esta rota só existe no app local")).codigo("so-local"));
         }
         let agora = crate::tempo::agora_ms();
-        let autorizacao = pedido.cabecalho("authorization").filter(|_| caminho.starts_with("/api/mcp/"));
         let ctx = match autorizacao {
             Some(valor) => {
                 let ctx = match chaves::do_cabecalho(valor) {

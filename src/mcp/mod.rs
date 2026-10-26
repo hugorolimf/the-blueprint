@@ -8,12 +8,14 @@ mod cliente_curl;
 #[cfg(test)]
 mod cliente_curl_tests;
 mod conversa;
+pub(crate) mod equipe;
 mod eventos;
 pub(crate) mod fila;
 mod hooks;
 pub(crate) mod iniciar;
 mod lembrete;
 mod linha_do_tempo;
+mod membro;
 mod registro;
 pub mod pendentes;
 pub(crate) mod permissao;

@@ -1,6 +1,7 @@
 //! `blueprint hook <evento>`: os comandos que o Claude Code chama (hooks de comando, status line e o comando /blueprint:status).
 //! Todos perguntam ao app aberto e nunca atrapalham a sessão: sem o app, ou com qualquer erro, não imprimem nada e saem com 0.
-//! (As edições não passam por aqui: o hook `http` do plugin fala direto com o app.)
+//! (No plugin local as edições não passam por aqui: o hook `http` fala direto com o app. No do convidado, `--equipe`, passam: edicao,
+//! subagente, parada e fim vão ao endereço do `blueprint conectar` com a chave.)
 //!   sessao           SessionStart: injeta o blueprint e a ação atual no contexto do agente
 //!   statusline       a linha curta da status line (lê o JSON da sessão na entrada padrão)
 //!   status           o estado completo, em texto, da pasta atual (usado por /blueprint:status)
@@ -70,10 +71,31 @@ fn entrada_padrao() -> String {
     serde_json::from_str::<Value>(&entrada).ok().filter(Value::is_object).map_or_else(|| "{}".to_string(), |v| v.to_string())
 }
 
+/// O corpo que vai ao app. No plugin do convidado (`--equipe`) o app é remoto e não conhece as pastas desta máquina: o corpo leva o
+/// blueprint da linha `Blueprint:` do CLAUDE.md/AGENTS.md da pasta, e pasta sem a linha não manda nada (None).
+fn corpo_do_hook(entrada: String, equipe: bool) -> Option<String> {
+    if !equipe {
+        return Some(entrada);
+    }
+    let mut v: Value = serde_json::from_str(&entrada).ok()?;
+    let (ws, bp) = crate::cli::claude::blueprint_da_pasta(std::path::Path::new(v.get("cwd")?.as_str()?))?;
+    (v["workspaceId"], v["blueprintId"]) = (json!(ws), json!(bp));
+    Some(v.to_string())
+}
+
+/// Os hooks que só repassam o evento (no plugin local eles são hooks `http` direto no app; no do convidado o endereço muda, então passam
+/// por aqui). Só o Stop devolve algo ao Claude: o lembrete de registrar o trabalho feito fora do plano.
+fn repassar(base: &str, evento: &str, corpo: &str) -> Option<Value> {
+    let resposta = perguntar(base, &format!("hook/{evento}"), corpo)?;
+    (evento == "parada" && resposta.get("hookSpecificOutput").is_some()).then_some(resposta)
+}
+
 /// Devolve o código de saída (sempre 0).
 pub fn executar(evento: &str) -> i32 {
+    let equipe = crate::mcp::equipe::ligado();
     let saida = match evento {
-        "sessao" => sessao(&base(), &entrada_padrao()).map(|v| v.to_string()),
+        "sessao" => corpo_do_hook(entrada_padrao(), equipe).and_then(|c| sessao(&base(), &c)).map(|v| v.to_string()),
+        "edicao" | "subagente" | "parada" | "fim" => corpo_do_hook(entrada_padrao(), equipe).and_then(|c| repassar(&base(), evento, &c)).map(|v| v.to_string()),
         "notificacao" => notificacao(&entrada_padrao()).map(|v| v.to_string()),
         "statusline" => statusline(&base(), &entrada_padrao()),
         "status" => Some(status(&base(), &std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_default())),
@@ -146,6 +168,53 @@ mod tests {
         assert_eq!(pasta_da_entrada(&json!({"cwd": "/b"})), Some("/b"));
         assert_eq!(pasta_da_entrada(&json!({})), None);
         assert!(statusline("http://127.0.0.1:9", "isto não é json").is_none());
+    }
+
+    /// Um app falso que atende um pedido: devolve (o pedido bruto, que a thread lê) e responde `resposta`.
+    fn app_falso(resposta: &'static str) -> (String, std::thread::JoinHandle<String>) {
+        use std::io::{Read, Write};
+        let ouvinte = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let base = format!("http://{}", ouvinte.local_addr().unwrap());
+        let t = std::thread::spawn(move || {
+            let (mut c, _) = ouvinte.accept().unwrap();
+            let mut bruto = Vec::new();
+            let mut buf = [0u8; 4096];
+            loop {
+                let n = c.read(&mut buf).unwrap();
+                bruto.extend_from_slice(&buf[..n]);
+                let texto = String::from_utf8_lossy(&bruto).to_string();
+                if let Some((cab, corpo)) = texto.split_once("\r\n\r\n") {
+                    let tamanho = cab.lines().find_map(|l| l.to_lowercase().strip_prefix("content-length:").map(|v| v.trim().parse::<usize>().unwrap())).unwrap_or(0);
+                    if corpo.len() >= tamanho || n == 0 {
+                        break;
+                    }
+                }
+            }
+            write!(c, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{resposta}", resposta.len()).unwrap();
+            String::from_utf8_lossy(&bruto).to_string()
+        });
+        (base, t)
+    }
+
+    #[test]
+    fn o_hook_do_convidado_leva_o_blueprint_da_pasta_e_so_o_stop_responde() {
+        let pasta = std::env::temp_dir().join(format!("blueprint-hook-equipe-{}", std::process::id()));
+        std::fs::create_dir_all(pasta.join("sub")).unwrap();
+        std::fs::write(pasta.join("CLAUDE.md"), "# x\nBlueprint: workspace_id `w2`, blueprint_id `p9`\n").unwrap();
+        let entrada = json!({"session_id": "s", "cwd": pasta.join("sub").display().to_string(), "tool_input": {"file_path": "a.rs"}}).to_string();
+        let corpo: Value = serde_json::from_str(&corpo_do_hook(entrada.clone(), true).unwrap()).unwrap();
+        assert_eq!((corpo["workspaceId"].as_str(), corpo["blueprintId"].as_str()), (Some("w2"), Some("p9")), "a linha da pasta acima vale");
+        assert_eq!(corpo_do_hook(entrada.clone(), false), Some(entrada), "no plugin local o corpo vai como veio");
+        assert_eq!(corpo_do_hook(json!({"cwd": std::env::temp_dir().join("nada-aqui-blueprint").display().to_string()}).to_string(), true), None, "pasta sem a linha não manda nada");
+        let (base, t) = app_falso("{}");
+        assert!(repassar(&base, "edicao", &corpo.to_string()).is_none(), "a edição não imprime nada");
+        let pedido = t.join().unwrap();
+        assert!(pedido.starts_with("POST /api/mcp/hook/edicao ") && pedido.contains("\"blueprintId\":\"p9\""), "{pedido}");
+        let (base, t) = app_falso(r#"{"hookSpecificOutput":{"hookEventName":"Stop","additionalContext":"registrar_trabalho"}}"#);
+        assert_eq!(repassar(&base, "parada", "{}").unwrap()["hookSpecificOutput"]["additionalContext"], "registrar_trabalho");
+        t.join().unwrap();
+        assert!(repassar("http://127.0.0.1:9", "edicao", "{}").is_none(), "app fora do ar: silêncio");
+        std::fs::remove_dir_all(pasta).unwrap();
     }
 
     #[test]

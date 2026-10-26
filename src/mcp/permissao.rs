@@ -64,6 +64,13 @@ pub fn exige_hospedado(ctx: &Contexto, recurso: &str, pedido: &Pedido, corpo: &V
             // já saiu dos dados (a página apaga antes de pedir o arquivo): basta gravar em algum lugar
             None => ctx.pode_editar(),
         },
+        // os hooks do Claude do membro (só com a chave: `acesso::hook_de_membro`): o blueprint vem no corpo e precisa ser um em que ele grava
+        ("POST", "hook/sessao" | "hook/edicao" | "hook/subagente") => {
+            let (ws, bp) = (texto("workspaceId"), texto("blueprintId"));
+            ws.is_empty() || bp.is_empty() || ctx.pode(Acao::Gravar, ws, Some(bp))
+        }
+        ("POST", "hook/parada" | "hook/fim") => true,
+        (_, r) if r.starts_with("hook/") => false,
         // `fila/ack` confere item por item (`pode_gravar_item`)
         ("POST", "fila/ack") => ctx.pode_editar(),
         _ => true,
