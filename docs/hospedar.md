@@ -117,3 +117,10 @@ never change one that was already applied.
 
 `node scripts/servidor-e2e.mjs` and `node scripts/convites-e2e.mjs` start a hosted server with a temporary database behind
 `scripts/proxy-teste.mjs`, a test proxy that plays Caddy's part without TLS.
+
+To try it by hand with two people: `node scripts/equipe-local.mjs` (after `cargo build`). It starts a test team server with its own
+database in `.dev/equipe` and prints the owner link already pointing at `http://127.0.0.1:8443`. Open that link in one browser, create an
+invite under People and open the invite in an InPrivate window or another browser profile: each keeps its own cookie. Options:
+`--porta N`, `--novo-link-dono` (the owner link works once) and `--limpar` (start over). It only works on this machine, since there is no
+TLS; for someone on another computer, use real HTTPS (Caddy, or a tunnel that serves HTTPS, with `BLUEPRINT_URL_PUBLICA` set to the
+tunnel address).

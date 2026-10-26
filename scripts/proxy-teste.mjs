@@ -4,11 +4,13 @@
 // Uso: node scripts/proxy-teste.mjs <alvo http://127.0.0.1:PORTA> <host público> [porta]   ou   import { ligarProxy } from "./proxy-teste.mjs"
 import { createServer, request } from "node:http";
 
-/** Liga o proxy; devolve { url, fechar }. */
-export function ligarProxy({ alvo, host, porta = 0 }) {
+/** Liga o proxy; devolve { url, fechar }. Com `origem`, troca a Origin do navegador por ela (o navegador fala com http://127.0.0.1 e o
+ *  servidor só aceita a origem pública; sem isso, uma página de verdade não grava). */
+export function ligarProxy({ alvo, host, porta = 0, origem }) {
   const destino = new URL(alvo);
   const servidor = createServer((req, res) => {
     const cabecalhos = { ...req.headers, host, "x-forwarded-proto": "https", "x-forwarded-for": req.socket.remoteAddress.replace(/^::ffff:/, "") };
+    if (origem && req.headers.origin) cabecalhos.origin = origem;
     const ida = request({ hostname: destino.hostname, port: destino.port, path: req.url, method: req.method, headers: cabecalhos }, (volta) => {
       res.writeHead(volta.statusCode, volta.headers);
       volta.pipe(res);

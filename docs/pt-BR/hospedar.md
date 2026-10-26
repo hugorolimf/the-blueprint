@@ -118,3 +118,10 @@ subir e nunca mudam uma já aplicada.
 
 `node scripts/servidor-e2e.mjs` e `node scripts/convites-e2e.mjs` sobem um servidor hospedado com banco temporário atrás do
 `scripts/proxy-teste.mjs`, um proxy de teste que faz o papel do Caddy sem TLS.
+
+Para experimentar à mão, com duas pessoas: `node scripts/equipe-local.mjs` (depois de `cargo build`). Ele sobe uma equipe de teste com
+banco próprio em `.dev/equipe` e imprime o link do dono já apontando para `http://127.0.0.1:8443`. Abra esse link num navegador, crie um
+convite em Pessoas e abra o convite numa janela InPrivate ou em outro perfil do navegador: cada um guarda o próprio cookie. Opções:
+`--porta N`, `--novo-link-dono` (o link do dono só vale uma vez) e `--limpar` (recomeça do zero). Só serve nesta máquina, porque não tem
+TLS; para outra pessoa em outro computador, use HTTPS de verdade (Caddy, ou um túnel que entregue HTTPS com a `BLUEPRINT_URL_PUBLICA`
+igual ao endereço do túnel).
