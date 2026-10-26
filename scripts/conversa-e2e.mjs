@@ -100,7 +100,7 @@ try {
   assert(!proposta.erro, proposta.texto);
   const numero = Number(/Proposal no\. (\d+)/.exec(proposta.texto)[1]);
   const fora = await chamar("responder_conversa", { workspace_id: "sm", blueprint_id: BP, acao_id: ACAO, texto: "x", proposta: numero + 50 });
-  assert(fora.erro && /não está na fila/.test(fora.texto), `proposta que não existe é recusada: ${fora.texto}`);
+  assert(fora.erro && /is not in this blueprint's queue/.test(fora.texto), `proposta que não existe é recusada: ${fora.texto}`);
   const resposta = await chamar("responder_conversa", { workspace_id: "sm", blueprint_id: BP, acao_id: ACAO, texto: `Mandei a proposta nº ${numero} com o plano novo.`, proposta: numero });
   assert(!resposta.erro, resposta.texto);
   await espera(`!!document.querySelector("#conversa .cv-msg.agente [data-cv-proposta]")`, "a resposta aparece com o botão da proposta");

@@ -26,6 +26,8 @@ mod conversa_tests;
 #[cfg(test)]
 mod hooks_tests;
 #[cfg(test)]
+mod idioma_tests;
+#[cfg(test)]
 mod iniciar_tests;
 #[cfg(test)]
 mod lembrete_tests;

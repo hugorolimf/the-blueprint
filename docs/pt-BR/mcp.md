@@ -31,3 +31,5 @@ Ferramentas:
 **Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem.
 
 O guia que o agente lê está em [`skills/blueprint-planejamento/`](../../skills/blueprint-planejamento/SKILL.md).
+
+**Idioma.** O que o agente lê (instruções, ferramentas, guia de planejamento e respostas das ferramentas) é sempre em inglês; o agente responde no idioma em que você escreve. O que você lê (status line, avisos dos hooks e do monitor, erros do servidor na tela) segue o seu idioma: `BLUEPRINT_IDIOMA` (`en` ou `pt-BR`) se existir, senão o idioma do Windows, senão inglês. Os erros do servidor vêm como `{erro, codigo, params?}`: `codigo` é estável e `erro` vem no `Accept-Language` do pedido.

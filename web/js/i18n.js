@@ -43,6 +43,16 @@ if (typeof document !== "undefined" && document.documentElement && document.writ
   if (I18N.ativo !== I18N.fonte) // síncrono: os catálogos precisam existir antes de o próximo script rodar
     for (const area of I18N.areas) document.write(`<script src="/web/i18n/${I18N.ativo}-${area}.js"><\/script>`);
 }
+// o servidor escreve os erros no idioma do Accept-Language (src/idioma.rs): manda o idioma escolhido aqui, não o do Windows, nas chamadas a /api/
+if (typeof window !== "undefined" && typeof window.fetch === "function") {
+  const fetchOriginal = window.fetch.bind(window);
+  window.fetch = (url, opcoes = {}) => {
+    if (typeof url !== "string" || !url.startsWith("/api/")) return fetchOriginal(url, opcoes);
+    const cabecalhos = new Headers(opcoes.headers || {});
+    if (!cabecalhos.has("accept-language")) cabecalhos.set("accept-language", I18N.ativo);
+    return fetchOriginal(url, { ...opcoes, headers: cabecalhos });
+  };
+}
 // textos que já estão no HTML da página (títulos, rótulos, aria-label, placeholder): trocados uma vez, por correspondência exata com o catálogo
 function i18nTraduzDom(raiz = document.body) {
   if (I18N.ativo === I18N.fonte) return;

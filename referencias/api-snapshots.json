@@ -1,5 +1,5 @@
 {
-  "data": "2026-10-26T13:58:31.893Z",
+  "data": "2026-10-26T14:03:03.731Z",
   "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
   "respostas": {
     "GET pagina": {
@@ -286,6 +286,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "acao-nao-encontrada",
         "erro": "Ação não encontrada neste blueprint."
       }
     },
@@ -301,6 +302,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "faltam-ids",
         "erro": "Informe workspaceId, blueprintId e acaoId."
       }
     },
@@ -330,6 +332,7 @@
       "status": 413,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "grande-demais",
         "erro": "grande demais"
       }
     },
@@ -478,6 +481,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "falta-blueprint",
         "erro": "Informe o blueprint_id."
       }
     },
@@ -485,6 +489,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "blueprint-nao-encontrado",
         "erro": "Blueprint não encontrado neste workspace (veja listar_blueprints)."
       }
     },
@@ -492,6 +497,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "workspace-nao-encontrado",
         "erro": "Workspace não encontrado (veja listar_blueprints)."
       }
     },
@@ -499,6 +505,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "acao-nao-encontrada",
         "erro": "Ação não encontrada neste blueprint (veja ler_blueprint sem acao_id)."
       }
     },
@@ -526,6 +533,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "workspace-nao-encontrado",
         "erro": "Workspace não encontrado (veja listar_blueprints)."
       }
     },
@@ -945,6 +953,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "tipo-invalido",
         "erro": "tipo de evento inválido"
       }
     },
@@ -952,6 +961,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "falta-texto",
         "erro": "texto é obrigatório"
       }
     },
@@ -998,13 +1008,15 @@
       "status": 409,
       "tipo": "application/json",
       "corpo": {
-        "erro": "Este plano já está concluída."
+        "codigo": "plano-ja-feito",
+        "erro": "Este plano já está concluído."
       }
     },
     "evento concluir inexistente": {
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "plano-nao-encontrado",
         "erro": "Ação ou plano não encontrada (veja ler_blueprint)."
       }
     },
@@ -1042,6 +1054,7 @@
       "status": 409,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "checkpoint-ja-feito",
         "erro": "Este checkpoint já está concluído."
       }
     },
@@ -1049,6 +1062,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "checkpoint-nao-encontrado",
         "erro": "Ação ou checkpoint não encontrado (veja ler_blueprint)."
       }
     },
@@ -1560,6 +1574,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "falta-html",
         "erro": "html é obrigatório: um documento HTML autocontido"
       }
     },
@@ -1567,6 +1582,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "falta-titulo",
         "erro": "titulo é obrigatório"
       }
     },
@@ -1574,6 +1590,7 @@
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "acao-nao-encontrada",
         "erro": "Ação não encontrada (veja ler_blueprint)."
       }
     },
@@ -1581,13 +1598,18 @@
       "status": 413,
       "tipo": "application/json",
       "corpo": {
-        "erro": "o protótipo passa de 2 MB; reduza (sem imagens grandes nem bibliotecas inline)"
+        "codigo": "prototipo-grande",
+        "erro": "o protótipo passa de 2 MB; reduza (sem imagens grandes nem bibliotecas inline)",
+        "params": {
+          "mb": 2
+        }
       }
     },
     "protótipo substituir inexistente": {
       "status": 404,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "prototipo-nao-encontrado",
         "erro": "prototipo_id não existe nesta ação (veja ler_blueprint)"
       }
     },
@@ -1619,6 +1641,7 @@
       "status": 400,
       "tipo": "application/json",
       "corpo": {
+        "codigo": "invalido",
         "erro": "prototipoId inválido"
       }
     },

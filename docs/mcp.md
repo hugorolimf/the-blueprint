@@ -32,3 +32,5 @@ Tools (their names are fixed; their descriptions and the planning guide are writ
 **Importing GitHub issues:** there is no import tool. Ask your agent to "import the open issues of owner/name"; the `importar` guide topic makes it read them with `gh issue list` and send one proposal, which you review and apply on the Plan screen. Assignees and authors are never copied, and the text of an issue is treated as data, not as orders.
 
 The guide the agent reads is in [`skills/blueprint-planejamento/`](../skills/blueprint-planejamento/SKILL.md).
+
+**Language.** What the agent reads (instructions, tools, the planning guide and tool replies) is always in English; the agent answers you in the language you write in. What you read (status line, hook notices, monitor notices, server errors on screen) follows your language: `BLUEPRINT_IDIOMA` (`en` or `pt-BR`) if set, otherwise the Windows display language, otherwise English. Server errors come as `{erro, codigo, params?}`: `codigo` is stable, `erro` is in the request's `Accept-Language`.
