@@ -59,7 +59,7 @@ try {
   writeFileSync(hooks, readFileSync(hooks, "utf8").replaceAll("127.0.0.1:3000", `127.0.0.1:${porta}`)); // SessionEnd, Stop... vão ao servidor do teste, nunca ao app
 
   rmSync(join(pasta, "monitors"), { recursive: true, force: true }); // o monitor não é o que se testa e acordaria o modelo sozinho ("terminou sem saída"), sujando a sessão ociosa
-  const marca = process.env.CANAL_MARCA || "plugin:blueprint@inline"; // @inline é o que o Claude Code dá a um plugin de --plugin-dir; src/cli/claude.rs (FLAG_CANAL) usa @blueprint-local
+  const marca = process.env.CANAL_MARCA || "plugin:blueprint@inline"; // @inline é o que o Claude Code dá a um plugin de --plugin-dir; src/cli/claude.rs (FLAG_CANAL) usa o mesmo desde 2026-10-26
   const args = ["--plugin-dir", pasta, "--setting-sources", "local", "--model", "claude-sonnet-5-5", "--effort", "medium", "--allowedTools", "mcp__plugin_blueprint_blueprint__*", "--dangerously-load-development-channels", marca];
   let tela = "";
   terminal = pty.spawn("cmd.exe", ["/c", "claude", ...args], { name: "xterm-256color", cols: 140, rows: 40, cwd: projeto, env: { ...process.env, BLUEPRINT_URL: url, BLUEPRINT_CHANNEL: "1" } });

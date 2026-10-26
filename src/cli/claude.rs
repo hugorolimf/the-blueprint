@@ -7,8 +7,9 @@ use std::process::Command;
 const AGENTE: &str = "blueprint:blueprint";
 
 /// O canal que o botão "Iniciar com o Claude" liga nas sessões que abre, para elas poderem receber depois o pedido de iniciar outra ação (docs/claude-na-folha.md,
-/// "Escolher a sessão"). Pelo mesmo comando do `docs/monitor-e-channels.md`.
-const FLAG_CANAL: [&str; 2] = ["--dangerously-load-development-channels", "plugin:blueprint@blueprint-local"];
+/// "Escolher a sessão"). `@inline` porque este comando carrega o plugin por `--plugin-dir` (verificado com um Claude real em 2026-10-26, scripts/agente-real-canal.mjs:
+/// com `@blueprint-local` o Claude Code avisa que o plugin instalado é `blueprint@inline` e a mensagem não chega).
+const FLAG_CANAL: [&str; 2] = ["--dangerously-load-development-channels", "plugin:blueprint@inline"];
 
 /// `--canal` (em qualquer posição) não é do Claude: liga o canal. A flag do canal vai no FIM, depois do prompt, porque pode aceitar vários valores e engoliria o prompt.
 fn separa_canal(extras: &[String]) -> (bool, Vec<String>) {
@@ -162,7 +163,7 @@ mod tests {
     fn canal_sai_dos_argumentos_do_claude_e_a_flag_vai_depois_do_prompt() {
         let (canal, resto) = separa_canal(&["Execute a ação".into(), "--canal".into()]);
         assert!(canal);
-        assert_eq!(resto, ["Execute a ação", "--dangerously-load-development-channels", "plugin:blueprint@blueprint-local"]);
+        assert_eq!(resto, ["Execute a ação", "--dangerously-load-development-channels", "plugin:blueprint@inline"]);
         let (canal, resto) = separa_canal(&["--continue".into()]);
         assert!(!canal);
         assert_eq!(resto, ["--continue"], "sem --canal nada muda");
