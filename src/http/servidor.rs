@@ -4,7 +4,7 @@ use super::config::Config;
 use super::estado::{abrir_dados, Estado};
 use super::estaticos::Assets;
 use super::pedido::{Corpo, Pedido, Resposta};
-use super::rotas::{corpo_grande_demais, despachar, limite_corpo};
+use super::rotas::{corpo_grande_demais, despachar, despachar_convidado, limite_corpo};
 use crate::atualizador::Atualizador;
 use crate::erro::{Erro, Resultado};
 use crate::mcp::Mcp;
@@ -29,7 +29,8 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let url = config.url(porta);
     let mcp = Mcp::novo(&config.host, config.rede_mcp, &config.exe.to_string_lossy(), &url, config.prototipos.clone());
     let (versao_dados, sincronia) = super::estado::versao_e_sincronia(config.hospedagem.is_some()); // presença só no modo hospedado
-    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), acesso: crate::acesso::Acesso::novo(), config });
+    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), acesso: crate::acesso::Acesso::novo(), compartilhar: crate::compartilhar::Compartilhar::novo(), config });
+    estado.compartilhar.definir_estado(Arc::downgrade(&estado));
     // o modo hospedado não tem atualizador nem pendentes do agente local (quem hospeda atualiza o binário; o agente fala pela chave)
     if estado.config.hospedagem.is_none() {
         // cada mudança do updater (baixando, pronta…) chega à página pelo mesmo SSE da fila
@@ -48,11 +49,26 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
         thread::spawn(move || {
             for pedido in servidor.incoming_requests() {
                 let estado = estado.clone();
-                thread::spawn(move || atender(&estado, pedido));
+                thread::spawn(move || atender(&estado, pedido, false));
             }
         })
     };
     Ok(Servidor { porta, url, estado, servidor, fio: Some(fio) })
+}
+
+/// A porta dos convidados (src/compartilhar): outro listener em 127.0.0.1, numa porta livre, só para o túnel. Tudo o que chega por ela é
+/// convidado (`despachar_convidado`). `unblock()` no servidor devolvido fecha a porta. A thread guarda só um `Weak` do estado.
+pub fn escutar_convidados(estado: &Arc<Estado>) -> Resultado<(Arc<Server>, u16)> {
+    let servidor = Arc::new(Server::http(("127.0.0.1", 0)).map_err(|e| Erro::Io(std::io::Error::other(format!("não consegui abrir a porta dos convidados: {e}"))))?);
+    let porta = servidor.server_addr().to_ip().map_or(0, |a| a.port());
+    let (s, fraco) = (servidor.clone(), Arc::downgrade(estado));
+    thread::spawn(move || {
+        for pedido in s.incoming_requests() {
+            let Some(estado) = fraco.upgrade() else { break };
+            thread::spawn(move || atender(&estado, pedido, true));
+        }
+    });
+    Ok((servidor, porta))
 }
 
 impl Servidor {
@@ -68,7 +84,7 @@ impl Servidor {
     }
 }
 
-fn atender(estado: &Estado, mut req: Request) {
+fn atender(estado: &Estado, mut req: Request, convidado: bool) {
     let metodo = req.method().as_str().to_uppercase();
     let url = req.url().to_string();
     let cabecalhos: Vec<(String, String)> = req.headers().iter().map(|h| (h.field.as_str().as_str().to_string(), h.value.as_str().to_string())).collect();
@@ -83,7 +99,7 @@ fn atender(estado: &Estado, mut req: Request) {
     }
     let mut pedido = Pedido::novo(&metodo, &url, cabecalhos, corpo);
     pedido.ip = req.remote_addr().map(|a| a.ip().to_string()).unwrap_or_default();
-    let resposta = despachar(estado, &pedido);
+    let resposta = if convidado { despachar_convidado(estado, &pedido) } else { despachar(estado, &pedido) };
     escrever(req, resposta);
 }
 
@@ -93,6 +109,9 @@ fn cabecalhos_de(resposta: &Resposta) -> Vec<Header> {
 
 fn escrever(req: Request, resposta: Resposta) {
     let cabecalhos = cabecalhos_de(&resposta);
+    // um fluxo que termina (o da porta dos convidados, `compartilhar::fluxo`) vai em pedaços: o tiny_http mantém a conexão viva e só o
+    // pedaço final diz ao túnel que a resposta acabou
+    let em_pedacos = resposta.cabecalho("transfer-encoding").is_some_and(|v| v.eq_ignore_ascii_case("chunked"));
     match resposta.corpo {
         Corpo::Bytes(bytes) => {
             let mut r = Response::from_data(bytes).with_status_code(StatusCode(resposta.status));
@@ -114,13 +133,14 @@ fn escrever(req: Request, resposta: Resposta) {
             }
             let mut trecho = [0u8; 1024];
             loop {
-                match leitor.read(&mut trecho) {
+                let escrito = match leitor.read(&mut trecho) {
+                    Ok(0) if em_pedacos => saida.write_all(b"0\r\n\r\n").and_then(|_| saida.flush()).and(Err(std::io::ErrorKind::Other.into())),
                     Ok(0) | Err(_) => return,
-                    Ok(n) => {
-                        if saida.write_all(&trecho[..n]).and_then(|_| saida.flush()).is_err() {
-                            return;
-                        }
-                    }
+                    Ok(n) if em_pedacos => saida.write_all(format!("{n:x}\r\n").as_bytes()).and_then(|_| saida.write_all(&trecho[..n])).and_then(|_| saida.write_all(b"\r\n")),
+                    Ok(n) => saida.write_all(&trecho[..n]),
+                };
+                if escrito.and_then(|_| saida.flush()).is_err() {
+                    return;
                 }
             }
         }

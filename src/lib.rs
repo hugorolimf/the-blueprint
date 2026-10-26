@@ -3,6 +3,7 @@
 pub mod acesso;
 pub mod atualizador;
 pub mod cli;
+pub mod compartilhar;
 pub mod contexto;
 pub mod dados;
 pub mod erro;
