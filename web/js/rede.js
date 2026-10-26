@@ -41,13 +41,16 @@ const preparaArquivo = (d) => {
 };
 let concluidosAntes = new Set();
 const concluidosAgora = () => new Set(D.blueprints.filter(projConcluido).map((p) => p.id));
-let ultimo = ""; // o data.json como o servidor o tem (ou como esta janela o gravou por último): a BASE para juntar edições (sincronia.js)
-let versaoDados = ""; // a versão desse texto; vai em `If-Match` e o servidor recusa (409) gravar sobre dados que outra janela já mudou
+let ultimo = ""; // o data.json como veio no último GET (para não redesenhar à toa); a base das operações é `aoVivoBase` (ao-vivo.js)
+let versaoDados = ""; // a última versão conhecida (GET ou resposta de /api/mudancas)
 async function carregar() {
   if (arr?.ativo || salvandoPerfil || salvandoWorkspace || timer || arquivo.chats?.some((c) => c.pensando)) return;
+  // a tela tem o que ainda não foi gravado (o salvar falhou, sem rede): trazer tudo não pode apagar isso; junta (ao-vivo.js) e grava o que faltava
+  if (carregado && aoVivoBase && opsEntre(aoVivoBase, instantaneoDe(arquivo)).length) return aoVivoRecarregar();
   try {
     await emblemasProntos;
     const r = await fetch("/api/dados", { cache: "no-store" });
+    if (r.status === 401) { typeof semSessao === "function" && semSessao(); return; }
     if (!r.ok) throw new Error(r.status);
     const texto = await r.text();
     if (salvandoPerfil || salvandoWorkspace || timer || arquivo.chats?.some((c) => c.pensando)) return;
@@ -65,6 +68,7 @@ async function carregar() {
       mostrarPerfil();
     }
     concluidosAntes = concluidosAgora();
+    aoVivoAssumir(versaoDados); // a base das operações e o ponto de partida do SSE (ao-vivo.js)
     render();
   } catch {
     $("login-erro").textContent = tr("Não foi possível carregar os dados. Tentando novamente…");
@@ -77,33 +81,21 @@ function avisarMonitor(tipo, blueprintId, checkpointId = "") {
   const evento = { tipo, workspaceId: workspaceAtual.id, blueprintId, checkpointId };
   avisosDoMonitor.set(JSON.stringify(evento), evento);
 }
-const corpoDosDados = () => JSON.stringify({ ...arquivo, chats: (arquivo.chats || []).map(({ pensando, ...c }) => c) }, null, 2);
-// Outra janela (ou um script) gravou antes: traz o que o servidor tem, junta com o que está nesta tela (sincronia.js) e mostra o resultado.
-async function reconciliar(corpoMeu) {
-  const r = await fetch("/api/dados", { cache: "no-store" });
-  if (!r.ok) throw new Error(r.status);
-  const texto = await r.text();
-  const deles = JSON.parse(texto);
-  arquivo = preparaArquivo(sincMesclar(ultimo ? JSON.parse(ultimo) : deles, JSON.parse(corpoMeu), deles)); // sem base, tudo o que difere é meu (como era antes)
-  workspaceAtual = workspaceDaRota(arquivo, location.hash);
-  D = workspaceAtual?.dados || arquivo;
-  ultimo = texto;
-  versaoDados = r.headers.get("x-dados-versao") || "";
-  concluidosAntes = concluidosAgora();
-  render();
-}
+// Salvar manda só a diferença entre a base (o servidor como esta página o conhece) e a tela, em operações por item (operacoes.js, ao-vivo.js).
+// Sem plano B silencioso: se o lote falha, aparece "erro ao salvar" (um defeito na diferença não pode cair num PUT que sobrescreve os outros).
+// O PUT /api/dados inteiro (com If-Match) continua para scripts e importação.
 async function gravarDados() {
   const avisos = [...avisosDoMonitor.entries()];
-  let corpo, r;
-  for (let tentativa = 0; tentativa < 4; tentativa++) {
-    corpo = corpoDosDados();
-    r = await fetch("/api/dados", { method: "PUT", headers: { "content-type": "application/json", ...(versaoDados ? { "if-match": versaoDados } : {}) }, body: corpo });
-    if (r.status !== 409) break;
-    await reconciliar(corpo);
+  const ops = aoVivoBase ? opsEntre(aoVivoBase, instantaneoDe(arquivo)) : [];
+  if (ops.length) {
+    const r = await fetch("/api/mudancas", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ base: Number(versaoDados) || null, cliente: CLIENTE, ops }) });
+    if (r.status === 401) { typeof semSessao === "function" && semSessao(); throw new Error(r.status); }
+    if (!r.ok) throw new Error(r.status);
+    const resposta = await r.json();
+    versaoDados = String(resposta.versao);
+    aoVivoGravou(resposta.versao, ops, resposta);
+    sincResposta(resposta, ops);
   }
-  if (!r.ok) throw new Error(r.status);
-  versaoDados = r.headers.get("x-dados-versao") || versaoDados;
-  ultimo = corpo;
   // Só avisar depois de persistir: receber a proposta na fila ainda não significa aplicá-la.
   await Promise.all(avisos.map(async ([chave, evento]) => {
     avisosDoMonitor.delete(chave);
@@ -133,14 +125,15 @@ const mudou = () => {
   });
   concluidosAntes = agora;
 };
-// Tempo real: o servidor avisa (SSE "dados") a cada gravação; se não foi esta janela, ela busca na hora, em vez de ficar com a tela velha e depois
-// sobrescrever o que as outras gravaram. Quem está digitando não tem a tela trocada: a atualização espera o foco sair do campo.
+// O SSE do MCP ainda avisa "dados" a cada PUT inteiro (scripts, importação). Com /api/eventos aberto quem cuida é o `substituido` (ao-vivo.js);
+// sem ele, a página busca na hora. Quem está digitando não tem a tela trocada: a atualização espera o foco sair do campo.
 let dadosAdiados = false;
 const digitando = () => !!document.activeElement?.matches?.("input, textarea, select, [contenteditable]");
 function dadosDeOutraJanela(e) {
   let n = "";
   try { n = String(JSON.parse(e.data).versao); } catch {}
   if (n && n === versaoDados) return; // fui eu que gravei
+  if (typeof aoVivoAberto === "function" && aoVivoAberto()) return; // o `substituido` do /api/eventos já traz
   if (digitando()) { dadosAdiados = true; return; }
   carregar();
 }

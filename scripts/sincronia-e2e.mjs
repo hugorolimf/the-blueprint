@@ -1,6 +1,7 @@
-// Duas janelas na mesma base não se sobrescrevem (web/js/sincronia.js + If-Match/409 em /api/dados + SSE "dados"). Edge sem janela, banco temporário.
+// Duas janelas na mesma base não se sobrescrevem (gravação por operações em /api/mudancas + SSE /api/eventos, web/js/ao-vivo.js). Edge sem janela, banco temporário.
 //   node scripts/sincronia-e2e.mjs [blueprint.exe]   (precisa do Microsoft Edge; ~15 s)
-// 1) uma janela grava e a outra vê na hora, sem recarregar; 2) uma janela que ficou velha grava e não apaga o que a outra fez (409 + junção).
+// 1) uma janela grava e a outra vê na hora, sem recarregar; 2) uma janela que ficou velha (sem SSE) grava só o que mudou e não apaga o que a
+// outra fez; ao reconectar, recebe pela versão o que perdeu.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import { existsSync, rmSync } from "node:fs";
@@ -40,7 +41,7 @@ try {
   await espera(async () => (await A.js(`D.blueprints[0].nome`)) === "Mudado em B", "A vê a gravação de B em tempo real");
 
   // 2) A fica velha de propósito (não recebe mais atualizações); B cria uma ação; A edita outra coisa e grava
-  await A.js(`carregar = async () => {}`);
+  await A.js(`carregar = async () => {}; aoVivoES.close(); aoVivoES = { readyState: 2, close() {} }`);
   await B.js(`D.blueprints[0].acoes.push({ id: "fB", nome: "Nova de B", inicio: "2026-11-06", fim: "2026-11-07", status: "planejado", progresso: 0, obs: "", planos: [], checkpoints: [] }); mudou();`);
   await dormir(1500);
   assert.equal(await A.js(`D.blueprints[0].acoes.some((f) => f.id === "fB")`), false, "A está velha: não conhece a ação de B");
@@ -51,9 +52,10 @@ try {
   assert(nomes.includes("Nova de B"), "a ação de B NÃO foi apagada pela janela velha: " + nomes);
   assert(nomes.includes("Editada em A"), "e a edição de A ficou");
   assert.equal(final.blueprints[0].nome, "Mudado em B", "a mudança anterior de B também ficou");
-  assert.equal(await A.js(`D.blueprints[0].acoes.some((f) => f.id === "fB")`), true, "e A passou a mostrar a ação de B depois da junção");
+  await A.js(`aoVivoConectar(true)`);
+  await espera(async () => (await A.js(`D.blueprints[0].acoes.some((f) => f.id === "fB")`)) === true, "ao reconectar, A recebe pela versão a ação de B");
   assert.deepEqual([...A.erros, ...B.erros], [], "sem erro no console");
-  console.log("sincronia e2e: ok (tempo real entre janelas; janela velha grava sem apagar o trabalho da outra)");
+  console.log("sincronia e2e: ok (tempo real entre janelas; janela velha grava sem apagar o trabalho da outra e recupera ao reconectar)");
 } finally {
   for (const f of filhos) { try { f.kill(); } catch {} }
   setTimeout(() => { try { rmSync(pasta.dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); } catch {} }, 800);

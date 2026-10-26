@@ -214,6 +214,9 @@ impl Lote<'_> {
         }
         item::posicionar(self.tx, t, pai.as_deref(), id, posicao)?;
         self.historico(&depois, tipo, id, "*", "mover", Some(&json!({"pai": lido.pai})), Some(&json!({"pai": pai, "posicao": posicao})))?;
+        if antes != depois {
+            self.aplicada(indice, antes); // quem acompanha a origem também fica sabendo que o item saiu
+        }
         self.aplicada(indice, depois);
         Ok(())
     }

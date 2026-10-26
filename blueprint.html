@@ -26,6 +26,7 @@
 <link rel="stylesheet" href="/web/css/impressao.css">
 <link rel="stylesheet" href="/web/css/conversa.css">
 <link rel="stylesheet" href="/web/css/terminal.css">
+<link rel="stylesheet" href="/web/css/presenca.css">
 </head>
 <body class="carregando">
 <section class="login" id="login" aria-label="Entrar">
@@ -61,6 +62,7 @@
     <button class="btn" id="b-tela" type="button">⛶ Tela cheia</button>
     <button class="btn" id="b-ia" type="button" aria-haspopup="dialog">✦ Planejar</button>
     <button class="btn so-blueprint" id="b-apresentar" type="button" aria-haspopup="dialog">Apresentar</button>
+    <div id="presenca" role="group" hidden></div>
   </div>
   <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button><button class="btn mini" id="periodo-andamento" type="button" aria-pressed="false">Em andamento · <span id="periodo-andamento-n">0</span></button></div></div>
   <div class="busca"><input id="busca" type="search" placeholder="Pesquisar blueprint ou ação…" aria-label="Pesquisar por nome de blueprint ou ação" autocomplete="off"><span id="busca-n" role="status"></span></div>
@@ -169,6 +171,10 @@
 <script src="/web/js/arrastar.js"></script>
 <script src="/web/js/sincronia.js"></script>
 <script src="/web/js/rede.js"></script>
+<script src="/web/js/operacoes.js"></script>
+<script src="/web/js/sinc-avisos.js"></script>
+<script src="/web/js/ao-vivo.js"></script>
+<script src="/web/js/presenca.js"></script>
 <script src="/web/js/prototipos.js"></script>
 <script src="/web/js/robo.js"></script>
 <script src="/web/js/claude-logica.js"></script>

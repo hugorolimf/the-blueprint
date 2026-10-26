@@ -1,0 +1,13 @@
+/* Presença e avisos da sincronia (web/js/presenca.js, sinc-avisos.js): avatares no cabeçalho da folha, contorno do item em edição numa camada
+   própria sobre a folha e o quadro de aviso de conflito. O app tem um tema só (papel de plotagem azul); as cores das pessoas são tokens dele. */
+:root{--pres-0:#ffc46b;--pres-1:#7fe3f0;--pres-2:#9be38f;--pres-3:#ff9fc4;--pres-4:#c7b2ff;--pres-5:#f4f1b0}
+#presenca{display:inline-flex;align-items:center;gap:4px;margin-left:auto}
+#presenca[hidden]{display:none}
+.pres-av{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--c,var(--mid));color:var(--c,var(--mid));background:var(--paper);font:600 11px/1 var(--mono);letter-spacing:.02em}
+.pres-mais{--c:var(--mid)}
+#presenca-camada{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.pres-contorno{position:absolute;border:1.5px dashed var(--c);border-radius:4px}
+.pres-contorno span{position:absolute;right:-1px;top:-17px;padding:1px 6px;background:var(--c);color:var(--paper);font:600 10px/14px var(--mono);border-radius:3px 3px 0 0;white-space:nowrap}
+#sinc-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 32px));padding:10px 14px;border:1px solid var(--lo);background:var(--paper);color:var(--ink);font-size:13px;box-shadow:0 6px 18px #02132ecc}
+#sinc-aviso[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){#sinc-aviso{animation:sinc-entra .18s ease-out}@keyframes sinc-entra{from{opacity:0;translate:0 6px}}}

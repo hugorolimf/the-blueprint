@@ -1,5 +1,6 @@
 // ---- sincronia: juntar a edição desta janela com a que outra janela (ou um script) gravou antes ----
-// O servidor recusa (409) uma gravação feita sobre dados velhos. A página então busca os dados atuais e junta três versões: a BASE (o que ela
+// Desde a gravação por operações (operacoes.js, ao-vivo.js) isto só entra quando a página perde o fio: `recarregar` ou `substituido` no
+// /api/eventos (buraco na retomada, app reiniciado, PUT de script). A página então busca os dados atuais e junta três versões: a BASE (o que ela
 // leu da última vez), a MINHA (o que está na tela) e a DELES (o que o servidor tem agora). Regra: quem mexeu sozinho em algo, ganha; as listas de
 // objetos com `id` (blueprints, ações, planos, checkpoints, chats…) são juntadas por id, então duas pessoas adicionando coisas diferentes ficam
 // com as duas; no mesmo campo mexido dos dois lados, vale a minha (a edição mais recente de quem está olhando a tela).

@@ -39,6 +39,8 @@ jobs:
           node atualizacao.test.mjs
           node notificacao.test.mjs
           node sincronia.test.mjs
+          node operacoes.test.mjs
+          node presenca.test.mjs
           node linha-do-tempo.test.mjs
           node terminal-logica.test.mjs
           node scripts/conferir-readmes.mjs
