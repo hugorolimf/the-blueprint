@@ -76,6 +76,11 @@ pub fn lancar_instalador(arquivo: &Path, args: &[String]) -> Result<bool, String
         std::fs::write(anotar, format!("{} {}", arquivo.display(), args.join(" "))).map_err(|e| format!("não consegui anotar: {e}"))?;
         return Ok(false);
     }
+    // com a janela de progresso (um processo à parte, que roda o instalador e mostra as etapas); se ela não abrir, o instalador roda direto, como antes
+    #[cfg(windows)]
+    if crate::janela::atualizando::lancar(arquivo, args).is_ok() {
+        return Ok(true);
+    }
     let mut c = std::process::Command::new(arquivo);
     c.args(args);
     desacoplar(&mut c);

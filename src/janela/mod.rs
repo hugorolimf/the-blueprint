@@ -1,6 +1,7 @@
 //! O app como aplicativo do Windows: janela nativa (WebView2, via `wry` e `tao`) apontada para o servidor local, ícone na bandeja,
 //! instância única e dados em %APPDATA%\Blueprint\. Só existe no Windows. A janela é só a tela: tudo (dados, MCP, protótipos) é do servidor,
 //! que continua de pé com a janela fechada, e por isso o agente segue falando com o app.
+pub mod atualizando;
 pub mod bandeja;
 pub mod console;
 pub mod dev;

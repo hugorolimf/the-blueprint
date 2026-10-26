@@ -56,6 +56,8 @@ pub fn executar(args: Vec<String>) -> i32 {
         }
         ["watch"] => return crate::watch::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
+        #[cfg(windows)]
+        ["atualizando", ..] => return crate::janela::atualizando::executar(&args[1..]), // interno: a janela de progresso que o app abre ao atualizar
         ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),
         ["--version"] | ["-V"] => {
             println!("blueprint {}", crate::atualizador::VERSAO);
