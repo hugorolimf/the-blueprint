@@ -4,7 +4,7 @@ function montaHub() {
   if (!blueprintEd()) edProj = D.blueprints[0]?.id ?? null;
   const p = blueprintEd(), novo = edProj === NOVO;
   hub.querySelector(".ed-topo .tit span").textContent = novo ? "Planejar · blueprint novo" : "Planejar";
-  $("ag-proj").textContent = p ? p.nome || (novo ? "Novo blueprint" : "Sem nome") : "Nenhum blueprint";
+  $("ag-proj").textContent = p ? p.nome || (novo ? tr("Novo blueprint") : tr("Sem nome")) : tr("Nenhum blueprint");
   montaLateral();
   montaOutras();
   $("ag-vazio").hidden = !!p;
@@ -17,7 +17,7 @@ function montaOutras() {
   if (!el) { el = document.createElement("span"); el.id = "ag-outras"; hub.querySelector(".ed-topo .tit").after(el); el.onclick = (e) => { const b = e.target.closest("[data-ep]"); if (b) { edProj = b.dataset.ep; montaHub(); } }; }
   const pref = (workspaceAtual?.id || "sm") + ":", aqui = contextoChat(edProj);
   const ids = (arquivo.chats || []).filter((c) => c.contexto?.startsWith(pref) && c.contexto !== aqui && (c.proposta?.length || c.fila?.length)).map((c) => c.contexto.slice(pref.length));
-  el.replaceChildren(...ids.map((id) => { const b = document.createElement("button"); b.className = "btn mini"; b.type = "button"; b.dataset.ep = id; b.textContent = id === NOVO ? "Proposta de blueprint novo" : `Proposta em «${D.blueprints.find((x) => x.id === id)?.nome || "outro blueprint"}»`; return b; }));
+  el.replaceChildren(...ids.map((id) => { const b = document.createElement("button"); b.className = "btn mini"; b.type = "button"; b.dataset.ep = id; b.textContent = id === NOVO ? tr("Proposta de blueprint novo") : tr("Proposta em «{nome}»", { nome: D.blueprints.find((x) => x.id === id)?.nome || tr("outro blueprint") }); return b; }));
 }
 function agenteTela(abre, op = {}) {
   if (abre === !hub.hidden) { if (abre) montaHub(); return; }
@@ -54,10 +54,10 @@ $("ag-novo").onclick = () => { rascunho = { id: NOVO, nome: "", descricao: "", o
 // ---- montagem ----------------------------------------------------------------------------------
 const chipBlueprint = (p) => {
   const r = resumo(acoesDe(p));
-  return projConcluido(p) ? "✓ concluído" : !p.acoes.length ? "sem ações" : r.futuro ? "planejado" : Math.round(r.geral * 100) + "%";
+  return projConcluido(p) ? tr("✓ concluído") : !p.acoes.length ? tr("sem ações") : r.futuro ? tr("planejado") : Math.round(r.geral * 100) + "%";
 };
 function montaLateral() {
-  $("ed-blueprints").innerHTML = $("ag-blueprints").innerHTML = D.blueprints.map((p, pi) => `<button class="ed-proj" type="button" data-ep="${esc(p.id)}" aria-current="${p.id === edProj}"><span class="n">${pad(pi + 1)}</span><span class="nm">${esc(p.nome || "Sem nome")}</span><span class="chip">${esc(chipBlueprint(p))}</span></button>`).join("") || `<p class="vazio">Nenhum blueprint ainda.</p>`;
+  $("ed-blueprints").innerHTML = $("ag-blueprints").innerHTML = D.blueprints.map((p, pi) => `<button class="ed-proj" type="button" data-ep="${esc(p.id)}" aria-current="${p.id === edProj}"><span class="n">${pad(pi + 1)}</span><span class="nm">${esc(p.nome || tr("Sem nome"))}</span><span class="chip">${esc(chipBlueprint(p))}</span></button>`).join("") || `<p class="vazio">${tr("Nenhum blueprint ainda.")}</p>`;
 }
 function montaEditor() {
   if (!blueprintEd()) edProj = D.blueprints[0]?.id ?? null;
@@ -65,9 +65,9 @@ function montaEditor() {
   ed.classList.toggle("modo-novo", novo);
   $("nv").hidden = !novo;
   $("painel-novo-manual").hidden = !novo;
-  ed.querySelector(".ed-topo .tit span").textContent = novo ? "Novo blueprint" : "Editar blueprint";
+  ed.querySelector(".ed-topo .tit span").textContent = novo ? tr("Novo blueprint") : tr("Editar blueprint");
   montaLateral();
-  $("ed-proj").textContent = p ? p.nome || (novo ? "Novo blueprint" : "Sem nome") : "Nenhum blueprint";
+  $("ed-proj").textContent = p ? p.nome || (novo ? tr("Novo blueprint") : tr("Sem nome")) : tr("Nenhum blueprint");
   $("ed-vazio").hidden = !!p;
   $("painel-manual").hidden = !p || novo;
   ed.querySelectorAll("[data-g]").forEach((el) => { if (el.type === "checkbox") el.checked = !!D[el.dataset.g]; else el.value = D[el.dataset.g] ?? ""; });

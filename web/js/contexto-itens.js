@@ -8,11 +8,11 @@ function tituloDoContexto(alvo, { cartaoWorkspace, linhaBlueprint, acao, plano, 
   const feita = acao && acaoDe(acao.dataset.p, acao.dataset.f);
   if (plano && feita) {
     const it = (plano.dataset.tipo === "t" ? feita.planos : feita.checkpoints).find((x) => x.id === plano.dataset.id);
-    return `${plano.dataset.tipo === "t" ? "Plano" : "Checkpoint"} · ${it?.texto || it?.nome || "sem nome"}`;
+    return `${plano.dataset.tipo === "t" ? tr("Plano") : tr("Checkpoint")} · ${it?.texto || it?.nome || tr("sem nome")}`;
   }
-  if (feita) return `Ação ${numeroDaAcao(bp(acao.dataset.p), feita)} · ${feita.nome || "sem nome"}`;
+  if (feita) return `${tr("Ação")} ${numeroDaAcao(bp(acao.dataset.p), feita)} · ${feita.nome || tr("sem nome")}`;
   if (cartaoWorkspace) return `Workspace · ${cartaoWorkspace.querySelector("h2")?.textContent || ""}`;
-  if (linhaBlueprint || idBlueprint) return `Blueprint · ${bp(idBlueprint)?.nome || "sem nome"}`;
+  if (linhaBlueprint || idBlueprint) return `${tr("Blueprint")} · ${bp(idBlueprint)?.nome || tr("sem nome")}`;
   return workspaceAtual ? `Workspace · ${workspaceAtual.nome}` : "The Blueprint";
 }
 
@@ -31,25 +31,25 @@ function itensDoContexto(alvo) {
   const criandoWorkspace = location.hash === "#/workspace/novo";
   const idBlueprint = linhaBlueprint?.dataset.goto || acao?.dataset.p || plano?.dataset.p || nota?.dataset.obs.split("|")[0] || tela;
 
-  if (cartaoWorkspace) add("abrir", "abrir", "Abrir workspace", () => { location.hash = cartaoWorkspace.getAttribute("href").slice(1); });
+  if (cartaoWorkspace) add("abrir", "abrir", tr("Abrir workspace"), () => { location.hash = cartaoWorkspace.getAttribute("href").slice(1); });
   if (cartaoWorkspace && cartaoWorkspace.dataset.workspace !== "sm") add("perigo", "lixo", "Excluir workspace…", () => excluirWorkspace(cartaoWorkspace.dataset.workspace), { perigo: true });
   if (novoWorkspace) add("editar", "mais", "Criar workspace", () => novoWorkspace.click());
   if (linhaBlueprint) {
-    add("abrir", "abrir", "Abrir blueprint", () => irBlueprint(linhaBlueprint.dataset.goto));
+    add("abrir", "abrir", tr("Abrir blueprint"), () => irBlueprint(linhaBlueprint.dataset.goto));
     add("perigo", "lixo", "Excluir blueprint…", () => excluirBlueprint(linhaBlueprint.dataset.goto), { perigo: true });
   }
   if (acao) {
     const feita = acaoDe(acao.dataset.p, acao.dataset.f), dono = D.blueprints.find((x) => x.id === acao.dataset.p);
-    if (feita && efetiva(feita).status !== "concluido") add("estado", "play", "Iniciar com o Claude…", () => iniciarComClaude(dono, feita)); // pede confirmação (gasta tokens, abre terminal)
+    if (feita && efetiva(feita).status !== "concluido") add("estado", "play", tr("Iniciar com o Claude…"), () => iniciarComClaude(dono, feita)); // pede confirmação (gasta tokens, abre terminal)
     if (feita) for (const { grupo, icone, rotulo, fn, ...extra } of itensDeSituacao(acao.dataset.p, feita)) add(grupo, icone, rotulo, fn, extra);
-    add("editar", "lapis", "Editar ação", () => editar(true, { proj: acao.dataset.p, sel: acao.dataset.f }));
+    add("editar", "lapis", tr("Editar ação"), () => editar(true, { proj: acao.dataset.p, sel: acao.dataset.f }));
     // abre o Editar na ação e aciona o "+ Plano" ou "+ Checkpoint" dela: o campo do item novo já fica em foco
     const adicionar = (botao) => () => { editar(true, { proj: acao.dataset.p, sel: acao.dataset.f }); document.querySelector(`#mn-detalhe [data-act="${botao}"]`)?.click(); };
-    add("editar", "mais", "Adicionar plano", adicionar("add-plano"));
-    add("editar", "losango", "Adicionar checkpoint", adicionar("add-checkpoint"));
-    if (acaoDe(acao.dataset.p, acao.dataset.f)?.prototipos?.length) add("abrir", "tela", "Ver protótipo", () => abreProtos(acao.dataset.p, acao.dataset.f));
-    add("abrir", "alvo", "Ir para esta ação", () => irPara(acao.dataset.p, acao.dataset.f, alvo.closest(".checkpoint")?.dataset.m));
-    add("perigo", "lixo", "Excluir ação…", () => excluirAcao(acao.dataset.p, acao.dataset.f, true), { perigo: true });
+    add("editar", "mais", tr("Adicionar plano"), adicionar("add-plano"));
+    add("editar", "losango", tr("Adicionar checkpoint"), adicionar("add-checkpoint"));
+    if (acaoDe(acao.dataset.p, acao.dataset.f)?.prototipos?.length) add("abrir", "tela", tr("Ver protótipo"), () => abreProtos(acao.dataset.p, acao.dataset.f));
+    add("abrir", "alvo", tr("Ir para esta ação"), () => irPara(acao.dataset.p, acao.dataset.f, alvo.closest(".checkpoint")?.dataset.m));
+    add("perigo", "lixo", tr("Excluir ação…"), () => excluirAcao(acao.dataset.p, acao.dataset.f, true), { perigo: true });
   }
   if (plano) {
     const feito = plano.getAttribute("aria-checked") === "true";
@@ -57,40 +57,40 @@ function itensDoContexto(alvo) {
   }
   if (nota) add("abrir", "doc", nota.dataset.obs.split("|")[1] ? "Abrir instruções" : "Abrir observações", () => abreNotaObs(nota));
   if (marca) add("abrir", "losango", "Ver marca", () => abreNotaMarca(marca));
-  if (link) add("abrir", "externo", "Abrir link em nova aba", () => link.click());
+  if (link) add("abrir", "externo", tr("Abrir link em nova aba"), () => link.click());
 
   if (!hub.hidden) {
     add("geral", "voltar", "Voltar ao blueprint", () => agenteTela(false));
   } else if (!ed.hidden) {
     const itemAcao = alvo?.closest(".mn-item[data-sel]");
     if (itemAcao && itemAcao.dataset.sel !== "blueprint") {
-      add("editar", "lapis", "Editar ação", () => itemAcao.click());
-      add("perigo", "lixo", "Excluir ação…", () => excluirAcao(edProj, itemAcao.dataset.sel, true), { perigo: true });
+      add("editar", "lapis", tr("Editar ação"), () => itemAcao.click());
+      add("perigo", "lixo", tr("Excluir ação…"), () => excluirAcao(edProj, itemAcao.dataset.sel, true), { perigo: true });
     }
     add("geral", "voltar", "Voltar ao blueprint", () => editar(false));
     add("editar", "mais", "Criar blueprint", () => $("b-novo").click());
   } else if (criandoWorkspace) {
-    add("geral", "voltar", "Voltar aos espaços", () => { location.hash = ""; });
+    add("geral", "voltar", tr("Voltar aos espaços"), () => { location.hash = ""; });
   } else if (workspaceAtual) {
     if (idBlueprint) {
-      if (idBlueprint !== tela && !linhaBlueprint) add("abrir", "abrir", "Abrir blueprint", () => irBlueprint(idBlueprint));
-      add("editar", "lapis", "Editar blueprint", () => editar(true, { proj: idBlueprint }));
+      if (idBlueprint !== tela && !linhaBlueprint) add("abrir", "abrir", tr("Abrir blueprint"), () => irBlueprint(idBlueprint));
+      add("editar", "lapis", tr("Editar blueprint"), () => editar(true, { proj: idBlueprint }));
       add("editar", "estrela", "Planejar este blueprint", () => agenteTela(true, { proj: idBlueprint }));
       if (idBlueprint === tela) {
         const bp = D.blueprints.find((x) => x.id === idBlueprint), aberto = bp?.projetos?.length ? algumProjetoAberto(bp) : abertos[idBlueprint] === true;
-        add("geral", aberto ? "recolher" : "expandir", aberto ? "Recolher ações" : "Expandir ações", () => abrirOuFecharTudo(idBlueprint, !aberto));
+        add("geral", aberto ? "recolher" : "expandir", aberto ? tr("Recolher ações") : tr("Expandir ações"), () => abrirOuFecharTudo(idBlueprint, !aberto));
       }
     } else {
-      add("editar", "lapis", "Editar dados", () => { editar(true); $("geral").open = true; });
+      add("editar", "lapis", tr("Editar dados"), () => { editar(true); $("geral").open = true; });
       add("editar", "mais", "Novo blueprint", () => editar(true, { novo: true }));
     }
-    add("geral", "voltar", tela ? "Voltar aos blueprints" : "Voltar aos espaços", () => { if (tela) irHome(); else location.hash = ""; });
+    add("geral", "voltar", tela ? tr("Voltar aos blueprints") : tr("Voltar aos espaços"), () => { if (tela) irHome(); else location.hash = ""; });
   } else if (nomeUsuario) {
     if (!novoWorkspace) add("editar", "mais", "Criar workspace", () => $("entrada-blueprints").querySelector("[data-adicionar-workspace]")?.click());
   } else {
-    add("geral", "entrar", "Entrar no sistema", () => $("login-nome").focus());
+    add("geral", "entrar", tr("Entrar no sistema"), () => $("login-nome").focus());
   }
-  add("geral", "tela_cheia", document.fullscreenElement ? "Sair da tela cheia" : "Entrar em tela cheia", alternarTelaCheia);
+  add("geral", "tela_cheia", document.fullscreenElement ? tr("Sair da tela cheia") : tr("Entrar em tela cheia"), alternarTelaCheia);
   itens.sort((a, b) => GRUPOS_CONTEXTO.indexOf(a.grupo) - GRUPOS_CONTEXTO.indexOf(b.grupo)); // estável: dentro do grupo vale a ordem em que foram somados
   return { titulo: tituloDoContexto(alvo, { cartaoWorkspace, linhaBlueprint, acao, plano, idBlueprint }), itens };
 }

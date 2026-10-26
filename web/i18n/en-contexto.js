@@ -1,0 +1,37 @@
+// Inglês: menu do botão direito, iniciar uma ação com o Claude, confirmações e a tela Planejar. Chave = texto-fonte em português (web/js/i18n.js).
+Object.assign(I18N.catalogos.en, {
+  // menu de contexto
+  "sem nome": "unnamed", "Abrir workspace": "Open workspace", "Abrir blueprint": "Open blueprint", "Iniciar com o Claude…": "Start with Claude…",
+  "Editar ação": "Edit action", "Adicionar plano": "Add plan", "Adicionar checkpoint": "Add checkpoint", "Ir para esta ação": "Go to this action",
+  "Excluir ação…": "Delete action…", "Abrir link em nova aba": "Open link in new tab", "Voltar aos espaços": "Back to spaces",
+  "Recolher ações": "Collapse actions", "Expandir ações": "Expand actions", "Editar dados": "Edit data", "Voltar aos blueprints": "Back to blueprints",
+  "Entrar no sistema": "Sign in", "Sair da tela cheia": "Exit full screen", "Entrar em tela cheia": "Enter full screen",
+  "Checkpoint": "Checkpoint",
+  // iniciar a ação
+  "Instruções da ação": "Action instructions", "Observação do blueprint": "Blueprint note",
+  "O que fazer nesta ação, passo a passo: o roteiro, as decisões, as dependências e os riscos…": "What to do in this action, step by step: the outline, decisions, dependencies and risks…",
+  "Anotações do blueprint…": "Blueprint notes…", "Iniciar com o Claude": "Start with Claude",
+  "Pedido enviado à sessão: o Claude vai começar a ação {numero}.": "Request sent to the session: Claude will start action {numero}.",
+  "Terminal aberto: o Claude vai começar a ação {numero}.": "Terminal opened: Claude will start action {numero}.",
+  "Essa sessão não está mais conectada ao app. Escolha outra ou abra uma nova.": "That session is no longer connected to the app. Pick another or open a new one.",
+  "Essa sessão não é de uma pasta deste blueprint. Escolha outra ou abra uma nova.": "That session is not from a folder of this blueprint. Pick another or open a new one.",
+  "Esta pasta não está ligada a um blueprint. Em Editar, preencha “Pasta do projeto” neste blueprint e tente de novo.": "This folder is not linked to a blueprint. In Edit, fill in “Project folder” on this blueprint and try again.",
+  "Não encontrei um terminal para abrir (Windows Terminal ou o prompt do Windows).": "Could not find a terminal to open (Windows Terminal or the Windows prompt).",
+  "Motivo: {erro}": "Reason: {erro}",
+  "O app não achou esta ação. Recarregue a página e tente de novo.": "The app could not find this action. Reload the page and try again.",
+  "Não foi possível iniciar a ação (erro {status}).": "Could not start the action (error {status}).",
+  "Sessão em {nome}": "Session in {nome}", "recebe o pedido direto": "receives the request directly", "sem canal: só copia o pedido": "no channel: only copies the request",
+  "Nova sessão": "New session", "abre um terminal novo": "opens a new terminal", "Cancelar": "Cancel", "Iniciar": "Start",
+  "Gasta tokens.": "Spends tokens.",
+  "Já há um agente trabalhando nesta ação; o novo vai trabalhar junto com ele.": "An agent is already working on this action; the new one will work alongside it.",
+  "Iniciar a ação {numero} «{nome}»?": "Start action {numero} “{nome}”?", "Iniciar a ação {numero} com o Claude?": "Start action {numero} with Claude?",
+  "Abre um terminal novo com o Claude Code. {base}": "Opens a new terminal with Claude Code. {base}",
+  "Enviando o pedido à sessão…": "Sending the request to the session…", "Copiando o pedido…": "Copying the request…", "Abrindo o terminal…": "Opening the terminal…",
+  "Pedido copiado: cole na sessão para o Claude começar a ação {numero}.": "Request copied: paste it into the session so Claude starts action {numero}.",
+  "Não consegui copiar sozinho. O pedido é: {prompt}": "Could not copy it automatically. The request is: {prompt}",
+  "Não consegui falar com o app para abrir o terminal. Ele está aberto?": "Could not reach the app to open the terminal. Is it running?",
+  // Planejar
+  "Novo blueprint": "New blueprint", "Nenhum blueprint": "No blueprint", "Proposta de blueprint novo": "New blueprint proposal",
+  "Proposta em «{nome}»": "Proposal on “{nome}”", "outro blueprint": "another blueprint", "✓ concluído": "✓ done", "sem ações": "no actions",
+  "Nenhum blueprint ainda.": "No blueprints yet.",
+});
