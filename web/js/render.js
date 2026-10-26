@@ -159,7 +159,7 @@ function render() {
     out.push(`<text class="mid cap" x="${cx + 8}" y="${cy2 + 47}" font-size="8">${tr("Tela")}</text><text x="${cx + 8}" y="${cy2 + 61}" font-size="12" font-weight="700" class="cap">${esc(corta(desenho, 38))}</text>`);
     const acoesCarimbo = atual ? acoesDe(atual.p) : D.blueprints.flatMap((p) => acoesDe(p)), feitasCarimbo = acoesCarimbo.filter((x) => x.status === "concluido").length;
     const progCarimbo = atual ? progressoDe(atual.p) : D.blueprints.length ? D.blueprints.reduce((t, x) => t + progressoDe(x), 0) / D.blueprints.length : 0;
-    [["Data", hoje.split("-").reverse().join("/"), 0], ["Progresso", `${Math.round(progCarimbo * 100)}%`, 150], ["Folha", `${folha}/${total}`, 250], ["Ações", `${feitasCarimbo}/${acoesCarimbo.length}`, 340]].forEach(([k, v, off]) => {
+    [[tr("Data"), hoje.split("-").reverse().join("/"), 0], [tr("Progresso"), `${Math.round(progCarimbo * 100)}%`, 150], [tr("Folha"), `${folha}/${total}`, 250], [tr("Ações"), `${feitasCarimbo}/${acoesCarimbo.length}`, 340]].forEach(([k, v, off]) => {
       out.push(`<text class="mid cap" x="${cx + off + 8}" y="${cy2 + 77}" font-size="8">${k}</text><text x="${cx + off + 8}" y="${cy2 + 91}" font-size="12" font-weight="700">${esc(v)}</text>`);
     });
   };
@@ -318,7 +318,7 @@ function render() {
           const gl = [];
           let cx0 = f.bx;
           if (f.planos.length) {
-            gl.push(cab(cx0, "Planos", f.tf[0], f.tf[1]));
+            gl.push(cab(cx0, tr("Planos"), f.tf[0], f.tf[1]));
             f.planos.forEach((t, i) => {
               const yy = base + 30 + i * 22, nome = t.texto || tr("sem texto");
               gl.push(`<g ${atr("t", t, `PLANO: ${nome} · ${t.feito ? "FEITO" : "PENDENTE"} · clique para marcar`)}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="cx${t.feito ? " ok" : ""}" x="${cx0}" y="${yy - 11}" width="13" height="13"/>${t.feito ? `<path class="cxm" d="M${cx0 + 3} ${yy - 4}l3 3l5-6"/>` : ""}<text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome, maxc))}</text></g>`);
@@ -328,7 +328,7 @@ function render() {
             cx0 += COLW + 30;
           }
           if (f.checkpoints.length) {
-            gl.push(cab(cx0, "Checkpoints", f.mf[0], f.mf[1]));
+            gl.push(cab(cx0, tr("Checkpoints"), f.mf[0], f.mf[1]));
             f.checkpoints.forEach((m, i) => {
               const yy = base + 30 + i * 22, nome = m.nome || tr("sem nome"), dt = dia(m.data) === dia(m.data) ? " · " + fmt(m.data) : "";
               gl.push(`<g ${atr("m", m, `CHECKPOINT: ${nome}${dt} · ${m.feito ? "FEITO" : "PENDENTE"} · clique para marcar`)}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><path class="dm${m.feito ? " ok" : ""}" d="M${cx0 + 6.5} ${yy - 12}l6.5 6.5l-6.5 6.5l-6.5 -6.5z"/><text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome + dt, maxc))}</text></g>`);

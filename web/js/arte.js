@@ -1,5 +1,5 @@
 // "Arte do projeto" na criação do workspace: marca pronta, texto (sigla) ou peças coladas como texto (JSON), com prévia ao vivo.
-const MARCAS_PRONTAS = [["blueprint", "Blueprint (padrão)"], ["moedas", "Moedas"], ["livros", "Livros"], ["chip", "Chip"], ["caminhao", "Caminhão"]];
+const MARCAS_PRONTAS = [["blueprint", tr("Blueprint (padrão)")], ["moedas", tr("Moedas")], ["livros", tr("Livros")], ["chip", tr("Chip")], ["caminhao", tr("Caminhão")]];
 const arteModo = () => $("workspace-arte-modo").value;
 function pecasDoTexto(t) {
   const tam = Math.max(14, Math.min(80, Math.floor(250 / (t.length * 0.68)))); // a sigla cabe na placa de 300 de largura
@@ -9,18 +9,18 @@ function pecasDoTexto(t) {
 function lerArte() {
   const modo = arteModo();
   if (modo === "marca") return { icone: $("workspace-arte-marca").value, pecas: null };
-  if (!EMB) throw new Error("A prévia da arte ainda está carregando.");
+  if (!EMB) throw new Error(tr("A prévia da arte ainda está carregando."));
   if (modo === "texto") {
     const t = $("workspace-arte-texto").value.trim().slice(0, 12);
-    if (!t) throw new Error("Digite o texto da arte.");
+    if (!t) throw new Error(tr("Digite o texto da arte."));
     return { icone: "blueprint", pecas: pecasDoTexto(t) };
   }
   const bruto = $("workspace-arte-json").value.trim();
-  if (!bruto) throw new Error("Cole as peças da arte em JSON.");
+  if (!bruto) throw new Error(tr("Cole as peças da arte em JSON."));
   let v;
-  try { v = JSON.parse(bruto); } catch { throw new Error("O texto da arte não é um JSON válido."); }
+  try { v = JSON.parse(bruto); } catch { throw new Error(tr("O texto da arte não é um JSON válido.")); }
   const pecas = EMB.sanitizaPecas(Array.isArray(v) ? v : v?.pecas);
-  if (!pecas.length) throw new Error("Nenhuma peça válida na arte.");
+  if (!pecas.length) throw new Error(tr("Nenhuma peça válida na arte."));
   return { icone: "blueprint", pecas };
 }
 function atualizaArte() {

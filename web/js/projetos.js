@@ -45,7 +45,7 @@ function gruposDoBlueprint(p, visiveis, todas) {
   const ag = agenteAqui();
   if (roboRolar && ag?.blueprintId === p.id) abrirProjetoDaAcao(p, ag.acaoId);
   const doGrupo = (lista, id) => lista.filter((f) => projetoDaAcao(p, f) === id);
-  const ids = [...projetosOrdenados(p).map((x) => ({ id: x.id, nome: x.nome || "Sem nome", descricao: x.descricao || "" })), { id: "", nome: "Geral", descricao: "" }];
+  const ids = [...projetosOrdenados(p).map((x) => ({ id: x.id, nome: x.nome || tr("Sem nome"), descricao: x.descricao || "" })), { id: "", nome: tr("Geral"), descricao: "" }];
   return ids.map((g, i) => ({ ...g, numero: i + 1 })).filter((g) => g.id || doGrupo(todas, "").length).map((g) => {
     const chave = chaveProjeto(p, g.id), seus = doGrupo(todas, g.id);
     return { ...g, chave, aberto: projetosAbertos.has(chave), acoes: doGrupo(visiveis, g.id), total: seus.length, ini: Math.min(...seus.map((f) => f.a)), fim: Math.max(...seus.map((f) => f.b)), ...resumo(seus) };

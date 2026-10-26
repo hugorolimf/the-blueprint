@@ -6,7 +6,7 @@ const protoUrl = (x) => `/prototipos/${x.id}.html?v=${encodeURIComponent(x.em ||
 function mostraProto() {
   const f = acaoDe(protoAlvo.pid, protoAlvo.fid), x = f?.prototipos.find((y) => y.id === protoAlvo.id);
   if (!x) return fechaProtos();
-  $("proto-acao").textContent = `Protótipo · ${f.nome || "acao"}`;
+  $("proto-acao").textContent = tr("Protótipo · {nome}", { nome: f.nome || tr("ação") });
   $("proto-titulo").textContent = x.titulo;
   const lista = $("proto-lista");
   lista.hidden = f.prototipos.length < 2;
@@ -32,7 +32,7 @@ function fechaProtos() {
 }
 async function excluirProto() {
   const f = protoAlvo && acaoDe(protoAlvo.pid, protoAlvo.fid), x = f?.prototipos.find((y) => y.id === protoAlvo.id);
-  if (!x || !(await confirmar({ titulo: "Excluir protótipo?", texto: `O protótipo "${x.titulo}" será apagado. Não dá para desfazer.`, rotulo: "Excluir protótipo" }))) return;
+  if (!x || !(await confirmar({ titulo: tr("Excluir protótipo?"), texto: tr(`O protótipo "{titulo}" será apagado. Não dá para desfazer.`, { titulo: x.titulo }), rotulo: tr("Excluir protótipo") }))) return;
   f.prototipos = f.prototipos.filter((y) => y.id !== x.id);
   try { await fetch("/api/mcp/prototipo/remover", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ prototipoId: x.id }) }); } catch {}
   mudou();

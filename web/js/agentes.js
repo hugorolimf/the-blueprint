@@ -16,12 +16,12 @@ function agenteMarcaVisto(a) {
   render();
 }
 let agentesLista = [], agentesVida = 10 * 60 * 1000, agentesExpira = 0; // agentesVida: sem aviso por esse tempo, o agente vai para o repouso
-const ESTADO_AG = { lendo: "Lendo", escrevendo: "Escrevendo", testando: "Testando", aguardando: "Aguardando", bloqueado: "Bloqueado", concluido: "Concluído", ocioso: "Parado" };
+const ESTADO_AG = { lendo: tr("Lendo"), escrevendo: tr("Escrevendo"), testando: tr("Testando"), aguardando: tr("Aguardando"), bloqueado: tr("Bloqueado"), concluido: tr("Concluído"), ocioso: tr("Parado") };
 const PAPEL_AG = { explorador: "Explorador", construtor: "Construtor", revisor: "Revisor" };
 
 const haQuanto = (iso) => {
   const s = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 1000));
-  return s < 10 ? "agora" : s < 60 ? `há ${s} s` : s < 3600 ? `há ${Math.round(s / 60)} min` : `há ${Math.round(s / 3600)} h`;
+  return s < 10 ? tr("agora") : s < 60 ? tr("há {n} s", { n: s }) : s < 3600 ? tr("há {n} min", { n: Math.round(s / 60) }) : tr("há {n} h", { n: Math.round(s / 3600) });
 };
 
 async function agentesBusca() {

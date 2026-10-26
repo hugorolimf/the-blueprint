@@ -8,7 +8,7 @@ function sugereF11(chave) {
   if (vistas[chave]) return;
   vistas[chave] = 1;
   try { localStorage.setItem("blueprint.f11", JSON.stringify(vistas)); } catch {}
-  dicaF11.innerHTML = `<b>F11</b><span>Pressione F11 para uma melhor visualização desta tela.</span><button class="fecha" type="button" aria-label="Fechar dica">×</button>`;
+  dicaF11.innerHTML = `<b>F11</b><span>${tr("Pressione F11 para uma melhor visualização desta tela.")}</span><button class="fecha" type="button" aria-label="${tr("Fechar dica")}">×</button>`;
   dicaF11.hidden = false;
   clearTimeout(dicaTimer);
   dicaTimer = setTimeout(() => { dicaF11.hidden = true; }, 9000);

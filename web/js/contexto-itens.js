@@ -75,7 +75,7 @@ function itensDoContexto(alvo) {
     if (idBlueprint) {
       if (idBlueprint !== tela && !linhaBlueprint) add("abrir", "abrir", tr("Abrir blueprint"), () => irBlueprint(idBlueprint));
       add("editar", "lapis", tr("Editar blueprint"), () => editar(true, { proj: idBlueprint }));
-      add("editar", "estrela", "Planejar este blueprint", () => agenteTela(true, { proj: idBlueprint }));
+      add("editar", "estrela", tr("Planejar este blueprint"), () => agenteTela(true, { proj: idBlueprint }));
       if (idBlueprint === tela) {
         const bp = D.blueprints.find((x) => x.id === idBlueprint), aberto = bp?.projetos?.length ? algumProjetoAberto(bp) : abertos[idBlueprint] === true;
         add("geral", aberto ? "recolher" : "expandir", aberto ? tr("Recolher ações") : tr("Expandir ações"), () => abrirOuFecharTudo(idBlueprint, !aberto));

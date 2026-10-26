@@ -31,7 +31,7 @@ function terminarArrasto(cancelado) {
   D.blueprints.splice(para, 0, D.blueprints.splice(de, 1)[0]);
   montaEditor();
   mudou();
-  aviso(`Blueprint movido para a posição ${para + 1}`);
+  aviso(tr("Blueprint movido para a posição {n}", { n: para + 1 }));
 }
 host.addEventListener("pointerdown", (e) => {
   if (e.button !== 0) return;

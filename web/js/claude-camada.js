@@ -135,8 +135,8 @@ function claudeFixa(r, x, y) {
 }
 function claudeRotula(r) { // aria, dica e SVG da pose; durante o deslocamento o SVG só troca no fim
   const { a, f, extras } = r.dados;
-  r.el.setAttribute("aria-label", a.espera ? "Claude esperando: abrir a ação para iniciar" : `Ver o que ${a.agente || "o agente"} está fazendo`);
-  r.el.title = a.espera ? `${a.texto}. Clique para abrir a ação e iniciar com o Claude.` : `${a.agente || "Agente"}${a.texto ? ": " + umaLinha(a.texto, 140) : ""}${extras ? ` (mais ${extras} agente${extras > 1 ? "s" : ""} junto${extras > 1 ? "s" : ""} aqui)` : ""}`;
+  r.el.setAttribute("aria-label", a.espera ? tr("Claude esperando: abrir a ação para iniciar") : tr("Ver o que {agente} está fazendo", { agente: a.agente || tr("o agente") }));
+  r.el.title = a.espera ? tr("{texto}. Clique para abrir a ação e iniciar com o Claude.", { texto: a.texto }) : `${a.agente || tr("Agente")}${a.texto ? ": " + umaLinha(a.texto, 140) : ""}${extras ? " " + trn(extras, ["(mais {n} agente junto aqui)", "(mais {n} agentes juntos aqui)"]) : ""}`;
   r.el.classList.toggle("erro", f.pose === "bloqueado");
   if (r.chave !== f.chave && !r.anim) { r.el.innerHTML = claudeHtmlPose(f.papel, f.pose); r.chave = f.chave; claudeVidaLiga(r); }
 }

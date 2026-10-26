@@ -1,6 +1,6 @@
 // Inglês: a tela Editar (blueprint, ações, planos, checkpoints, links, confirmações de exclusão). Chave = texto-fonte em português (web/js/i18n.js).
 Object.assign(I18N.catalogos.en, {
-  "Concluída": "Completed", "⤡ Sair da tela cheia": "⤡ Exit full screen",
+  "Concluída": "Completed", "Checkpoints": "Checkpoints", "⤡ Sair da tela cheia": "⤡ Exit full screen",
   // itens
   "Plano feito": "Plan done", "Descreva o plano": "Describe the plan", "Texto do plano": "Plan text", "Horas estimadas do plano": "Estimated hours for the plan",
   "Estimativa de trabalho do agente, em horas": "Agent work estimate, in hours", "Excluir plano": "Delete plan",

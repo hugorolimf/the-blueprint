@@ -71,9 +71,9 @@ function mdHtml(texto) {
   return out.join("");
 }
 // Campo de texto com a prévia ao lado: o que se digita aparece renderizado em tempo real (um quadro por vez, para não pesar com texto grande).
-const MD_VAZIO = '<p class="md-vazio">A prévia aparece aqui enquanto você escreve.</p>';
+const MD_VAZIO = `<p class="md-vazio">${tr("A prévia aparece aqui enquanto você escreve.")}</p>`;
 function mdEdicao(attrs, texto, { rows = 10, placeholder = "", oculto = false } = {}) {
-  return `<div class="obs-edicao"${oculto ? " hidden" : ""}><textarea ${attrs} rows="${rows}" placeholder="${esc(placeholder)}">${esc(texto)}</textarea><div class="obs-previa-bloco"><span class="obs-rot">Prévia</span><div class="md obs-previa">${mdHtml(texto) || MD_VAZIO}</div></div></div>`;
+  return `<div class="obs-edicao"${oculto ? " hidden" : ""}><textarea ${attrs} rows="${rows}" placeholder="${esc(placeholder)}">${esc(texto)}</textarea><div class="obs-previa-bloco"><span class="obs-rot">${tr("Prévia")}</span><div class="md obs-previa">${mdHtml(texto) || MD_VAZIO}</div></div></div>`;
 }
 let mdQuadro = 0;
 function mdPrevia(ta) {

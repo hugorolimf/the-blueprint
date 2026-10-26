@@ -7,7 +7,8 @@ import { join } from "node:path";
 import vm from "node:vm";
 import { poseDoEstado, MAX_SUBAGENTES, ESCALA, PAPEIS, POSES, QUADROS, SEQUENCIA } from "./agentes-claude.mjs";
 
-const ctx = vm.createContext({});
+const ctx = vm.createContext({ navigator: { languages: ["pt-BR"] }, location: { search: "" } });
+vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "i18n.js"), "utf8"), ctx, { filename: "i18n.js" });
 vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "claude-logica.js"), "utf8")
   + "\nthis.api = { claudeEstadoDoEvento, claudePrincipal, claudePapelDe, claudeFigura, claudeChave, claudeChaveSvg, claudeQuadrosUnicos, claudeVisiveis, claudeLugar, claudeItens, claudeLarguraDe, claudeLarguraItem, claudePosicao, claudeProximaAcao, claudeAgenteEspera, claudeItemEspera, CLAUDE_MAX_SUB, CLAUDE_ESCALA_SUB, CLAUDE_PAPEIS, CLAUDE_FOLGA };", ctx);
 const A = ctx.api;

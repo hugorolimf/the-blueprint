@@ -81,7 +81,7 @@ function claudeProximaAcao(p, ags = []) {
   return candidatas[0]?.f || null;
 }
 // o "agente" de espera: só leva o que a figura usa (pose esperando = estado aguardando, o texto da dica e a ação que o clique abre)
-const claudeAgenteEspera = (p, f, numero) => ({ agente: "~espera", estado: "aguardando", blueprintId: p.id, acaoId: f.id, planoId: "", em: 0, espera: true, texto: `Esperando para começar a ação ${numero} · ${f.nome || "sem nome"}` });
+const claudeAgenteEspera = (p, f, numero) => ({ agente: "~espera", estado: "aguardando", blueprintId: p.id, acaoId: f.id, planoId: "", em: 0, espera: true, texto: tr("Esperando para começar a ação {numero} · {nome}", { numero, nome: f.nome || tr("sem nome") }) });
 // o item da figura de espera: ao lado da barra da ação (`acao:<id>`) se ela está à vista e aberta; senão no cabeçalho do blueprint, depois dos que já estão lá (`itens`)
 function claudeItemEspera(p, f, numero, acaoVisivel, itens, secaoDe = () => null) {
   const secao = secaoDe(f.id), lugar = acaoVisivel(f.id) ? `acao:${f.id}` : secao ? `secao:${secao}` : `cab:${p.id}`;
