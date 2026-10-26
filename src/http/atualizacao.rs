@@ -9,12 +9,12 @@ use serde_json::{json, Value};
 
 pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
     if !so_loopback(&estado.mcp, pedido) {
-        return Resposta::texto(403, "text/plain", "a atualização só funciona nesta máquina");
+        return Resposta::texto(403, "text/plain", crate::tr!("updating only works on this machine", "a atualização só funciona nesta máquina"));
     }
     let a = &estado.atualizador;
     match (pedido.metodo.as_str(), pedido.caminho.as_str()) {
         ("GET", "/api/atualizacao") => Resposta::json(200, &a.json()).com("cache-control", "no-store"),
-        ("POST", _) if !pedido.eh_json() => Resposta::texto(415, "text/plain", "envie application/json"),
+        ("POST", _) if !pedido.eh_json() => Resposta::texto(415, "text/plain", crate::tr!("send application/json", "envie application/json")),
         ("POST", "/api/atualizacao/verificar") => {
             a.verificar_em_segundo_plano(true);
             Resposta::json(202, &json!({"ok": true}))
@@ -28,10 +28,10 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
                 a.definir_automatica(ligada);
                 Resposta::json(200, &a.json())
             }
-            None => Resposta::json(400, &json!({"erro": "envie {\"ligada\": true|false}"})),
+            None => Resposta::json(400, &json!({"erro": crate::tr!("send {{\"ligada\": true|false}}", "envie {{\"ligada\": true|false}}"), "codigo": "invalido"})),
         },
-        ("GET" | "POST", _) => Resposta::texto(404, "text/plain", "não encontrado"),
-        _ => Resposta::texto(405, "text/plain", "método não permitido"),
+        ("GET" | "POST", _) => Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado")),
+        _ => Resposta::texto(405, "text/plain", crate::tr!("method not allowed", "método não permitido")),
     }
 }
 
@@ -39,7 +39,7 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
 /// abrir: src/mcp/pendentes.rs, então um agente trabalhando não impede a atualização.)
 fn bloqueio(estado: &Estado) -> Option<String> {
     let n = estado.mcp.itens().len();
-    (n > 0).then(|| format!("Há {n} aviso(s) do agente (propostas ou marcações) que a tela ainda não aplicou: fechar o app agora os perderia. Abra o blueprint, aplique ou descarte e clique em Atualizar de novo."))
+    (n > 0).then(|| crate::tr!("There are {n} agent notice(s) (proposals or marks) that the screen has not applied yet: closing the app now would lose them. Open the blueprint, apply or discard them and click Update again.", "Há {n} aviso(s) do agente (propostas ou marcações) que a tela ainda não aplicou: fechar o app agora os perderia. Abra o blueprint, aplique ou descarte e clique em Atualizar de novo."))
 }
 
 /// O clique em Atualizar: confere a fila, copia o banco, roda o instalador e manda o app sair. Usado pela rota, pela bandeja e (por HTTP) pelo `blueprint atualizar --instalar`.

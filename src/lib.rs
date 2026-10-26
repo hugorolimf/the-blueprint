@@ -7,6 +7,7 @@ pub mod dados;
 pub mod erro;
 pub mod hook;
 pub mod http;
+pub mod idioma;
 #[cfg(windows)]
 pub mod janela;
 pub mod mcp;

@@ -32,7 +32,7 @@ fn recusa(status: u16, erro: &str, codigo: &str) -> (u16, Value) {
 pub(super) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path, &Path, &str) -> Result<&'static str, String>) -> Result<(u16, Value), ErroHttp> {
     let (ws, bp, acao_id) = (texto(corpo, "workspaceId"), texto(corpo, "blueprintId"), texto(corpo, "acaoId"));
     if ![ws, bp, acao_id].iter().all(|i| id_valido(i)) {
-        return Err(falha(400, "Informe workspaceId, blueprintId e acaoId."));
+        return Err(falha(400, crate::tr!("Send workspaceId, blueprintId and acaoId.", "Informe workspaceId, blueprintId e acaoId.")).codigo("faltam-ids"));
     }
     let (pasta, prompt) = {
         let mut d = travado(dados);
@@ -41,19 +41,19 @@ pub(super) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path
         let estrutura = acoes::blueprint(tudo, ws, bp, None)?; // 404 de workspace ou blueprint que não existe
         let p = &estrutura["blueprint"];
         let acoes = lista(&p["acoes"]);
-        let i = acoes.iter().position(|a| texto(a, "id") == acao_id).ok_or_else(|| falha(404, "Ação não encontrada neste blueprint."))?;
+        let i = acoes.iter().position(|a| texto(a, "id") == acao_id).ok_or_else(|| falha(404, crate::tr!("Action not found in this blueprint.", "Ação não encontrada neste blueprint.")).codigo("acao-nao-encontrada"))?;
         let Some(pasta) = d.pasta_do_blueprint(&Contexto::local(), ws, bp)?.filter(|c| Path::new(c).is_dir()) else {
-            return Ok(recusa(409, "Este blueprint não tem uma pasta ligada (ou ela não existe mais).", "sem-pasta"));
+            return Ok(recusa(409, &crate::tr!("This blueprint has no linked folder (or it no longer exists).", "Este blueprint não tem uma pasta ligada (ou ela não existe mais)."), "sem-pasta"));
         };
-        let prompt = format!(
-            "Execute a ação {} «{}» do blueprint «{}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): leia com ler_blueprint, registre o progresso com registrar_progresso e conclua cada plano com marcar_concluido e a evidência.",
-            numeros_das_acoes(p, n)[i],
-            limpo(texto(&acoes[i], "nome")),
-            limpo(texto(p, "nome"))
+        // o pedido segue o idioma de quem clicou (o agente responde nele); os nomes das ferramentas não mudam
+        let (numero, acao, nome_bp) = (&numeros_das_acoes(p, n)[i], limpo(texto(&acoes[i], "nome")), limpo(texto(p, "nome")));
+        let prompt = crate::tr!(
+            "Execute action {numero} «{acao}» of blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): read it with ler_blueprint, report progress with registrar_progresso and complete each plan with marcar_concluido and the evidence.",
+            "Execute a ação {numero} «{acao}» do blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): leia com ler_blueprint, registre o progresso com registrar_progresso e conclua cada plano com marcar_concluido e a evidência."
         );
         (pasta, prompt)
     };
-    let exe = std::env::current_exe().map_err(|e| falha(500, format!("não sei onde este programa está: {e}")))?;
+    let exe = std::env::current_exe().map_err(|e| falha(500, crate::tr!("cannot tell where this program is: {e}", "não sei onde este programa está: {e}")))?;
     Ok(match lancar(Path::new(&pasta), &exe, &prompt) {
         Ok(terminal) => (200, json!({"ok": true, "pasta": pasta, "terminal": terminal})),
         Err(e) => recusa(501, &e, "sem-terminal"),
@@ -66,7 +66,7 @@ pub(super) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path
 pub(super) fn em_sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<(u16, Value), ErroHttp> {
     let sessao = texto(corpo, "sessaoId");
     if !id_valido(sessao) {
-        return Err(falha(400, "sessaoId inválido."));
+        return Err(falha(400, crate::tr!("invalid sessaoId.", "sessaoId inválido.")).codigo("sessao-invalida"));
     }
     let (ws, bp, copiar) = (texto(corpo, "workspaceId"), texto(corpo, "blueprintId"), corpo["semCanal"] == true);
     let (pedido, recusa_da_entrega) = (RefCell::new(String::new()), RefCell::new(None));

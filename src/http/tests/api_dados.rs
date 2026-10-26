@@ -66,7 +66,7 @@ fn gravar_sobre_versao_velha_e_recusado_e_cada_gravacao_avisa_as_janelas() {
     // uma janela que ainda tem a versão velha não apaga o que a outra gravou
     let r = gravar_na_versao(&e, Some(&v1), json!({"blueprints": [{"id": "velho", "nome": "Velho", "acoes": []}]}));
     assert_eq!(r.status, 409);
-    assert_eq!(json_de(&r), json!({"erro": "desatualizado", "versao": v2.parse::<u64>().unwrap()}));
+    assert_eq!(json_de(&r), json!({"erro": "desatualizado", "codigo": "desatualizado", "versao": v2.parse::<u64>().unwrap()}));
     assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/dados", &[], None))), primeiro);
     assert!(janela.try_recv().is_err(), "a gravação recusada não avisa ninguém");
     // com aspas, como um ETag, vale igual; sem If-Match segue valendo como antes (importadores e scripts simples)

@@ -130,11 +130,11 @@ impl Mcp {
     /// O mesmo endereçamento para os outros textos do usuário (`comentario-plano`, `conversa-usuario`; ver `conversa.rs`): o `watch.rs` dá o prefixo de cada um.
     pub(super) fn entregar_ao_canal(&self, evento: &'static str, workspace_id: &str, blueprint_id: &str, canal_id: &str, pedido: &str) -> Result<(), (u16, &'static str, &'static str)> {
         let Some(cwd) = self.canais.lock().unwrap_or_else(|e| e.into_inner()).get(canal_id).cloned() else {
-            return Err((410, "sessao-caiu", "Essa sessão não está mais conectada ao app."));
+            return Err((410, "sessao-caiu", crate::idioma::ou("That session is no longer connected to the app.", "Essa sessão não está mais conectada ao app.")));
         };
         let da_pasta = self.abertas.lock().unwrap_or_else(|e| e.into_inner()).values().any(|s| s.workspace_id == workspace_id && s.blueprint_id == blueprint_id && normal(&s.cwd) == normal(&cwd));
         if !da_pasta {
-            return Err((409, "sessao-de-outra-pasta", "Essa sessão não é de uma pasta deste blueprint."));
+            return Err((409, "sessao-de-outra-pasta", crate::idioma::ou("That session is not in a folder of this blueprint.", "Essa sessão não é de uma pasta deste blueprint.")));
         }
         self.notificar(evento, Some(json!({"workspaceId": workspace_id, "blueprintId": blueprint_id, "canalId": canal_id, "texto": pedido})));
         Ok(())

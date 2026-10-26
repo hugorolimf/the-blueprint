@@ -59,7 +59,7 @@ try {
   const total = (await (await fetch(url + "/api/dados")).json()).blueprints.find((x) => x.id === blueprint.id).acoes.length;
   const r1 = await registrar(NOME, "Corrigi o menu fora do plano.");
   assert.equal(r1.isError, false, r1.texto);
-  assert.match(r1.texto, /Registro nº 1/i, "a resposta ao agente diz o número do registro e que ele deve perguntar ao usuário");
+  assert.match(r1.texto, /Record no\. 1/i, "a resposta ao agente diz o número do registro e que ele deve perguntar ao usuário");
   await dormir(1200);
   await js(`document.getElementById("b-ia").click()`); // abre o Planejar: o registro aparece no painel acima da proposta
   await dormir(1500);

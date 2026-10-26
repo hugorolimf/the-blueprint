@@ -11,32 +11,32 @@ const EVIDENCIA_MAX: usize = 1000;
 pub fn validar_registro(entrada: &Value, blueprint: &Value, hoje: &str) -> Validacao {
     let mut erros = Vec::new();
     if !lista(entrada.get("remover")).is_empty() || !lista(entrada.get("mover")).is_empty() {
-        erros.push("Um registro só relata o que foi feito: `remover` e `mover` não valem aqui (use propor_blueprint).".into());
+        erros.push(crate::tr!("A record only reports what was done: `remover` and `mover` are not allowed here (use propor_blueprint).", "Um registro só relata o que foi feito: `remover` e `mover` não valem aqui (use propor_blueprint)."));
     }
     let enviadas = lista(entrada.get("acoes"));
     let mut feitos = 0;
     for (i, f) in enviadas.iter().take(20).enumerate() {
-        for (lista_nome, rotulo) in [("planos", "plano"), ("checkpoints", "checkpoint")] {
+        for (lista_nome, rotulo) in [("planos", crate::idioma::ou("plan", "plano")), ("checkpoints", "checkpoint")] {
             for (j, item) in lista(f.get(lista_nome)).iter().enumerate() {
-                let onde = format!("Ação {}, {rotulo} {}", i + 1, j + 1);
+                let onde = crate::tr!("Action {}, {rotulo} {}", "Ação {}, {rotulo} {}", i + 1, j + 1);
                 match item.get("feito") {
                     None | Some(Value::Null) | Some(Value::Bool(false)) => {}
                     Some(Value::Bool(true)) => {
                         feitos += 1;
                         let evidencia = campo(item, "evidencia");
                         if evidencia.is_empty() {
-                            erros.push(format!("{onde}: `feito: true` exige a `evidencia` (o comando ou teste rodado e o resultado)."));
+                            erros.push(crate::tr!("{onde}: `feito: true` requires `evidencia` (the command or test that was run and its result).", "{onde}: `feito: true` exige a `evidencia` (o comando ou teste rodado e o resultado)."));
                         } else if evidencia.chars().count() > EVIDENCIA_MAX {
-                            erros.push(format!("{onde}: `evidencia` com {} caracteres; o máximo é {EVIDENCIA_MAX}.", evidencia.chars().count()));
+                            erros.push(crate::tr!("{onde}: `evidencia` has {} characters; the maximum is {EVIDENCIA_MAX}.", "{onde}: `evidencia` com {} caracteres; o máximo é {EVIDENCIA_MAX}.", evidencia.chars().count()));
                         }
                     }
-                    Some(_) => erros.push(format!("{onde}: `feito` deve ser true ou false.")),
+                    Some(_) => erros.push(crate::tr!("{onde}: `feito` must be true or false.", "{onde}: `feito` deve ser true ou false.")),
                 }
             }
         }
     }
     if feitos == 0 && erros.is_empty() {
-        erros.push("O registro não tem nada feito: marque `feito: true` (com `evidencia`) no que já foi feito. Trabalho futuro vai em propor_blueprint.".into());
+        erros.push(crate::tr!("The record has nothing done: mark `feito: true` (with `evidencia`) on what is already done. Future work goes in propor_blueprint.", "O registro não tem nada feito: marque `feito: true` (com `evidencia`) no que já foi feito. Trabalho futuro vai em propor_blueprint."));
     }
     let mut r = validar(entrada, Some(blueprint), hoje, true);
     r.erros.splice(0..0, erros);

@@ -36,7 +36,7 @@ impl Atualizador {
             let e = self.i.estado.lock().unwrap_or_else(|e| e.into_inner());
             match (&e.fase, &e.versao, &e.arquivo, &e.sha256) {
                 (Fase::Pronta, Some(v), Some(a), Some(h)) => (v.clone(), a.clone(), h.clone()),
-                _ => return Err(recusa(409, "sem-atualizacao", "Não há atualização pronta para instalar.")),
+                _ => return Err(recusa(409, "sem-atualizacao", crate::tr!("There is no update ready to install.", "Não há atualização pronta para instalar."))),
             }
         };
         if let Some(motivo) = bloqueio {
@@ -46,11 +46,11 @@ impl Atualizador {
         if !arquivo.starts_with(&self.i.pasta) || !hash::confere(&arquivo, &esperado) {
             let _ = std::fs::remove_file(&arquivo);
             self.apagar_pronta();
-            let texto = "O instalador baixado mudou depois do download e foi descartado; o app vai baixar de novo na próxima verificação.";
-            self.mudar(|e| *e = super::estado::Info { fase: Fase::Erro(texto.into()), ..Default::default() });
+            let texto = crate::tr!("The downloaded installer changed after the download and was discarded; the app will download it again at the next check.", "O instalador baixado mudou depois do download e foi descartado; o app vai baixar de novo na próxima verificação.");
+            self.mudar(|e| *e = super::estado::Info { fase: Fase::Erro(texto.clone()), ..Default::default() });
             return Err(recusa(409, "arquivo-alterado", texto));
         }
-        backup(&versao).map_err(|e| recusa(500, "backup", format!("Não instalei: {e}")))?;
+        backup(&versao).map_err(|e| recusa(500, "backup", crate::tr!("Not installed: {e}", "Não instalei: {e}")))?;
         self.mudar(|e| {
             e.fase = Fase::Instalando;
             e.motivo = None;

@@ -73,8 +73,9 @@ impl Limite {
     fn novo() -> Self { Self { inicio: Instant::now(), linhas: 0, canal: None } }
     fn mensagem(&mut self, nome: &str, dados: &str, alvo: &(String, String)) -> Option<String> {
         let texto = match nome {
-            "proposta-aplicada" => "The Blueprint: o usuário aplicou uma proposta no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual.",
-            "checkpoint-marcado" => "The Blueprint: o usuário marcou um checkpoint no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual.",
+            // avisos informativos no idioma do usuário; os prefixos de prefixo() são contrato com as instruções do MCP e não se traduzem
+            "proposta-aplicada" => crate::idioma::ou("The Blueprint: the user applied a proposal to this folder's blueprint. Check ler_blueprint for the current state.", "The Blueprint: o usuário aplicou uma proposta no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual."),
+            "checkpoint-marcado" => crate::idioma::ou("The Blueprint: the user marked a checkpoint in this folder's blueprint. Check ler_blueprint for the current state.", "The Blueprint: o usuário marcou um checkpoint no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual."),
             _ if prefixo(nome).is_some() => "", // o texto vem do evento, abaixo; só a sessão com canal endereçada o recebe
             _ => return None,
         };

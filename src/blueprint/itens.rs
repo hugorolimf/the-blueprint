@@ -56,12 +56,12 @@ fn horas_do_plano(t: &Value, ex: Option<&Value>, rot: &str, erros: &mut Vec<Stri
     match valor {
         Some(h) if (0.5..=16.0).contains(&h) => {
             if h > 8.0 {
-                avisos.push(format!("{rot}: {h} h é muito para um plano (o ideal é de 0,5 a 4 h; acima de 8 h, divida)."));
+                avisos.push(crate::tr!("{rot}: {h} h is a lot for a plan (ideally 0.5 to 4 h; above 8 h, split it).", "{rot}: {h} h é muito para um plano (o ideal é de 0,5 a 4 h; acima de 8 h, divida)."));
             }
             Some((h * 10.0).round() / 10.0)
         }
         _ => {
-            erros.push(format!("{rot}: `horas` deve ser um número de 0,5 a 16 (recebido {enviado})."));
+            erros.push(crate::tr!("{rot}: `horas` must be a number from 0.5 to 16 (got {enviado}).", "{rot}: `horas` deve ser um número de 0,5 a 16 (recebido {enviado})."));
             None
         }
     }
@@ -80,15 +80,15 @@ pub fn planos(f: &Value, c: &Cenario, erros: &mut Vec<String>, avisos: &mut Vec<
     let itens: Vec<Item> = enviadas.iter().map(Item::Enviado).chain(mantidas.iter().map(|x| Item::Mantido(x))).collect();
     let (rotulo, total) = (c.rotulo, itens.len());
     if total == 0 {
-        avisos.push(format!("{rotulo}: sem planos (ok só se for um esqueleto que o usuário vai detalhar)."));
+        avisos.push(crate::tr!("{rotulo}: no plans (fine only for a skeleton the user will detail).", "{rotulo}: sem planos (ok só se for um esqueleto que o usuário vai detalhar)."));
     }
     if total > 12 {
-        erros.push(format!("{rotulo}: {total} planos; o máximo é 12 (o ideal é de 3 a 8). Divida a ação."));
+        erros.push(crate::tr!("{rotulo}: {total} plans; the maximum is 12 (ideally 3 to 8). Split the action.", "{rotulo}: {total} planos; o máximo é 12 (o ideal é de 3 a 8). Divida a ação."));
     } else if total > 0 && !(3..=8).contains(&total) {
-        avisos.push(format!("{rotulo}: {total} plano(s); o ideal é de 3 a 8."));
+        avisos.push(crate::tr!("{rotulo}: {total} plan(s); ideally 3 to 8.", "{rotulo}: {total} plano(s); o ideal é de 3 a 8."));
     }
     if !mantidas.is_empty() && !enviadas.is_empty() {
-        avisos.push(format!("{rotulo}: {} plano(s) existente(s) não vieram e ficam como estão.", mantidas.len()));
+        avisos.push(crate::tr!("{rotulo}: {} existing plan(s) were not sent and stay as they are.", "{rotulo}: {} plano(s) existente(s) não vieram e ficam como estão.", mantidas.len()));
     }
     let mut vistos: HashSet<String> = HashSet::new();
     let mut saida = Vec::new();
@@ -103,30 +103,30 @@ pub fn planos(f: &Value, c: &Cenario, erros: &mut Vec<String>, avisos: &mut Vec<
         };
         let ex = c.acha("planos", &campo(t, "id"));
         let tx = ou(campo(t, "texto"), ex.as_ref().map(|e| str_de(e, "texto")).unwrap_or_default());
-        let rot = format!("{rotulo}, plano {}{}", j + 1, entre_aspas(&tx));
+        let rot = crate::tr!("{rotulo}, plan {}{}", "{rotulo}, plano {}{}", j + 1, entre_aspas(&tx));
         if tx.is_empty() {
-            erros.push(format!("{rot}: falta o título (`texto`)."));
+            erros.push(crate::tr!("{rot}: the title (`texto`) is missing.", "{rot}: falta o título (`texto`)."));
         } else {
             if tamanho(&tx) > 45 {
-                erros.push(format!("{rot}: título com {} caracteres; o máximo é 45.", tamanho(&tx)));
+                erros.push(crate::tr!("{rot}: title has {} characters; the maximum is 45.", "{rot}: título com {} caracteres; o máximo é 45.", tamanho(&tx)));
             }
             if !infinitivo(&tx) {
-                avisos.push(format!("{rot}: o título deveria começar com verbo no infinitivo."));
+                avisos.push(crate::tr!("{rot}: the title should start with a verb in the infinitive.", "{rot}: o título deveria começar com verbo no infinitivo."));
             }
             if vistos.contains(&tx.to_lowercase()) {
-                erros.push(format!("{rot}: título repetido na ação."));
+                erros.push(crate::tr!("{rot}: title repeated in the action.", "{rot}: título repetido na ação."));
             }
             vistos.insert(tx.to_lowercase());
         }
         let descricao = ou(campo(t, "descricao"), ex.as_ref().map(|e| str_de(e, "descricao")).unwrap_or_default());
         if descricao.is_empty() && ex.is_none() {
-            erros.push(format!("{rot}: falta a descrição (escopo, resultado esperado e validação)."));
+            erros.push(crate::tr!("{rot}: the description is missing (scope, expected result and validation).", "{rot}: falta a descrição (escopo, resultado esperado e validação)."));
         } else if !descricao.is_empty() && !campo(t, "descricao").is_empty() && !descricao.to_lowercase().contains("valida") {
-            avisos.push(format!("{rot}: a descrição não diz como validar (inclua \"Validação: ...\")."));
+            avisos.push(crate::tr!("{rot}: the description does not say how to validate (include \"Validation: ...\").", "{rot}: a descrição não diz como validar (inclua \"Validação: ...\")."));
         }
         let id = campo(t, "id");
         if !id.is_empty() && ex.is_none() {
-            erros.push(format!("{rot}: o id \"{id}\" não existe nesta ação nem em outra do blueprint (deixe vazio num plano novo)."));
+            erros.push(crate::tr!("{rot}: id \"{id}\" does not exist in this action or another one of the blueprint (leave it empty for a new plan).", "{rot}: o id \"{id}\" não existe nesta ação nem em outra do blueprint (deixe vazio num plano novo)."));
         }
         let horas = horas_do_plano(t, ex.as_ref(), &rot, erros, avisos);
         saida.push(com_horas(com_origem(json!({"id": id, "texto": truncar(&tx, 45), "descricao": truncar(&descricao, 3000)}), &ex), horas));
@@ -140,7 +140,7 @@ pub fn checkpoints(f: &Value, c: &Cenario, erros: &mut Vec<String>) -> Vec<Value
     let itens: Vec<Item> = enviados.iter().map(Item::Enviado).chain(mantidos.iter().map(|x| Item::Mantido(x))).collect();
     let rotulo = c.rotulo;
     if itens.len() > 8 {
-        erros.push(format!("{rotulo}: {} checkpoints; o máximo é 8 (o ideal é de 1 a 3).", itens.len()));
+        erros.push(crate::tr!("{rotulo}: {} checkpoints; the maximum is 8 (ideally 1 to 3).", "{rotulo}: {} checkpoints; o máximo é 8 (o ideal é de 1 a 3).", itens.len()));
     }
     let periodo_ok = dia_valido(c.inicio) && dia_valido(c.fim);
     let mut saida = Vec::new();
@@ -154,19 +154,19 @@ pub fn checkpoints(f: &Value, c: &Cenario, erros: &mut Vec<String>) -> Vec<Value
         };
         let ex = c.acha("checkpoints", &campo(m, "id"));
         let nm = ou(campo(m, "nome"), ex.as_ref().map(|e| str_de(e, "nome")).unwrap_or_default());
-        let rot = format!("{rotulo}, checkpoint {}{}", j + 1, entre_aspas(&nm));
+        let rot = crate::tr!("{rotulo}, checkpoint {}{}", "{rotulo}, checkpoint {}{}", j + 1, entre_aspas(&nm));
         let data = ou(campo(m, "data"), ex.as_ref().map(|e| str_de(e, "data")).unwrap_or_default());
         if nm.is_empty() {
-            erros.push(format!("{rot}: falta o nome."));
+            erros.push(crate::tr!("{rot}: the name is missing.", "{rot}: falta o nome."));
         }
         if !dia_valido(&data) {
-            erros.push(format!("{rot}: `data` deve ser aaaa-mm-dd válida (recebido \"{data}\")."));
+            erros.push(crate::tr!("{rot}: `data` must be a valid yyyy-mm-dd date (got \"{data}\").", "{rot}: `data` deve ser aaaa-mm-dd válida (recebido \"{data}\")."));
         } else if periodo_ok && (data.as_str() < c.inicio || data.as_str() > c.fim) {
-            erros.push(format!("{rot}: a data {data} está fora do período da ação ({} a {}).", c.inicio, c.fim));
+            erros.push(crate::tr!("{rot}: date {data} is outside the action period ({} to {}).", "{rot}: a data {data} está fora do período da ação ({} a {}).", c.inicio, c.fim));
         }
         let id = texto(m.get("id"));
         if !id.is_empty() && ex.is_none() {
-            erros.push(format!("{rot}: o id \"{id}\" não existe nesta ação nem em outra do blueprint (deixe vazio num checkpoint novo)."));
+            erros.push(crate::tr!("{rot}: id \"{id}\" does not exist in this action or another one of the blueprint (leave it empty for a new checkpoint).", "{rot}: o id \"{id}\" não existe nesta ação nem em outra do blueprint (deixe vazio num checkpoint novo)."));
         }
         saida.push(com_origem(json!({"id": id, "nome": truncar(&nm, 120), "data": data}), &ex));
     }

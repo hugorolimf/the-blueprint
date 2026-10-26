@@ -25,7 +25,7 @@ const MUTACOES = [
   M("PUT /api/dados exige blueprints[]", "src/http/api_dados.rs", "!valor.get(\"blueprints\").is_some_and(Value::is_array)", "false"),
   M("checkpoint já feito não é marcado de novo (409)", "src/mcp/acoes.rs", 'if verdade(checkpoint.get("feito")) {', "if false {"),
   M("plano já concluído não é marcado de novo (409)", "src/mcp/acoes.rs", 'if marca && verdade(plano.get("feito")) {', "if false {"),
-  M("evento sem texto/evidência é recusado", "src/mcp/acoes.rs", "if texto.is_empty() {\n        return Err(falha(400, \"texto é obrigatório\"));", "if false {\n        return Err(falha(400, \"texto é obrigatório\"));"),
+  M("evento sem texto/evidência é recusado", "src/mcp/acoes.rs", "if texto.is_empty() {\n        return Err(falha(400, crate::tr!(\"texto is required\"", "if false {\n        return Err(falha(400, crate::tr!(\"texto is required\""),
   M("proposta nova substitui a pendente do mesmo alvo", "src/mcp/fila.rs", 'self.itens.retain(|i| !(i["tipo"] == "proposta"', 'self.itens.retain(|i| true || !(i["tipo"] == "proposta"'),
   M("atividade: estado e papel só os permitidos", "src/mcp/acoes.rs", "Some(Value::String(s)) if permitidos.contains(&s.as_str()) =>", "Some(Value::String(s)) if true =>"),
   M("atividade: onde tem tamanho máximo", "src/mcp/acoes.rs", "Some(Value::String(s)) if limpo(s, 120) =>", "Some(Value::String(s)) if true =>"),

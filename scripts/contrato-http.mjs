@@ -152,7 +152,7 @@ async function ligar(tipo) {
   const tmp = mkdtempSync(join(tmpdir(), `contrato-${tipo}-`));
   writeFileSync(join(tmp, "dados.json"), JSON.stringify(DADOS));
   const porta = await portaLivre();
-  const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), PROTOTIPOS_DIR: join(tmp, "p"), DADOS_ARQ: join(tmp, "dados.json"), BLUEPRINT_DB: join(tmp, "blueprint.db") };
+  const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), PROTOTIPOS_DIR: join(tmp, "p"), DADOS_ARQ: join(tmp, "dados.json"), BLUEPRINT_DB: join(tmp, "blueprint.db"), BLUEPRINT_IDIOMA: "pt-BR" }; // pedidos sem Accept-Language: textos em português, como no snapshot
   delete env.MCP_REDE;
   const exe = resolve(arg("rust") || join(raiz, "target/release/blueprint.exe"));
   const filho = spawn(exe, ["serve"], { env, stdio: "ignore", windowsHide: true });

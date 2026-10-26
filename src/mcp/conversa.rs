@@ -75,16 +75,18 @@ fn cabecalho(dados: &Mutex<Dados>, ws: &str, bp: &str, acao_id: &str, plano_id: 
     let estrutura = acoes::blueprint(tudo, ws, bp, None)?;
     let p = &estrutura["blueprint"];
     let lista_acoes = lista(&p["acoes"]);
-    let i = lista_acoes.iter().position(|a| texto(a, "id") == acao_id).ok_or_else(|| falha(404, "Ação não encontrada neste blueprint."))?;
+    let i = lista_acoes.iter().position(|a| texto(a, "id") == acao_id).ok_or_else(|| falha(404, crate::tr!("Action not found in this blueprint.", "Ação não encontrada neste blueprint.")).codigo("acao-nao-encontrada"))?;
     let acao = &lista_acoes[i];
     let ids = format!("workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}");
-    let da_acao = format!("{} «{}» do blueprint «{}»", numeros_das_acoes(p, n)[i], limpo(texto(acao, "nome")), limpo(texto(p, "nome")));
+    let (numero, nome_acao, nome_bp) = (&numeros_das_acoes(p, n)[i], limpo(texto(acao, "nome")), limpo(texto(p, "nome")));
+    let da_acao = crate::tr!("{numero} «{nome_acao}» of blueprint «{nome_bp}»", "{numero} «{nome_acao}» do blueprint «{nome_bp}»");
     Ok(match plano_id {
         Some(pl) => {
-            let plano = lista(&acao["planos"]).iter().find(|x| texto(x, "id") == pl).ok_or_else(|| falha(404, "Plano não encontrado nesta ação."))?;
-            format!("Comentário no plano «{}» (plano_id {pl}) da ação {da_acao} ({ids})", limpo(texto(plano, "texto")))
+            let plano = lista(&acao["planos"]).iter().find(|x| texto(x, "id") == pl).ok_or_else(|| falha(404, crate::tr!("Plan not found in this action.", "Plano não encontrado nesta ação.")).codigo("plano-nao-encontrado"))?;
+            let nome_plano = limpo(texto(plano, "texto"));
+            crate::tr!("Comment on plan «{nome_plano}» (plano_id {pl}) of action {da_acao} ({ids})", "Comentário no plano «{nome_plano}» (plano_id {pl}) da ação {da_acao} ({ids})")
         }
-        None => format!("Ação {da_acao} ({ids})"),
+        None => crate::tr!("Action {da_acao} ({ids})", "Ação {da_acao} ({ids})"),
     })
 }
 
@@ -94,31 +96,31 @@ pub(super) fn enviar(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<(
     let (ws, bp, acao, sessao) = (texto(corpo, "workspaceId"), texto(corpo, "blueprintId"), texto(corpo, "acaoId"), texto(corpo, "sessaoId"));
     let copiar = corpo["semCanal"] == true; // só copiar: não precisa de sessão
     if ![ws, bp, acao].iter().all(|i| id_valido(i)) || (!copiar && !id_valido(sessao)) {
-        return Err(falha(400, "Informe workspaceId, blueprintId, acaoId e sessaoId."));
+        return Err(falha(400, crate::tr!("Send workspaceId, blueprintId, acaoId and sessaoId.", "Informe workspaceId, blueprintId, acaoId e sessaoId.")).codigo("faltam-ids"));
     }
     let (evento, plano) = match texto(corpo, "tipo") {
         "comentario" => {
             let pl = texto(corpo, "planoId");
             if !id_valido(pl) {
-                return Err(falha(400, "Informe o planoId do comentário."));
+                return Err(falha(400, crate::tr!("Send the comment's planoId.", "Informe o planoId do comentário.")).codigo("falta-plano"));
             }
             ("comentario-plano", Some(pl))
         }
         "conversa" => ("conversa-usuario", None),
-        _ => return Err(falha(400, "tipo deve ser comentario ou conversa.")),
+        _ => return Err(falha(400, crate::tr!("tipo must be comentario or conversa.", "tipo deve ser comentario ou conversa.")).codigo("tipo-invalido")),
     };
     let msg = sem_controle(texto(corpo, "texto"));
     if msg.is_empty() {
-        return Err(falha(400, "Escreva o texto."));
+        return Err(falha(400, crate::tr!("Write the text.", "Escreva o texto.")).codigo("falta-texto"));
     }
     if msg.chars().count() > MAX_TEXTO {
-        return Ok(recusa(413, "Texto longo demais (até 800 caracteres).", "texto-longo"));
+        return Ok(recusa(413, &crate::tr!("Text too long (up to 800 characters).", "Texto longo demais (até 800 caracteres)."), "texto-longo"));
     }
     let prompt = format!("{}: {msg}", cabecalho(dados, ws, bp, acao, plano)?);
     if !copiar {
         let tamanho = json!({"workspaceId": ws, "blueprintId": bp, "canalId": sessao, "texto": prompt}).to_string().len();
         if tamanho > MAX_EVENTO {
-            return Ok(recusa(413, "Texto longo demais para o canal; encurte.", "texto-longo"));
+            return Ok(recusa(413, &crate::tr!("Text too long for the channel; shorten it.", "Texto longo demais para o canal; encurte."), "texto-longo"));
         }
         if let Err((s, codigo, frase)) = mcp.entregar_ao_canal(evento, ws, bp, sessao, &prompt) {
             return Ok(recusa(s, frase, codigo));
@@ -134,18 +136,18 @@ pub(super) fn enviar(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<(
 pub(super) fn responder(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<(u16, Value), ErroHttp> {
     let (ws, bp, acao) = (texto(corpo, "workspaceId"), texto(corpo, "blueprintId"), texto(corpo, "acaoId"));
     if ![ws, bp, acao].iter().all(|i| id_valido(i)) {
-        return Err(falha(400, "Informe workspace_id, blueprint_id e acao_id."));
+        return Err(falha(400, crate::tr!("Send workspace_id, blueprint_id and acao_id.", "Informe workspace_id, blueprint_id e acao_id.")).codigo("faltam-ids"));
     }
     let resposta = texto(corpo, "texto").trim();
     if resposta.is_empty() || resposta.chars().count() > MAX_RESPOSTA {
-        return Err(falha(400, "texto é obrigatório e vai até 4000 caracteres."));
+        return Err(falha(400, crate::tr!("texto is required and goes up to 4000 characters.", "texto é obrigatório e vai até 4000 caracteres.")).codigo("texto-invalido"));
     }
     cabecalho(dados, ws, bp, acao, None)?; // a ação existe
     let mut mensagem = json!({"de": "agente", "texto": resposta, "em": crate::tempo::agora_ms()});
     if let Some(p) = corpo.get("proposta").filter(|v| !v.is_null()) {
-        let n = p.as_i64().ok_or_else(|| falha(400, "proposta é o número de uma proposta da fila."))?;
+        let n = p.as_i64().ok_or_else(|| falha(400, crate::tr!("proposta is the number of a proposal in the queue.", "proposta é o número de uma proposta da fila.")).codigo("proposta-invalida"))?;
         if let Err(pendentes) = mcp.entrada_da_proposta(ws, bp, n) {
-            return Err(falha(409, format!("A proposta nº {n} não está na fila deste blueprint (pendentes: {pendentes:?}).")));
+            return Err(falha(409, crate::tr!("Proposal no. {n} is not in this blueprint's queue (pending: {pendentes:?}).", "A proposta nº {n} não está na fila deste blueprint (pendentes: {pendentes:?}).")).codigo("proposta-nao-encontrada").params(json!({"numero": n, "pendentes": pendentes})));
         }
         mensagem["proposta"] = json!(n);
     }
@@ -157,9 +159,9 @@ pub(super) fn responder(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Resul
 pub(super) fn ferramenta(a: &Value, servidor: &dyn Fn(&str, &str, Option<&Value>) -> Result<Value, String>) -> Result<String, String> {
     let campo = |k: &str| a.get(k).and_then(Value::as_str).unwrap_or("").trim().to_string();
     if campo("texto").is_empty() {
-        return Err("texto é obrigatório.".into());
+        return Err("texto is required.".into());
     }
     let corpo = json!({"workspaceId": campo("workspace_id"), "blueprintId": campo("blueprint_id"), "acaoId": campo("acao_id"), "texto": campo("texto"), "proposta": a.get("proposta").cloned().unwrap_or(Value::Null)});
     servidor("conversa/resposta", "POST", Some(&corpo))?;
-    Ok("Resposta mostrada ao usuário na conversa da ação. Lembre: mudanças no blueprint só por propor_blueprint; o usuário aplica.".into())
+    Ok("Answer shown to the user in the action's conversation. Remember: blueprint changes only through propor_blueprint; the user applies them.".into())
 }

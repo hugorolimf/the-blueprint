@@ -43,7 +43,7 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
             let mut guardado = estado.dados_json.lock().unwrap_or_else(|e| e.into_inner());
             let atual = estado.versao_dados.load(Ordering::SeqCst);
             if pedido.cabecalho("if-match").is_some() && versao_pedida(pedido) != Some(atual) {
-                return Resposta::json(409, &json!({"erro": "desatualizado", "versao": atual})).com("x-dados-versao", &atual.to_string());
+                return Resposta::json(409, &json!({"erro": "desatualizado", "codigo": "desatualizado", "versao": atual})).com("x-dados-versao", &atual.to_string());
             }
             *guardado = None; // qualquer que seja o resultado, a próxima leitura refaz a cópia
             let mut dados = estado.dados.lock().unwrap_or_else(|e| e.into_inner());

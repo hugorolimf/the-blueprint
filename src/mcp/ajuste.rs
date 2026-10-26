@@ -20,7 +20,7 @@ fn numero_de(v: Option<&Value>, campo: &str) -> R<Option<i64>> {
         None | Some(Value::Null) => Ok(None),
         Some(Value::Number(n)) if n.as_i64().is_some_and(|n| n > 0) => Ok(n.as_i64()),
         Some(Value::String(s)) if s.trim().parse::<i64>().is_ok_and(|n| n > 0) => Ok(s.trim().parse().ok()),
-        Some(_) => Err(falha(400, format!("{campo} inválido: use o número da proposta que `propor_blueprint` devolveu (um inteiro a partir de 1)."))),
+        Some(_) => Err(falha(400, crate::tr!("invalid {campo}: use the proposal number that `propor_blueprint` returned (an integer from 1).", "{campo} inválido: use o número da proposta que `propor_blueprint` devolveu (um inteiro a partir de 1).")).codigo("numero-invalido").params(json!({"campo": campo}))),
     }
 }
 
@@ -37,7 +37,7 @@ fn mesclar_itens(lista: &mut Vec<Value>, novos: &[Value], aninhadas: &[&str]) ->
         let existente = if id.is_empty() { None } else { lista.iter_mut().find(|x| chave(x, "id") == id || chave(x, "prov") == id) };
         let Some(alvo) = existente else {
             if id.starts_with('+') {
-                return Err(falha(400, format!("id provisório \"{id}\" não existe nesta proposta (use os ids devolvidos por propor_blueprint).")));
+                return Err(falha(400, crate::tr!("provisional id \"{id}\" does not exist in this proposal (use the ids returned by propor_blueprint).", "id provisório \"{id}\" não existe nesta proposta (use os ids devolvidos por propor_blueprint).")).codigo("id-provisorio").params(json!({"id": id})));
             }
             lista.push(novo.clone());
             continue;
@@ -115,12 +115,17 @@ fn rotular(entrada: &mut Value) {
 pub fn preparar(mcp: &Mcp, corpo: &Value, workspace_id: &str, blueprint_id: &str) -> R<(Value, Option<i64>)> {
     let (ajustar, substituir) = (numero_de(corpo.get("ajustar"), "ajustar")?, numero_de(corpo.get("substituir"), "substituir")?);
     let mut entrada = match (ajustar, substituir) {
-        (Some(_), Some(_)) => return Err(falha(400, "Use ajustar OU substituir, não os dois.")),
+        (Some(_), Some(_)) => return Err(falha(400, crate::tr!("Use ajustar OR substituir, not both.", "Use ajustar OU substituir, não os dois.")).codigo("ajustar-e-substituir")),
         (None, None) => Value::Object(conteudo(corpo)),
         (Some(n), None) | (None, Some(n)) => {
             let antiga = mcp.entrada_da_proposta(workspace_id, blueprint_id, n).map_err(|pendentes| {
-                let fila = if pendentes.is_empty() { "A fila de propostas deste blueprint está vazia (a proposta pode já ter sido aplicada ou descartada); envie uma proposta nova.".to_string() } else { format!("Na fila deste blueprint há as propostas {}; envie uma delas ou uma proposta nova.", pendentes.iter().map(|n| format!("nº {n}")).collect::<Vec<_>>().join(", ")) };
-                falha(404, format!("Não existe a proposta nº {n} na fila. {fila}"))
+                let lista = pendentes.iter().map(|n| crate::tr!("no. {n}", "nº {n}")).collect::<Vec<_>>().join(", ");
+                let fila = if pendentes.is_empty() {
+                    crate::tr!("This blueprint's proposal queue is empty (the proposal may already have been applied or discarded); send a new proposal.", "A fila de propostas deste blueprint está vazia (a proposta pode já ter sido aplicada ou descartada); envie uma proposta nova.")
+                } else {
+                    crate::tr!("This blueprint's queue holds proposals {lista}; send one of them or a new proposal.", "Na fila deste blueprint há as propostas {lista}; envie uma delas ou uma proposta nova.")
+                };
+                falha(404, crate::tr!("There is no proposal no. {n} in the queue. {fila}", "Não existe a proposta nº {n} na fila. {fila}")).codigo("proposta-nao-encontrada").params(json!({"numero": n, "pendentes": pendentes}))
             })?;
             if ajustar.is_some() { mesclar(&antiga, corpo)? } else { Value::Object(conteudo(corpo)) }
         }

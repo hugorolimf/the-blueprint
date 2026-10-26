@@ -85,7 +85,7 @@ fn corpo_grande_demais_e_recusado() {
     let grande = format!(r#"{{"tipo":"progresso","texto":"{}"}}"#, "a".repeat(300 * 1024));
     let (status, _, corpo) = pedir(s.porta, "POST", "/api/mcp/evento", Some(&grande));
     assert_eq!(status, 413);
-    assert_eq!(serde_json::from_str::<Value>(&corpo).unwrap(), json!({"erro": "grande demais"}));
+    assert_eq!(serde_json::from_str::<Value>(&corpo).unwrap(), json!({"erro": "grande demais", "codigo": "grande-demais"}));
     s.parar();
     let _ = std::fs::remove_dir_all(&dir);
 }

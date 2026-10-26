@@ -98,7 +98,7 @@ try {
   const chamar = mcpStdio(servidor.url);
   const proposta = await chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: BP, mensagem: "Dividir o plano", acoes: [{ id: ACAO, planos: [{ texto: "Criar o endpoint de detalhar pedido", descricao: "Escopo: GET /pedidos/:id. Resultado esperado: 200 com o pedido. Validação: teste da rota.", horas: 2 }] }] });
   assert(!proposta.erro, proposta.texto);
-  const numero = Number(/Proposta nº (\d+)/.exec(proposta.texto)[1]);
+  const numero = Number(/Proposal no\. (\d+)/.exec(proposta.texto)[1]);
   const fora = await chamar("responder_conversa", { workspace_id: "sm", blueprint_id: BP, acao_id: ACAO, texto: "x", proposta: numero + 50 });
   assert(fora.erro && /não está na fila/.test(fora.texto), `proposta que não existe é recusada: ${fora.texto}`);
   const resposta = await chamar("responder_conversa", { workspace_id: "sm", blueprint_id: BP, acao_id: ACAO, texto: `Mandei a proposta nº ${numero} com o plano novo.`, proposta: numero });

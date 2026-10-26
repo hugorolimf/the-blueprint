@@ -15,7 +15,7 @@ pub fn codificar(s: &str) -> String {
 }
 
 fn dividir(url: &str) -> Result<(String, String), String> {
-    let resto = url.strip_prefix("http://").ok_or_else(|| format!("BLUEPRINT_URL precisa começar com http:// (recebido \"{url}\"); o servidor do The Blueprint é local e não usa https."))?;
+    let resto = url.strip_prefix("http://").ok_or_else(|| crate::tr!("BLUEPRINT_URL must start with http:// (got \"{url}\"); The Blueprint server is local and does not use https.", "BLUEPRINT_URL precisa começar com http:// (recebido \"{url}\"); o servidor do The Blueprint é local e não usa https."))?;
     let host = resto.trim_end_matches('/').split('/').next().unwrap_or("");
     let com_porta = if host.rsplit_once(':').is_some_and(|(_, p)| p.bytes().all(|c| c.is_ascii_digit()) && !p.is_empty()) { host.to_string() } else { format!("{host}:80") };
     Ok((host.to_string(), com_porta))
@@ -41,14 +41,16 @@ pub fn requisitar(base: &str, metodo: &str, rota: &str, corpo: Option<&str>) -> 
 
 /// Qualquer caminho do servidor local.
 pub fn requisitar_em(base: &str, metodo: &str, caminho: &str, corpo: Option<&str>) -> Result<(u16, String), String> {
-    let sem_resposta = || format!("Não consegui falar com o The Blueprint em {base}. Ele está rodando (blueprint serve)? Se usa outra porta, defina BLUEPRINT_URL.");
+    let sem_resposta = || crate::tr!("Could not reach The Blueprint at {base}. Is it running (blueprint serve)? If it uses another port, set BLUEPRINT_URL.", "Não consegui falar com o The Blueprint em {base}. Ele está rodando (blueprint serve)? Se usa outra porta, defina BLUEPRINT_URL.");
     let (host, com_porta) = dividir(base)?;
     let endereco = com_porta.to_socket_addrs().ok().and_then(|mut a| a.next()).ok_or_else(sem_resposta)?;
     let mut conexao = TcpStream::connect_timeout(&endereco, PRAZO).map_err(|_| sem_resposta())?;
     let _ = (conexao.set_read_timeout(Some(PRAZO)), conexao.set_write_timeout(Some(PRAZO)));
     let dados = corpo.unwrap_or("");
     let envio = if corpo.is_some() { format!("Content-Type: application/json\r\nContent-Length: {}\r\n", dados.len()) } else { String::new() };
-    let pedido = format!("{metodo} {caminho} HTTP/1.1\r\nHost: {host}\r\n{envio}Accept: application/json\r\nConnection: close\r\n\r\n{dados}");
+    // o idioma desta thread: inglês no `--mcp` (texto para o agente), o do usuário no `blueprint hook` (texto para a pessoa)
+    let idioma = crate::idioma::atual().codigo();
+    let pedido = format!("{metodo} {caminho} HTTP/1.1\r\nHost: {host}\r\n{envio}Accept: application/json\r\nAccept-Language: {idioma}\r\nConnection: close\r\n\r\n{dados}");
     conexao.write_all(pedido.as_bytes()).map_err(|_| sem_resposta())?;
     let mut bruto = Vec::new();
     conexao.read_to_end(&mut bruto).map_err(|_| sem_resposta())?;

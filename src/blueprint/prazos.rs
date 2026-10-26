@@ -33,7 +33,7 @@ pub fn avisos_da_acao(rotulo: &str, inicio: &str, fim: &str, planos: &[Value], o
     }
     let dias = dias_entre(inicio, fim) + 1;
     if dias > DIAS_SEM_MOTIVO && !tem_motivo(observacao) {
-        avisos.push(format!("{rotulo}: dura {dias} dias; ação de mais de {DIAS_SEM_MOTIVO} dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."));
+        avisos.push(crate::tr!("{rotulo}: lasts {dias} days; an action longer than {DIAS_SEM_MOTIVO} days needs a reason in the instructions (waiting for a person, CI, publishing, a third party) or a split into smaller actions.", "{rotulo}: dura {dias} dias; ação de mais de {DIAS_SEM_MOTIVO} dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."));
     }
     let estimativas = horas(planos);
     if estimativas.is_empty() {
@@ -41,10 +41,10 @@ pub fn avisos_da_acao(rotulo: &str, inicio: &str, fim: &str, planos: &[Value], o
     }
     let soma: f64 = estimativas.iter().sum();
     if dias >= DIAS_SEM_MOTIVO && soma < dias as f64 * HORAS_MIN_POR_DIA {
-        avisos.push(format!("{rotulo}: {soma} h de trabalho em {dias} dias parece frouxo (o esperado é de pelo menos {dias} h); confira as estimativas ou encurte o prazo."));
+        avisos.push(crate::tr!("{rotulo}: {soma} h of work in {dias} days looks loose (at least {dias} h is expected); check the estimates or shorten the deadline.", "{rotulo}: {soma} h de trabalho em {dias} dias parece frouxo (o esperado é de pelo menos {dias} h); confira as estimativas ou encurte o prazo."));
     }
     if soma > dias as f64 * HORAS_MAX_POR_DIA {
-        avisos.push(format!("{rotulo}: {soma} h em {dias} dia(s) não cabe (cerca de {HORAS_MAX_POR_DIA} h por dia); alongue o prazo ou divida a ação."));
+        avisos.push(crate::tr!("{rotulo}: {soma} h in {dias} day(s) does not fit (about {HORAS_MAX_POR_DIA} h per day); extend the deadline or split the action.", "{rotulo}: {soma} h em {dias} dia(s) não cabe (cerca de {HORAS_MAX_POR_DIA} h por dia); alongue o prazo ou divida a ação."));
     }
 }
 
@@ -54,7 +54,7 @@ pub fn avisos_de_buracos(mut novas: Vec<Nova>, avisos: &mut Vec<String>) {
     for par in novas.windows(2) {
         let buraco = dias_entre(&par[0].fim, &par[1].inicio) - 1;
         if buraco > BURACO_MAX {
-            avisos.push(format!("{}: começa {buraco} dias depois do fim de {}; ações em sequência não deveriam deixar buracos de mais de {BURACO_MAX} dias.", par[1].rotulo, par[0].rotulo));
+            avisos.push(crate::tr!("{}: starts {buraco} days after the end of {}; actions in sequence should not leave gaps of more than {BURACO_MAX} days.", "{}: começa {buraco} dias depois do fim de {}; ações em sequência não deveriam deixar buracos de mais de {BURACO_MAX} dias.", par[1].rotulo, par[0].rotulo));
         }
     }
 }

@@ -168,7 +168,7 @@ fn propor_blueprint_conhece_a_fila_e_o_agente_aprende_a_ajustar() {
     assert!(inicio.contains("propor_blueprint") && inicio.contains("ALWAYS up to date"), "a regra e os nomes continuam nos primeiros 512");
     let ids = json!([{"id": "+a1", "nome": "Nova", "planos": [{"id": "+a1.p1", "texto": "Criar a tela"}], "checkpoints": []}, {"id": "f1", "nome": "Base", "planos": [], "checkpoints": [{"id": "+f1.c1", "nome": "Pronto"}]}]);
     let texto = super::stdio::ids_provisorios(&ids);
-    assert!(texto.contains("- ação +a1 \"Nova\"; planos: +a1.p1 \"Criar a tela\"") && texto.contains("- ação f1 \"Base\"; checkpoints: +f1.c1 \"Pronto\""), "{texto}");
+    assert!(texto.contains("- action +a1 \"Nova\"; plans: +a1.p1 \"Criar a tela\"") && texto.contains("- action f1 \"Base\"; checkpoints: +f1.c1 \"Pronto\""), "{texto}");
 }
 
 #[test]
@@ -194,14 +194,14 @@ fn o_guia_vem_por_partes_sem_o_cabecalho() {
     assert!(planejar.contains("## Deadlines at AI pace") && planejar.contains("`horas`") && planejar.contains("1 to 3 calendar days"), "a régua de prazos da IA está no tópico planejar");
     let ruim = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "nada"}}));
     assert_eq!(ruim["result"]["isError"], true);
-    assert!(ruim["result"]["content"][0]["text"].as_str().unwrap().contains("Tópico desconhecido: nada"));
+    assert!(ruim["result"]["content"][0]["text"].as_str().unwrap().contains("Unknown topic: nada"));
 }
 
 #[test]
 fn argumentos_que_faltam_voltam_como_erro_da_ferramenta() {
     let r = rpc("tools/call", json!({"name": "marcar_concluido", "arguments": {"workspace_id": "sm", "blueprint_id": "p", "acao_id": "f", "plano_id": "t"}}));
     assert_eq!(r["result"]["isError"], true);
-    assert_eq!(r["result"]["content"][0]["text"], "evidencia é obrigatório.");
+    assert_eq!(r["result"]["content"][0]["text"], "evidencia is required.");
 }
 
 #[test]

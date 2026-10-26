@@ -96,15 +96,54 @@ impl Resposta {
     }
 }
 
-/// Erro de uma rota com o status que ela devolve (o `falha(status, erro)` do mcp.mjs).
+/// Erro de uma rota com o status que ela devolve (o `falha(status, erro)` do mcp.mjs). Vai ao cliente como `{erro, codigo, params?}`:
+/// `erro` é o texto no idioma do pedido (`crate::tr!`), `codigo` é estável (a página traduz por ele) e `params` traz os valores do texto.
 #[derive(Debug)]
 pub struct ErroHttp {
     pub status: u16,
     pub mensagem: String,
+    pub codigo: &'static str,
+    pub params: Option<Value>,
+}
+
+/// O código pelo status, quando a rota não dá um próprio.
+fn codigo_do_status(status: u16) -> &'static str {
+    match status {
+        400 => "invalido",
+        403 => "proibido",
+        404 => "nao-encontrado",
+        409 => "conflito",
+        413 => "grande-demais",
+        _ => "interno",
+    }
 }
 
 pub fn falha(status: u16, mensagem: impl Into<String>) -> ErroHttp {
-    ErroHttp { status, mensagem: mensagem.into() }
+    ErroHttp { status, mensagem: mensagem.into(), codigo: codigo_do_status(status), params: None }
+}
+
+impl ErroHttp {
+    pub fn codigo(mut self, codigo: &'static str) -> ErroHttp {
+        self.codigo = codigo;
+        self
+    }
+
+    pub fn params(mut self, params: Value) -> ErroHttp {
+        self.params = Some(params);
+        self
+    }
+
+    pub fn json(&self) -> Value {
+        let mut v = serde_json::json!({"erro": self.mensagem, "codigo": self.codigo});
+        if let Some(p) = &self.params {
+            v["params"] = p.clone();
+        }
+        v
+    }
+
+    pub fn resposta(&self) -> Resposta {
+        Resposta::json(self.status, &self.json())
+    }
 }
 
 impl From<crate::erro::Erro> for ErroHttp {

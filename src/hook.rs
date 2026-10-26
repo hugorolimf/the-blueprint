@@ -49,12 +49,12 @@ fn statusline(base: &str, entrada: &str) -> Option<String> {
 fn status(base: &str, pasta: &str) -> String {
     let corpo = json!({"cwd": pasta}).to_string();
     match requisitar(base, "POST", "hook/status", Some(&corpo)) {
-        Err(_) => "O The Blueprint não está aberto. Abra o app e tente de novo.".into(),
+        Err(_) => crate::tr!("The Blueprint is not open. Open the app and try again.", "O The Blueprint não está aberto. Abra o app e tente de novo."),
         Ok((200, resposta)) => match serde_json::from_str::<Value>(&resposta).ok().and_then(|r| r["texto"].as_str().map(String::from)) {
             Some(t) => t,
-            None => "Esta pasta não está ligada a nenhum blueprint. Peça ao agente: \"ligue esta pasta ao blueprint X\" (ferramenta vincular_pasta).".into(),
+            None => crate::tr!("This folder is not linked to any blueprint. Ask the agent: \"link this folder to blueprint X\" (tool vincular_pasta).", "Esta pasta não está ligada a nenhum blueprint. Peça ao agente: \"ligue esta pasta ao blueprint X\" (ferramenta vincular_pasta)."),
         },
-        Ok((codigo, _)) => format!("O The Blueprint recusou o pedido ({codigo})."),
+        Ok((codigo, _)) => crate::tr!("The Blueprint refused the request ({codigo}).", "O The Blueprint recusou o pedido ({codigo})."),
     }
 }
 

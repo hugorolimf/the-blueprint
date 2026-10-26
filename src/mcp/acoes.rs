@@ -74,11 +74,11 @@ fn workspaces_de(dados: &Value) -> Vec<Workspace<'_>> {
 
 /// `workspace_id` é obrigatório; `blueprint_id` vazio = blueprint que ainda não existe.
 pub(super) fn localizar<'a>(dados: &'a Value, workspace_id: &str, blueprint_id: &str) -> R<(Workspace<'a>, Option<&'a Value>)> {
-    let ws = workspace_dos(dados, workspace_id).ok_or_else(|| falha(404, "Workspace não encontrado (veja listar_blueprints)."))?;
+    let ws = workspace_dos(dados, workspace_id).ok_or_else(|| falha(404, crate::tr!("Workspace not found (see listar_blueprints).", "Workspace não encontrado (veja listar_blueprints).")).codigo("workspace-nao-encontrado"))?;
     if blueprint_id.is_empty() {
         return Ok((ws, None));
     }
-    let blueprint = ws.blueprints.iter().find(|p| p.get("id").and_then(Value::as_str) == Some(blueprint_id)).ok_or_else(|| falha(404, "Blueprint não encontrado neste workspace (veja listar_blueprints)."))?;
+    let blueprint = ws.blueprints.iter().find(|p| p.get("id").and_then(Value::as_str) == Some(blueprint_id)).ok_or_else(|| falha(404, crate::tr!("Blueprint not found in this workspace (see listar_blueprints).", "Blueprint não encontrado neste workspace (veja listar_blueprints).")).codigo("blueprint-nao-encontrado"))?;
     Ok((ws, Some(blueprint)))
 }
 
@@ -95,9 +95,9 @@ pub fn blueprints(dados: &Value) -> Value {
 /// Sem `acao_id`: só a estrutura (o agente se localiza gastando pouco contexto); com `acao_id`: aquela ação inteira.
 pub fn blueprint(dados: &Value, workspace_id: &str, blueprint_id: &str, acao_id: Option<&str>) -> R<Value> {
     let (ws, p) = localizar(dados, workspace_id, blueprint_id)?;
-    let p = p.ok_or_else(|| falha(400, "Informe o blueprint_id."))?;
+    let p = p.ok_or_else(|| falha(400, crate::tr!("Send blueprint_id.", "Informe o blueprint_id.")).codigo("falta-blueprint"))?;
     if let Some(acao_id) = acao_id.filter(|f| !f.is_empty()) {
-        let acao = contexto_acao(p, acao_id).ok_or_else(|| falha(404, "Ação não encontrada neste blueprint (veja ler_blueprint sem acao_id)."))?;
+        let acao = contexto_acao(p, acao_id).ok_or_else(|| falha(404, crate::tr!("Action not found in this blueprint (see ler_blueprint without acao_id).", "Ação não encontrada neste blueprint (veja ler_blueprint sem acao_id).")).codigo("acao-nao-encontrada"))?;
         return Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprintId": str_de(p, "id"), "acao": acao}));
     }
     let outros: Vec<Value> = ws.blueprints.iter().filter(|x| x.get("id") != p.get("id")).map(|x| json!({"id": x.get("id"), "nome": x.get("nome")})).collect();
@@ -154,18 +154,18 @@ fn declaracao(corpo: &Value) -> R<(Option<String>, Map<String, Value>)> {
         None | Some(Value::Null) => None,
         Some(Value::String(s)) if s.trim().is_empty() => None,
         Some(Value::String(s)) if limpo(s.trim(), 40) && !s.chars().any(char::is_control) => Some(s.trim().to_string()),
-        Some(_) => return Err(falha(400, "agente inválido: use um nome de até 40 caracteres, sem caracteres de controle")),
+        Some(_) => return Err(falha(400, crate::tr!("invalid agente: use a name of up to 40 characters, without control characters", "agente inválido: use um nome de até 40 caracteres, sem caracteres de controle")).codigo("agente-invalido")),
     };
-    for (campo, permitidos, dica) in [("papel", &PAPEIS[..], "explorador, construtor ou revisor"), ("estado", &ESTADOS_AGENTE[..], "lendo, escrevendo, testando, aguardando, bloqueado ou concluido")] {
+    for (campo, permitidos, dica) in [("papel", &PAPEIS[..], crate::tr!("explorador, construtor or revisor", "explorador, construtor ou revisor")), ("estado", &ESTADOS_AGENTE[..], crate::tr!("lendo, escrevendo, testando, aguardando, bloqueado or concluido", "lendo, escrevendo, testando, aguardando, bloqueado ou concluido"))] {
         match corpo.get(campo) {
             None | Some(Value::Null) => {}
             Some(Value::String(s)) if permitidos.contains(&s.as_str()) => {
                 extras.insert(campo.into(), json!(s));
             }
-            Some(_) => return Err(falha(400, format!("{campo} inválido: use {dica}"))),
+            Some(_) => return Err(falha(400, crate::tr!("invalid {campo}: use {dica}", "{campo} inválido: use {dica}")).codigo("campo-invalido").params(json!({"campo": campo}))),
         }
     }
-    let onde_ruim = || falha(400, "onde inválido: até 5 caminhos de até 120 caracteres, sem caracteres de controle");
+    let onde_ruim = || falha(400, crate::tr!("invalid onde: up to 5 paths of up to 120 characters, without control characters", "onde inválido: até 5 caminhos de até 120 caracteres, sem caracteres de controle")).codigo("onde-invalido");
     match corpo.get("onde") {
         None | Some(Value::Null) => {}
         Some(Value::String(s)) if limpo(s, 120) => {
@@ -181,16 +181,16 @@ fn declaracao(corpo: &Value) -> R<(Option<String>, Map<String, Value>)> {
         Some(Value::Number(n)) if n.as_f64().is_some_and(|p| (0.0..=100.0).contains(&p)) => {
             extras.insert("percentual".into(), json!(n.as_f64().unwrap_or(0.0).round() as i64));
         }
-        Some(_) => return Err(falha(400, "percentual inválido: um número de 0 a 100")),
+        Some(_) => return Err(falha(400, crate::tr!("invalid percentual: a number from 0 to 100", "percentual inválido: um número de 0 a 100")).codigo("percentual-invalido")),
     }
     Ok((agente, extras))
 }
 
 pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
-    let tipo = corpo.get("tipo").and_then(Value::as_str).filter(|t| TIPOS_EVENTO.contains(t)).ok_or_else(|| falha(400, "tipo de evento inválido"))?;
+    let tipo = corpo.get("tipo").and_then(Value::as_str).filter(|t| TIPOS_EVENTO.contains(t)).ok_or_else(|| falha(400, crate::tr!("invalid event type", "tipo de evento inválido")).codigo("tipo-invalido"))?;
     let texto = corta(&texto_js(corpo.get("texto")), 2000).trim().to_string();
     if texto.is_empty() {
-        return Err(falha(400, "texto é obrigatório"));
+        return Err(falha(400, crate::tr!("texto is required", "texto é obrigatório")).codigo("falta-texto"));
     }
     let (workspace_id, blueprint_id) = (texto_js(corpo.get("workspaceId")), texto_js(corpo.get("blueprintId")));
     let mut item = Map::new();
@@ -208,9 +208,9 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
         let (_, p) = localizar(dados, &workspace_id, &blueprint_id)?;
         let acao = acao_de(p);
         let checkpoint = acao.as_ref().zip(corpo.get("checkpointId")).and_then(|(f, id)| por_id(lista(f.get("checkpoints")), id));
-        let (Some(acao), Some(checkpoint)) = (acao.as_ref(), checkpoint) else { return Err(falha(404, "Ação ou checkpoint não encontrado (veja ler_blueprint).")) };
+        let (Some(acao), Some(checkpoint)) = (acao.as_ref(), checkpoint) else { return Err(falha(404, crate::tr!("Action or checkpoint not found (see ler_blueprint).", "Ação ou checkpoint não encontrado (veja ler_blueprint).")).codigo("checkpoint-nao-encontrado")) };
         if verdade(checkpoint.get("feito")) {
-            return Err(falha(409, "Este checkpoint já está concluído."));
+            return Err(falha(409, crate::tr!("This checkpoint is already done.", "Este checkpoint já está concluído.")).codigo("checkpoint-ja-feito"));
         }
         for (k, v) in [("acaoId", acao["id"].clone()), ("checkpointId", checkpoint["id"].clone()), ("checkpoint", json!(str_de(checkpoint, "nome")))] {
             item.insert(k.into(), v);
@@ -220,9 +220,9 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
         let (_, p) = localizar(dados, &workspace_id, &blueprint_id)?;
         let acao = acao_de(p);
         let plano = acao.as_ref().zip(corpo.get("planoId")).and_then(|(f, id)| por_id(lista(f.get("planos")), id));
-        let (Some(acao), Some(plano)) = (acao.as_ref(), plano) else { return Err(falha(404, "Ação ou plano não encontrada (veja ler_blueprint).")) };
+        let (Some(acao), Some(plano)) = (acao.as_ref(), plano) else { return Err(falha(404, crate::tr!("Action or plan not found (see ler_blueprint).", "Ação ou plano não encontrada (veja ler_blueprint).")).codigo("plano-nao-encontrado")) };
         if marca && verdade(plano.get("feito")) {
-            return Err(falha(409, "Este plano já está concluída."));
+            return Err(falha(409, crate::tr!("This plan is already done.", "Este plano já está concluído.")).codigo("plano-ja-feito"));
         }
         for (k, v) in [("acaoId", acao["id"].clone()), ("planoId", plano["id"].clone()), ("plano", json!(str_de(plano, "texto")))] {
             item.insert(k.into(), v);
@@ -262,28 +262,29 @@ fn novo_id_prototipo() -> String {
 pub fn prototipo(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
     let (workspace_id, blueprint_id) = (texto_js(corpo.get("workspaceId")), texto_js(corpo.get("blueprintId")));
     let (_, p) = localizar(dados, &workspace_id, &blueprint_id)?;
-    let acao = corpo.get("acaoId").zip(p).and_then(|(id, p)| por_id(lista(p.get("acoes")), id)).ok_or_else(|| falha(404, "Ação não encontrada (veja ler_blueprint)."))?;
+    let acao = corpo.get("acaoId").zip(p).and_then(|(id, p)| por_id(lista(p.get("acoes")), id)).ok_or_else(|| falha(404, crate::tr!("Action not found (see ler_blueprint).", "Ação não encontrada (veja ler_blueprint).")).codigo("acao-nao-encontrada"))?;
     let titulo = corta(&texto_js(corpo.get("titulo")), 120).trim().to_string();
     let html = corpo.get("html").and_then(Value::as_str).unwrap_or("");
     if titulo.is_empty() {
-        return Err(falha(400, "titulo é obrigatório"));
+        return Err(falha(400, crate::tr!("titulo is required", "titulo é obrigatório")).codigo("falta-titulo"));
     }
     let tem_tag = html.as_bytes().windows(2).any(|w| w[0] == b'<' && (w[1].is_ascii_alphabetic() || w[1] == b'!'));
     if !tem_tag {
-        return Err(falha(400, "html é obrigatório: um documento HTML autocontido"));
+        return Err(falha(400, crate::tr!("html is required: a self-contained HTML document", "html é obrigatório: um documento HTML autocontido")).codigo("falta-html"));
     }
     if html.len() > PROTOTIPO_MAX {
-        return Err(falha(413, format!("o protótipo passa de {} MB; reduza (sem imagens grandes nem bibliotecas inline)", PROTOTIPO_MAX / 1024 / 1024)));
+        let mb = PROTOTIPO_MAX / 1024 / 1024;
+        return Err(falha(413, crate::tr!("the prototype is over {mb} MB; make it smaller (no large images or inline libraries)", "o protótipo passa de {mb} MB; reduza (sem imagens grandes nem bibliotecas inline)")).codigo("prototipo-grande").params(json!({"mb": mb})));
     }
     let atualiza = texto_js(corpo.get("prototipoId"));
     if !atualiza.is_empty() && !lista(acao.get("prototipos")).iter().any(|x| x.get("id").and_then(Value::as_str) == Some(atualiza.as_str())) {
-        return Err(falha(404, "prototipo_id não existe nesta ação (veja ler_blueprint)"));
+        return Err(falha(404, crate::tr!("prototipo_id does not exist in this action (see ler_blueprint)", "prototipo_id não existe nesta ação (veja ler_blueprint)")).codigo("prototipo-nao-encontrado"));
     }
     let prototipo_id = if atualiza.is_empty() { novo_id_prototipo() } else { atualiza.clone() };
     if !id_prototipo_valido(&prototipo_id) {
-        return Err(falha(400, "prototipo_id inválido"));
+        return Err(falha(400, crate::tr!("invalid prototipo_id", "prototipo_id inválido")).codigo("prototipo-invalido"));
     }
-    std::fs::create_dir_all(&mcp.prototipos).and_then(|_| std::fs::write(mcp.prototipos.join(format!("{prototipo_id}.html")), html)).map_err(|e| falha(500, format!("não consegui gravar o protótipo: {e}")))?;
+    std::fs::create_dir_all(&mcp.prototipos).and_then(|_| std::fs::write(mcp.prototipos.join(format!("{prototipo_id}.html")), html)).map_err(|e| falha(500, crate::tr!("could not save the prototype: {e}", "não consegui gravar o protótipo: {e}")))?;
     let mut item = Map::new();
     for (k, v) in [
         ("tipo", json!("prototipo")), ("workspaceId", json!(workspace_id)), ("blueprintId", json!(blueprint_id)), ("acaoId", acao["id"].clone()),

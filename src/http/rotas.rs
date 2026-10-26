@@ -16,10 +16,16 @@ pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
 }
 
 pub fn corpo_grande_demais(caminho: &str) -> Resposta {
-    if caminho.starts_with("/api/mcp/") { Resposta::json(413, &serde_json::json!({"erro": "grande demais"})) } else { Resposta::texto(413, "text/plain", "grande demais") }
+    let texto = crate::tr!("too large", "grande demais");
+    if caminho.starts_with("/api/mcp/") { Resposta::json(413, &serde_json::json!({"erro": texto, "codigo": "grande-demais"})) } else { Resposta::texto(413, "text/plain", texto) }
 }
 
+/// Atende o pedido no idioma dele (`Accept-Language`, senão o do usuário): ver `crate::idioma`.
 pub fn despachar(estado: &Estado, pedido: &Pedido) -> Resposta {
+    crate::idioma::com(crate::idioma::do_pedido(pedido), || despachar_no_idioma(estado, pedido))
+}
+
+fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
     let caminho = pedido.caminho.as_str();
     let pagina = if caminho == "/" { "/blueprint.html" } else { caminho };
     if let Some(r) = estado.assets.responder(pagina, pedido) {
@@ -40,7 +46,7 @@ pub fn despachar(estado: &Estado, pedido: &Pedido) -> Resposta {
     if caminho == "/api/dados" {
         return api_dados::rota(estado, pedido);
     }
-    Resposta::texto(404, "text/plain", "não encontrado")
+    Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))
 }
 
 /// A segunda execução do app pede à primeira que traga a janela à frente. Só POST vindo desta máquina e sem Origin (página de outro

@@ -1,6 +1,7 @@
 //! `blueprint --mcp`: o servidor MCP por stdio (JSON-RPC 2.0, uma mensagem por linha) que o agente do usuário registra
-//! (`claude mcp add blueprint -- blueprint.exe --mcp`). Porte de mcp-roadmap.mjs: mesmas ferramentas, mesmas instruções e mesmos textos.
-//! Não tem dados próprios: cada ferramenta chama as rotas /api/mcp do servidor local.
+//! (`claude mcp add blueprint -- blueprint.exe --mcp`). Porte de mcp-roadmap.mjs: mesmas ferramentas e instruções. Não tem dados próprios: cada ferramenta
+//! chama as rotas /api/mcp do servidor local. Tudo aqui é texto para o AGENTE, então é inglês (o agente responde ao usuário no idioma dele); o
+//! servidor também responde em inglês porque o cliente manda `Accept-Language: en` (ver `crate::idioma`).
 use super::cliente::{codificar, requisitar};
 use serde_json::{json, Map, Value};
 use std::io::{BufRead, Write};
@@ -18,11 +19,11 @@ const TOPICOS: [(&str, &str); 6] = [
     ("importar", include_str!("../../skills/blueprint-planejamento/topicos/importar.md")),
     ("apresentar", include_str!("../../skills/blueprint-planejamento/topicos/apresentar.md")),
 ];
-const REGRA: &str = "Mantenha este blueprint sempre atualizado: planos e mudanças de plano via propor_blueprint; ao começar um plano, registrar_progresso; ao terminar, marcar_concluido com a evidência; se não deu, marcar_nao_concluido; se travar, reportar_bloqueio.";
+const REGRA: &str = "Keep this blueprint always up to date: plans and plan changes via propor_blueprint; when you start a plan, registrar_progresso; when you finish, marcar_concluido with the evidence; if it did not work, marcar_nao_concluido; if you get stuck, reportar_bloqueio.";
 
 /// só ao criar blueprint: as instruções do servidor já dizem para manter a linha nas sessões seguintes
 fn vinculo(w: &str) -> String {
-    format!("\nAo aplicar o blueprint novo, o app liga a pasta desta sessão automaticamente. Workspace: {w}. {REGRA}")
+    format!("\nWhen the new blueprint is applied, the app links this session's folder automatically. Workspace: {w}. {REGRA}")
 }
 
 type R = Result<String, String>;
@@ -47,11 +48,11 @@ fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, St
     let lista = |chave: &str| dados.get(chave).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).collect::<Vec<_>>().join("\n- ")).unwrap_or_default();
     if dados.get("erros").is_some_and(Value::is_array) {
         let avisos = lista("avisos");
-        let quem = if rota == "registro" { "O registro" } else { "A proposta" }; // registro não é proposta
-        return Err(format!("{quem} tem erros; corrija e envie de novo:\n- {}{}", lista("erros"), if avisos.is_empty() { String::new() } else { format!("\nAvisos:\n- {avisos}") }));
+        let quem = if rota == "registro" { "The record" } else { "The proposal" }; // registro não é proposta
+        return Err(format!("{quem} has errors; fix them and send again:\n- {}{}", lista("erros"), if avisos.is_empty() { String::new() } else { format!("\nWarnings:\n- {avisos}") }));
     }
     let motivo = dados.get("erro").and_then(Value::as_str).map(String::from).unwrap_or_else(|| texto.chars().take(200).collect());
-    Err(format!("O The Blueprint recusou ({status}): {motivo}"))
+    Err(format!("The Blueprint refused ({status}): {motivo}"))
 }
 
 /// A última ferramenta foi guardada em arquivo porque o app estava fechado (a resposta ao agente avisa; o stdio atende uma ferramenta por vez).
@@ -59,17 +60,17 @@ static GUARDADO_OFFLINE: AtomicBool = AtomicBool::new(false);
 
 fn guardar_offline(rota: &str, corpo: &Value) -> Result<Value, String> {
     let pasta = super::pendentes::pasta_do_banco(&crate::http::Config::do_app().banco);
-    let pendentes = super::pendentes::guardar(&pasta, rota, corpo).map_err(|e| format!("O The Blueprint não está aberto e não consegui guardar o registro: {e}"))?;
+    let pendentes = super::pendentes::guardar(&pasta, rota, corpo).map_err(|e| format!("The Blueprint is not open and the record could not be saved: {e}"))?;
     GUARDADO_OFFLINE.store(true, Ordering::Relaxed);
     Ok(json!({"offline": true, "pendentes": pendentes}))
 }
 
-const AVISO_OFFLINE: &str = "\n(O The Blueprint está fechado: o registro ficou guardado e entra no app quando ele abrir, sem você precisar repetir. A validação (ids, formato) só acontece então; se algo for recusado, o arquivo fica em pendentes/recusados, ao lado do banco.)";
+const AVISO_OFFLINE: &str = "\n(The Blueprint is closed: the record was saved and enters the app when it opens, without you repeating it. Validation (ids, format) only happens then; if something is refused, the file stays in pendentes/recusados, next to the database.)";
 
 fn texto(a: &Value, chave: &str) -> Result<String, String> {
     match a.get(chave).and_then(Value::as_str).map(str::trim) {
         Some(t) if !t.is_empty() => Ok(t.to_string()),
-        _ => Err(format!("{chave} é obrigatório.")),
+        _ => Err(format!("{chave} is required.")),
     }
 }
 
@@ -131,9 +132,9 @@ pub(super) fn ids_provisorios(ids: &Value) -> String {
     let lista = |a: &Value, chave: &str, nome: &str| -> String { a[chave].as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|x| item(x, nome)).collect::<Vec<_>>().join(", ") };
     let linhas: Vec<String> = ids.as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|a| {
         let (planos, cps) = (lista(a, "planos", "texto"), lista(a, "checkpoints", "nome"));
-        format!("- ação {}{}{}", item(a, "nome"), if planos.is_empty() { String::new() } else { format!("; planos: {planos}") }, if cps.is_empty() { String::new() } else { format!("; checkpoints: {cps}") })
+        format!("- action {}{}{}", item(a, "nome"), if planos.is_empty() { String::new() } else { format!("; plans: {planos}") }, if cps.is_empty() { String::new() } else { format!("; checkpoints: {cps}") })
     }).collect();
-    format!("Ids provisórios (valem enquanto a proposta está na fila):\n{}", linhas.join("\n"))
+    format!("Provisional ids (valid while the proposal is in the queue):\n{}", linhas.join("\n"))
 }
 
 fn chamar(nome: &str, a: &Value) -> R {
@@ -142,10 +143,10 @@ fn chamar(nome: &str, a: &Value) -> R {
             let r = servidor("blueprints", "GET", None)?;
             let linhas: Vec<String> = r["workspaces"].as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|w| {
                 let blueprints = w["blueprints"].as_array().map(Vec::as_slice).unwrap_or(&[]);
-                let corpo = if blueprints.is_empty() { "  (sem blueprints)".to_string() } else { blueprints.iter().map(|p| format!("  - {} (blueprint_id: {}) · {} ação(s)", p["nome"].as_str().unwrap_or(""), p["id"].as_str().unwrap_or(""), p["acoes"])).collect::<Vec<_>>().join("\n") };
+                let corpo = if blueprints.is_empty() { "  (no blueprints)".to_string() } else { blueprints.iter().map(|p| format!("  - {} (blueprint_id: {}) · {} action(s)", p["nome"].as_str().unwrap_or(""), p["id"].as_str().unwrap_or(""), p["acoes"])).collect::<Vec<_>>().join("\n") };
                 format!("Workspace {} (workspace_id: {})\n{corpo}", w["nome"].as_str().unwrap_or(""), w["id"].as_str().unwrap_or(""))
             }).collect();
-            Ok(format!("Hoje: {}\n{}", r["hoje"].as_str().unwrap_or(""), linhas.join("\n")))
+            Ok(format!("Today: {}\n{}", r["hoje"].as_str().unwrap_or(""), linhas.join("\n")))
         }
         "guia_de_planejamento" => {
             let t = opcional(a, "topico");
@@ -155,7 +156,7 @@ fn chamar(nome: &str, a: &Value) -> R {
             }
             match TOPICOS.iter().find(|(n, _)| *n == t) {
                 Some((_, conteudo)) => Ok(sem_cabecalho(conteudo)),
-                None => Err(format!("Tópico desconhecido: {t}. Use um destes: {}.", TOPICOS.map(|(n, _)| n).join(", "))),
+                None => Err(format!("Unknown topic: {t}. Use one of: {}.", TOPICOS.map(|(n, _)| n).join(", "))),
             }
         }
         "ler_blueprint" => {
@@ -178,12 +179,12 @@ fn chamar(nome: &str, a: &Value) -> R {
             }
             let r = servidor("proposta", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
-                return Ok("Proposta guardada: o app está fechado. Quando ele abrir, ela entra na fila para o usuário revisar e aplicar (ids e formato são validados só então).".into());
+                return Ok("Proposal saved: the app is closed. When it opens, the proposal enters the queue for the user to review and apply (ids and format are validated only then).".into());
             }
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
-            let aviso = if avisos.is_empty() { String::new() } else { format!("\nAvisos (não impedem o envio, mas vale ajustar):\n- {}", avisos.join("\n- ")) };
+            let aviso = if avisos.is_empty() { String::new() } else { format!("\nWarnings (they do not block the submission, but worth fixing):\n- {}", avisos.join("\n- ")) };
             let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
-            Ok(format!("Proposta nº {} na fila do app, para o usuário revisar e aplicar (uma de cada vez; as outras da fila não foram mexidas).{aviso}\n{}\nSe ele pedir mudanças, envie `ajustar: {}` só com o que muda (a ação, o plano ou o checkpoint pelo id acima); `substituir: {}` troca a proposta inteira.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
+            Ok(format!("Proposal no. {} is in the app's queue for the user to review and apply (one at a time; the others in the queue were not touched).{aviso}\n{}\nIf the user asks for changes, send `ajustar: {}` with only what changes (the action, plan or checkpoint by the id above); `substituir: {}` replaces the whole proposal.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
         }
         "registrar_trabalho" => {
             let mut corpo = alvo(a);
@@ -195,57 +196,54 @@ fn chamar(nome: &str, a: &Value) -> R {
             texto(a, "blueprint_id")?; // um registro é sobre um blueprint que já existe
             let r = servidor("registro", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
-                return Ok("Registro guardado: o app está fechado. Quando ele abrir, entra na fila para o usuário decidir se adiciona ao blueprint (a validação é feita só então).".into());
+                return Ok("Record saved: the app is closed. When it opens, the record enters the queue for the user to decide whether to add it to the blueprint (validation happens only then).".into());
             }
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
-            let aviso = if avisos.is_empty() { String::new() } else { format!("
-Avisos:
-- {}", avisos.join("
-- ")) };
-            Ok(format!("Registro nº {} na fila do app (não é proposta). Nada foi salvo: o usuário vê o que foi feito, com os checks, e decide se adiciona ao blueprint. Avise o usuário agora e pergunte se quer adicioná-lo.{aviso}", r["numero"]))
+            let aviso = if avisos.is_empty() { String::new() } else { format!("\nWarnings:\n- {}", avisos.join("\n- ")) };
+            Ok(format!("Record no. {} is in the app's queue (it is not a proposal). Nothing was saved: the user sees what was done, with the checks, and decides whether to add it to the blueprint. Tell the user now and ask whether to add it.{aviso}", r["numero"]))
         }
         "vincular_pasta" => {
             // o servidor MCP roda na pasta da sessão do agente: é ela que fica ligada
-            let pasta = std::env::current_dir().map_err(|e| format!("Não sei em que pasta estou: {e}"))?;
+            let pasta = std::env::current_dir().map_err(|e| format!("Cannot tell which folder this is: {e}"))?;
             let corpo = com(alvo(a), &[("cwd", json!(pasta.display().to_string()))]);
             servidor("pasta/vincular", "POST", Some(&Value::Object(corpo)))?;
-            Ok(format!("Pasta {} ligada ao blueprint. As próximas sessões nela já começam com o blueprint e a ação atual.", pasta.display()))
+            Ok(format!("Folder {} linked to the blueprint. The next sessions in it start with the blueprint and the current action.", pasta.display()))
         }
         "anexar_prototipo" => {
             let corpo = com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("titulo", json!(texto(a, "titulo")?)), ("html", json!(texto(a, "html")?)), ("prototipoId", json!(opcional(a, "prototipo_id")))]);
             let r = servidor("prototipo", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
-                return Ok("Protótipo guardado: o app está fechado. Ele é anexado à ação quando o app abrir.".into());
+                return Ok("Prototype saved: the app is closed. It is attached to the action when the app opens.".into());
             }
-            let acao = if r["atualizado"] == true { "atualizado" } else { "anexado" };
-            Ok(format!("Protótipo \"{}\" {acao} à ação (prototipo_id: {}); o usuário o vê na folha do blueprint, no ícone de protótipo da ação. Para revisar, chame de novo com este prototipo_id.", r["titulo"].as_str().unwrap_or(""), r["prototipoId"].as_str().unwrap_or("")))
+            let acao = if r["atualizado"] == true { "updated in" } else { "attached to" };
+            Ok(format!("Prototype \"{}\" {acao} the action (prototipo_id: {}); the user sees it on the blueprint sheet, in the action's prototype icon. To revise it, call again with this prototipo_id.", r["titulo"].as_str().unwrap_or(""), r["prototipoId"].as_str().unwrap_or("")))
         }
         "registrar_progresso" => {
             evento("progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
-            Ok("Progresso registrado.".into())
+            Ok("Progress recorded.".into())
         }
         "marcar_concluido" => {
             evento("concluir", texto(a, "evidencia")?, plano(a)?)?;
-            Ok("Plano enviado ao app como concluído, com a evidência.".into())
+            Ok("Plan sent to the app as done, with the evidence.".into())
         }
         "marcar_nao_concluido" => {
             evento("nao-concluida", texto(a, "motivo")?, plano(a)?)?;
-            Ok("Registrado: o plano continua pendente.".into())
+            Ok("Recorded: the plan stays pending.".into())
         }
         "marcar_checkpoint_feito" => {
             evento("checkpoint-feito", texto(a, "evidencia")?, checkpoint(a)?)?;
-            Ok("Checkpoint enviado ao app como atingido, com a evidência.".into())
+            Ok("Checkpoint sent to the app as reached, with the evidence.".into())
         }
         "marcar_checkpoint_nao_feito" => {
             evento("checkpoint-nao-feito", texto(a, "motivo")?, checkpoint(a)?)?;
-            Ok("Registrado: o checkpoint continua pendente.".into())
+            Ok("Recorded: the checkpoint stays pending.".into())
         }
         "reportar_bloqueio" => {
             evento("bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
-            Ok("Bloqueio registrado; o usuário foi avisado.".into())
+            Ok("Block recorded; the user was notified.".into())
         }
         "responder_conversa" => super::conversa::ferramenta(a, &servidor),
-        _ => Err(format!("Ferramenta desconhecida: {nome}")),
+        _ => Err(format!("Unknown tool: {nome}")),
     }
 }
 
@@ -279,7 +277,7 @@ pub fn tratar(msg: &Value) -> Option<Value> {
             let nome = params["name"].as_str().unwrap_or("");
             let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
             if !ferramentas.as_array().is_some_and(|f| f.iter().any(|x| x["name"] == nome)) {
-                return Some(erro(-32602, format!("Ferramenta desconhecida: {nome}")));
+                return Some(erro(-32602, format!("Unknown tool: {nome}")));
             }
             let argumentos = if params["arguments"].is_object() { params["arguments"].clone() } else { json!({}) };
             GUARDADO_OFFLINE.store(false, Ordering::Relaxed);
@@ -293,7 +291,7 @@ pub fn tratar(msg: &Value) -> Option<Value> {
                 Err(texto) => resposta(id, json!({"result": {"isError": true, "content": [{"type": "text", "text": texto}]}})), // o erro volta ao modelo, que pode corrigir
             }
         }
-        outro => erro(-32601, format!("Método não suportado: {outro}")),
+        outro => erro(-32601, format!("Method not supported: {outro}")),
     })
 }
 
@@ -307,6 +305,7 @@ fn id_do_canal() -> String {
 
 /// Lê mensagens de stdin (uma por linha) até o agente fechar a conversa.
 pub fn executar() -> i32 {
+    crate::idioma::fixar(crate::idioma::Idioma::En); // texto para o agente: o servidor responde em inglês (Accept-Language do cliente)
     let saida = std::io::stdout();
     let mut canal_iniciado = false;
     for linha in std::io::stdin().lock().lines().map_while(Result::ok) {
@@ -326,7 +325,7 @@ pub fn executar() -> i32 {
                 }
                 tratar(&msg)
             },
-            Err(_) => Some(json!({"jsonrpc": "2.0", "id": null, "error": {"code": -32700, "message": "JSON inválido"}})),
+            Err(_) => Some(json!({"jsonrpc": "2.0", "id": null, "error": {"code": -32700, "message": "invalid JSON"}})),
         };
         if let Some(r) = r {
             let mut s = saida.lock();

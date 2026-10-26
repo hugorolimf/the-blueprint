@@ -20,7 +20,7 @@ try {
   const proposta = await mcp.chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: "p1", mensagem: "m", acoes: [{ nome: "Nova", inicio: "2026-11-06", fim: "2026-11-07", planos: [{ texto: "Criar algo", descricao: "d" }] }] });
   const leitura = await mcp.chamar("ler_blueprint", { workspace_id: "sm", blueprint_id: "p1" });
   mcp.fechar();
-  for (const r of [a, b, ruim, proposta]) { assert.equal(r.erro, false); assert.match(r.texto, /fechado|guardad/i, r.texto); }
+  for (const r of [a, b, ruim, proposta]) { assert.equal(r.erro, false); assert.match(r.texto, /closed|saved/i, r.texto); }
   assert.equal(leitura.erro, true, "ler precisa do app: com ele fechado volta o erro de sempre, sem guardar nada");
   assert.equal((await readdir(pendentes)).filter((n) => n.endsWith(".json")).length, 4, "um arquivo por registro, e só os de escrita");
   console.log("ok: 4 registros guardados com o app fechado; a leitura continua pedindo o app");

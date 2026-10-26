@@ -43,24 +43,24 @@ fn montar(workspace: &str, estrutura: &Value, n: usize) -> (String, String) {
     let onde = format!("{} › {}", curto(workspace, 16), curto(texto(p, "nome"), 22));
     let acoes = lista(&p["acoes"]);
     let Some(i) = acao_atual(acoes) else {
-        let t = format!("The Blueprint · {workspace} › {}\nTodas as ações estão concluídas.", texto(p, "nome"));
-        return (t, format!("Blueprint · {onde} · concluído"));
+        let t = crate::tr!("The Blueprint · {workspace} › {}\nAll actions are done.", "The Blueprint · {workspace} › {}\nTodas as ações estão concluídas.", texto(p, "nome"));
+        return (t, crate::tr!("Blueprint · {onde} · done", "Blueprint · {onde} · concluído"));
     };
     let a = &acoes[i];
     let numero = &numeros_das_acoes(p, n)[i];
     let planos = lista(&a["planos"]);
     let feitos = planos.iter().filter(|x| x["feito"] == true).count();
-    let mut t = format!("The Blueprint · {workspace} › {}\nAção {numero}: {} ({} a {}) · {feitos}/{} planos\n", texto(p, "nome"), texto(a, "nome"), dia(texto(a, "inicio")), dia(texto(a, "fim")), planos.len());
+    let mut t = crate::tr!("The Blueprint · {workspace} › {}\nAction {numero}: {} ({} to {}) · {feitos}/{} plans\n", "The Blueprint · {workspace} › {}\nAção {numero}: {} ({} a {}) · {feitos}/{} planos\n", texto(p, "nome"), texto(a, "nome"), dia(texto(a, "inicio")), dia(texto(a, "fim")), planos.len());
     for x in planos {
         t += &format!("  [{}] {}\n", if x["feito"] == true { "x" } else { " " }, texto(x, "texto"));
     }
     // o checkpoint pendente mais próximo de todo o blueprint (datas aaaa-mm-dd ordenam como texto)
     let proximo = acoes.iter().flat_map(|a| lista(&a["checkpoints"])).filter(|c| c["feito"] != true).min_by_key(|c| texto(c, "data"));
     match proximo {
-        Some(c) => t += &format!("Próximo checkpoint: {} · {}", dia(texto(c, "data")), texto(c, "nome")),
-        None => t += "Sem checkpoints pendentes.",
+        Some(c) => t += &crate::tr!("Next checkpoint: {} · {}", "Próximo checkpoint: {} · {}", dia(texto(c, "data")), texto(c, "nome")),
+        None => t += crate::idioma::ou("No pending checkpoints.", "Sem checkpoints pendentes."),
     }
-    (t, format!("Blueprint · {onde} · ação {numero} · {} · {feitos}/{}", curto(texto(a, "nome"), 30), planos.len()))
+    (t, crate::tr!("Blueprint · {onde} · action {numero} · {} · {feitos}/{}", "Blueprint · {onde} · ação {numero} · {} · {feitos}/{}", curto(texto(a, "nome"), 30), planos.len()))
 }
 
 /// `hook/status`: o estado do blueprint da pasta (`cwd`) ou da sessão. Sem blueprint ligado: `vinculado: false` e sem texto.

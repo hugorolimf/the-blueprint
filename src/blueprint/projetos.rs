@@ -35,18 +35,18 @@ pub fn projetos_novos(dados_blueprint: Option<&Value>, atual: Option<&Value>, er
         let rotulo = format!("`blueprint.projetos[{i}]`");
         if !id.is_empty() {
             if !existentes.iter().any(|(eid, _)| *eid == id) {
-                erros.push(format!("{rotulo}: o id \"{id}\" não existe neste blueprint (use só ids de ler_blueprint)."));
+                erros.push(crate::tr!("{rotulo}: id \"{id}\" does not exist in this blueprint (use only ids from ler_blueprint).", "{rotulo}: o id \"{id}\" não existe neste blueprint (use só ids de ler_blueprint)."));
             }
         } else if nome.is_empty() {
-            erros.push(format!("{rotulo}: falta o nome do projeto."));
+            erros.push(crate::tr!("{rotulo}: the project name is missing.", "{rotulo}: falta o nome do projeto."));
         } else if igual(&nome, GERAL) {
-            erros.push(format!("{rotulo}: \"{GERAL}\" é reservado ao grupo das ações sem projeto; escolha outro nome."));
+            erros.push(crate::tr!("{rotulo}: \"{GERAL}\" is reserved for the group of actions without a project; choose another name.", "{rotulo}: \"{GERAL}\" é reservado ao grupo das ações sem projeto; escolha outro nome."));
         } else if !existentes.iter().any(|(_, en)| igual(en, &nome)) && !novos.iter().any(|n| igual(n, &nome)) {
             novos.push(nome);
         }
     }
     if novos.len() > MAX_NOVOS {
-        erros.push(format!("Projetos novos demais (máximo {MAX_NOVOS} por proposta)."));
+        erros.push(crate::tr!("Too many new projects (at most {MAX_NOVOS} per proposal).", "Projetos novos demais (máximo {MAX_NOVOS} por proposta)."));
     }
     novos.into_iter().map(|nome| json!({"id": "", "nome": nome})).collect()
 }
@@ -63,7 +63,7 @@ pub fn escolher(acao: &Value, atual: Option<&Value>, novos: &[Value], rotulo: &s
         None | Some(Value::Null) => return Escolha::Mantem,
         Some(Value::String(s)) => s.trim().to_string(),
         Some(_) => {
-            erros.push(format!("{rotulo}: `projeto` deve ser o id ou o nome de um projeto (texto)."));
+            erros.push(crate::tr!("{rotulo}: `projeto` must be the id or the name of a project (text).", "{rotulo}: `projeto` deve ser o id ou o nome de um projeto (texto)."));
             return Escolha::Mantem;
         }
     };
@@ -78,8 +78,8 @@ pub fn escolher(acao: &Value, atual: Option<&Value>, novos: &[Value], rotulo: &s
         return Escolha::Projeto(json!({"id": "", "nome": str_de(n, "nome")}));
     }
     let nomes: Vec<String> = existentes.iter().map(|(_, n)| n.clone()).chain(novos.iter().map(|n| str_de(n, "nome"))).collect();
-    let dica = if nomes.is_empty() { "este blueprint não tem projetos; liste-os em `blueprint.projetos`".to_string() } else { format!("projetos: {}", nomes.join(", ")) };
-    erros.push(format!("{rotulo}: o projeto \"{}\" não existe neste blueprint ({dica}; para criar, liste-o em `blueprint.projetos`; use \"{GERAL}\" ou vazio para tirar a ação do projeto).", truncar(&texto, 80)));
+    let dica = if nomes.is_empty() { crate::tr!("this blueprint has no projects; list them in `blueprint.projetos`", "este blueprint não tem projetos; liste-os em `blueprint.projetos`") } else { crate::tr!("projects: {}", "projetos: {}", nomes.join(", ")) };
+    erros.push(crate::tr!("{rotulo}: project \"{}\" does not exist in this blueprint ({dica}; to create it, list it in `blueprint.projetos`; use \"{GERAL}\" or empty to take the action out of the project).", "{rotulo}: o projeto \"{}\" não existe neste blueprint ({dica}; para criar, liste-o em `blueprint.projetos`; use \"{GERAL}\" ou vazio para tirar a ação do projeto).", truncar(&texto, 80)));
     Escolha::Mantem
 }
 

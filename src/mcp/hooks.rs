@@ -41,7 +41,7 @@ pub(super) fn alvo(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Option<(
 pub fn vincular(dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let (cwd, ws, bp) = (texto(corpo, "cwd"), texto(corpo, "workspaceId"), texto(corpo, "blueprintId"));
     if !caminho_valido(cwd) {
-        return Err(falha(400, "cwd inválido: o caminho da pasta, de até 500 caracteres"));
+        return Err(falha(400, crate::tr!("invalid cwd: the folder path, up to 500 characters", "cwd inválido: o caminho da pasta, de até 500 caracteres")).codigo("cwd-invalido"));
     }
     let mut d = travado(dados);
     acoes::blueprint(d.ler_tudo(&Contexto::local())?, ws, bp, None)?;
@@ -55,19 +55,23 @@ fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize) -> Str
     let acoes = lista(&p["acoes"]);
     let atual = acao_atual(acoes).map(|i| (i, &acoes[i]));
     let numeros = numeros_das_acoes(p, n);
-    let mut t = format!("The Blueprint: esta pasta é do blueprint «{}» (workspace_id {ws}, blueprint_id {bp}).", texto(p, "nome"));
+    let nome_bp = texto(p, "nome");
+    let mut t = crate::tr!("The Blueprint: this folder belongs to blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}).", "The Blueprint: esta pasta é do blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}).");
     match atual {
         Some((i, a)) => {
             // a folha numera as ações como <nº do projeto>.<nº da ação> (2.5; sem projetos, <nº do blueprint>.<nº da ação>): é como o usuário as chama
-            t += &format!(" Ação atual: {} «{}» (acao_id {}, de {} a {}). Ao falar com o usuário, chame as ações pelo número da folha.", numeros[i], texto(a, "nome"), texto(a, "id"), texto(a, "inicio"), texto(a, "fim"));
+            t += &crate::tr!(" Current action: {} «{}» (acao_id {}, from {} to {}). When talking to the user, call actions by their sheet number.", " Ação atual: {} «{}» (acao_id {}, de {} a {}). Ao falar com o usuário, chame as ações pelo número da folha.", numeros[i], texto(a, "nome"), texto(a, "id"), texto(a, "inicio"), texto(a, "fim"));
             let pendentes: Vec<String> = lista(&a["planos"]).iter().filter(|x| x["feito"] != true).map(|x| format!("«{}» (plano_id {})", texto(x, "texto"), texto(x, "id"))).collect();
             if !pendentes.is_empty() {
-                t += &format!(" Planos pendentes: {}.", pendentes.join("; "));
+                t += &crate::tr!(" Pending plans: {}.", " Planos pendentes: {}.", pendentes.join("; "));
             }
         }
-        None => t += " Todas as ações estão concluídas.",
+        None => t += crate::idioma::ou(" All actions are done.", " Todas as ações estão concluídas."),
     }
-    t += " Mantenha-o atualizado pelo MCP blueprint: registrar_progresso ao começar cada plano, marcar_concluido só com a evidência. Trabalho fora do plano termina com registrar_trabalho e uma pergunta ao usuário sobre adicioná-lo ao blueprint.";
+    t += crate::idioma::ou(
+        " Keep it up to date through the blueprint MCP: registrar_progresso when starting each plan, marcar_concluido only with the evidence. Work outside the plan ends with registrar_trabalho and a question to the user about adding it to the blueprint.",
+        " Mantenha-o atualizado pelo MCP blueprint: registrar_progresso ao começar cada plano, marcar_concluido só com a evidência. Trabalho fora do plano termina com registrar_trabalho e uma pergunta ao usuário sobre adicioná-lo ao blueprint.",
+    );
     t.chars().take(CONTEXTO_MAX).collect()
 }
 
@@ -78,7 +82,7 @@ pub fn sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
         if caminho_valido(cwd) && travado(&mcp.pastas_avisadas).insert(cwd.replace('\\', "/").trim_end_matches('/').to_lowercase()) {
             mcp.empurra(json!({"tipo": "pasta-sem-blueprint", "cwd": cwd}).as_object().unwrap().clone());
         }
-        return Ok(json!({"vinculado": false, "contexto": "The Blueprint: esta pasta não está ligada a nenhum blueprint. Se for de um, chame listar_blueprints, confirme com o usuário qual é e chame vincular_pasta; se não for, ignore."}));
+        return Ok(json!({"vinculado": false, "contexto": crate::idioma::ou("The Blueprint: this folder is not linked to any blueprint. If it belongs to one, call listar_blueprints, confirm with the user which one and call vincular_pasta; if not, ignore this.", "The Blueprint: esta pasta não está ligada a nenhum blueprint. Se for de um, chame listar_blueprints, confirme com o usuário qual é e chame vincular_pasta; se não for, ignore.")}));
     };
     mcp.lembrar_sessao(texto(corpo, "session_id"), &ws, &bp);
     mcp.abrir_sessao(texto(corpo, "session_id"), texto(corpo, "cwd"), &ws, &bp);
@@ -87,7 +91,7 @@ pub fn sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let n = acoes::numero_do_blueprint(tudo, &ws, &bp);
     let Ok(estrutura) = acoes::blueprint(tudo, &ws, &bp, None) else {
         // o blueprint foi apagado depois de ligado
-        return Ok(json!({"vinculado": false, "contexto": "The Blueprint: o blueprint desta pasta não existe mais. Chame listar_blueprints e vincular_pasta com o certo."}));
+        return Ok(json!({"vinculado": false, "contexto": crate::idioma::ou("The Blueprint: this folder's blueprint no longer exists. Call listar_blueprints and vincular_pasta with the right one.", "The Blueprint: o blueprint desta pasta não existe mais. Chame listar_blueprints e vincular_pasta com o certo.")}));
     };
     Ok(json!({"vinculado": true, "workspaceId": ws, "blueprintId": bp, "contexto": contexto_do_blueprint(&estrutura, &ws, &bp, n)}))
 }
@@ -143,7 +147,7 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let Some((ws, bp)) = alvo(mcp, dados, corpo)? else { return Ok(json!({})) };
     let Some(arquivo) = corpo["tool_input"]["file_path"].as_str().and_then(|f| onde(f, texto(corpo, "cwd"))) else { return Ok(json!({})) };
     let (nome, papel, _) = identidade(corpo);
-    let mut evento = evento_de(mcp, &nome, papel, &ws, &bp, &format!("Editando {arquivo}"), "escrevendo");
+    let mut evento = evento_de(mcp, &nome, papel, &ws, &bp, &crate::tr!("Editing {arquivo}", "Editando {arquivo}"), "escrevendo");
     evento["onde"] = json!([arquivo]);
     if evento.get("planoId").is_none() {
         super::lembrete::editou_sem_plano(mcp, texto(corpo, "session_id"), &ws, &bp);
@@ -167,7 +171,7 @@ pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let (frase, estado) = if !fim {
         (format!("{nome} começou"), "lendo")
     } else {
-        (if mensagem.is_empty() { format!("{nome} terminou") } else { mensagem.to_string() }, "concluido")
+        (if mensagem.is_empty() { crate::tr!("{nome} finished", "{nome} terminou") } else { mensagem.to_string() }, "concluido")
     };
     let evento = evento_de(mcp, &nome, papel, &ws, &bp, &frase, estado);
     super::linha_do_tempo::evento(mcp, dados, &evento)?;
@@ -177,7 +181,7 @@ pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
 
 pub fn desvincular(dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let cwd = texto(corpo, "cwd");
-    if !caminho_valido(cwd) { return Err(falha(400, "cwd inválido")); }
+    if !caminho_valido(cwd) { return Err(falha(400, crate::tr!("invalid cwd", "cwd inválido")).codigo("cwd-invalido")); }
     travado(dados).desvincular_pasta(&Contexto::local(), cwd)?;
     Ok(json!({"ok": true}))
 }

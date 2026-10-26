@@ -1,4 +1,4 @@
-//! As rotas /api/mcp/* (porte de `rota` do mcp.mjs): só esta máquina, JSON em todo POST, e erros sempre como `{ "erro": "..." }`.
+//! As rotas /api/mcp/* (porte de `rota` do mcp.mjs): só esta máquina, JSON em todo POST, e erros JSON como `{ "erro", "codigo", "params"? }` (`ErroHttp::json`), o texto no idioma do pedido.
 use super::acoes::{self, id_prototipo_valido};
 use super::hooks;
 use super::permissao::{permitido, so_loopback};
@@ -11,20 +11,20 @@ use std::collections::HashSet;
 use std::sync::Mutex;
 
 fn nao_encontrado() -> Resposta {
-    Resposta::texto(404, "text/plain", "não encontrado")
+    Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))
 }
 
 pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
     if !permitido(mcp, pedido) {
-        return Resposta::texto(403, "text/plain", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)");
+        return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
     }
     let recurso = pedido.caminho.trim_start_matches("/api/mcp/");
     if (recurso == "iniciar" || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
-        return Resposta::texto(403, "text/plain", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)");
+        return Resposta::texto(403, "text/plain", crate::tr!("starting an action only works on this machine (not even MCP_REDE=1 opens it)", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)"));
     }
     match executar(mcp, dados, pedido, recurso) {
         Ok(resposta) => resposta,
-        Err(e) => Resposta::json(e.status, &json!({"erro": e.mensagem})),
+        Err(e) => e.resposta(),
     }
 }
 
@@ -32,7 +32,7 @@ pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
 /// Origin: quem escreveu o arquivo já tinha acesso à pasta de dados do usuário.
 pub fn reenviar(mcp: &Mcp, dados: &Mutex<Dados>, recurso: &str, corpo: &Value) -> (u16, Value) {
     let pedido = Pedido::novo("POST", &format!("/api/mcp/{recurso}"), vec![("content-type".into(), "application/json".into())], corpo.to_string().into_bytes());
-    let resposta = executar(mcp, dados, &pedido, recurso).unwrap_or_else(|e| Resposta::json(e.status, &json!({"erro": e.mensagem})));
+    let resposta = executar(mcp, dados, &pedido, recurso).unwrap_or_else(|e| e.resposta());
     (resposta.status, serde_json::from_slice(resposta.bytes()).unwrap_or(Value::Null))
 }
 
@@ -71,12 +71,12 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
         });
     }
     if pedido.metodo != "POST" {
-        return Ok(Resposta::texto(405, "text/plain", "método não permitido"));
+        return Ok(Resposta::texto(405, "text/plain", crate::tr!("method not allowed", "método não permitido")));
     }
     if !pedido.eh_json() {
-        return Ok(Resposta::texto(415, "text/plain", "envie application/json"));
+        return Ok(Resposta::texto(415, "text/plain", crate::tr!("send application/json", "envie application/json")));
     }
-    let corpo: Value = if pedido.corpo.is_empty() { json!({}) } else { serde_json::from_slice(&pedido.corpo).map_err(|e| falha(400, e.to_string()))? };
+    let corpo: Value = if pedido.corpo.is_empty() { json!({}) } else { serde_json::from_slice(&pedido.corpo).map_err(|e| falha(400, crate::tr!("invalid JSON: {e}", "JSON inválido: {e}")).codigo("json-invalido"))? };
     if recurso.starts_with("hook/") {
         mcp.sinal_sessao(hooks::texto(&corpo, "session_id")); // qualquer hook da sessão prova que ela está viva (expiração em sessoes.rs)
     }
@@ -124,7 +124,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
         "conversa/resposta" => { let (status, r) = super::conversa::responder(mcp, dados, &corpo)?; Resposta::json(status, &r) }
         "prototipo/remover" => {
             // chamado pela página ao excluir; só mexe em arquivos com id gerado por aqui
-            let id = corpo.get("prototipoId").and_then(Value::as_str).filter(|i| id_prototipo_valido(i)).ok_or_else(|| falha(400, "prototipoId inválido"))?;
+            let id = corpo.get("prototipoId").and_then(Value::as_str).filter(|i| id_prototipo_valido(i)).ok_or_else(|| falha(400, crate::tr!("invalid prototipoId", "prototipoId inválido")))?;
             let _ = std::fs::remove_file(mcp.prototipos.join(format!("{id}.html")));
             Resposta::json(200, &json!({"ok": true}))
         }
