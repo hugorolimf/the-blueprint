@@ -7,10 +7,10 @@ import { join, resolve } from "node:path";
 const raiz = resolve(import.meta.dirname, "..");
 const dados = JSON.parse(readFileSync(join(raiz, "roadmap.json"), "utf8"));
 const ESTADOS = {
-  entregue: { ordem: 0, en: "✅ Shipped", pt: "✅ Entregue" },
-  agora: { ordem: 1, en: "🔨 Doing now", pt: "🔨 Fazendo agora" },
-  proximo: { ordem: 2, en: "⏭️ Next", pt: "⏭️ Em seguida" },
-  depois: { ordem: 3, en: "💭 Later", pt: "💭 Depois" },
+  entregue: { ordem: 0, en: "Shipped", pt: "Entregue" },
+  agora: { ordem: 1, en: "Doing now", pt: "Fazendo agora" },
+  proximo: { ordem: 2, en: "Next", pt: "Em seguida" },
+  depois: { ordem: 3, en: "Later", pt: "Depois" },
 };
 const TEXTOS = {
   en: { titulo: "The Blueprint roadmap", outro: "[Leia em português](ROADMAP.pt-BR.md)", legenda: "How to read it", atualizado: "Updated", ideia: "Have an idea or a vote? [Open an issue](https://github.com/hugorolimf/the-blueprint/issues). Source of this page: `roadmap.json` (the app's Roadmap screen reads the same file)." },
@@ -27,7 +27,7 @@ export function gerar(idioma) {
     linhas.push(`## ${tema[idioma]}`, "");
     for (const i of itens) {
       const x = i[idioma];
-      linhas.push(`- ${ESTADOS[i.estado][idioma].split(" ")[0]} **${x.titulo}**: ${x.resumo}${x.detalhe ? ` ${x.detalhe}` : ""}`);
+      linhas.push(`- *${ESTADOS[i.estado][idioma]}* · **${x.titulo}**: ${x.resumo}${x.detalhe ? ` ${x.detalhe}` : ""}`);
     }
     linhas.push("");
   }
