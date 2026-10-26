@@ -39,11 +39,16 @@ pub fn lancar(instalador: &Path, args: &[String]) -> Result<(), String> {
     let copia = pasta.join("blueprint-atualizando.exe");
     std::fs::copy(&exe, &copia).map_err(|e| e.to_string())?;
     use std::os::windows::process::CommandExt;
+    use std::process::Stdio;
     Command::new(&copia)
         .arg("atualizando")
         .arg(instalador)
         .arg(&exe)
         .args(args)
+        // o app aberto pelo atalho soltou o console (FreeConsole): herdar o stdio passaria handles mortos ou reaproveitados, e o spawn falhava às vezes (erro 50)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .creation_flags(0x0000_0008 | 0x0000_0200) // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP: sobrevive ao app, que sai logo depois
         .spawn()
         .map(|_| ())

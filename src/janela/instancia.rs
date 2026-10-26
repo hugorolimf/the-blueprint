@@ -19,7 +19,9 @@ fn arquivo_da_porta() -> PathBuf {
 
 /// Tenta ser a primeira instância. O mutex fica aberto até o processo acabar (de propósito: é isso que mantém a trava).
 pub fn garantir() -> Instancia {
-    let nome: Vec<u16> = "Local\\Blueprint.InstanciaUnica".encode_utf16().chain(std::iter::once(0)).collect();
+    // `BLUEPRINT_INSTANCIA_PARA_TESTE` (só testes): outra trava, para um app de teste abrir ao lado do app do usuário (o instalador de teste usa a mesma no AppMutex)
+    let nome = std::env::var("BLUEPRINT_INSTANCIA_PARA_TESTE").map_or_else(|_| "Local\\Blueprint.InstanciaUnica".to_string(), |s| format!("Local\\Blueprint.Teste.{s}"));
+    let nome: Vec<u16> = nome.encode_utf16().chain(std::iter::once(0)).collect();
     // SAFETY: `nome` termina em zero e vive durante a chamada; sem atributos de segurança (ponteiro nulo é o padrão).
     let (_, ja) = unsafe {
         let h = CreateMutexW(std::ptr::null(), 0, nome.as_ptr());
