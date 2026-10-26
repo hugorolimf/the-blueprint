@@ -14,8 +14,10 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Entregue* · **Prazos no ritmo da IA e tempo real medido**: Planos de 0,5 a 4 h, ações de 1 a 3 dias; o app mede quanto cada plano realmente levou.
 - *Entregue* · **Propor, aplicar e provar**: O agente só propõe; você aplica. Marcar um plano como feito exige evidência (o comando ou teste e o resultado).
 - *Em seguida* · **Apresentação e impressão do blueprint**: Transformar um blueprint em proposta de projeto, cronograma ou relatório de andamento para clientes e empresas, imprimível em A4 e exportável em um HTML único. A IA também cria figuras interativas do Anatomy que explicam o projeto em construção, mostradas num sandbox e trocadas por um instantâneo estático na impressão.
+- *Em seguida* · **Exportar o blueprint como arquivos Markdown**: Um arquivo por ação mais um índice, legível no GitHub e versionado com o código. Só leitura: o banco continua sendo a fonte.
 - *Depois* · **Importar e exportar Markdown e Issues do GitHub**: Levar planos entre o Blueprint, arquivos Markdown de um repositório e gerenciadores de issues.
 - *Depois* · **Um worktree do Git por ação**: Iniciar uma ação no próprio worktree para agentes em paralelo não se atropelarem (ideia vista no ORCA e no Vibe Kanban).
+- *Depois* · **Importar issues do GitHub como proposta**: Issues abertas viram ações e planos numa proposta numerada que você revisa e aplica. Nada é gravado antes do clique.
 
 ## Integração com agentes
 
@@ -57,6 +59,7 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Entregue* · **Código aberto desde o começo**: Licença MIT, CONTRIBUTING, SECURITY, CI no Windows e no Ubuntu, releases com checksums.
 - *Fazendo agora* · **README, vídeos de demonstração e guias que valem a leitura**: Um README novo, no modelo dos melhores projetos do gênero, demonstrações gravadas, guias passo a passo e um FAQ de problemas.
 - *Em seguida* · **winget e Scoop**: Instalar com um único comando pelos gerenciadores de pacotes do Windows.
+- *Depois* · **Completar comandos no terminal**: blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos.
 
 ---
 

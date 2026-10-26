@@ -107,6 +107,15 @@
       "pt": { "titulo": "README, vídeos de demonstração e guias que valem a leitura", "resumo": "Um README novo, no modelo dos melhores projetos do gênero, demonstrações gravadas, guias passo a passo e um FAQ de problemas." } },
     { "id": "pacotes", "tema": "comunidade", "estado": "proximo",
       "en": { "titulo": "winget and Scoop", "resumo": "Install with a single command from the Windows package managers." },
-      "pt": { "titulo": "winget e Scoop", "resumo": "Instalar com um único comando pelos gerenciadores de pacotes do Windows." } }
+      "pt": { "titulo": "winget e Scoop", "resumo": "Instalar com um único comando pelos gerenciadores de pacotes do Windows." } },
+    { "id": "exportar-markdown", "tema": "planejamento", "estado": "proximo",
+      "en": { "titulo": "Export a blueprint as Markdown files", "resumo": "One file per action plus an index, readable on GitHub and versioned with the code. Read-only: the database stays the source." },
+      "pt": { "titulo": "Exportar o blueprint como arquivos Markdown", "resumo": "Um arquivo por ação mais um índice, legível no GitHub e versionado com o código. Só leitura: o banco continua sendo a fonte." } },
+    { "id": "importar-issues", "tema": "planejamento", "estado": "depois",
+      "en": { "titulo": "Import GitHub issues as a proposal", "resumo": "Open issues become actions and plans in a numbered proposal that you review and apply. Nothing is saved before your click." },
+      "pt": { "titulo": "Importar issues do GitHub como proposta", "resumo": "Issues abertas viram ações e planos numa proposta numerada que você revisa e aplica. Nada é gravado antes do clique." } },
+    { "id": "completar-comandos", "tema": "comunidade", "estado": "depois",
+      "en": { "titulo": "Shell completions for the command line", "resumo": "blueprint completions prints a script for PowerShell and Bash that completes the subcommands." },
+      "pt": { "titulo": "Completar comandos no terminal", "resumo": "blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos." } }
   ]
 }

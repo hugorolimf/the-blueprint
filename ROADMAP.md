@@ -14,8 +14,10 @@ Shipped · Doing now · Next · Later
 - *Shipped* · **Deadlines at AI pace and measured real time**: Plans of 0.5–4 h, actions of 1–3 days; the app measures how long each plan really took.
 - *Shipped* · **Propose, apply, prove**: The agent only proposes; you apply. Marking a plan done requires evidence (the command or test and its result).
 - *Next* · **Presentation and print of a blueprint**: Turn a blueprint into a project proposal, a schedule or a progress report for clients and companies, printable to A4 and exportable as one HTML file. The AI also builds interactive Anatomy figures that explain the project being built, shown in a sandbox and replaced by a static snapshot when printed.
+- *Next* · **Export a blueprint as Markdown files**: One file per action plus an index, readable on GitHub and versioned with the code. Read-only: the database stays the source.
 - *Later* · **Import and export Markdown and GitHub Issues**: Move plans between the Blueprint, Markdown files in a repository and issue trackers.
 - *Later* · **One Git worktree per action**: Start an action in its own worktree so parallel agents do not step on each other (an idea seen in ORCA and Vibe Kanban).
+- *Later* · **Import GitHub issues as a proposal**: Open issues become actions and plans in a numbered proposal that you review and apply. Nothing is saved before your click.
 
 ## Agent integration
 
@@ -57,6 +59,7 @@ Shipped · Doing now · Next · Later
 - *Shipped* · **Open source from day one**: MIT license, CONTRIBUTING, SECURITY, CI on Windows and Ubuntu, releases with checksums.
 - *Doing now* · **A README, demo videos and guides worth reading**: A new README modeled on the best projects of the genre, recorded demos, step-by-step guides and a troubleshooting FAQ.
 - *Next* · **winget and Scoop**: Install with a single command from the Windows package managers.
+- *Later* · **Shell completions for the command line**: blueprint completions prints a script for PowerShell and Bash that completes the subcommands.
 
 ---
 
