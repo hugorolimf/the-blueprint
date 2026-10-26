@@ -64,9 +64,9 @@ túnel vive num Job Object e morre com o app). Esconder a janela na bandeja **n�
 
 | Rota (só porta local, Host e Origin em loopback, JSON) | Resposta |
 | --- | --- |
-| `GET /api/compartilhar` | `{"estado": "desligado" \| "baixando" \| "ligando" \| "ligado" \| "erro", "url"?, "workspaceId"?, "erro"?, "porta"?}` |
-| `POST /api/compartilhar/ligar` `{"workspaceId"}` | 202 e o estado; 400 `falta-workspace`, 404 `workspace-inexistente`, 409 `ja-compartilhando` |
-| `POST /api/compartilhar/desligar` `{}` | 200 e o estado (`desligado`) |
+| `GET /api/compartilhar` | `{"estado": "desligado" \| "baixando" \| "ligando" \| "ligado" \| "erro", "url"?, "workspaces"?, "workspaceId"? (o primeiro), "erro"?, "porta"?}` |
+| `POST /api/compartilhar/ligar` `{"workspaceId"}` | 202 e o estado; 400 `falta-workspace`, 404 `workspace-inexistente`. Com o túnel já ligado, inclui o workspace no mesmo endereço |
+| `POST /api/compartilhar/desligar` `{"workspaceId"?}` | 200 e o estado; com `workspaceId` tira só esse workspace (o túnel desliga quando não sobra nenhum), sem ele desliga tudo |
 
 Cada mudança de estado também chega à página como o evento `compartilhar` em `/api/mcp/eventos` (só a página local). Convites e pessoas
 usam as rotas do modo hospedado (`/api/convites`, `/api/pessoas`), chamadas pela página local enquanto compartilha; os links saem com o

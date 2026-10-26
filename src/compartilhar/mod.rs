@@ -40,7 +40,8 @@ impl Fase {
 #[derive(Default)]
 struct Interno {
     fase: Fase,
-    workspace: String,
+    /// os workspaces abertos aos convidados, todos pelo mesmo túnel (cada convite continua preso ao seu)
+    workspaces: Vec<String>,
     url: Option<String>,
     erro: Option<String>,
     porta: Option<u16>,
@@ -85,12 +86,13 @@ impl Compartilhar {
         self.interno.lock().unwrap_or_else(|e| e.into_inner())
     }
 
-    /// `GET /api/compartilhar`: `{estado, url?, workspaceId?, erro?, porta?}`.
+    /// `GET /api/compartilhar`: `{estado, url?, workspaces?, workspaceId?, erro?, porta?}` (`workspaceId` é o primeiro, para quem só lê um).
     pub fn json(&self) -> Value {
         let i = self.travar();
         let mut v = json!({"estado": i.fase.texto()});
         if i.fase != Fase::Desligado {
-            v["workspaceId"] = json!(i.workspace);
+            v["workspaces"] = json!(i.workspaces);
+            v["workspaceId"] = json!(i.workspaces.first());
         }
         for (chave, valor) in [("url", i.url.as_ref().map(|u| json!(u))), ("erro", i.erro.as_ref().map(|e| json!(e))), ("porta", i.porta.map(|p| json!(p)))] {
             if let Some(valor) = valor {
@@ -105,10 +107,10 @@ impl Compartilhar {
         matches!(self.travar().fase, Fase::Baixando | Fase::Ligando | Fase::Ligado)
     }
 
-    /// A URL do túnel como configuração do modo hospedado e o workspace compartilhado, só com o compartilhamento ligado.
-    pub fn porta_aberta(&self) -> Option<(Hospedagem, String)> {
+    /// A URL do túnel como configuração do modo hospedado e os workspaces compartilhados, só com o compartilhamento ligado.
+    pub fn porta_aberta(&self) -> Option<(Hospedagem, Vec<String>)> {
         let i = self.travar();
-        Some((i.hospedagem.clone().filter(|_| i.fase == Fase::Ligado)?, i.workspace.clone()))
+        Some((i.hospedagem.clone().filter(|_| i.fase == Fase::Ligado)?, i.workspaces.clone()))
     }
 
     fn avisar(&self) {
@@ -117,17 +119,21 @@ impl Compartilhar {
         }
     }
 
-    /// Começa a ligar (o resto acontece em segundo plano e chega por SSE). Um compartilhamento por vez.
+    /// Começa a ligar (o resto acontece em segundo plano e chega por SSE). Com o túnel já ligado (ou ligando), só inclui o workspace.
     pub fn ligar(&self, workspace: &str) -> Result<(), ErroHttp> {
         let estado = self.estado.get().and_then(Weak::upgrade).ok_or_else(|| falha(503, crate::tr!("the server is not ready", "o servidor não está pronto")))?;
         let geracao = {
             let mut i = self.travar();
             if matches!(i.fase, Fase::Baixando | Fase::Ligando | Fase::Ligado) {
-                let ws = i.workspace.clone();
-                return Err(falha(409, crate::tr!("workspace {ws} is already being shared: turn it off first", "o workspace {ws} já está sendo compartilhado: desligue antes")).codigo("ja-compartilhando").params(json!({"workspaceId": ws})));
+                if !i.workspaces.iter().any(|w| w == workspace) {
+                    i.workspaces.push(workspace.to_string());
+                }
+                drop(i);
+                self.avisar();
+                return Ok(());
             }
             let g = i.geracao + 1;
-            *i = Interno { fase: Fase::Ligando, workspace: workspace.to_string(), geracao: g, ..Interno::default() };
+            *i = Interno { fase: Fase::Ligando, workspaces: vec![workspace.to_string()], geracao: g, ..Interno::default() };
             g
         };
         self.avisar();
@@ -219,6 +225,20 @@ impl Compartilhar {
         self.avisar();
     }
 
+    /// Tira um workspace do compartilhamento; sem nenhum, derruba o túnel. Os convidados dele perdem o acesso na hora (`so_do_workspace`).
+    pub fn desligar_workspace(&self, workspace: &str) {
+        let vazio = {
+            let mut i = self.travar();
+            i.workspaces.retain(|w| w != workspace);
+            i.workspaces.is_empty()
+        };
+        if vazio {
+            self.desligar();
+        } else {
+            self.avisar();
+        }
+    }
+
     /// Derruba o túnel e fecha a porta dos convidados (clique em Desligar; ir para a bandeja não desliga).
     pub fn desligar(&self) {
         let (ouvinte, t, mudou) = {
@@ -239,19 +259,19 @@ impl Compartilhar {
     }
 }
 
-/// Quem chega pela porta dos convidados só alcança o workspace compartilhado (nem o `'*'` de um dono do modo hospedado passa).
-pub fn so_do_workspace(ctx: &Contexto, workspace: &str) -> Contexto {
+/// Quem chega pela porta dos convidados só alcança os workspaces compartilhados (nem o `'*'` de um dono do modo hospedado passa).
+pub fn so_do_workspace(ctx: &Contexto, workspaces: &[String]) -> Contexto {
     let mut c = ctx.clone();
     c.local = false;
-    c.acessos.retain(|a| a.workspace_id == workspace);
+    c.acessos.retain(|a| workspaces.contains(&a.workspace_id));
     c.papel = c.acessos.iter().map(|a| a.papel).max().unwrap_or(Papel::Visitante);
     c
 }
 
-/// O usuário local administrando pessoas e convites enquanto compartilha: dono só do workspace compartilhado (convite de outro workspace
-/// ou de `'*'` é recusado pelas regras de sempre).
-pub fn dono_local(workspace: &str) -> Contexto {
-    Contexto::membro("local", "local", vec![Acesso::novo(workspace, "", Papel::Dono)])
+/// O usuário local administrando pessoas e convites enquanto compartilha: dono só dos workspaces compartilhados (convite de outro
+/// workspace ou de `'*'` é recusado pelas regras de sempre).
+pub fn dono_local(workspaces: &[String]) -> Contexto {
+    Contexto::membro("local", "local", workspaces.iter().map(|w| Acesso::novo(w, "", Papel::Dono)).collect())
 }
 
 /// A configuração do modo hospedado que vale agora: a do `serve --hospedar` ou a do compartilhamento ligado.

@@ -612,6 +612,6 @@ Download sem barra de progresso (só o estado `baixando`). Só Windows (no Linux
 
 **Testes:** `cargo test compartilhar` (cada rota só local em 404 pela porta dos convidados, com e sem sessão de dono; convidado sem sessão
 não lê nada; convidado de um workspace não vê outro, nem com acesso antigo à raiz; Host, Origin e HTTPS do túnel; porta local igual e
-convites na URL do túnel; API, um compartilhamento por vez, Atualizar recusando, filtro do SSE do MCP; hash errado apagado e recusado;
+convites na URL do túnel; API, vários workspaces no mesmo túnel (desligar um a um), Atualizar recusando, filtro do SSE do MCP; hash errado apagado e recusado;
 endereço só do quick tunnel; túnel falso ligando, atendendo pela porta de verdade, SSE terminando em pedaços com o lote, desligar fechando a
 porta; túnel que cai virando `erro`).

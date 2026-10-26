@@ -7,7 +7,8 @@ Object.assign(I18N.catalogos.en, {
   "Só na primeira vez: o app baixa o cloudflared, o programa da Cloudflare que cria o endereço público.": "First time only: the app downloads cloudflared, the Cloudflare program that creates the public address.",
   "Ligando o túnel…": "Starting the tunnel…", "Pedindo um endereço público à Cloudflare; leva alguns segundos.": "Asking Cloudflare for a public address; it takes a few seconds.",
   "Compartilhando «{nome}»": "Sharing “{nome}”",
-  "O compartilhamento está ligado para outro workspace. Desligue para compartilhar este.": "Sharing is on for another workspace. Turn it off to share this one.",
+  "«{nome}» não está compartilhado": "“{nome}” is not shared",
+  "O túnel já está ligado para outro workspace. Ligue para incluir «{nome}» no mesmo endereço: cada convidado só vê o workspace do próprio convite.": "The tunnel is already on for another workspace. Turn it on to add “{nome}” to the same address: each guest only sees the workspace in their own invite.",
   "Quem tiver um link de convite entra por este endereço e só vê este workspace.": "Anyone with an invite link joins through this address and sees only this workspace.",
   "Não foi possível compartilhar": "Could not share", "O túnel não ligou. Tente de novo.": "The tunnel did not start. Try again.",
   "Compartilhamento desligado": "Sharing is off",
@@ -16,6 +17,6 @@ Object.assign(I18N.catalogos.en, {
   "O app precisa ficar aberto enquanto as pessoas usam. O endereço muda a cada vez que você liga: depois de religar, mande os links de novo.": "The app must stay open while people use it. The address changes every time you turn it on: after turning it on again, send the links again.",
   "Esta versão do app não compartilha workspaces.": "This version of the app cannot share workspaces.",
   "Este é o endereço público. Quem não tem link de convite não entra.": "This is the public address. People without an invite link cannot join.",
-  "Desligar o compartilhamento?": "Turn sharing off?",
-  "Quem está usando perde o acesso na hora. Ao ligar de novo, o endereço muda.": "People using it lose access right away. When you turn it on again, the address changes.",
+  "Parar de compartilhar este workspace?": "Stop sharing this workspace?",
+  "Quem usa este workspace perde o acesso na hora. Sem nenhum workspace compartilhado, o túnel desliga e o endereço muda ao ligar de novo.": "People using this workspace lose access right away. With no workspace shared, the tunnel turns off and the address changes when you turn it on again.",
 });

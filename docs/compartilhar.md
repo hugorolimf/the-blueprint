@@ -62,9 +62,9 @@ process lives in a Job Object and dies with the app). Hiding the window in the t
 
 | Route (local port only, loopback Host and Origin, JSON) | Answer |
 | --- | --- |
-| `GET /api/compartilhar` | `{"estado": "desligado" \| "baixando" \| "ligando" \| "ligado" \| "erro", "url"?, "workspaceId"?, "erro"?, "porta"?}` |
-| `POST /api/compartilhar/ligar` `{"workspaceId"}` | 202 and the state; 400 `falta-workspace`, 404 `workspace-inexistente`, 409 `ja-compartilhando` |
-| `POST /api/compartilhar/desligar` `{}` | 200 and the state (`desligado`) |
+| `GET /api/compartilhar` | `{"estado": "desligado" \| "baixando" \| "ligando" \| "ligado" \| "erro", "url"?, "workspaces"?, "workspaceId"? (the first), "erro"?, "porta"?}` |
+| `POST /api/compartilhar/ligar` `{"workspaceId"}` | 202 and the state; 400 `falta-workspace`, 404 `workspace-inexistente`. With the tunnel already on, it adds the workspace to the same address |
+| `POST /api/compartilhar/desligar` `{"workspaceId"?}` | 200 and the state; with `workspaceId` it removes only that workspace (the tunnel stops when none is left), without it everything stops |
 
 Every state change also goes to the page as the `compartilhar` event on `/api/mcp/eventos` (local page only). Invites and people use the
 routes of the hosted mode (`/api/convites`, `/api/pessoas`), called by the local page while sharing; links come out with the tunnel address.

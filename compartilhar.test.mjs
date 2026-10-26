@@ -14,7 +14,8 @@ const { ESTADOS, normalizar, corpoDoLigar, vistaDoEstado } = await import("./web
 
 // o servidor pode mandar só o estado; estado desconhecido ou resposta vazia vira erro (nunca um botão errado)
 assert.deepEqual(ESTADOS, ["desligado", "baixando", "ligando", "ligado", "erro"]);
-assert.deepEqual(normalizar({ estado: "ligado", url: "https://a.trycloudflare.com", workspaceId: "w1", porta: 4100 }), { estado: "ligado", url: "https://a.trycloudflare.com", workspaceId: "w1", erro: "" });
+assert.deepEqual(normalizar({ estado: "ligado", url: "https://a.trycloudflare.com", workspaces: ["w1", "w2"], workspaceId: "w1", porta: 4100 }), { estado: "ligado", url: "https://a.trycloudflare.com", workspaces: ["w1", "w2"], erro: "" });
+assert.deepEqual(normalizar({ estado: "ligado", workspaceId: "w1" }).workspaces, ["w1"], "servidor antigo, com um workspace só");
 assert.equal(normalizar({ estado: "quebrado" }).estado, "erro");
 assert.equal(normalizar(null).estado, "erro");
 assert.equal(normalizar({ estado: "erro", erro: "sem rede" }).erro, "sem rede");
@@ -41,10 +42,13 @@ const ligado = v({ estado: "ligado", url: "https://a.trycloudflare.com", workspa
 assert.deepEqual([ligado.botao, ligado.ocupado, ligado.url], ["desligar", false, "https://a.trycloudflare.com"]);
 assert.equal(ligado.titulo, "Compartilhando «Produto»");
 assert.match(ligado.texto, /só vê este workspace/);
-const outro = v({ estado: "ligado", url: "https://b.trycloudflare.com", workspaceId: "w2" }, "w1");
-assert.equal(outro.titulo, "Compartilhando «Pessoal»", "ligado para outro workspace: diz qual");
-assert.match(outro.texto, /outro workspace/);
-assert.equal(outro.botao, "desligar");
+// túnel ligado para outro workspace: o diálogo continua falando do workspace aberto e oferece incluí-lo no mesmo endereço
+const outro = v({ estado: "ligado", url: "https://b.trycloudflare.com", workspaces: ["w2"] }, "w1");
+assert.equal(outro.titulo, "«Produto» não está compartilhado");
+assert.match(outro.texto, /incluir «Produto» no mesmo endereço/);
+assert.deepEqual([outro.botao, outro.url], ["ligar", ""], "sem endereço nem pessoas de outro workspace");
+const dois = v({ estado: "ligado", url: "https://b.trycloudflare.com", workspaces: ["w2", "w1"] }, "w1");
+assert.deepEqual([dois.titulo, dois.botao, dois.url], ["Compartilhando «Produto»", "desligar", "https://b.trycloudflare.com"]);
 const erro = v({ estado: "erro", erro: "A Cloudflare não respondeu." });
 assert.deepEqual([erro.botao, erro.texto], ["ligar", "A Cloudflare não respondeu."], "erro: mostra o texto do servidor e deixa tentar de novo");
 assert.equal(v({ estado: "erro" }).texto, "O túnel não ligou. Tente de novo.");

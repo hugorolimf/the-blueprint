@@ -33,7 +33,11 @@ fn resultado(estado: &Estado, pedido: &Pedido) -> Result<Resposta, ErroHttp> {
             Ok(Resposta::json(202, &c.json()))
         }
         ("POST", "/api/compartilhar/desligar") => {
-            c.desligar();
+            // com workspaceId, tira só esse (o túnel cai quando não sobra nenhum); sem, desliga tudo
+            match serde_json::from_slice::<Value>(&pedido.corpo).ok().as_ref().and_then(|v| v.get("workspaceId")?.as_str()) {
+                Some(ws) => c.desligar_workspace(ws),
+                None => c.desligar(),
+            }
             Ok(Resposta::json(200, &c.json()))
         }
         ("GET" | "POST", _) => Err(falha(404, crate::tr!("not found", "não encontrado"))),

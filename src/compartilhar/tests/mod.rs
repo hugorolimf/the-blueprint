@@ -15,7 +15,7 @@ impl Compartilhar {
     pub fn ligado_para_teste(&self, url: &str, workspace: &str) {
         let mut i = self.travar();
         let g = i.geracao + 1;
-        *i = Interno { fase: Fase::Ligado, workspace: workspace.into(), url: Some(url.into()), hospedagem: Some(Hospedagem::de(url, "127.0.0.1", None, false).unwrap()), geracao: g, ..Interno::default() };
+        *i = Interno { fase: Fase::Ligado, workspaces: vec![workspace.into()], url: Some(url.into()), hospedagem: Some(Hospedagem::de(url, "127.0.0.1", None, false).unwrap()), geracao: g, ..Interno::default() };
     }
 }
 
@@ -121,9 +121,9 @@ pub fn esperar(c: &Compartilhar, fase: &str) -> Value {
 #[test]
 fn so_do_workspace_corta_os_outros_e_o_de_todos() {
     let ctx = Contexto::membro("m1", "Ana", vec![Acesso::novo("*", "", Papel::Dono), Acesso::novo("w2", "", Papel::Colaborador), Acesso::novo("sm", "p1", Papel::Supervisor)]);
-    let c = so_do_workspace(&ctx, "w2");
+    let c = so_do_workspace(&ctx, &["w2".into()]);
     assert_eq!((c.acessos.len(), c.papel, c.local), (1, Papel::Colaborador, false));
     assert!(c.pode(crate::contexto::Acao::Gravar, "w2", Some("p9")) && !c.pode(crate::contexto::Acao::Ler, "sm", Some("p1")));
-    assert!(!so_do_workspace(&Contexto::local(), "w2").local, "a porta dos convidados nunca vira o dono local");
-    assert!(!so_do_workspace(&ctx, "w3").pode(crate::contexto::Acao::Ler, "w3", None));
+    assert!(!so_do_workspace(&Contexto::local(), &["w2".into()]).local, "a porta dos convidados nunca vira o dono local");
+    assert!(!so_do_workspace(&ctx, &["w3".into()]).pode(crate::contexto::Acao::Ler, "w3", None));
 }

@@ -31,13 +31,20 @@ fn no_modo_hospedado_a_api_nao_existe() {
 }
 
 #[test]
-fn um_compartilhamento_por_vez() {
+fn segundo_workspace_entra_no_mesmo_tunel_e_sai_sozinho() {
     let e = Arc::new(crate::http::tests::estado(false));
     e.compartilhar.definir_estado(Arc::downgrade(&e));
     e.compartilhar.ligado_para_teste(URL, "w2");
     let r = pela_porta_local(&e, &local("POST", "/api/compartilhar/ligar", Some(json!({"workspaceId": "sm"}))));
-    assert_eq!((r.status, codigo(&r)), (409, "ja-compartilhando".into()));
-    assert_eq!(json_de(&r)["params"]["workspaceId"], "w2");
+    assert_eq!(r.status, 202);
+    assert_eq!((json_de(&r)["estado"].clone(), json_de(&r)["workspaces"].clone(), json_de(&r)["url"].clone()), (json!("ligado"), json!(["w2", "sm"]), json!(URL)), "mesmo endereço");
+    assert_eq!(json_de(&pela_porta_local(&e, &local("POST", "/api/compartilhar/ligar", Some(json!({"workspaceId": "sm"})))))["workspaces"], json!(["w2", "sm"]), "repetir não duplica");
+    // desligar um workspace não derruba o outro; o último leva o túnel junto
+    let r = pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({"workspaceId": "w2"}))));
+    assert_eq!((json_de(&r)["estado"].clone(), json_de(&r)["workspaces"].clone()), (json!("ligado"), json!(["sm"])));
+    assert_eq!(e.compartilhar.porta_aberta().unwrap().1, vec!["sm".to_string()], "convidados de w2 perdem o acesso");
+    let r = pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({"workspaceId": "sm"}))));
+    assert_eq!(json_de(&r), json!({"estado": "desligado"}));
 }
 
 #[test]
@@ -54,7 +61,7 @@ fn atualizar_recusa_com_o_compartilhamento_ligado() {
 fn sse_do_mcp_de_quem_nao_e_local_nao_leva_texto_do_usuario_nem_outro_workspace() {
     use crate::mcp::permissao::evento_visivel;
     use crate::mcp::Evento;
-    let ana = so_do_workspace(&Contexto::membro("m1", "Ana", vec![Acesso::novo("w2", "", Papel::Colaborador)]), "w2");
+    let ana = so_do_workspace(&Contexto::membro("m1", "Ana", vec![Acesso::novo("w2", "", Papel::Colaborador)]), &["w2".into()]);
     let ev = |nome: &'static str, dados: Value| Evento { nome, dados: Some(dados) };
     assert!(!evento_visivel(&ana, &ev("iniciar-acao", json!({"workspaceId": "w2", "blueprintId": "p9", "canalId": "c", "texto": "pedido"}))));
     assert!(!evento_visivel(&ana, &ev("compartilhar", json!({"estado": "ligado"}))));
