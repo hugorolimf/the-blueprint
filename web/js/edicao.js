@@ -21,10 +21,10 @@ const NOVO = "__novo"; // o blueprint que ainda está sendo criado na tela "Novo
 let rascunho = { id: NOVO, nome: "", descricao: "", obs: "", links: [], acoes: [], emblema: null };
 const blueprintEd = () => (edProj === NOVO ? rascunho : D.blueprints.find((p) => p.id === edProj) || null);
 const acaoEd = (p) => p.acoes.find((f) => f.id === edSel);
-const SIT = [["planejado", "Planejada"], ["andamento", "Em desenvolvimento"], ["concluido", "Concluída"]];
+const SIT = [["planejado", tr("Planejada")], ["andamento", tr("Em desenvolvimento")], ["concluido", tr("Concluída")]];
 const progEditavel = (f) => f.status === "andamento" && !efetiva(f).it[1];
 const ultimoDe = (el, sel) => [...el.querySelectorAll(sel)].pop();
-const durTxt = (f) => (dia(f.inicio) === dia(f.inicio) && dia(f.fim) === dia(f.fim) && dia(f.fim) >= dia(f.inicio) ? `${dia(f.fim) - dia(f.inicio) + 1} dias` : "");
+const durTxt = (f) => (dia(f.inicio) === dia(f.inicio) && dia(f.fim) === dia(f.fim) && dia(f.fim) >= dia(f.inicio) ? trn(dia(f.fim) - dia(f.inicio) + 1, ["{n} dia", "{n} dias"]) : "");
 
 // tela cheia: as telas abrem em tela cheia (dá para desligar em Dados gerais)
 const telaCheiaPref = () => { try { return localStorage.getItem("blueprint.telaCheia") !== "0"; } catch { return true; } };
@@ -32,7 +32,7 @@ const telaCheiaPref = () => { try { return localStorage.getItem("blueprint.telaC
 function pedirTelaCheia() {}
 // no app (WebView2) a Fullscreen API só estica a página dentro da janela; a tela cheia do Windows vem do Rust via window.ipc
 let telaCheiaApp = false;
-const rotuloTela = (cheia) => { $("b-tela").textContent = $("ed-tela").textContent = $("ag-tela").textContent = $("workspace-tela").textContent = cheia ? "⤡ Sair da tela cheia" : "⛶ Tela cheia"; };
+const rotuloTela = (cheia) => { $("b-tela").textContent = $("ed-tela").textContent = $("ag-tela").textContent = $("workspace-tela").textContent = cheia ? tr("⤡ Sair da tela cheia") : tr("⛶ Tela cheia"); };
 function telaCheiaNativa(cheia) { telaCheiaApp = cheia; rotuloTela(cheia); }
 function alternarTelaCheia() {
   if (window.chrome?.webview) window.ipc?.postMessage("tela-cheia");
