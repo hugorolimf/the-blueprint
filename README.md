@@ -130,6 +130,10 @@ Binário de 2,5 MB, servidor com ~11 MB de memória e 0% de CPU em repouso, `GET
 
 As rotas `/api/mcp/*` só respondem em loopback e conferem `Host` e `Origin`; os protótipos rodam num `iframe` com sandbox de origem opaca e sem rede. Leia [SECURITY.md](SECURITY.md).
 
+## Roadmap
+
+O que já existe, o que está em andamento e o que vem depois (incluindo a integração nativa com o Codex, a apresentação do blueprint e o modo colaborativo): [ROADMAP.pt-BR.md](ROADMAP.pt-BR.md) · [ROADMAP.md (English)](ROADMAP.md). Ideias e votos são bem-vindos nas [Issues](https://github.com/hugorolimf/the-blueprint/issues).
+
 ## Licença
 
 [MIT](LICENSE). O kit isométrico descende do [Anatomy](https://github.com/wheresryan22/anatomy) (MIT); veja [NOTICE.md](NOTICE.md).
