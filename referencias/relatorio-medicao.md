@@ -77,3 +77,26 @@ servidor) e a contagem de processos filhos do servidor com duas sessões abertas
 
 Leitura: o p95 de ~20 ms é o quadro de desenho do xterm (ele desenha no próximo `requestAnimationFrame`); o caminho servidor + pseudoconsole
 fica abaixo de 3 ms. Com o painel escondido não há tela nem conexão; a sessão segue no servidor sem gastar CPU.
+## Sincronização entre pessoas (frente SINCRONIA, 2026-10-26)
+
+`node scripts/medir-sincronia.mjs` (binário de release do worktree, Windows 11, servidor e clientes na mesma máquina): N conexões SSE em
+`/api/eventos` e 4 gravadores mandando 10 lotes cada em `/api/mudancas` ao mesmo tempo. Atraso = do envio do lote até cada cliente ver a
+mudança (servidor + SSE, sem o navegador).
+
+| Conexões SSE | Memória do servidor | Por conexão | Threads | CPU em 2 s parado | Lotes/s | Atraso p50 | p95 | Máx. | Perdidos |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 0 | 11,3 MB | — | 10 | — | — | — | — | — | — |
+| 10 | 11,7 MB | 50 KB | 27 | 0 ms | 771 | 3,8 ms | 6,8 ms | 10,6 ms | 0 |
+| 100 | 16,8 MB | 57 KB | 223 | 0 ms | 711 | 4,3 ms | 6,8 ms | 9,1 ms | 0 |
+| 250 | 27,2 MB | 65 KB | 613 | 0 ms | 357 | 7,5 ms | 13,3 ms | 17,2 ms | 0 |
+
+Leitura e limite: cada conexão SSE custa duas threads paradas (a de leitura do tiny_http e a do fluxo) e ~60 KB; em repouso não há CPU (só o
+batimento de 25 s). Uma conexão que caiu só libera as threads no próximo envio ou batimento (por isso a contagem de 250 inclui as das rodadas
+anteriores). Até 250 pessoas olhando o mesmo servidor o atraso fica abaixo de 20 ms; o limite prático do servidor síncrono é o número de
+threads (o Windows aguenta alguns milhares), então para mais de algumas centenas de pessoas ao mesmo tempo o caminho é um laço de eventos no
+SSE, não antes.
+
+Na página: com 10 000 planos (3,7 MB de JSON), calcular a diferença do salvar (`opsEntre`) leva ~77 ms quando só há campos alterados e ~111 ms
+com criar ou mover (a cópia da base só nasce nesse caso), e o lote mandado tem ~100 B contra os 3,7 MB do `PUT` inteiro de antes. No
+`duas-pessoas-e2e` a mudança de uma página aparece na outra ~420 a 470 ms depois do `mudou()`, quase todo o tempo sendo os 400 ms de espera
+do salvar.

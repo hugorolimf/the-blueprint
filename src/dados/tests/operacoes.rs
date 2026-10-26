@@ -148,3 +148,12 @@ fn o_agente_com_comentarios_troca_por_inteiro_e_o_historico_corta_valores_grande
     d.aplicar_operacoes(&pessoa("ana"), 102, 0, &[alterar("plano", "p1", json!({"nota": null}), json!({}))], &livre).unwrap();
     assert!(plano(&mut d, 0, "p1").get("nota").is_none());
 }
+
+#[test]
+fn mover_entre_workspaces_avisa_a_origem_e_o_destino() {
+    let mut d = dados();
+    let s = d.aplicar_operacoes(&pessoa("ana"), 101, 0, &[Op::Mover { tipo: "acao".into(), id: "a2".into(), pai: Some("b1".into()), posicao: 0 }], &livre).unwrap();
+    let onde: Vec<(&str, &str)> = s.aplicadas.iter().map(|a| (a.workspace_id.as_str(), a.blueprint_id.as_str())).collect();
+    assert_eq!(onde, [("w2", "b2"), ("sm", "b1")]);
+    assert_eq!(d.ler_tudo(&Contexto::local()).unwrap()["blueprints"][0]["acoes"][0]["id"], "a2");
+}

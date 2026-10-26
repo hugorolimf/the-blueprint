@@ -97,7 +97,9 @@ function aplicarOp(raiz, op) {
 }
 
 function opsEntre(base, atual) {
-  const B = opsIndice(base), A = opsIndice(atual), sim = opsClone(base), criados = new Set(), estrutura = [], alteracoes = [], apagar = [];
+  let sim = null; // a cópia da base só nasce se houver criar ou mover (o salvar comum só altera campos)
+  const copia = () => (sim ||= opsClone(base));
+  const B = opsIndice(base), A = opsIndice(atual), criados = new Set(), estrutura = [], alteracoes = [], apagar = [];
   // a cópia do item novo só com os filhos que também são novos (os existentes entram depois, por `mover`)
   const soNovos = (no, tipo) => {
     const c = { ...no };
@@ -110,7 +112,7 @@ function opsEntre(base, atual) {
   };
   // logo depois do irmão anterior (na tela) que já está no lugar na cópia; 0 se não há
   const posicao = (paiNo, lista, filhos, i, tipoFilho, eu) => {
-    const daCopia = (paiNo ? opsAchar(sim, ...paiNo) : null)?.no?.[lista] || [];
+    const daCopia = (paiNo ? opsAchar(copia(), ...paiNo) : null)?.no?.[lista] || [];
     const ids = daCopia.map((x) => x.id).filter((x) => x !== eu);
     for (let j = i - 1; j >= 0; j--) { const k = ids.indexOf(filhos[j].id); if (k >= 0) return k + 1; }
     return 0;
@@ -128,10 +130,10 @@ function opsEntre(base, atual) {
         if (criados.has(c)) { /* já foi dentro do valor do pai novo */ }
         else if (!B.has(c)) {
           const op = { op: "criar", tipo: tf, id: f.id, ...pai, posicao: posicao(ident, lista, filhos, i, tf, f.id), valor: soNovos(f, tf) };
-          criados.add(c); estrutura.push(op); aplicarOp(sim, op);
+          criados.add(c); estrutura.push(op); aplicarOp(copia(), op);
         } else if (B.get(c).pai !== chave || !fica.has(f.id)) {
           const op = { op: "mover", tipo: tf, id: f.id, ...pai, posicao: posicao(ident, lista, filhos, i, tf, f.id) };
-          estrutura.push(op); aplicarOp(sim, op);
+          estrutura.push(op); aplicarOp(copia(), op);
         }
         visita(f, tf, c, false, [tf, f.id]);
       });

@@ -355,6 +355,33 @@ passa a salvar por operações nos dois modos (um caminho só); `sincronia.js` f
 banco novo ignora a tabela nova. Sem plano B silencioso: se o lote falha, a página mostra "erro ao salvar" (um defeito no diff não pode cair num
 `PUT` que sobrescreve os outros).
 
+### 6.1 Como a frente SINCRONIA construiu (desvios e detalhes, 2026-10-26)
+
+- **Vazio vale vazio no conflito.** Ausente, `null`, `""`, `false`, `0`, `[]` e `{}` são iguais ao comparar o atual com o `antes` e com o novo:
+  a página normaliza os itens (`obs: ""`, `links: []`, `feito: false`...) e o banco guarda sem esses campos; sem a regra, a primeira edição de
+  cada item viraria um falso conflito. Teste: `vazio_normalizado_pela_pagina_nao_e_conflito`.
+- **`null` em `campos` remove a chave** (ausente e `null` são o mesmo no data.json). `posicao` ausente em `criar`/`mover` = fim da lista.
+- **Versão.** Só sobe se alguma operação mudou o banco; um lote todo ignorado (ou sem mudança de fato) responde a versão atual.
+- **`mover` entre blueprints (ou workspaces)** entra no evento da origem e no do destino, para quem acompanha cada lado.
+- **O SSE do MCP não avisa `dados` para `/api/mudancas`**, só para o `PUT` (como antes). A página ignora esse `dados` quando o `/api/eventos` está aberto.
+- **Presença.** Ligada por `BLUEPRINT_HOSPEDAR=1` (`sincronia::presenca_do_ambiente()`); a ACESSO troca pela configuração do modo hospedado.
+  `POST /api/presenca` aceita também `cliente` (a aba) e cada pessoa em `presenca.pessoas[]` leva `cliente`: a página esconde só a própria aba e
+  junta as abas do mesmo membro num avatar. A saída de quem fechou a aba aparece no próximo batimento (até 25 s), quando a escrita falha.
+  O `editando` vencido (120 s) é cortado ao montar a próxima lista (sem relógio em repouso). Uma thread curta espera o resto dos 500 ms só
+  quando há mudança de presença dentro do intervalo.
+- **Folha ao vivo.** Os dados mudam por item (`aplicarRemota`, sem GET nem reparse) e a folha é redesenhada por um `render()` por quadro
+  (`requestAnimationFrame`), adiado enquanto a pessoa digita: o `render.js` desenha tudo numa função só e dividi-lo por item está fora desta
+  frente (o mesmo `render()` já roda a cada edição local). O contorno e os avatares vivem na camada `#presenca-camada`, relida depois de cada desenho.
+- **Ordem dos lotes na página.** Um lote de outra pessoa com versão menor que uma gravação minha já respondida não pisa nos campos que eu gravei
+  depois (venceram no servidor). Ao recarregar, a página junta com `sincMesclar(base, tela, servidor)` e grava o que só a tela tinha;
+  `carregar()` com edição não gravada faz o mesmo em vez de trocar a tela.
+- **Arquivos a mais:** `src/dados/item.rs` (ler e reescrever uma linha, achar workspace/blueprint, ordenar irmãos), `web/js/sinc-avisos.js`
+  (os avisos com Desfazer e Copiar o texto), `scripts/lib-e2e-edge.mjs` (a página no Edge para os e2e) e os testes das rotas em
+  `src/http/tests/sincronia_rotas.rs`. Erros de método e tipo nessas rotas: 405 `metodo` e 415 `json`.
+- **Antes da ACESSO:** todas as páginas são o membro `local`, então os avisos saem como "outra janela" e o `duas-pessoas-e2e` usa duas abas do
+  mesmo membro. Pontos de troca ao integrar: `sincronia::{autor, exige_gravar, pode_ler, presenca_do_ambiente}` (src/sincronia/mod.rs),
+  `aoVivoEu()` em `web/js/ao-vivo.js` (o id do membro da sessão) e o `Contexto::local()` do despacho em `src/http/rotas.rs`.
+
 ## 7. Divisão de trabalho e arquivos
 
 Três worktrees a partir do `main`. **Ordem de integração: ACESSO, depois SINCRONIA, depois TELAS**; cada frente faz rebase sobre a anterior
