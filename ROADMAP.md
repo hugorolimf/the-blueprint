@@ -55,6 +55,7 @@ Shipped · Doing now · Next · Later
 
 ## Collaboration and sharing
 
+- *Doing now* · **Share one workspace from the app**: A Share button opens one workspace to invited people through an HTTPS tunnel while your app is open; a fixed address comes later.
 - *Later* · **Collaborative mode**: A server mode with members, roles (owner, collaborator, supervisor, visitor) and invite links, live between people. Design first; the sync fix shipped now is its first building block.
 - *Later* · **Public read-only link**: Share a proposal or progress with a client through a revocable link.
 - *Later* · **Progress summary for a period**: One click copies a Markdown summary of what was finished, what is in progress and what is blocked, with the evidence. Computed from your data, no AI and no network.

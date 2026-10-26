@@ -81,3 +81,9 @@ Linear (secondary sources only; no October 2026 entry found on linear.app/change
 Idea added to the blueprint App (planned, not started): an assignee on each plan, a person or their agent, with a "My plans" filter and the MCP telling each agent which plans are its own. It belongs to the real-time collaboration project and depends on members.
 
 Also added to `roadmap.json`: `responsavel-plano`.
+
+### Eleventh round, 26 Oct 2026
+
+Tunnels, for the Share button being built today (secondary sources; Cloudflare's own docs not read). Cloudflare quick tunnels need no account and give a random trycloudflare.com address until the process stops, are labelled a demo tool with no uptime guarantee, and one guide reports a cap of about 200 in-flight requests and no Server-Sent Events ([Flavio Copes](https://flaviocopes.com/cloudflare-quick-tunnels/)); named tunnels are free with a Cloudflare account and a domain on Cloudflare and keep a stable hostname ([same author](https://flaviocopes.com/cloudflare-tunnel/)). Tailscale Funnel exposes one local service to the public internet over HTTPS through a relay that does not decrypt traffic; visitors need no Tailscale ([Tailscale docs](https://tailscale.com/kb/1223/tailscale-funnel)). The SSE claim matters: live changes use SSE, so the builder was asked to measure it with the real cloudflared and add a fallback if needed.
+
+Idea added to the blueprint App (planned, not started): a fixed address for sharing (named tunnel or Tailscale Funnel). Also added to `roadmap.json`: `compartilhar-workspace` (now).

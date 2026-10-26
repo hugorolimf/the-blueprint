@@ -55,6 +55,7 @@ Entregue · Fazendo agora · Em seguida · Depois
 
 ## Colaboração e apresentação
 
+- *Fazendo agora* · **Compartilhar um workspace pelo app**: Um botão Compartilhar abre um workspace para convidados por um túnel HTTPS enquanto o seu app está aberto; endereço fixo vem depois.
 - *Depois* · **Modo colaborativo**: Um modo servidor com membros, papéis (dono, colaborador, supervisor, visitante) e links de convite, ao vivo entre pessoas. Primeiro o desenho; a correção de sincronia entregue agora é o primeiro tijolo.
 - *Depois* · **Link público de leitura**: Compartilhar uma proposta ou o andamento com um cliente por um link revogável.
 - *Depois* · **Resumo de progresso por período**: Um clique copia um resumo em Markdown do que foi concluído, do que está em andamento e do que bloqueou, com as evidências. Calculado dos seus dados, sem IA e sem rede.

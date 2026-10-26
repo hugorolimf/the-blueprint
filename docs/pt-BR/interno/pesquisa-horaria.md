@@ -81,3 +81,9 @@ Linear (só fontes secundárias; nenhuma entrada de outubro de 2026 em linear.ap
 Ideia acrescentada ao blueprint App (planejada, não iniciada): responsável por plano, uma pessoa ou o agente dela, com filtro "Meus planos" e o MCP dizendo a cada agente quais planos são seus. Fica no projeto de colaboração em tempo real e depende dos membros.
 
 Também acrescentado ao `roadmap.json`: `responsavel-plano`.
+
+### Décima primeira rodada, 26 de outubro de 2026
+
+Túneis, para o botão Compartilhar que está sendo construído hoje (fontes secundárias; a documentação da Cloudflare não foi lida). O túnel rápido da Cloudflare não pede conta e dá um endereço aleatório em trycloudflare.com até o processo parar, é chamado de ferramenta de demonstração sem garantia, e um guia relata limite de cerca de 200 pedidos em andamento e falta de Server-Sent Events ([Flavio Copes](https://flaviocopes.com/cloudflare-quick-tunnels/)); o túnel nomeado é grátis com conta e domínio na Cloudflare e mantém o endereço ([mesmo autor](https://flaviocopes.com/cloudflare-tunnel/)). O Tailscale Funnel expõe um serviço local à internet por HTTPS, por um relay que não decifra o tráfego; quem visita não precisa de Tailscale ([docs do Tailscale](https://tailscale.com/kb/1223/tailscale-funnel)). A falta de SSE importa: as mudanças ao vivo usam SSE, então o construtor vai medir com o cloudflared real e pôr um plano B se precisar.
+
+Ideia acrescentada ao blueprint App (planejada, não iniciada): endereço fixo para o compartilhamento (túnel nomeado ou Tailscale Funnel). Também no `roadmap.json`: `compartilhar-workspace` (agora).
