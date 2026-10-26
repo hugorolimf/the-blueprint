@@ -78,6 +78,16 @@ pub fn pode_ler_item(ctx: &Contexto, item: &Value) -> bool {
     ctx.local || (!ctx.visitante && ctx.pode(Acao::Ler, ws, bp))
 }
 
+/// O SSE do MCP para quem não é o usuário local (modo hospedado e convidados do compartilhamento): nunca o texto que o usuário local
+/// manda às sessões dele (`iniciar-acao`, `comentario-plano`, `conversa-usuario`) nem o estado do app (atualização, compartilhamento);
+/// o que traz `workspaceId`, só se o papel lê esse alvo.
+pub fn evento_visivel(ctx: &Contexto, e: &super::Evento) -> bool {
+    if matches!(e.nome, "iniciar-acao" | "comentario-plano" | "conversa-usuario" | "atualizacao" | "compartilhar") {
+        return false;
+    }
+    e.dados.as_ref().filter(|d| d.get("workspaceId").is_some()).is_none_or(|d| pode_ler_item(ctx, d))
+}
+
 pub fn pode_gravar_item(ctx: &Contexto, item: &Value) -> bool {
     let texto = |k: &str| item.get(k).and_then(Value::as_str).unwrap_or("");
     let (ws, bp) = alvo(texto("workspaceId"), texto("blueprintId"));

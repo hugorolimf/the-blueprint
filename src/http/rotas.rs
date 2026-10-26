@@ -37,6 +37,25 @@ fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
     }
 }
 
+/// A porta dos convidados (src/compartilhar): todo pedido é convidado, nunca `Contexto::local()`. Passa pelo mesmo despacho do modo
+/// hospedado (HTTPS pelo túnel, Host e Origin da URL do túnel, sessão ou chave, rotas só locais em 404) e o contexto só alcança o
+/// workspace compartilhado. O SSE termina a cada evento, porque o quick tunnel só entrega a resposta inteira (`compartilhar::fluxo`).
+pub fn despachar_convidado(estado: &Estado, pedido: &Pedido) -> Resposta {
+    crate::idioma::com(crate::idioma::do_pedido(pedido), || {
+        let Some((h, ws)) = estado.compartilhar.porta_aberta() else {
+            return Resposta::texto(503, "text/plain", crate::tr!("sharing is off", "o compartilhamento está desligado"));
+        };
+        let r = crate::acesso::despachar(estado, pedido, &h, |ctx| {
+            // os dados inteiros (importação) são só do app local: pela porta dos convidados nem o dono do workspace os troca
+            if pedido.metodo == "PUT" && pedido.caminho == "/api/dados" {
+                return super::pedido::falha(404, crate::tr!("this route only exists in the local app", "esta rota só existe no app local")).codigo("so-local").resposta();
+            }
+            rotear(estado, pedido, &crate::compartilhar::so_do_workspace(ctx, &ws))
+        });
+        crate::compartilhar::fluxo::curto(r)
+    })
+}
+
 fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let caminho = pedido.caminho.as_str();
     // `/convite` (modo hospedado) é a própria página: ela lê o segredo do fragmento, que nunca chega aqui
@@ -61,6 +80,9 @@ fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     }
     if caminho.starts_with("/api/atualizacao") {
         return super::atualizacao::rota(estado, pedido);
+    }
+    if caminho == "/api/compartilhar" || caminho.starts_with("/api/compartilhar/") {
+        return crate::compartilhar::rotas::rota(estado, pedido);
     }
     if caminho == "/api/app/mostrar" {
         return mostrar_janela(estado, pedido);

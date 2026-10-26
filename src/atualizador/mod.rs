@@ -4,7 +4,7 @@
 mod backup;
 mod ciclo;
 mod estado;
-mod hash;
+pub(crate) mod hash;
 mod instalar;
 mod preferencias;
 pub(crate) mod rede;

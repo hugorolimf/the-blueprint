@@ -34,7 +34,7 @@ pub fn estado() -> Estado {
     let mut config = Config::do_ambiente();
     (config.prototipos, config.assets_dir) = (prototipos.clone(), None);
     config.hospedagem = Some(Hospedagem::de(URL, "127.0.0.1", None, true).unwrap());
-    Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: crate::atualizador::Atualizador::do_ambiente(&config.banco), assets: Assets::novo(None), mcp: Mcp::novo("127.0.0.1", false, "C:/app/blueprint.exe", "http://127.0.0.1:3000", prototipos), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados: std::sync::atomic::AtomicU64::new(1), sincronia: crate::sincronia::Sincronia::nova(1, true), terminais: crate::terminal::Terminais::novo(), acesso: Acesso::novo(), config }
+    Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: crate::atualizador::Atualizador::do_ambiente(&config.banco), assets: Assets::novo(None), mcp: Mcp::novo("127.0.0.1", false, "C:/app/blueprint.exe", "http://127.0.0.1:3000", prototipos), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados: std::sync::atomic::AtomicU64::new(1), sincronia: crate::sincronia::Sincronia::nova(1, true), terminais: crate::terminal::Terminais::novo(), acesso: Acesso::novo(), compartilhar: crate::compartilhar::Compartilhar::novo(), config }
 }
 
 /// Um pedido como o proxy o entrega: par em loopback, `X-Forwarded-Proto: https`, Host e Origin públicos.

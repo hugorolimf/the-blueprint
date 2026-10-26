@@ -83,8 +83,12 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
             "info" => Resposta::json(200, &json!({"arquivo": if ctx.local { mcp.arquivo.as_str() } else { "blueprint" }, "url": mcp.url, "exe": true})),
             "eventos" => {
                 let mut fluxo = FluxoSse::novo(mcp.assinar());
-                // `?canal=&cwd=`: a conexão é de uma sessão com o canal ligado e ela é destinatária enquanto durar
-                if let (Some(id), Some(cwd)) = (pedido.parametro("canal"), pedido.parametro("cwd")) {
+                if !ctx.local {
+                    // modo hospedado e convidados: sem canal de sessão e só os eventos do que o papel lê
+                    let ctx = ctx.clone();
+                    fluxo = fluxo.filtrado(move |e| super::permissao::evento_visivel(&ctx, e));
+                } else if let (Some(id), Some(cwd)) = (pedido.parametro("canal"), pedido.parametro("cwd")) {
+                    // `?canal=&cwd=`: a conexão é de uma sessão com o canal ligado e ela é destinatária enquanto durar
                     if let Some(guarda) = mcp.abrir_canal(&id, &cwd) {
                         fluxo = fluxo.com_guarda(guarda);
                     }

@@ -43,17 +43,31 @@ fn metodo_errado() -> ErroHttp {
     falha(405, crate::tr!("method not allowed", "método não permitido"))
 }
 
+/// Pessoas, convites e atividade (`rotas_pessoas`): o que o usuário local também usa enquanto compartilha um workspace.
+fn de_pessoas(caminho: &str) -> bool {
+    eh_rota(caminho) && !caminho.starts_with("/api/sessao") && !caminho.starts_with("/api/convite/") && !caminho.starts_with("/api/chave")
+}
+
 pub fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let caminho = pedido.caminho.as_str();
-    let resultado = match (estado.config.hospedagem.as_ref(), caminho) {
-        (None, "/api/sessao") if pedido.metodo == "GET" => Ok(Resposta::json(200, &json!({"modo": "local"}))),
-        (None, _) => Err(falha(404, crate::tr!("this route only exists in the hosted server", "esta rota só existe no servidor hospedado")).codigo("so-servidor")),
+    let so_servidor = || falha(404, crate::tr!("this route only exists in the hosted server", "esta rota só existe no servidor hospedado")).codigo("so-servidor");
+    if ctx.local {
+        // o app local; compartilhando (src/compartilhar), o dono local administra só o workspace compartilhado e os links saem na URL do túnel
+        let r = match (caminho, estado.compartilhar.porta_aberta()) {
+            ("/api/sessao", _) if pedido.metodo == "GET" => Ok(Resposta::json(200, &json!({"modo": "local"}))),
+            (c, Some((h, ws))) if de_pessoas(c) => rotas_pessoas::rota(estado, pedido, &crate::compartilhar::dono_local(&ws), &h.url_publica),
+            _ => Err(so_servidor()),
+        };
+        return r.unwrap_or_else(|e| e.resposta());
+    }
+    let resultado = match (crate::compartilhar::hospedagem(estado).as_ref(), caminho) {
+        (None, _) => Err(so_servidor()),
         (Some(_), "/api/sessao") if pedido.metodo == "GET" => sessao(estado, ctx),
         (Some(_), "/api/sessao/sair") if pedido.metodo == "POST" => sair(estado, pedido, ctx),
         (Some(_), "/api/convite/conferir") if pedido.metodo == "POST" => conferir(estado, pedido),
         (Some(_), "/api/convite/entrar") if pedido.metodo == "POST" => entrar(estado, pedido, ctx),
         (Some(h), "/api/chave" | "/api/chave/revogar") => chave(estado, pedido, ctx, &h.url_publica),
-        (Some(h), _) if eh_rota(caminho) && !caminho.starts_with("/api/sessao") && !caminho.starts_with("/api/convite/") => rotas_pessoas::rota(estado, pedido, ctx, &h.url_publica),
+        (Some(h), c) if de_pessoas(c) => rotas_pessoas::rota(estado, pedido, ctx, &h.url_publica),
         (Some(_), _) if eh_rota(caminho) => Err(metodo_errado()),
         _ => Err(falha(404, crate::tr!("not found", "não encontrado"))),
     };
@@ -92,7 +106,7 @@ fn invalido(estado: &Estado, ip: &str, agora: i64) -> ErroHttp {
 
 /// 429 `muitas-tentativas` antes de tocar o banco, se o IP (ou o total) passou do limite.
 fn limitar(estado: &Estado, pedido: &Pedido, agora: i64) -> Result<String, ErroHttp> {
-    let ip = estado.config.hospedagem.as_ref().map_or_else(|| pedido.ip.clone(), |h| super::cabecalhos::ip_cliente(h, pedido));
+    let ip = crate::compartilhar::hospedagem(estado).map_or_else(|| pedido.ip.clone(), |h| super::cabecalhos::ip_cliente(&h, pedido));
     if let Some(segundos) = estado.acesso.limite.lock().unwrap_or_else(|e| e.into_inner()).bloqueado(&ip, agora) {
         return Err(falha(429, crate::tr!("too many attempts; try again in {segundos} s", "tentativas demais; tente de novo em {segundos} s")).codigo("muitas-tentativas").params(json!({"segundos": segundos})));
     }

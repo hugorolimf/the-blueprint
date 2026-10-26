@@ -58,11 +58,13 @@ impl Acesso {
     }
 }
 
-/// As rotas que só existem no app local (abrem processo, falam com a janela ou com os hooks do Claude Code desta máquina).
+/// As rotas que só existem no app local (abrem processo, falam com a janela ou com os hooks do Claude Code desta máquina, ligam o
+/// compartilhamento). Valem no modo hospedado e na porta dos convidados do compartilhamento.
 pub fn so_local(caminho: &str) -> bool {
     let mcp = caminho.strip_prefix("/api/mcp/").unwrap_or("");
     caminho.starts_with("/api/terminal/")
         || caminho.starts_with("/api/atualizacao")
+        || caminho.starts_with("/api/compartilhar")
         || caminho == "/api/app/mostrar"
         || matches!(mcp, "iniciar" | "sessoes" | "pastas")
         || mcp.starts_with("conversa")

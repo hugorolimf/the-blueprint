@@ -11,8 +11,8 @@ pub(crate) mod rotas;
 mod servidor;
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 pub use config::Config;
 pub use estado::Estado;
-pub use servidor::{iniciar, Servidor};
+pub use servidor::{escutar_convidados, iniciar, Servidor};

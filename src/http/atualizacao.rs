@@ -37,10 +37,14 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
 
 /// Por que não fechar o app agora: a fila do MCP é só memória e some ao sair. (O que o agente registrar com o app fechado fica guardado em arquivo e entra ao
 /// abrir: src/mcp/pendentes.rs, então um agente trabalhando não impede a atualização.) Nem com sessão viva no terminal do app: sair derruba o Claude que roda nela.
+/// Nem compartilhando um workspace (src/compartilhar): sair derruba o túnel e os convidados.
 pub(crate) fn bloqueio(estado: &Estado) -> Option<String> {
     let n = estado.mcp.itens().len();
     if n > 0 {
         return Some(crate::tr!("There are {n} agent notice(s) (proposals or marks) that the screen has not applied yet: closing the app now would lose them. Open the blueprint, apply or discard them and click Update again.", "Há {n} aviso(s) do agente (propostas ou marcações) que a tela ainda não aplicou: fechar o app agora os perderia. Abra o blueprint, aplique ou descarte e clique em Atualizar de novo."));
+    }
+    if estado.compartilhar.ligado() {
+        return Some(crate::tr!("A workspace is being shared: updating closes the app and drops the guests. Turn sharing off and click Update again.", "Um workspace está sendo compartilhado: atualizar fecha o app e derruba os convidados. Desligue o compartilhamento e clique em Atualizar de novo."));
     }
     let t = estado.terminais.vivas();
     (t > 0).then(|| crate::tr!("There are {t} session(s) running in the app's terminal: updating closes the app and ends them. Close them in the Terminal panel and click Update again.", "Há {t} sessão(ões) rodando no terminal do app: atualizar fecha o app e as encerra. Feche-as no painel Terminal e clique em Atualizar de novo."))

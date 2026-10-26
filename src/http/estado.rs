@@ -32,6 +32,8 @@ pub struct Estado {
     pub config: Config,
     /// o acesso do modo hospedado: sessões encerradas e tentativas inválidas, só memória (src/acesso)
     pub acesso: crate::acesso::Acesso,
+    /// o compartilhamento pelo app: porta dos convidados e túnel, só memória e só quando ligado (src/compartilhar)
+    pub compartilhar: crate::compartilhar::Compartilhar,
     pub dados: Mutex<Dados>,
     /// o data.json já serializado, para GET /api/dados não refazer o texto a cada pedido; limpo a cada gravação
     pub dados_json: Mutex<Option<Vec<u8>>>,

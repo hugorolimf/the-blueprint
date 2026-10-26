@@ -42,11 +42,13 @@ pub struct FluxoSse {
     aberto: bool,
     /// o que vive enquanto a conexão vive (o canal de uma sessão, ver `sessoes`): ao fechar o fluxo, sai da lista
     _guarda: Option<Box<dyn Send>>,
+    /// só os eventos que passam (quem não é o usuário local: `permissao::evento_visivel`)
+    filtro: Option<Box<dyn Fn(&Evento) -> bool + Send>>,
 }
 
 impl FluxoSse {
     pub fn novo(rx: Receiver<Evento>) -> FluxoSse {
-        FluxoSse { rx, pendente: Vec::new(), pos: 0, aberto: false, _guarda: None }
+        FluxoSse { rx, pendente: Vec::new(), pos: 0, aberto: false, _guarda: None, filtro: None }
     }
 
     pub(super) fn com_guarda(mut self, guarda: impl Send + 'static) -> FluxoSse {
@@ -54,24 +56,39 @@ impl FluxoSse {
         self
     }
 
+    pub(super) fn filtrado(mut self, passa: impl Fn(&Evento) -> bool + Send + 'static) -> FluxoSse {
+        self.filtro = Some(Box::new(passa));
+        self
+    }
+
+    fn passa(&self, e: &Evento) -> bool {
+        self.filtro.as_ref().is_none_or(|f| f(e))
+    }
+
     fn proximo_trecho(&mut self) -> Option<Vec<u8>> {
         if !self.aberto {
             self.aberto = true;
             return Some(b"retry: 3000\n: aberto\n\n".to_vec());
         }
-        match self.rx.recv_timeout(BATIMENTO) {
-            Ok(primeiro) => {
-                // vários avisos seguidos do mesmo tipo viram um só: a página busca a lista inteira
-                let mut nomes = vec![primeiro];
-                while let Ok(n) = self.rx.try_recv() {
-                    if !nomes.contains(&n) {
-                        nomes.push(n);
+        loop {
+            match self.rx.recv_timeout(BATIMENTO) {
+                Ok(primeiro) => {
+                    // vários avisos seguidos do mesmo tipo viram um só: a página busca a lista inteira
+                    let mut nomes = vec![primeiro];
+                    while let Ok(n) = self.rx.try_recv() {
+                        if !nomes.contains(&n) {
+                            nomes.push(n);
+                        }
                     }
+                    nomes.retain(|n| self.passa(n));
+                    if nomes.is_empty() {
+                        continue; // nada que esta conexão possa ver: volta a esperar
+                    }
+                    return Some(nomes.iter().map(|n| format!("event: {}\ndata: {}\n\n", n.nome, n.dados.as_ref().map_or_else(|| "nova".into(), Value::to_string))).collect::<String>().into_bytes());
                 }
-                Some(nomes.iter().map(|n| format!("event: {}\ndata: {}\n\n", n.nome, n.dados.as_ref().map_or_else(|| "nova".into(), Value::to_string))).collect::<String>().into_bytes())
+                Err(RecvTimeoutError::Timeout) => return Some(b": batimento\n\n".to_vec()),
+                Err(RecvTimeoutError::Disconnected) => return None,
             }
-            Err(RecvTimeoutError::Timeout) => Some(b": batimento\n\n".to_vec()),
-            Err(RecvTimeoutError::Disconnected) => None,
         }
     }
 }

@@ -4,7 +4,7 @@ use super::config::Config;
 use super::estado::{abrir_dados, Estado};
 use super::estaticos::Assets;
 use super::pedido::{Corpo, Pedido, Resposta};
-use super::rotas::{corpo_grande_demais, despachar, limite_corpo};
+use super::rotas::{corpo_grande_demais, despachar, despachar_convidado, limite_corpo};
 use crate::atualizador::Atualizador;
 use crate::erro::{Erro, Resultado};
 use crate::mcp::Mcp;
@@ -29,7 +29,8 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let url = config.url(porta);
     let mcp = Mcp::novo(&config.host, config.rede_mcp, &config.exe.to_string_lossy(), &url, config.prototipos.clone());
     let (versao_dados, sincronia) = super::estado::versao_e_sincronia(config.hospedagem.is_some()); // presença só no modo hospedado
-    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), acesso: crate::acesso::Acesso::novo(), config });
+    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), acesso: crate::acesso::Acesso::novo(), compartilhar: crate::compartilhar::Compartilhar::novo(), config });
+    estado.compartilhar.definir_estado(Arc::downgrade(&estado));
     // o modo hospedado não tem atualizador nem pendentes do agente local (quem hospeda atualiza o binário; o agente fala pela chave)
     if estado.config.hospedagem.is_none() {
         // cada mudança do updater (baixando, pronta…) chega à página pelo mesmo SSE da fila
@@ -48,11 +49,26 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
         thread::spawn(move || {
             for pedido in servidor.incoming_requests() {
                 let estado = estado.clone();
-                thread::spawn(move || atender(&estado, pedido));
+                thread::spawn(move || atender(&estado, pedido, false));
             }
         })
     };
     Ok(Servidor { porta, url, estado, servidor, fio: Some(fio) })
+}
+
+/// A porta dos convidados (src/compartilhar): outro listener em 127.0.0.1, numa porta livre, só para o túnel. Tudo o que chega por ela é
+/// convidado (`despachar_convidado`). `unblock()` no servidor devolvido fecha a porta. A thread guarda só um `Weak` do estado.
+pub fn escutar_convidados(estado: &Arc<Estado>) -> Resultado<(Arc<Server>, u16)> {
+    let servidor = Arc::new(Server::http(("127.0.0.1", 0)).map_err(|e| Erro::Io(std::io::Error::other(format!("não consegui abrir a porta dos convidados: {e}"))))?);
+    let porta = servidor.server_addr().to_ip().map_or(0, |a| a.port());
+    let (s, fraco) = (servidor.clone(), Arc::downgrade(estado));
+    thread::spawn(move || {
+        for pedido in s.incoming_requests() {
+            let Some(estado) = fraco.upgrade() else { break };
+            thread::spawn(move || atender(&estado, pedido, true));
+        }
+    });
+    Ok((servidor, porta))
 }
 
 impl Servidor {
@@ -68,7 +84,7 @@ impl Servidor {
     }
 }
 
-fn atender(estado: &Estado, mut req: Request) {
+fn atender(estado: &Estado, mut req: Request, convidado: bool) {
     let metodo = req.method().as_str().to_uppercase();
     let url = req.url().to_string();
     let cabecalhos: Vec<(String, String)> = req.headers().iter().map(|h| (h.field.as_str().as_str().to_string(), h.value.as_str().to_string())).collect();
@@ -83,7 +99,7 @@ fn atender(estado: &Estado, mut req: Request) {
     }
     let mut pedido = Pedido::novo(&metodo, &url, cabecalhos, corpo);
     pedido.ip = req.remote_addr().map(|a| a.ip().to_string()).unwrap_or_default();
-    let resposta = despachar(estado, &pedido);
+    let resposta = if convidado { despachar_convidado(estado, &pedido) } else { despachar(estado, &pedido) };
     escrever(req, resposta);
 }
 
