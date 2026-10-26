@@ -18,7 +18,7 @@ function cabecalhoSecao(out, s, { L, R }) {
       ? `<text class="mid cap" x="${px}" y="${yb + 14}" font-size="9">${tr("Situação")} · ${contagem}</text><text x="${px}" y="${yb + 32}" font-size="12" font-weight="700">${tr("✓ CONCLUÍDO · 100%")}</text>`
       : s.futuro
         ? `<text class="mid cap" x="${px}" y="${yb + 14}" font-size="9">${tr("Situação")}</text><text x="${px}" y="${yb + 32}" font-size="12" font-weight="700">${tr("PLANEJADO")}</text>`
-        : `<text class="mid cap" x="${px}" y="${yb + 14}" font-size="9">Progresso geral · ${contagem}</text><rect class="ln" x="${px}" y="${yb + 21}" width="190" height="10"/><rect class="prog" x="${px}" y="${yb + 21}" width="${190 * s.geral}" height="10"/><text x="${px + 200}" y="${yb + 31}" font-size="12" font-weight="700">${Math.round(s.geral * 100)}%</text>`) + `</g>`);
+        : `<text class="mid cap" x="${px}" y="${yb + 14}" font-size="9">${tr("Progresso geral")} · ${contagem}</text><rect class="ln" x="${px}" y="${yb + 21}" width="190" height="10"/><rect class="prog" x="${px}" y="${yb + 21}" width="${190 * s.geral}" height="10"/><text x="${px + 200}" y="${yb + 31}" font-size="12" font-weight="700">${Math.round(s.geral * 100)}%</text>`) + `</g>`);
   out.push(`<path class="ln m" pathLength="1" d="M${L} ${yb + 58}H${s.total ? R - 144 : R}"/>`);
   // botão grande com texto: some a dúvida do que fazer e dá um alvo fácil de acertar
   if (s.total) out.push(`<rect class="botao" x="${R - 136}" y="${yb + 44}" width="132" height="30"/><text class="botao-t cap" x="${R - 70}" y="${yb + 63}" font-size="11" text-anchor="middle">${s.aberto ? tr("− Recolher") : `+ ${trn(s.total, ["Abrir {n} ação", "Abrir {n} ações"])}`}</text>`);

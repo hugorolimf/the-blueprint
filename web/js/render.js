@@ -265,7 +265,7 @@ function render() {
         const dias = Math.round(f.b - f.a) + 1;
         let w = Math.max(f.x1 - f.x0, 6);
         const extra = (f.tf[1] ? ` · ${f.tf[0]}/${f.tf[1]} ${tr("PLANOS")}` : "") + (f.mf[1] ? ` · ${f.mf[0]}/${f.mf[1]} ${tr("CHECKPOINTS")}` : "") + (f.obs?.trim() ? ` · ${tr("COM INSTRUÇÕES")}` : "");
-        const abrir = s.aberto ? "" : " · CLIQUE PARA ABRIR AQUI"; // com as ações recolhidas, clicar abre e leva até o item
+        const abrir = s.aberto ? "" : " · " + tr("CLIQUE PARA ABRIR AQUI"); // com as ações recolhidas, clicar abre e leva até o item
         const info = `${f.rotulo.toUpperCase()} · ${ROTULO[f.status].toUpperCase()} · ${Math.round(f.pct * 100)}% · ${fmt(f.inicio)} → ${fmt(f.fim)} · ${dias} ${tr("dias")}${extra}${abrir}`;
         const aria = `${f.rotulo}, ${ROTULO[f.status]}, ${Math.round(f.pct * 100)}%, ${fmt(f.inicio)} a ${fmt(f.fim)}${extra.replaceAll("·", ",").toLowerCase()}`;
         const checkpoints = (cy, r, g) => (f.checkpoints || []).filter((m) => dia(m.data) >= t0 && dia(m.data) < t1).map((m) => {
@@ -308,7 +308,7 @@ function render() {
         // cota: duração entre as duas datas, com traços oblíquos nas pontas
         const cy = fy + 72;
         out.push(`<g class="cota"><path class="ln m" d="M${g.x0} ${by + bh + 2}V${cy + 6}M${g.x1} ${by + bh + 2}V${cy + 6}M${g.x0} ${cy}H${g.x1}M${g.x0 - 4} ${cy + 4}l8 -8M${g.x1 - 4} ${cy + 4}l8 -8"/>`);
-        out.push(`<text class="mid" x="${(g.x0 + g.x1) / 2}" y="${cy - 5}" font-size="10" text-anchor="middle">${dias} DIAS</text>`);
+        out.push(`<text class="mid" x="${(g.x0 + g.x1) / 2}" y="${cy - 5}" font-size="10" text-anchor="middle">${trn(dias, ["{n} DIA", "{n} DIAS"])}</text>`);
         out.push(datasCota(g, cy));
         // planos e checkpoints da ação: caixas de marcar direto no blueprint
         if (f.planos.length || f.checkpoints.length) {
@@ -321,7 +321,7 @@ function render() {
             gl.push(cab(cx0, tr("Planos"), f.tf[0], f.tf[1]));
             f.planos.forEach((t, i) => {
               const yy = base + 30 + i * 22, nome = t.texto || tr("sem texto");
-              gl.push(`<g ${atr("t", t, `PLANO: ${nome} · ${t.feito ? "FEITO" : "PENDENTE"} · clique para marcar`)}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="cx${t.feito ? " ok" : ""}" x="${cx0}" y="${yy - 11}" width="13" height="13"/>${t.feito ? `<path class="cxm" d="M${cx0 + 3} ${yy - 4}l3 3l5-6"/>` : ""}<text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome, maxc))}</text></g>`);
+              gl.push(`<g ${atr("t", t, tr("PLANO: {nome} · {estado} · clique para marcar", { nome, estado: t.feito ? tr("FEITO") : tr("PENDENTE") }))}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="cx${t.feito ? " ok" : ""}" x="${cx0}" y="${yy - 11}" width="13" height="13"/>${t.feito ? `<path class="cxm" d="M${cx0 + 3} ${yy - 4}l3 3l5-6"/>` : ""}<text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome, maxc))}</text></g>`);
               const aqui = agsP.filter((x) => x.planoId === t.id);
               if (aqui.length) gl.push(`<rect class="robo-linha${roboClasse(aqui[0])}" data-plano="${esc(t.id)}" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/>`);
             });
@@ -331,7 +331,7 @@ function render() {
             gl.push(cab(cx0, tr("Checkpoints"), f.mf[0], f.mf[1]));
             f.checkpoints.forEach((m, i) => {
               const yy = base + 30 + i * 22, nome = m.nome || tr("sem nome"), dt = dia(m.data) === dia(m.data) ? " · " + fmt(m.data) : "";
-              gl.push(`<g ${atr("m", m, `CHECKPOINT: ${nome}${dt} · ${m.feito ? "FEITO" : "PENDENTE"} · clique para marcar`)}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><path class="dm${m.feito ? " ok" : ""}" d="M${cx0 + 6.5} ${yy - 12}l6.5 6.5l-6.5 6.5l-6.5 -6.5z"/><text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome + dt, maxc))}</text></g>`);
+              gl.push(`<g ${atr("m", m, tr("CHECKPOINT: {nome}{dt} · {estado} · clique para marcar", { nome, dt, estado: m.feito ? tr("FEITO") : tr("PENDENTE") }))}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><path class="dm${m.feito ? " ok" : ""}" d="M${cx0 + 6.5} ${yy - 12}l6.5 6.5l-6.5 6.5l-6.5 -6.5z"/><text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome + dt, maxc))}</text></g>`);
             });
           }
           out.push(`<g ${anima(nf, "surge")}>${gl.join("")}</g>`);

@@ -33,6 +33,9 @@ Object.assign(I18N.catalogos.en, {
   "PROTÓTIPO DA AÇÃO {rotulo}: {titulos} · clique para ver": ["PROTOTYPE OF ACTION {rotulo}: {titulos} · click to view", "PROTOTYPES OF ACTION {rotulo}: {titulos} · click to view"],
   "INSTRUÇÕES DA AÇÃO {rotulo}: {texto}": "INSTRUCTIONS OF ACTION {rotulo}: {texto}", "ainda sem instruções · clique para escrever": "no instructions yet · click to write",
   "{n} resultado": ["{n} result", "{n} results"], "nenhum resultado": "no results",
+  "SELECIONADO: {info}": "SELECTED: {info}", "CLIQUE PARA ABRIR AQUI": "CLICK TO OPEN HERE", "{n} DIA": ["{n} DAY", "{n} DAYS"],
+  "PLANO: {nome} · {estado} · clique para marcar": "PLAN: {nome} · {estado} · click to tick", "CHECKPOINT: {nome}{dt} · {estado} · clique para marcar": "CHECKPOINT: {nome}{dt} · {estado} · click to tick",
+  "Progresso geral": "Overall progress",
   // cabeçalho das seções
   "{nome}: recolher ações": "{nome}: collapse actions", "{nome}: expandir ações": "{nome}: expand actions",
   "{concl}/{total} ações concluídas": "{concl}/{total} actions completed", "{horas} h de desenvolvimento": "{horas} h of development",

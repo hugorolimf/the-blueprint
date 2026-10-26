@@ -3,7 +3,7 @@ const hub = $("agente-tela");
 function montaHub() {
   if (!blueprintEd()) edProj = D.blueprints[0]?.id ?? null;
   const p = blueprintEd(), novo = edProj === NOVO;
-  hub.querySelector(".ed-topo .tit span").textContent = novo ? "Planejar · blueprint novo" : "Planejar";
+  hub.querySelector(".ed-topo .tit span").textContent = novo ? tr("Planejar · blueprint novo") : tr("Planejar");
   $("ag-proj").textContent = p ? p.nome || (novo ? tr("Novo blueprint") : tr("Sem nome")) : tr("Nenhum blueprint");
   montaLateral();
   montaOutras();

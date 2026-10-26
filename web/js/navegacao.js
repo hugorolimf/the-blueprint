@@ -70,7 +70,7 @@ function marcar(g) {
   host.querySelectorAll(".acao[data-on]").forEach((e) => e.removeAttribute("data-on"));
   g.setAttribute("data-on", "");
   const sel = g.closest("svg.desenho").querySelector(".sel");
-  textoSel(sel, "SELECIONADO: " + g.dataset.info);
+  textoSel(sel, tr("SELECIONADO: {info}", { info: g.dataset.info }));
   sel.style.fill = "#eaf4ff";
   selecionada = g.getAttribute("aria-label");
 }

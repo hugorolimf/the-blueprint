@@ -33,5 +33,5 @@ Object.assign(I18N.catalogos.en, {
   // Planejar
   "Novo blueprint": "New blueprint", "Nenhum blueprint": "No blueprint", "Proposta de blueprint novo": "New blueprint proposal",
   "Proposta em «{nome}»": "Proposal on “{nome}”", "outro blueprint": "another blueprint", "✓ concluído": "✓ done", "sem ações": "no actions",
-  "Nenhum blueprint ainda.": "No blueprints yet.",
+  "Nenhum blueprint ainda.": "No blueprints yet.", "Planejar · blueprint novo": "Plan · new blueprint",
 });
