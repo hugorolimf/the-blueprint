@@ -6,10 +6,12 @@
 use crate::http::pedido::{Corpo, Resposta};
 use std::io::{self, Read};
 
-/// Troca o corpo de um SSE pelo que termina no primeiro evento; outras respostas passam iguais.
+/// Troca o corpo de um SSE pelo que termina no primeiro evento, em pedaços (`Transfer-Encoding: chunked`: o tiny_http mantém a conexão
+/// viva, então só o pedaço final diz ao túnel que a resposta acabou); outras respostas passam iguais.
 pub fn curto(mut r: Resposta) -> Resposta {
     if let Corpo::Fluxo(dentro) = r.corpo {
         r.corpo = Corpo::Fluxo(Box::new(UmEvento { dentro, cauda: Vec::new(), evento: false, fim: false }));
+        r = r.com("transfer-encoding", "chunked");
     }
     r
 }

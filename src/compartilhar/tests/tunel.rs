@@ -93,6 +93,23 @@ fn liga_com_o_tunel_falso_atende_convidados_e_desligar_fecha_a_porta() {
     let r = pedir_convidado(porta, "/api/sessao");
     assert!(r.starts_with("HTTP/1.1 401") && r.contains("sem-sessao"), "{r}");
     assert!(pedir_convidado(porta, "/api/compartilhar").contains("so-local"));
+    // o SSE do convidado termina no primeiro lote, em pedaços, com o pedaço final (o quick tunnel só entrega a resposta inteira)
+    let ana = convidado_entra(&e, "w2", "colaborador", "Ana");
+    let mut s = TcpStream::connect(("127.0.0.1", porta)).unwrap();
+    s.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    write!(s, "GET /api/eventos?workspace=w2&cliente=c2 HTTP/1.1\r\nHost: {HOST}\r\nX-Forwarded-Proto: https\r\nCookie: bp_sessao={ana}\r\nConnection: keep-alive\r\n\r\n").unwrap();
+    std::thread::sleep(Duration::from_millis(300));
+    let ops = json!({"base": 0, "cliente": "dono", "ops": [{"op": "alterar", "tipo": "blueprint", "id": "p9", "campos": {"nome": "Novo"}, "antes": {"nome": "Dele"}}]});
+    assert_eq!(pela_porta_local(&e, &local("POST", "/api/mudancas", Some(ops))).status, 200);
+    let (mut lido, mut buf) = (Vec::new(), [0u8; 4096]);
+    while !lido.ends_with(b"0\r\n\r\n") {
+        match s.read(&mut buf) {
+            Ok(n) if n > 0 => lido.extend_from_slice(&buf[..n]),
+            _ => break,
+        }
+    }
+    let texto = String::from_utf8_lossy(&lido);
+    assert!(texto.contains("transfer-encoding: chunked") && texto.contains("event: mudancas") && texto.ends_with("0\r\n\r\n"), "{texto}");
     // desligar: o túnel cai e a porta fecha
     let r = pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({}))));
     assert_eq!(json_de(&r), json!({"estado": "desligado"}));

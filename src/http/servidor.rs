@@ -109,6 +109,9 @@ fn cabecalhos_de(resposta: &Resposta) -> Vec<Header> {
 
 fn escrever(req: Request, resposta: Resposta) {
     let cabecalhos = cabecalhos_de(&resposta);
+    // um fluxo que termina (o da porta dos convidados, `compartilhar::fluxo`) vai em pedaços: o tiny_http mantém a conexão viva e só o
+    // pedaço final diz ao túnel que a resposta acabou
+    let em_pedacos = resposta.cabecalho("transfer-encoding").is_some_and(|v| v.eq_ignore_ascii_case("chunked"));
     match resposta.corpo {
         Corpo::Bytes(bytes) => {
             let mut r = Response::from_data(bytes).with_status_code(StatusCode(resposta.status));
@@ -130,13 +133,14 @@ fn escrever(req: Request, resposta: Resposta) {
             }
             let mut trecho = [0u8; 1024];
             loop {
-                match leitor.read(&mut trecho) {
+                let escrito = match leitor.read(&mut trecho) {
+                    Ok(0) if em_pedacos => saida.write_all(b"0\r\n\r\n").and_then(|_| saida.flush()).and(Err(std::io::ErrorKind::Other.into())),
                     Ok(0) | Err(_) => return,
-                    Ok(n) => {
-                        if saida.write_all(&trecho[..n]).and_then(|_| saida.flush()).is_err() {
-                            return;
-                        }
-                    }
+                    Ok(n) if em_pedacos => saida.write_all(format!("{n:x}\r\n").as_bytes()).and_then(|_| saida.write_all(&trecho[..n])).and_then(|_| saida.write_all(b"\r\n")),
+                    Ok(n) => saida.write_all(&trecho[..n]),
+                };
+                if escrito.and_then(|_| saida.flush()).is_err() {
+                    return;
                 }
             }
         }
