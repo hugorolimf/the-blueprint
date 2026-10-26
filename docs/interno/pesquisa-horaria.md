@@ -16,3 +16,16 @@ Ideas added to the blueprint App (planned, not started):
 3. Shell completions for PowerShell and Bash.
 
 Also added to `roadmap.json`: `exportar-markdown`, `importar-issues`, `completar-comandos`.
+
+### Second round, 26 Oct 2026
+
+Sources:
+- Plane Agents, launched 18 Sep 2026: agents get instructions, skills, triggers (assigned, mentioned, item changed, schedule), memory and MCP tools, and a run panel shows the plan and the tools called. Via [Plane's announcement](https://plane.so/blog/agents-are-now-live-in-plane) and [changelog of 30 Sep 2026](https://plane.so/changelog/2026-09-30-plane-agents-propel-new-ai-models). The credits and plan limits come from one aggregator and are unverified.
+- A community MCP server for Plane limits its tools with `PLANE_MCP_PROFILE=worker|planner|full` ([pkg.go.dev](https://pkg.go.dev/github.com/ItsJennyFiggy/plane-mcp@v1.2.0), June 2026). Community-maintained, not official.
+- Task Master: the search found no release notes, so nothing was taken from it.
+
+Ideas added to the blueprint App (planned, not started):
+1. MCP tool profiles (`BLUEPRINT_MCP_PERFIL`), so the agent loads fewer tool descriptions.
+2. Agent run timeline on each action, read-only, with a retention limit.
+
+Also added to `roadmap.json`: `perfis-mcp`, `linha-do-tempo-agente`.

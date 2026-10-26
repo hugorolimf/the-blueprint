@@ -116,6 +116,12 @@
       "pt": { "titulo": "Importar issues do GitHub como proposta", "resumo": "Issues abertas viram ações e planos numa proposta numerada que você revisa e aplica. Nada é gravado antes do clique." } },
     { "id": "completar-comandos", "tema": "comunidade", "estado": "depois",
       "en": { "titulo": "Shell completions for the command line", "resumo": "blueprint completions prints a script for PowerShell and Bash that completes the subcommands." },
-      "pt": { "titulo": "Completar comandos no terminal", "resumo": "blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos." } }
+      "pt": { "titulo": "Completar comandos no terminal", "resumo": "blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos." } },
+    { "id": "perfis-mcp", "tema": "agentes", "estado": "depois",
+      "en": { "titulo": "MCP tool profiles for a smaller context", "resumo": "An environment variable limits which tools the agent sees (executor, planner or full), so the tool descriptions take less of its context." },
+      "pt": { "titulo": "Perfis de ferramentas do MCP", "resumo": "Uma variável de ambiente limita as ferramentas que o agente vê (executor, planejador ou completo), e as descrições ocupam menos do contexto dele." } },
+    { "id": "linha-do-tempo-agente", "tema": "agentes", "estado": "depois",
+      "en": { "titulo": "Agent run timeline on each action", "resumo": "A read-only list of what the agent did on an action and when: started, changed file, finished a plan, blocked." },
+      "pt": { "titulo": "Linha do tempo do agente em cada ação", "resumo": "Uma lista só de leitura do que o agente fez na ação e quando: começou, mudou de arquivo, concluiu um plano, bloqueou." } }
   ]
 }

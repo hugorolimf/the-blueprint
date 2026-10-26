@@ -27,6 +27,8 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Em seguida* · **Claude Code dentro do app**: O comando claude oficial rodando num terminal integrado e com o tema do app, onde os agentes trabalham organizados por ação, com todas as capacidades do Claude Code. Arquitetura a decidir com protótipo medido (pseudoconsole x stream-json); leve e carregado sob demanda.
 - *Em seguida* · **Integração nativa com o Codex**: Levar ao Codex o que o plugin do Claude Code faz: hooks, skills, status e sessões, depois de um estudo de paridade documentado. Hoje o Codex recebe só o servidor MCP e a linha do AGENTS.md.
 - *Depois* · **Guias para outros agentes MCP**: Guias de configuração testados para outros agentes que falam MCP.
+- *Depois* · **Perfis de ferramentas do MCP**: Uma variável de ambiente limita as ferramentas que o agente vê (executor, planejador ou completo), e as descrições ocupam menos do contexto dele.
+- *Depois* · **Linha do tempo do agente em cada ação**: Uma lista só de leitura do que o agente fez na ação e quando: começou, mudou de arquivo, concluiu um plano, bloqueou.
 
 ## Interface
 

@@ -27,6 +27,8 @@ Shipped · Doing now · Next · Later
 - *Next* · **Claude Code inside the app**: The official claude command running in an integrated, themed terminal where the agents work, organized by action, with every Claude Code capability. Architecture to be decided with a measured prototype (pseudoconsole vs. stream-json); light and lazy-loaded.
 - *Next* · **Native Codex integration**: Bring to Codex what the Claude Code plugin does: hooks, skills, status and sessions, after a documented parity study. Today Codex gets the MCP server and the AGENTS.md line only.
 - *Later* · **Guides for other MCP agents**: Tested setup guides for other agents that speak MCP.
+- *Later* · **MCP tool profiles for a smaller context**: An environment variable limits which tools the agent sees (executor, planner or full), so the tool descriptions take less of its context.
+- *Later* · **Agent run timeline on each action**: A read-only list of what the agent did on an action and when: started, changed file, finished a plan, blocked.
 
 ## Interface
 
