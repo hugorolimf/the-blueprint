@@ -34,6 +34,6 @@ Object.assign(I18N.catalogos.en, {
   "✦ Proposta de blueprint novo": "✦ New blueprint proposal",
   "Para um blueprint novo, use “Proposta de blueprint novo”.": "For a new blueprint, use “New blueprint proposal”.",
   "Registros do que já foi feito": "Records of work already done", "Como conectar o seu agente": "How to connect your agent", "Fechar": "Close",
-  "Protótipo da ação": "Action prototype", "Protótipo": "Prototype", "Protótipos desta ação": "This action's prototypes",
+  "Protótipo da ação": "Action prototype", "Idioma": "Language", "Automático (idioma do Windows)": "Automatic (Windows language)", "Protótipo": "Prototype", "Protótipos desta ação": "This action's prototypes",
   "Abrir em nova aba": "Open in new tab", "Excluir": "Delete",
 });
