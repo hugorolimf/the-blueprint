@@ -1,5 +1,6 @@
 let nomeUsuario = "", editandoNome = false, salvandoPerfil = false, salvandoWorkspace = false;
 function mostrarPerfil() {
+  if (typeof hospedado === "function" && hospedado()) nomeUsuario = sessao.membro?.nome || tr("Visitante"); // modo hospedado: o nome vem da sessão (sessao.js), não do perfil local
   document.body.classList.toggle("sem-perfil", !nomeUsuario);
   $("login").hidden = !!nomeUsuario;
   $("perfil-nome").textContent = nomeUsuario;

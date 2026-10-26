@@ -1,0 +1,36 @@
+/* painéis de equipe (Pessoas, links de convite, Minha chave, Acompanhar): um <dialog> só, no estilo do "Como conectar" (planejar.css) */
+#equipe{width:min(860px,94vw);max-height:88vh;padding:0;border:1px solid var(--mid);background:#0a3270;color:var(--ink);font:13px/1.6 var(--mono)}
+#equipe::backdrop{background:#041a3acc}
+.eq-corpo{padding:6px 18px 18px;max-height:calc(88vh - 60px);overflow:auto}
+.eq-secao{padding:12px 0;border-bottom:1px dashed var(--lo)}.eq-secao:last-child{border-bottom:0}
+.eq-secao h4,.eq-secao h5{margin:6px 0 10px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid)}
+.eq-secao p{margin:6px 0;color:var(--mid)}
+.eq-ws{display:flex;gap:10px;align-items:center;margin:10px 0;font-size:11px;color:var(--mid)}
+#equipe select,#equipe input{background:#082b5e;color:var(--ink);border:1px solid var(--lo);font:12px var(--mono);padding:6px 8px}
+.eq-status{min-height:1.6em;font-size:12px}
+.eq-lista{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.eq-lista li{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--faint);background:#0c3a7866}
+.eq-lista .eq-vazio{border-style:dashed;color:var(--mid)}
+.eq-avatar{display:grid;place-items:center;flex:none;width:30px;height:30px;border:1px solid var(--mid);border-radius:50%}
+.eq-nome{flex:1;min-width:0;display:flex;flex-direction:column;overflow-wrap:anywhere}.eq-nome small{color:var(--mid);font-size:11px}
+.eq-papel{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid)}
+.eq-convites li:not(.eq-ativo):not(.eq-vazio){opacity:.55}
+.eq-form{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px 14px;align-items:end;margin-bottom:10px}
+.eq-form label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--mid)}.eq-form label[hidden]{display:none}
+.eq-form .eq-dica{grid-column:1/-1;margin:0;font-size:12px}
+.eq-form .btn{justify-self:start}
+.eq-link{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px 10px;align-items:center;margin:10px 0;padding:12px;border:1px solid var(--ink);background:#082b5e}
+.eq-link[hidden]{display:none}
+.eq-link code{grid-column:span 1;overflow-wrap:anywhere;user-select:all;font-size:12px}
+.eq-link>code:first-child{grid-column:1/3}
+.eq-link small{grid-column:1/-1;color:var(--mid);font-size:11px}
+.eq-link b{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}
+.eq-acoes{display:flex;gap:10px;margin:10px 0}
+.eq-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.eq-bp{display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--lo);background:#0c3a7899}
+.eq-bp.atrasado{border-color:var(--erro)}.eq-bp.atrasado small:nth-of-type(2){color:var(--erro)}
+.eq-bp progress{width:100%;height:4px;accent-color:var(--ink)}
+.eq-bp small{color:var(--mid);font-size:11px}.eq-bp .btn{align-self:flex-start;margin-top:6px}
+.eq-duas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+#equipe :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+@media(max-width:650px){.eq-corpo{padding:6px 12px 14px}.eq-duas{grid-template-columns:1fr}.eq-lista li{flex-wrap:wrap}.eq-link{grid-template-columns:minmax(0,1fr) auto}.eq-link b{grid-column:1/-1}}
