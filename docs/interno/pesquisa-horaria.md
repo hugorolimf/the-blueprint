@@ -57,3 +57,7 @@ Also added to `roadmap.json`: `hooks-codex`.
 Task Master lets you choose which MCP tools load with the `TASK_MASTER_TOOLS` environment variable (`all`, `standard`, `core` or a custom list; the default is a lean set of seven), per its [MCP documentation](https://docs.task-master.dev/capabilities/mcp.md). When it was added could not be confirmed. This supports the already planned action "MCP tool profiles", so no new action was created. Focalboard: only a community MCP server turned up and nothing from 2026.
 
 Round decision: the blueprint already holds 77 actions, so this round only logs the source and moves on to execute.
+
+### Sixth round, 26 Oct 2026
+
+No Claude Code changelog entry for October 2026 turned up. Third-party guides ([claudelog](https://www.claudelog.com/faqs/what-is-plugins-system-in-claude-code/), [fast.io](https://fast.io/resources/claude-code-plugins-development-guide.md)) say Claude Code loads MCP tools lazily ("MCP Tool Search", up to 95% less context) and lists `http` and `mcp_tool` among its hook types; both claims are unverified against the official documentation. If the lazy loading is real, the planned "MCP tool profiles" matter mostly for agents that do not have it (Codex among them), so the action should start by measuring the context cost in each agent. No new action.

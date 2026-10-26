@@ -57,3 +57,7 @@ Também entrou no `roadmap.json`: `hooks-codex`.
 O Task Master deixa escolher quais ferramentas MCP carregar com a variável de ambiente `TASK_MASTER_TOOLS` (`all`, `standard`, `core` ou uma lista própria; o padrão é um conjunto enxuto de sete), conforme a [documentação de MCP](https://docs.task-master.dev/capabilities/mcp.md). A data em que isso entrou não foi confirmada. Isso reforça a ação já planejada "Perfis de ferramentas do MCP", então nenhuma ação nova foi criada. Focalboard: só apareceu um servidor MCP da comunidade e nada de 2026.
 
 Decisão da rodada: o blueprint já tem 77 ações, então esta rodada só registra a fonte e passa a executar.
+
+### Sexta rodada, 26 de outubro de 2026
+
+Nenhuma entrada do changelog do Claude Code de outubro de 2026 apareceu. Guias de terceiros ([claudelog](https://www.claudelog.com/faqs/what-is-plugins-system-in-claude-code/), [fast.io](https://fast.io/resources/claude-code-plugins-development-guide.md)) dizem que o Claude Code carrega as ferramentas MCP sob demanda ("MCP Tool Search", até 95% menos contexto) e lista `http` e `mcp_tool` entre os tipos de hook; as duas afirmações não foram conferidas na documentação oficial. Se o carregamento sob demanda for real, os "Perfis de ferramentas do MCP" valem sobretudo para agentes que não o têm (o Codex entre eles), então a ação deve começar medindo o custo de contexto em cada agente. Nenhuma ação nova.
