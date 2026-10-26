@@ -25,7 +25,6 @@ Object.assign(I18N.catalogos.en, {
   "Gasta tokens.": "Spends tokens.",
   "Já há um agente trabalhando nesta ação; o novo vai trabalhar junto com ele.": "An agent is already working on this action; the new one will work alongside it.",
   "Iniciar a ação {numero} «{nome}»?": "Start action {numero} “{nome}”?", "Iniciar a ação {numero} com o Claude?": "Start action {numero} with Claude?",
-  "Abre um terminal novo com o Claude Code. {base}": "Opens a new terminal with Claude Code. {base}",
   "Enviando o pedido à sessão…": "Sending the request to the session…", "Copiando o pedido…": "Copying the request…", "Abrindo o terminal…": "Opening the terminal…",
   "Pedido copiado: cole na sessão para o Claude começar a ação {numero}.": "Request copied: paste it into the session so Claude starts action {numero}.",
   "Não consegui copiar sozinho. O pedido é: {prompt}": "Could not copy it automatically. The request is: {prompt}",

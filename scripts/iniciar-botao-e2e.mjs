@@ -1,5 +1,6 @@
 // O botão "Iniciar com o Claude" com a rota REAL: no Edge (sem janela), o clique no Claude esperando abre a folha da ação, o botão pede confirmação e chama o servidor de verdade, que
-// abre o `wt` FALSO (nenhum terminal real) com o prompt da ação; sem pasta ligada a folha explica onde ligar; cancelar não chama nada.
+// abre o `wt` FALSO (nenhum terminal real) com o prompt da ação; sem pasta ligada a folha explica onde ligar; cancelar não chama nada. A opção padrão, "Terminal do app",
+// abre a sessão no pseudoconsole do app com um programa falso (cmd.exe por BLUEPRINT_TERMINAL_COMANDO, nada de claude) e a aba aparece no painel.
 // Uso: node scripts/iniciar-botao-e2e.mjs [blueprint.exe]   (padrão: target/release/blueprint.exe; precisa do Microsoft Edge). Captura em target/iniciar-botao.png.
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -21,7 +22,7 @@ const limpar = () => { try { edge.kill(); } catch {} servidor?.parar(); setTimeo
 process.on("exit", limpar);
 const liga = (blueprintId) => fetch(`${servidor.url}/api/mcp/pasta/vincular`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cwd: pasta, workspaceId: "sm", blueprintId }) });
 try {
-  servidor = await sobeServidor(exe, dir, falso);
+  servidor = await sobeServidor(exe, dir, falso, { BLUEPRINT_TERMINAL_COMANDO: "cmd.exe /q /k" });
   let alvo;
   for (let i = 0; i < 100 && !alvo; i++) { try { alvo = (await (await fetch(`http://127.0.0.1:${depuracao}/json/list`)).json()).find((t) => t.type === "page"); } catch {} await dormir(100); }
   const ws = new WebSocket(alvo.webSocketDebuggerUrl);
@@ -57,11 +58,12 @@ try {
   assert(/Pasta do projeto/.test(await aviso()), `sem pasta ligada, explica onde ligar: ${await aviso()}`);
   assert.equal(falso.chamadas().length, 0, "e nenhum terminal abre");
 
-  // com a pasta ligada: confirmar chama a rota real, que abre o terminal falso com o prompt da ação
+  // com a pasta ligada: "Nova sessão" chama a rota real, que abre o terminal falso com o prompt da ação
   assert.equal((await liga("bp1a2b3")).status, 200);
   await abreEspera("bp1a2b3");
   await js(`${botao}.click()`);
   await dormir(500);
+  await js(`document.querySelector('dialog.confirmar input[value="nova"]').click()`);
   await js(`document.querySelector('dialog.confirmar [data-r="1"]').click()`);
   for (let i = 0; i < 60 && !/Terminal aberto/.test(await aviso()); i++) await dormir(150);
   assert(/Terminal aberto/.test(await aviso()), `confirmou: a folha avisa que o terminal abriu (${await aviso()})`);
@@ -71,6 +73,23 @@ try {
   assert(chamada[4].startsWith("Execute a ação 1.2 «") && chamada[4].includes("acao_id ac1a002"), `o terminal recebeu o prompt da ação do Claude esperando: ${chamada[4].slice(0, 100)}`);
   mkdirSync(join(raiz, "target"), { recursive: true });
   writeFileSync(join(raiz, "target", "iniciar-botao.png"), Buffer.from((await cdp("Page.captureScreenshot", { format: "png" })).result.data, "base64"));
+
+  // "Terminal do app" (o padrão): a sessão abre no pseudoconsole do app, a aba aparece no painel e as teclas chegam ao programa
+  await abreEspera("bp1a2b3");
+  await js(`${botao}.click()`);
+  await dormir(500);
+  assert.equal(await js(`document.querySelector('dialog.confirmar input[name="sessao"]:checked').value`), "app", "o terminal do app é o padrão");
+  await js(`document.querySelector('dialog.confirmar [data-r="1"]').click()`);
+  for (let i = 0; i < 80 && !(await js(`!!document.querySelector("#terminal-painel:not([hidden]) .term-tela .xterm-rows")`)); i++) await dormir(100);
+  assert(/Terminal do app aberto/.test(await aviso()), `a folha avisa que o terminal do app abriu (${await aviso()})`);
+  const [sessao] = (await (await fetch(`${servidor.url}/api/terminal/sessoes`)).json()).sessoes;
+  assert.equal(sessao?.acaoId, "ac1a002", "a sessão é da ação do Claude esperando");
+  for (let i = 0; i < 50 && !(await js(`document.activeElement?.classList.contains("xterm-helper-textarea")`)); i++) await dormir(100);
+  await cdp("Input.insertText", { text: "set /a 6*7" });
+  for (const type of ["keyDown", "keyUp"]) await cdp("Input.dispatchKeyEvent", { type, key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
+  for (let i = 0; i < 80 && !(await js(`document.querySelector(".term-tela .xterm-rows").textContent.includes("42")`)); i++) await dormir(100);
+  assert.equal(await js(`document.querySelector(".term-tela .xterm-rows").textContent.includes("42")`), true, "as teclas chegam ao programa da sessão");
+  assert.equal(falso.chamadas().length, 1, "o terminal externo não foi chamado de novo");
   assert.deepEqual(erros, [], "sem erro no console");
-  console.log("botão Iniciar com o Claude (rota real, terminal falso): ok (esperando abre a folha, confirmação, cancelar não abre, sem pasta explica, com pasta abre o terminal com o prompt)");
+  console.log("botão Iniciar com o Claude (rota real, terminal falso): ok (esperando abre a folha, confirmação, cancelar não abre, sem pasta explica, Nova sessão abre o terminal externo com o prompt, Terminal do app abre a aba com a sessão)");
 } finally { limpar(); }

@@ -37,7 +37,7 @@ async function sessoesAbertas(p) {
     return r.ok ? (await r.json()).sessoes || [] : [];
   } catch { return []; }
 }
-// o diálogo com a escolha: "Nova sessão" (padrão) ou uma sessão aberta. Devolve null (cancelou), {nova: true} ou {sessao}
+// o diálogo com a escolha: "Terminal do app" (padrão, web/js/terminal.js), "Nova sessão" (terminal externo) ou uma sessão aberta. Devolve null (cancelou), {app: true}, {nova: true} ou {sessao}
 function escolherSessao({ titulo, texto, sessoes }) {
   return new Promise((resolve) => {
     const d = document.createElement("dialog");
@@ -46,13 +46,13 @@ function escolherSessao({ titulo, texto, sessoes }) {
     d.setAttribute("aria-label", titulo);
     const nome = (s) => (s.pasta || "").replace(/[\\/]+$/, "").split(/[\\/]/).pop() || s.pasta;
     const linhas = sessoes.map((s, i) => `<label><input type="radio" name="sessao" value="${i}"> <span>${tr("Sessão em {nome}", { nome: esc(nome(s)) })}</span> <small>${s.canal ? tr("recebe o pedido direto") : tr("sem canal: só copia o pedido")}</small></label>`).join("");
-    d.innerHTML = `<div class="cu-topo"><h3>${esc(titulo)}</h3></div><p class="cu-corpo">${esc(texto)}</p><div class="cu-opcoes"><label><input type="radio" name="sessao" value="nova" checked> <span>${tr("Nova sessão")}</span> <small>${tr("abre um terminal novo")}</small></label>${linhas}</div><div class="confirmar-acoes"><button class="btn" type="button" data-r="0">${tr("Cancelar")}</button><button class="btn perigo" type="button" data-r="1">${tr("Iniciar")}</button></div>`;
+    d.innerHTML = `<div class="cu-topo"><h3>${esc(titulo)}</h3></div><p class="cu-corpo">${esc(texto)}</p><div class="cu-opcoes"><label><input type="radio" name="sessao" value="app" checked> <span>${tr("Terminal do app")}</span> <small>${tr("abre o Claude aqui dentro, numa aba do painel")}</small></label><label><input type="radio" name="sessao" value="nova"> <span>${tr("Nova sessão")}</span> <small>${tr("abre um terminal novo")}</small></label>${linhas}</div><div class="confirmar-acoes"><button class="btn" type="button" data-r="0">${tr("Cancelar")}</button><button class="btn perigo" type="button" data-r="1">${tr("Iniciar")}</button></div>`;
     d.addEventListener("click", (e) => { if (e.target === d) d.close("0"); });
     d.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => d.close(b.dataset.r)));
     d.addEventListener("close", () => {
       const v = d.querySelector('input[name="sessao"]:checked')?.value;
       d.remove();
-      resolve(d.returnValue !== "1" ? null : v === "nova" ? { nova: true } : { sessao: sessoes[Number(v)] });
+      resolve(d.returnValue !== "1" ? null : v === "app" ? { app: true } : v === "nova" ? { nova: true } : { sessao: sessoes[Number(v)] });
     });
     document.body.append(d);
     d.showModal();
@@ -63,10 +63,9 @@ async function iniciarComClaude(p, f) {
   const numero = numeroDaAcao(p, f), ocupada = agentesDoBlueprint(p.id).some((x) => x.acaoId === f.id && x.estado !== "ocioso");
   const sessoes = await sessoesAbertas(p);
   const base = `${tr("Gasta tokens.")}${ocupada ? " " + tr("Já há um agente trabalhando nesta ação; o novo vai trabalhar junto com ele.") : ""} ${tr("Iniciar a ação {numero} «{nome}»?", { numero, nome: f.nome || tr("sem nome") })}`;
-  let escolha = { nova: true };
-  if (sessoes.length) escolha = await escolherSessao({ titulo: tr("Iniciar a ação {numero} com o Claude?", { numero }), texto: base, sessoes });
-  else if (!(await confirmar({ titulo: tr("Iniciar a ação {numero} com o Claude?", { numero }), texto: tr("Abre um terminal novo com o Claude Code. {base}", { base }), rotulo: tr("Iniciar") }))) escolha = null;
+  const escolha = await escolherSessao({ titulo: tr("Iniciar a ação {numero} com o Claude?", { numero }), texto: base, sessoes });
   if (!escolha) return;
+  if (escolha.app) return iniciarNoApp(p, f, numero);
   const sessao = escolha.sessao;
   iniciarAviso(sessao ? (sessao.canal ? tr("Enviando o pedido à sessão…") : tr("Copiando o pedido…")) : tr("Abrindo o terminal…"));
   try {
@@ -80,5 +79,17 @@ async function iniciarComClaude(p, f) {
       return;
     }
     iniciarAviso(iniciarMensagem(r.status, j, numero, !!sessao), !r.ok);
+  } catch { iniciarAviso(tr("Não consegui falar com o app para abrir o terminal. Ele está aberto?"), true); }
+}
+// "Terminal do app": a mesma pasta e o mesmo prompt, num pseudoconsole do app (POST /api/terminal/iniciar, src/terminal); a aba nova abre no painel
+async function iniciarNoApp(p, f, numero) {
+  iniciarAviso(tr("Abrindo o terminal do app…"));
+  try {
+    const corpo = { workspaceId: workspaceAtual?.id || "sm", blueprintId: p.id, acaoId: f.id, titulo: `${numero} · ${f.nome || tr("sem nome")}` };
+    const r = await fetch("/api/terminal/iniciar", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(corpo) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.sessao) return iniciarAviso(j?.codigo === "sem-terminal" ? tr("Não consegui abrir o terminal do app. Motivo: {erro}", { erro: j.erro || r.status }) : iniciarMensagem(r.status, j, numero, false), true);
+    iniciarAviso(tr("Terminal do app aberto: o Claude vai começar a ação {numero}.", { numero }));
+    terminalAbrirSessao(j.sessao);
   } catch { iniciarAviso(tr("Não consegui falar com o app para abrir o terminal. Ele está aberto?"), true); }
 }
