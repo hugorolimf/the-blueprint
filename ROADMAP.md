@@ -29,6 +29,7 @@ Shipped · Doing now · Next · Later
 - *Later* · **Guides for other MCP agents**: Tested setup guides for other agents that speak MCP.
 - *Later* · **MCP tool profiles for a smaller context**: An environment variable limits which tools the agent sees (executor, planner or full), so the tool descriptions take less of its context.
 - *Later* · **Agent run timeline on each action**: A read-only list of what the agent did on an action and when: started, changed file, finished a plan, blocked.
+- *Later* · **Remote MCP over HTTP for guests**: Guests connect their own Claude or Codex to a shared workspace with one command and their member key, without installing The Blueprint.
 - *Later* · **Send a plan comment to the agent**: A button on a plan comment sends it to the Claude session you pick, only on your click and only on your machine.
 - *Later* · **Codex hooks for automatic progress**: Once the hook format is confirmed in the official source, Codex gets what Claude Code already has: the right blueprint at session start and edits recorded as progress.
 
