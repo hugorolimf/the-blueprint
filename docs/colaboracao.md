@@ -20,7 +20,7 @@ continua dono implícito, sem cookie, sem convite e com o MCP só em loopback se
 | Link do dono impresso uma vez | **Mantém**, válido 24 h e de uso único; novo link só por `blueprint serve --hospedar --novo-link-dono` (quem tem o terminal do servidor é a autoridade). | `src/cli.rs` |
 | Limite de tentativas, só o hash, `Referrer-Policy`, `Origin` | **Mantém.** A comparação "em tempo constante" é atendida pela busca por hash (o tempo só revela algo sobre o SHA-256, não sobre o segredo). | decisão deste desenho |
 | Chave de MCP por membro | **Mantém.** **Muda:** o `--mcp` hoje só fala `http://` (`cliente.rs`); para um servidor `https://` ele usa o `curl` do sistema, como o atualizador já faz, com a chave passada pela entrada padrão (nunca na linha de comando). | `src/mcp/cliente.rs`, `src/atualizador/` |
-| `/api/mcp/*` só loopback, sem token | **Mantém no modo local** (inclusive `MCP_REDE`). No modo hospedado a autenticação (cookie ou chave) substitui o loopback; `iniciar`, `conversa`, `hook/*`, `/api/terminal/*`, `/api/atualizacao` e `/api/app/mostrar` **não existem** no modo hospedado. | `src/mcp/permissao.rs`, `src/mcp/rotas.rs` |
+| `/api/mcp/*` só loopback, sem token | **Mantém no modo local** (inclusive `MCP_REDE`). No modo hospedado a autenticação (cookie ou chave) substitui o loopback; `iniciar`, `conversa`, `hook/*` (salvo os hooks do Claude do membro, só com a chave), `/api/terminal/*`, `/api/atualizacao` e `/api/app/mostrar` **não existem** no modo hospedado. | `src/mcp/permissao.rs`, `src/mcp/rotas.rs` |
 | SSE para o tempo real | **Mantém.** **Muda:** rota nova `GET /api/eventos` fora de `/api/mcp` (que é loopback), por workspace, com operações por item e `id:` para retomar pela versão. O SSE do MCP (`/api/mcp/eventos`) continua como está. | `src/mcp/eventos.rs` (`FluxoSse`, batimento de 25 s) |
 | Sincronia entre janelas (26/10) | **Mantém** para o `PUT` inteiro e para a recarga longa; **evolui** para operações por item (seção 6). | `src/http/api_dados.rs`, `web/js/sincronia.js`, `web/js/rede.js` |
 | Colunas `revisao` por linha (001) | **Cai** como mecanismo de conflito: o `PUT` recria as linhas e zera a revisão. O conflito usa o valor anterior (`antes`) e a tabela `historico_campos`. | `src/dados/migracoes/001_inicial.sql` |
@@ -158,7 +158,8 @@ vale o maior papel que cobre o alvo (`'*'` > workspace > blueprint). Visitante n
 | Convites: criar / listar / revogar / trocar | administrar | não | não | não |
 | Atividade de acesso (`GET /api/atividade`) | ler | não | ler | não |
 | Chave de MCP própria (`/api/chave`) | sim | sim | sim | não |
-| Terminal, iniciar, hooks, atualização, mostrar janela | só modo local | — | — | — |
+| Terminal, iniciar, sessões, status line, atualização, mostrar janela | só modo local | — | — | — |
+| Hooks do Claude do membro (`hook/sessao`, `edicao`, `subagente`, `parada`, `fim`; só com a chave) | gravar no alvo | gravar no alvo | não | não |
 
 Regras: nunca remover nem rebaixar o último dono de um workspace (`ultimo-dono`); o dono de um workspace convida dono, colaborador, supervisor
 e visitante desse workspace; só o dono `'*'` cria workspace. A função única de decisão é `Contexto::pode(Acao, workspace, blueprint)` (seção 7).
@@ -203,8 +204,11 @@ recebe `sessao-encerrada` e fecha.
 `claude mcp add blueprint-equipe --env BLUEPRINT_URL=https://equipe.exemplo.com --env BLUEPRINT_CHAVE=bpk_... -- blueprint --mcp`
 (Codex: `codex mcp add` com os mesmos `--env`). O `--mcp` manda `Authorization: Bearer <chave>` em todo pedido. Para `https://` chama
 `curl --silent --show-error --config -` e escreve `url`, `request`, `header` e `data` na entrada padrão do curl (a chave nunca vai para os
-argumentos do processo). Chave errada ou revogada: 401 `chave-invalida`. Limite conhecido: os hooks do plugin apontam para o app local
-(`127.0.0.1:3000`) e não seguem para o servidor hospedado.
+argumentos do processo). Chave errada ou revogada: 401 `chave-invalida`. Os hooks do plugin local apontam para o app local
+(`127.0.0.1:3000`); para o servidor hospedado ou o Compartilhar, `blueprint conectar <endereço> <chave>` instala o plugin `blueprint-equipe`,
+cujos hooks (`blueprint hook <evento> --equipe`) mandam `hook/sessao`, `hook/edicao`, `hook/subagente`, `hook/parada` e `hook/fim` com a
+chave: só com `Authorization` essas rotas existem fora do app local, o blueprint vem da linha `Blueprint:` da pasta (só onde o papel
+grava), o agente leva o nome do membro (`Claude · Bia`) e a sessão fica separada por membro (`docs/compartilhar.md`, "The guest's Claude").
 
 ## 5. API para a frente TELAS
 

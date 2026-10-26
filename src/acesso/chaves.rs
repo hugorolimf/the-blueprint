@@ -38,5 +38,10 @@ pub fn gerar(conn: &rusqlite::Connection, membro_id: &str) -> Resultado<(String,
 /// Os comandos que a tela mostra para ligar o agente ao servidor (a chave vai por variável de ambiente, nunca nos argumentos do curl).
 pub fn comandos(url_publica: &str, chave: &str) -> serde_json::Value {
     let env = format!("--env BLUEPRINT_URL={url_publica} --env BLUEPRINT_CHAVE={chave}");
-    serde_json::json!({"claude": format!("claude mcp add blueprint-equipe {env} -- blueprint --mcp"), "codex": format!("codex mcp add blueprint-equipe {env} -- blueprint --mcp")})
+    serde_json::json!({
+        // um comando só: plugin com MCP e hooks no Claude Code e o MCP no Codex (src/registrar/conectar.rs)
+        "conectar": format!("blueprint conectar {url_publica} {chave}"),
+        "claude": format!("claude mcp add blueprint-equipe {env} -- blueprint --mcp"),
+        "codex": format!("codex mcp add blueprint-equipe {env} -- blueprint --mcp"),
+    })
 }

@@ -150,7 +150,7 @@ export function rotas(E, ctx, metodo, rota, q, corpo, origem) {
     const chave = "bpk_" + segredo(), env = `--env BLUEPRINT_URL=${origemPublica} --env BLUEPRINT_CHAVE=${chave}`;
     E.chaves.set(mid, { hash: sha(chave), prefixo: chave.slice(0, 8), criadaEm: agoraIso(), usadaEm: null });
     ativ(E, ctx, "chave-criada");
-    return [201, { chave, prefixo: chave.slice(0, 8), comandos: { claude: `claude mcp add blueprint-equipe ${env} -- blueprint --mcp`, codex: `codex mcp add blueprint-equipe ${env} -- blueprint --mcp` } }];
+    return [201, { chave, prefixo: chave.slice(0, 8), comandos: { conectar: `blueprint conectar ${origemPublica} ${chave}`, claude: `claude mcp add blueprint-equipe ${env} -- blueprint --mcp`, codex: `codex mcp add blueprint-equipe ${env} -- blueprint --mcp` } }];
   }
   if (metodo === "GET" && rota === "/api/atividade") {
     const ws = q.get("workspace") || "", e = exige(ws, ["dono", "supervisor"]); if (e) return e;

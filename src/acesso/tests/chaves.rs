@@ -25,6 +25,7 @@ fn o_agente_do_colaborador_grava_com_a_chave_dele() {
     assert_eq!(g["prefixo"].as_str(), Some(&chave[..8]));
     assert!(g["comandos"]["claude"].as_str().unwrap().contains("--env BLUEPRINT_URL=https://equipe.teste --env BLUEPRINT_CHAVE=bpk_"));
     assert!(g["comandos"]["codex"].as_str().unwrap().starts_with("codex mcp add blueprint-equipe"));
+    assert_eq!(g["comandos"]["conectar"].as_str(), Some(format!("blueprint conectar https://equipe.teste {chave}").as_str()));
     let r = despachar(&e, &do_agente("POST", "/api/mcp/evento", &chave, Some(json!({"tipo": "progresso", "workspaceId": "w2", "blueprintId": "p9", "texto": "pelo agente"}))));
     assert_eq!(r.status, 200, "{}", String::from_utf8_lossy(r.bytes()));
     let fila = json_de(&despachar(&e, &do_agente("GET", "/api/mcp/fila", &chave, None)));

@@ -21,6 +21,32 @@ computador, veja [Hospedar o The Blueprint para uma equipe](hospedar.md). Desenh
 Para parar, clique em **Desligar** no mesmo diálogo: o túnel cai e a porta dos convidados fecha. Sair do app também desliga (o processo do
 túnel vive num Job Object e morre com o app). Esconder a janela na bandeja **não** desliga.
 
+## O Claude do convidado
+
+O convidado pode ligar o próprio Claude Code (e o Codex) ao workspace compartilhado com um comando. Ele precisa do The Blueprint instalado
+no computador dele (o instalador da release; o app não precisa estar aberto lá).
+
+1. No navegador, no workspace compartilhado, o convidado abre **Minha chave** e clica em **Gerar chave**.
+2. A tela mostra o comando pronto para copiar: `blueprint conectar https://<endereço> bpk_...`. Ele roda num terminal.
+3. Ele abre uma sessão nova do Claude Code numa pasta cujo `CLAUDE.md` (ou `AGENTS.md`) tenha a linha
+   `Blueprint: workspace_id <id>, blueprint_id <id>` de um blueprint do workspace compartilhado.
+
+O que o comando faz: instala um plugin próprio, `blueprint-equipe` (marketplace `blueprint-equipe-local`, em
+`%APPDATA%\Blueprint\claude-plugin-equipe`), que nunca briga com o plugin local `blueprint`, e registra o MCP `blueprint-equipe` no Codex. O
+Claude passa a ler e propor no workspace compartilhado com o papel do convidado, e os hooks dele (progresso ao editar, subagentes, o
+lembrete no fim do turno) chegam ao app do dono: o dono vê o Claude do convidado na folha como **Claude · <nome>**.
+
+- **O endereço mudou?** Rode `blueprint conectar` de novo com o endereço novo (e uma chave nova, se a antiga foi revogada). As sessões
+  abertas passam a usar o endereço novo na próxima chamada.
+- **Desfazer:** `blueprint conectar --remover` tira o plugin, os MCPs e a chave do computador.
+- **Onde fica a chave:** em `%APPDATA%\Blueprint\conexao-equipe.json` (só na pasta do seu usuário), lida a cada pedido pelo
+  `blueprint --mcp --equipe` e pelo `blueprint hook <evento> --equipe`. Ela nunca vai nos argumentos dos processos do MCP e dos hooks nem na
+  cópia do plugin que o Claude Code guarda; os hooks a mandam em `Authorization: Bearer`, como o MCP. Ela aparece uma vez no próprio comando
+  `blueprint conectar` (e no histórico do seu terminal), e o Codex guarda só o comando, não a chave.
+- **O que os hooks do convidado alcançam:** só os blueprints em que o papel grava; os vínculos de pasta, a lista de sessões, a status line e
+  o "Iniciar com o Claude" continuam só na máquina do dono. Com o app do dono fechado ou o endereço velho, os hooks falham em silêncio (no
+  máximo de 3 a 5 s) e nunca travam o Claude.
+
 ## Limites
 
 - **O app precisa ficar aberto**, com o computador ligado e na internet. Fechou, os convidados perdem o acesso até você compartilhar de novo.
@@ -45,7 +71,8 @@ túnel vive num Job Object e morre com o app). Esconder a janela na bandeja **n�
   cabeçalho, porque o próprio túnel conecta a partir desta máquina.
 - **Nada na porta dos convidados é você.** Todo pedido ali precisa de uma sessão de convidado (de um convite) ou de uma chave de MCP
   pessoal, com o Host e a Origin do endereço do túnel, e só alcança o workspace compartilhado, com o papel do convidado.
-- **O que o convidado nunca alcança:** o terminal, o "Iniciar com o Claude", os hooks e as sessões do Claude Code, os vínculos de pasta, o
+- **O que o convidado nunca alcança:** o terminal, o "Iniciar com o Claude", as sessões e a status line do Claude Code (os hooks só com a
+  chave de MCP do convidado, veja acima), os vínculos de pasta, o
   atualizador, os controles do compartilhamento, a importação dos dados inteiros (`PUT /api/dados`), a janela, os outros workspaces e o
   texto que você manda às sessões do seu agente. Essas rotas respondem 404 pela porta dos convidados.
 - **A Cloudflare fica no meio.** O HTTPS termina na Cloudflare, que leva o tráfego até o app pelo túnel. Compartilhe só o que você aceita

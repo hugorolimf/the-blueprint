@@ -21,6 +21,32 @@ see [Hosting The Blueprint for a team](hospedar.md). Design and contract: [colab
 To stop, click **Turn off** in the same dialog: the tunnel goes down and the guest port closes. Quitting the app also stops it (the tunnel
 process lives in a Job Object and dies with the app). Hiding the window in the tray does **not** stop it.
 
+## The guest's Claude
+
+A guest can connect their own Claude Code (and Codex) to the shared workspace with one command. They need The Blueprint installed on
+their computer (the installer from the release; the app does not have to be open there).
+
+1. In the browser, on the shared workspace, the guest opens **My key** and clicks **Generate key**.
+2. The screen shows the command, ready to copy: `blueprint conectar https://<address> bpk_...`. They run it in a terminal.
+3. They open a new Claude Code session in a folder whose `CLAUDE.md` (or `AGENTS.md`) has the line
+   `Blueprint: workspace_id <id>, blueprint_id <id>` of a blueprint in the shared workspace.
+
+What the command does: it installs a plugin of its own, `blueprint-equipe` (marketplace `blueprint-equipe-local`, in
+`%APPDATA%\Blueprint\claude-plugin-equipe`), so it never clashes with the local `blueprint` plugin, and registers the MCP `blueprint-equipe`
+in Codex. Claude then reads and proposes in the shared workspace with the guest's role, and its hooks (progress on edits, subagents, the
+reminder at the end of a turn) reach the owner's app: the owner sees the guest's Claude on the sheet as **Claude · <name>**.
+
+- **The address changes?** Run `blueprint conectar` again with the new address (and a new key if the old one was revoked). Open sessions
+  pick up the new address on their next call.
+- **Undo:** `blueprint conectar --remover` removes the plugin, the MCPs and the key from the computer.
+- **Where the key lives:** in `%APPDATA%\Blueprint\conexao-equipe.json` (your user folder only), read at each request by
+  `blueprint --mcp --equipe` and `blueprint hook <event> --equipe`. It is never in the arguments of the MCP or hook processes, nor in the
+  plugin copy that Claude Code keeps; the hooks send it as `Authorization: Bearer`, like the MCP. It does appear once in the
+  `blueprint conectar` command itself (and in your shell history), and Codex keeps only the command, not the key.
+- **What the guest's hooks reach:** only the blueprints the role can write; the folder links, the session list, the status line and
+  "Start with Claude" stay on the owner's machine only. If the owner's app is closed or the address is old, the hooks fail silently
+  (3 to 5 s at most) and never block Claude.
+
 ## Limits
 
 - **The app must stay open**, and the computer awake and online. When it closes, guests lose access until you share again.
@@ -43,7 +69,8 @@ process lives in a Job Object and dies with the app). Hiding the window in the t
   the tunnel itself connects from this machine.
 - **Nothing on the guest port is you.** Every request there needs a guest session (from an invite) or a personal MCP key, with the
   Host and Origin of the tunnel address, and it only reaches the shared workspace, with the guest's role.
-- **What guests never reach:** the terminal, "Start with Claude", the Claude Code hooks and sessions, the folder links, the updater, the
+- **What guests never reach:** the terminal, "Start with Claude", the Claude Code sessions and status line (the hooks only with the
+  guest's MCP key, see above), the folder links, the updater, the
   sharing controls, the whole-data import (`PUT /api/dados`), the window, other workspaces, and the text you send to your own agent
   sessions. Those routes answer 404 on the guest port.
 - **Cloudflare sits in the middle.** HTTPS ends at Cloudflare, which then carries the traffic to the app through the tunnel. Share only

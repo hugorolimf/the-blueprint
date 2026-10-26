@@ -49,8 +49,24 @@ try {
     const settings = join(env.CLAUDE_CONFIG_DIR, "settings.json"); // a pasta do plugin em %APPDATA%\Blueprint é dado do app e fica (como o banco); o que não pode sobrar é o registro no Claude
     assert.doesNotMatch(existsSync(settings) ? readFileSync(settings, "utf8") : "", /blueprint/, `sobrou plugin ou marketplace na configuração do Claude depois de remover #${vez}`);
   }
+  // o plugin do convidado (blueprint conectar): instala ao lado, valida, troca o endereço e sai
+  const envConv = { ...env, BLUEPRINT_CONECTAR_HTTP_LOCAL: "1" };
+  const chave = "bpk_" + "a".repeat(43);
+  for (const endereco of ["http://127.0.0.1:9", "http://127.0.0.1:8"]) {
+    const saida = execFileSync(exe, ["conectar", endereco, chave], { env: envConv, encoding: "utf8" });
+    assert.match(saida, /plugin `blueprint-equipe` instalado/, saida);
+  }
+  assert.match(rodar("claude", ["plugin", "list"]), /blueprint-equipe@blueprint-equipe-local[\s\S]*enabled/, "plugin do convidado ligado");
+  const pastaEquipe = join(env.APPDATA, "Blueprint", "claude-plugin-equipe", "plugins", "blueprint-equipe");
+  assert.match(rodar("claude", ["plugin", "validate", pastaEquipe]), /Validation passed/);
+  assert.match(rodar("claude", ["plugin", "details", "blueprint-equipe@blueprint-equipe-local"]), /MCP servers \(1\)/);
+  assert.match(readFileSync(join(env.APPDATA, "Blueprint", "conexao-equipe.json"), "utf8"), /127\.0\.0\.1:8/, "rodar de novo troca o endereço");
+  if (temCodex) assert.match(codexMcp(), /blueprint-equipe/);
+  execFileSync(exe, ["conectar", "--remover"], { env: envConv, encoding: "utf8" });
+  assert.doesNotMatch(rodar("claude", ["plugin", "list"]), /blueprint-equipe/, "conectar --remover tira o plugin");
+  if (temCodex) assert.doesNotMatch(codexMcp(), /blueprint-equipe/);
   assert.equal(foto(), antes, "a configuração real do Claude mudou");
-  console.log(`ok: instala, repete, valida, hooks (inclui SubagentStart/Stop), remove, repete; ${temCodex ? "MCP no Codex registrado e removido; " : "Codex ausente (pulado); "}configuração real intacta`);
+  console.log(`ok: instala, repete, valida, hooks (inclui SubagentStart/Stop), remove, repete; plugin do convidado (conectar) instala, valida, troca o endereço e sai; ${temCodex ? "MCP no Codex registrado e removido; " : "Codex ausente (pulado); "}configuração real intacta`);
 } finally {
   rmSync(base, { recursive: true, force: true });
 }

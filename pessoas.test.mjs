@@ -64,6 +64,7 @@ assert.equal(estadoDoConvite(c({ usosMax: null, usos: 50 }), agora), "ativo", "l
 const k = comandosDaChave("https://equipe.exemplo.com", "bpk_abc");
 assert.equal(k.claude, "claude mcp add blueprint-equipe --env BLUEPRINT_URL=https://equipe.exemplo.com --env BLUEPRINT_CHAVE=bpk_abc -- blueprint --mcp");
 assert.equal(k.codex, "codex mcp add blueprint-equipe --env BLUEPRINT_URL=https://equipe.exemplo.com --env BLUEPRINT_CHAVE=bpk_abc -- blueprint --mcp");
+assert.equal(k.conectar, "blueprint conectar https://equipe.exemplo.com bpk_abc");
 
 // inglês pelo catálogo
 vm.runInThisContext(readFileSync(join(import.meta.dirname, "web", "i18n", "en-pessoas.js"), "utf8"));

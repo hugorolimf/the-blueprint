@@ -58,8 +58,9 @@ try {
   const chave = await bruno.js(`document.querySelector("#eq-chave-nova code").textContent`);
   assert.match(chave, /^bpk_/, "chave com prefixo bpk_");
   const cmds = await bruno.js(`[...document.querySelectorAll("#eq-chave-nova code")].slice(1).map((c) => c.textContent)`);
-  assert.match(cmds[0], /^claude mcp add .*BLUEPRINT_CHAVE=bpk_.* -- blueprint --mcp$/, "comando do Claude Code");
-  assert.match(cmds[1], /^codex mcp add .*BLUEPRINT_URL=https?:\/\/.* -- blueprint --mcp$/, "comando do Codex");
+  assert.match(cmds[0], /^blueprint conectar https?:\/\/\S+ bpk_\S+$/, "o comando único (blueprint conectar)");
+  assert.match(cmds[1], /^claude mcp add .*BLUEPRINT_CHAVE=bpk_.* -- blueprint --mcp$/, "comando do Claude Code");
+  assert.match(cmds[2], /^codex mcp add .*BLUEPRINT_URL=https?:\/\/.* -- blueprint --mcp$/, "comando do Codex");
   await bruno.ate(`/Chave bpk_/.test(document.getElementById("eq-chave-status").textContent) && document.getElementById("eq-chave-gerar").textContent === "Trocar chave"`, 5000, "depois de gerar, só o prefixo");
   await bruno.js(`document.getElementById("equipe").close()`);
   await bruno.ate(`document.getElementById("eq-chave-nova").textContent === ""`, 3000, "fechar o painel apaga a chave da tela"); // o evento close do <dialog> chega numa tarefa depois
