@@ -5,6 +5,7 @@ body.na-entrada,body.sem-perfil{background:radial-gradient(ellipse at 45% 35%,#1
 .entrada-topo{display:flex;justify-content:space-between;align-items:center;gap:24px;border-bottom:1px solid var(--lo);padding-bottom:24px}
 .entrada-marca{font-size:13px;letter-spacing:.2em;text-transform:uppercase}
 .perfil{display:flex;align-items:center;gap:12px;color:var(--mid);font-size:12px}.perfil strong{color:var(--ink)}
+.entrada-rodape{position:absolute;right:64px;bottom:24px}.entrada-rodape select{background:transparent;color:var(--mid);border:0;border-bottom:1px dotted var(--lo);font:11px var(--mono);padding:2px 0;cursor:pointer;opacity:.7}.entrada-rodape select:hover,.entrada-rodape select:focus-visible{opacity:1;color:var(--ink)}.entrada-rodape option{background:#082b5e;color:var(--ink)}
 .avatar{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--mid);border-radius:50%;color:var(--ink)}
 .entrada h1{font-size:clamp(28px,5vw,42px);font-weight:500;letter-spacing:-.04em;margin:48px 0 12px}
 .entrada p{color:var(--mid)}
@@ -45,7 +46,7 @@ body.criando-workspace #entrada,body.criando-workspace #rolagem,body.criando-wor
 .login label{font-size:11px}.login input{width:100%;margin:10px 0 20px;padding:15px;border:1px solid var(--mid);background:#082b5ebb;color:var(--ink);font:16px var(--mono);border-radius:0}
 .login .btn{width:100%;text-align:center}.login small{display:block;margin-top:20px;font-size:10px;color:var(--mid)}
 body.na-entrada #folha,body.na-entrada #rolagem,body.na-entrada #dica-f11,body.sem-perfil #folha,body.sem-perfil #entrada,body.sem-perfil #editor,body.sem-perfil #agente-tela,body.sem-perfil #rolagem,body.sem-perfil #dica-f11{display:none!important}
-@media(max-width:650px){.login{padding:24px 18px}.login-folha{grid-template-columns:1fr}.login-ilustra{padding:24px;border-right:0;border-bottom:1px solid var(--lo);gap:12px}#login-arte{min-height:130px}#login-arte svg{max-height:150px}.login form{padding:30px 24px}.entrada{padding:24px 18px}.entrada-topo{align-items:flex-start;gap:12px}.perfil{gap:8px;flex-wrap:wrap;justify-content:flex-end}.perfil .btn{font-size:10px;padding:8px}.avatar{display:none}}
+@media(max-width:650px){.login{padding:24px 18px}.login-folha{grid-template-columns:1fr}.login-ilustra{padding:24px;border-right:0;border-bottom:1px solid var(--lo);gap:12px}#login-arte{min-height:130px}#login-arte svg{max-height:150px}.login form{padding:30px 24px}.entrada{padding:24px 18px}.entrada-topo{align-items:flex-start;gap:12px}.perfil{gap:8px;flex-wrap:wrap;justify-content:flex-end}.entrada-rodape{right:18px;bottom:16px}.perfil .btn{font-size:10px;padding:8px}.avatar{display:none}}
 @media(prefers-reduced-motion:reduce){.blueprint-cartao{transition:none}.blueprint-cartao:hover{transform:none}}
 @media(max-width:650px){.entrada{padding:28px 24px 48px}.blueprint-cartao{flex-basis:min(320px,100%)}.entrada-acoes{margin-top:24px}}
 @media print{.entrada,.login{display:none}}
