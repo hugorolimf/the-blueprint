@@ -62,9 +62,9 @@ Entregue · Fazendo agora · Em seguida · Depois
 ## Comunidade
 
 - *Entregue* · **Código aberto desde o começo**: Licença MIT, CONTRIBUTING, SECURITY, CI no Windows e no Ubuntu, releases com checksums.
+- *Entregue* · **Completar comandos no terminal**: blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos.
 - *Fazendo agora* · **README, vídeos de demonstração e guias que valem a leitura**: Um README novo, no modelo dos melhores projetos do gênero, demonstrações gravadas, guias passo a passo e um FAQ de problemas.
 - *Em seguida* · **winget e Scoop**: Instalar com um único comando pelos gerenciadores de pacotes do Windows.
-- *Depois* · **Completar comandos no terminal**: blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos.
 
 ---
 

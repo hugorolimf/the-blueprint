@@ -114,7 +114,7 @@
     { "id": "importar-issues", "tema": "planejamento", "estado": "depois",
       "en": { "titulo": "Import GitHub issues as a proposal", "resumo": "Open issues become actions and plans in a numbered proposal that you review and apply. Nothing is saved before your click." },
       "pt": { "titulo": "Importar issues do GitHub como proposta", "resumo": "Issues abertas viram ações e planos numa proposta numerada que você revisa e aplica. Nada é gravado antes do clique." } },
-    { "id": "completar-comandos", "tema": "comunidade", "estado": "depois",
+    { "id": "completar-comandos", "tema": "comunidade", "estado": "entregue",
       "en": { "titulo": "Shell completions for the command line", "resumo": "blueprint completions prints a script for PowerShell and Bash that completes the subcommands." },
       "pt": { "titulo": "Completar comandos no terminal", "resumo": "blueprint completions imprime um script para PowerShell e Bash que completa os subcomandos." } },
     { "id": "perfis-mcp", "tema": "agentes", "estado": "depois",

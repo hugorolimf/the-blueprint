@@ -62,9 +62,9 @@ Shipped · Doing now · Next · Later
 ## Community
 
 - *Shipped* · **Open source from day one**: MIT license, CONTRIBUTING, SECURITY, CI on Windows and Ubuntu, releases with checksums.
+- *Shipped* · **Shell completions for the command line**: blueprint completions prints a script for PowerShell and Bash that completes the subcommands.
 - *Doing now* · **A README, demo videos and guides worth reading**: A new README modeled on the best projects of the genre, recorded demos, step-by-step guides and a troubleshooting FAQ.
 - *Next* · **winget and Scoop**: Install with a single command from the Windows package managers.
-- *Later* · **Shell completions for the command line**: blueprint completions prints a script for PowerShell and Bash that completes the subcommands.
 
 ---
 
