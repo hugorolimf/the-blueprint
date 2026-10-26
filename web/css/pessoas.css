@@ -32,5 +32,7 @@
 .eq-bp progress{width:100%;height:4px;accent-color:var(--ink)}
 .eq-bp small{color:var(--mid);font-size:11px}.eq-bp .btn{align-self:flex-start;margin-top:6px}
 .eq-duas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.cp h4{font-size:12px;color:var(--ink)}.cp .eq-dica{font-size:12px}
+.cp-progresso{display:block;width:100%;height:4px;margin:8px 0;accent-color:var(--ink)}.cp-progresso[hidden]{display:none}
 #equipe :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 @media(max-width:650px){.eq-corpo{padding:6px 12px 14px}.eq-duas{grid-template-columns:1fr}.eq-lista li{flex-wrap:wrap}.eq-link{grid-template-columns:minmax(0,1fr) auto}.eq-link b{grid-column:1/-1}}

@@ -39,6 +39,7 @@ function aoVivoConectar(forcar = false) {
   es.addEventListener("substituido", () => aoVivoRecarregar());
   es.addEventListener("recarregar", () => aoVivoRecarregar());
   es.addEventListener("presenca", (e) => typeof presencaRecebida === "function" && presencaRecebida(JSON.parse(e.data)));
+  es.addEventListener("compartilhar", (e) => { try { compartilharRecebe(JSON.parse(e.data)); } catch {} }); // se o servidor avisar por este fluxo em vez do do MCP
   es.addEventListener("sessao-encerrada", () => { es.close(); typeof semSessao === "function" && semSessao(); });
 }
 const aoVivoAberto = () => !!aoVivoES && aoVivoES.readyState !== 2;

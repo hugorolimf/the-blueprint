@@ -28,7 +28,7 @@ export function linhasPessoas(membros, souDono, agora = Date.now()) {
     }));
 }
 
-let workspaceId = "";
+let workspaceId = "", souDono = false;
 const corpo = () => $("equipe-corpo");
 export async function abrirPessoas() {
   const opcoes = workspacesDaEquipe(["dono", "supervisor"]);
@@ -37,16 +37,22 @@ export async function abrirPessoas() {
   $("equipe-titulo").textContent = tr("Pessoas");
   const escolha = opcoes.length > 1
     ? `<label class="eq-ws">${tr("Workspace")}<select id="eq-ws">${opcoes.map((w) => `<option value="${esc(w.id)}"${w.id === workspaceId ? " selected" : ""}>${esc(w.nome)}</option>`).join("")}</select></label>` : "";
-  corpo().innerHTML = `${escolha}<section class="eq-secao" aria-labelledby="eq-pessoas-tit"><h4 id="eq-pessoas-tit">${tr("Quem tem acesso")}</h4><p class="eq-status" id="eq-pessoas-status" role="status"></p><div id="eq-pessoas"></div></section><section class="eq-secao" id="eq-convites" hidden></section>`;
+  corpo().innerHTML = `${escolha}<div id="eq-equipe"></div>`;
   $("eq-ws")?.addEventListener("change", (e) => { workspaceId = e.target.value; abrirPessoas(); });
   if (!$("equipe").open) $("equipe").showModal();
+  await montarPessoas($("eq-equipe"), workspaceId, papelNoEscopo(sessao.acessos, workspaceId) === "dono");
+}
+// a lista de quem tem acesso e, para o dono, os links de convite de um workspace, dentro de `el`: usada pelo painel Pessoas (hospedado)
+// e pelo diálogo Compartilhar do app local (compartilhar.js), em que o usuário local é o dono
+export async function montarPessoas(el, ws, dono) {
+  workspaceId = ws; souDono = !!dono;
+  el.innerHTML = `<section class="eq-secao" aria-labelledby="eq-pessoas-tit"><h4 id="eq-pessoas-tit">${tr("Quem tem acesso")}</h4><p class="eq-status" id="eq-pessoas-status" role="status"></p><div id="eq-pessoas"></div></section><section class="eq-secao" id="eq-convites" hidden></section>`;
   await listar();
-  const souDono = papelNoEscopo(sessao.acessos, workspaceId) === "dono";
   $("eq-convites").hidden = !souDono;
   if (souDono) montarConvites($("eq-convites"), workspaceId);
 }
 async function listar() {
-  const status = $("eq-pessoas-status"), souDono = papelNoEscopo(sessao.acessos, workspaceId) === "dono";
+  const status = $("eq-pessoas-status");
   status.textContent = tr("carregando…");
   let membros;
   try { ({ membros } = await equipeApi(`/api/pessoas?workspace=${encodeURIComponent(workspaceId)}`)); }

@@ -22,12 +22,12 @@ const id16 = () => randomBytes(8).toString("hex");
 const agoraIso = () => new Date().toISOString();
 const PESO = { visitante: 0, supervisor: 1, colaborador: 2, dono: 3 };
 
-function estado(dados) {
+export function estado(dados) {
   return { dados, versao: Date.now(), membros: new Map(), acessos: [], convites: new Map(), sessoes: new Map(), chaves: new Map(), atividade: [], falhas: new Map() };
 }
 const nomeWs = (E, ws) => ws === "*" ? "" : ws === "sm" ? E.dados.empresa : (E.dados.workspaces || []).find((w) => w.id === ws)?.nome || ws;
 const blueprintsDe = (E) => [...E.dados.blueprints.map((b) => ({ ws: "sm", b })), ...(E.dados.workspaces || []).flatMap((w) => w.blueprints.map((b) => ({ ws: w.id, b })))];
-function criarConvite(E, { papel, workspaceId, blueprintId = "", abre = "folha", horas = 168, usosMax = 1, criadoPor = null }) {
+export function criarConvite(E, { papel, workspaceId, blueprintId = "", abre = "folha", horas = 168, usosMax = 1, criadoPor = null }) {
   const s = segredo(), c = { id: id16(), hash: sha(s), papel, workspaceId, blueprintId, abre, criadoPor, criadoEm: agoraIso(), expiraEm: new Date(Date.now() + horas * 36e5).toISOString(), usosMax, usos: 0, revogadoEm: null, horas };
   E.convites.set(c.id, c);
   return { c, s };
@@ -38,7 +38,7 @@ const ativ = (E, ctx, tipo, ws = "", alvo = "") => E.atividade.push({ em: agoraI
 const papelEm = (acessos, ws, bp = "") => acessos.filter((a) => a.workspaceId === "*" || (a.workspaceId === ws && (!a.blueprintId || a.blueprintId === bp))).reduce((m, a) => (PESO[a.papel] > (PESO[m] ?? -1) ? a.papel : m), "");
 const papelNoWs = (acessos, ws) => acessos.filter((a) => a.workspaceId === "*" || a.workspaceId === ws).reduce((m, a) => (PESO[a.papel] > (PESO[m] ?? -1) ? a.papel : m), "");
 
-function contexto(E, pedido) {
+export function contexto(E, pedido) {
   const ck = /(?:^|;\s*)bp_sessao=([^;]+)/.exec(pedido.headers.cookie || "")?.[1], s = ck && E.sessoes.get(sha(ck));
   if (!s) return null;
   s.vistoEm = agoraIso();
@@ -56,7 +56,7 @@ function filtrar(E, ctx) {
   return d;
 }
 
-function rotas(E, ctx, metodo, rota, q, corpo, origem) {
+export function rotas(E, ctx, metodo, rota, q, corpo, origem) {
   const erro = (status, codigo, params) => [status, { erro: codigo, codigo, ...(params ? { params } : {}) }];
   const exige = (ws, papeis) => (ctx && !ctx.visitante && papeis.includes(papelNoWs(ctx.acessos, ws)) ? null : ctx ? erro(403, "proibido") : erro(401, "sem-sessao"));
   const membroVisto = (mid) => [...E.sessoes.values()].filter((s) => s.membroId === mid).map((s) => s.vistoEm).sort().pop() || null;
@@ -172,14 +172,15 @@ function rotas(E, ctx, metodo, rota, q, corpo, origem) {
   return erro(404, "so-local");
 }
 let origemPublica = PUBLICA;
+export const definirOrigemPublica = (u) => { origemPublica = u; }; // o stub do Compartilhar (stub-compartilhar.mjs): os links saem no endereço do túnel
 
-function estatico(caminho) {
+export function estatico(caminho) {
   const p = caminho === "/" || caminho === "/convite" ? "/blueprint.html" : caminho;
   if (!(/^\/(web|kit)\//.test(p) || ["/blueprint.html", "/emblemas.mjs", "/agentes-figura.mjs", "/agentes-claude.mjs"].includes(p)) || p.includes("..")) return null;
   const arq = normalize(join(raiz, p));
   return arq.startsWith(raiz) && existsSync(arq) ? { corpo: readFileSync(arq), tipo: TIPOS[extname(arq)] || "application/octet-stream" } : null;
 }
-const SEGURANCA = { "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-frame-options": "DENY" };
+export const SEGURANCA = { "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-frame-options": "DENY" };
 
 export async function subirStub({ porta = 0, dados = join(raiz, "data.exemplo.json"), rust = "" } = {}) {
   const pedidos = [];

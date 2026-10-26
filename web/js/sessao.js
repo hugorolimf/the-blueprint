@@ -79,6 +79,7 @@ function sessaoGuarda(iniciar) {
   lerSessao().then((s) => {
     if (s.semSessao) { semSessao(); return; }
     if (hospedado()) sessaoMostra();
+    else $("b-compartilhar").hidden = false; // Compartilhar é só do app local: quem entra pelo túnel está no modo servidor e não o vê
     iniciar();
   });
 }
@@ -123,4 +124,7 @@ function abrirEquipe(modulo, funcao) {
 $("b-pessoas").onclick = $("b-pessoas-folha").onclick = () => abrirEquipe("pessoas", "abrirPessoas");
 $("b-chave").onclick = () => abrirEquipe("chave-mcp", "abrirChave");
 $("b-acompanhar").onclick = () => abrirEquipe("supervisor", "abrirSupervisor");
+$("b-compartilhar").onclick = () => abrirEquipe("compartilhar", "abrirCompartilhar");
+// o evento "compartilhar" do SSE (mcp.js, ao-vivo.js): só chega ao módulo se o diálogo já foi aberto alguma vez
+function compartilharRecebe(j) { equipeModulos.compartilhar?.then((m) => m.compartilharMudou(j)).catch(() => {}); }
 $("equipe-fechar").onclick = () => $("equipe").close();
