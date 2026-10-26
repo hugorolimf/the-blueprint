@@ -29,3 +29,15 @@ Ideas added to the blueprint App (planned, not started):
 2. Agent run timeline on each action, read-only, with a retention limit.
 
 Also added to `roadmap.json`: `perfis-mcp`, `linha-do-tempo-agente`.
+
+### Third round, 26 Oct 2026
+
+Sources:
+- Linear: [Linear Agent](https://linear.app/changelog/2026-03-24-introducing-linear-agent) (Mar 2026) and an "Agent assisted project updates" entry of 18 Jun 2026; coding sessions and loops (recurring agent workflows) are reported by a third-party tracker only, so their dates are unverified. Check [linear.app/changelog](https://linear.app/changelog/timeline).
+- Vibe Kanban: each workspace gets its own git worktree and branch, and inline diff comments go straight back to the agent ([Virtus Lab](https://virtuslab.com/blog/ai/vibe-kanban/), [fork README](https://github.com/MrEggs/vibe-kanban-fork)). The company shut down in April 2026 and the project is community-maintained; the fork's date and activity are unconfirmed.
+
+Ideas added to the blueprint App (planned, not started):
+1. Progress summary for a period, in Markdown, computed from existing data (no AI, no network).
+2. Send a plan comment to the agent, reusing the click-only session channel (no wider exception).
+
+Also added to `roadmap.json`: `resumo-progresso`, `comentario-ao-agente`.

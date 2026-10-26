@@ -122,6 +122,12 @@
       "pt": { "titulo": "Perfis de ferramentas do MCP", "resumo": "Uma variável de ambiente limita as ferramentas que o agente vê (executor, planejador ou completo), e as descrições ocupam menos do contexto dele." } },
     { "id": "linha-do-tempo-agente", "tema": "agentes", "estado": "depois",
       "en": { "titulo": "Agent run timeline on each action", "resumo": "A read-only list of what the agent did on an action and when: started, changed file, finished a plan, blocked." },
-      "pt": { "titulo": "Linha do tempo do agente em cada ação", "resumo": "Uma lista só de leitura do que o agente fez na ação e quando: começou, mudou de arquivo, concluiu um plano, bloqueou." } }
+      "pt": { "titulo": "Linha do tempo do agente em cada ação", "resumo": "Uma lista só de leitura do que o agente fez na ação e quando: começou, mudou de arquivo, concluiu um plano, bloqueou." } },
+    { "id": "resumo-progresso", "tema": "colaboracao", "estado": "depois",
+      "en": { "titulo": "Progress summary for a period", "resumo": "One click copies a Markdown summary of what was finished, what is in progress and what is blocked, with the evidence. Computed from your data, no AI and no network." },
+      "pt": { "titulo": "Resumo de progresso por período", "resumo": "Um clique copia um resumo em Markdown do que foi concluído, do que está em andamento e do que bloqueou, com as evidências. Calculado dos seus dados, sem IA e sem rede." } },
+    { "id": "comentario-ao-agente", "tema": "agentes", "estado": "depois",
+      "en": { "titulo": "Send a plan comment to the agent", "resumo": "A button on a plan comment sends it to the Claude session you pick, only on your click and only on your machine." },
+      "pt": { "titulo": "Enviar comentário do plano ao agente", "resumo": "Um botão no comentário do plano o envia à sessão do Claude que você escolher, só no seu clique e só no seu computador." } }
   ]
 }

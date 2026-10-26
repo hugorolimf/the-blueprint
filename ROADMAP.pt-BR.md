@@ -29,6 +29,7 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Depois* · **Guias para outros agentes MCP**: Guias de configuração testados para outros agentes que falam MCP.
 - *Depois* · **Perfis de ferramentas do MCP**: Uma variável de ambiente limita as ferramentas que o agente vê (executor, planejador ou completo), e as descrições ocupam menos do contexto dele.
 - *Depois* · **Linha do tempo do agente em cada ação**: Uma lista só de leitura do que o agente fez na ação e quando: começou, mudou de arquivo, concluiu um plano, bloqueou.
+- *Depois* · **Enviar comentário do plano ao agente**: Um botão no comentário do plano o envia à sessão do Claude que você escolher, só no seu clique e só no seu computador.
 
 ## Interface
 
@@ -55,6 +56,7 @@ Entregue · Fazendo agora · Em seguida · Depois
 
 - *Depois* · **Modo colaborativo**: Um modo servidor com membros, papéis (dono, colaborador, supervisor, visitante) e links de convite, ao vivo entre pessoas. Primeiro o desenho; a correção de sincronia entregue agora é o primeiro tijolo.
 - *Depois* · **Link público de leitura**: Compartilhar uma proposta ou o andamento com um cliente por um link revogável.
+- *Depois* · **Resumo de progresso por período**: Um clique copia um resumo em Markdown do que foi concluído, do que está em andamento e do que bloqueou, com as evidências. Calculado dos seus dados, sem IA e sem rede.
 
 ## Comunidade
 

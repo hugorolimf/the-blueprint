@@ -29,6 +29,7 @@ Shipped · Doing now · Next · Later
 - *Later* · **Guides for other MCP agents**: Tested setup guides for other agents that speak MCP.
 - *Later* · **MCP tool profiles for a smaller context**: An environment variable limits which tools the agent sees (executor, planner or full), so the tool descriptions take less of its context.
 - *Later* · **Agent run timeline on each action**: A read-only list of what the agent did on an action and when: started, changed file, finished a plan, blocked.
+- *Later* · **Send a plan comment to the agent**: A button on a plan comment sends it to the Claude session you pick, only on your click and only on your machine.
 
 ## Interface
 
@@ -55,6 +56,7 @@ Shipped · Doing now · Next · Later
 
 - *Later* · **Collaborative mode**: A server mode with members, roles (owner, collaborator, supervisor, visitor) and invite links, live between people. Design first; the sync fix shipped now is its first building block.
 - *Later* · **Public read-only link**: Share a proposal or progress with a client through a revocable link.
+- *Later* · **Progress summary for a period**: One click copies a Markdown summary of what was finished, what is in progress and what is blocked, with the evidence. Computed from your data, no AI and no network.
 
 ## Community
 
