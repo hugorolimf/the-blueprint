@@ -69,7 +69,7 @@ try {
     if (original.statusLine) {
       const combinado = spawnSync(exe, ["hook", "statusline", "--anterior", "cat"], { env, input: JSON.stringify({ cwd: solta }), encoding: "utf8" });
       assert.equal(combinado.status, 0); assert(combinado.stdout.includes(solta.replaceAll("\\", "\\\\")), combinado.stdout);
-      assert(combinado.stdout.includes("Blueprint · ação"), combinado.stdout);
+      assert(combinado.stdout.includes(" › ") && combinado.stdout.includes(" · ação "), combinado.stdout);
     }
     rodar(["registrar", "--status-line", "--remover"]);
     for (const dir of dirs) { assert.deepEqual(JSON.parse(readFileSync(join(dir, "settings.json"))), original); assert(existsSync(join(dir, "settings.json.bak"))); }

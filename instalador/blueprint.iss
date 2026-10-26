@@ -40,6 +40,9 @@ SetupIconFile=..\recursos\icone\icone.ico
 #ifndef SemMutex
 AppMutex=Local\Blueprint.InstanciaUnica
 #endif
+; sem o Restart Manager: ele não fecha os ajudantes sem janela que as sessões do Claude abrem (watch, hook statusline, --mcp) e o diálogo "incapaz de fechar" aparecia;
+; quem os encerra é o PrepareToInstall (abaixo), e a janela do app continua protegida pelo AppMutex
+CloseApplications=no
 
 [Languages]
 Name: "ptbr"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
@@ -103,6 +106,26 @@ begin
     Result := MsgBox('O WebView2 Runtime (a parte do Windows que desenha a janela do The Blueprint) não foi encontrado.' + #13#10 + #13#10 +
       'Instale-o em https://go.microsoft.com/fwlink/p/?LinkId=2124703 e depois abra o The Blueprint (beta). Quer continuar a instalação mesmo assim?',
       mbConfirmation, MB_YESNO) = IDYES;
+end;
+
+{ As sessões do Claude rodam o mesmo blueprint.exe sem janela (watch, hook statusline, --mcp) e o Windows trava o arquivo enquanto elas existem. Encerra só os desta
+  pasta de instalação (outro blueprint.exe, de outra pasta, não é tocado); cada sessão do Claude reabre o dela. A janela do app já saiu: o AppMutex a exige fechada antes. }
+procedure PararAjudantes;
+var
+  Exe, Comando: String;
+  Codigo: Integer;
+begin
+  Exe := ExpandConstant('{app}\{#Exe}');
+  StringChangeEx(Exe, '''', '''''', True);
+  Comando := '-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq ''{#Exe}'' -and $_.ExecutablePath -ieq ''' + Exe +
+    ''' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }"';
+  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'), Comando, '', SW_HIDE, ewWaitUntilTerminated, Codigo);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  PararAjudantes;
+  Result := '';
 end;
 
 { Os dados do usuário (banco e protótipos) não são do instalador: só saem se a pessoa mandar. }

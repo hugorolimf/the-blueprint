@@ -49,7 +49,7 @@ fn corta(t: &str, n: usize) -> String {
 
 pub(super) struct Workspace<'a> {
     id: String,
-    nome: String,
+    pub(super) nome: String,
     blueprints: &'a [Value],
 }
 

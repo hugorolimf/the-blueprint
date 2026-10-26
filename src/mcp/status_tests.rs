@@ -13,7 +13,17 @@ fn o_status_mostra_a_acao_atual_os_planos_e_o_proximo_checkpoint() {
     assert!(t.contains("Ação 1.2: Tela (01/12 a 05/12) · 0/1 planos"), "{t}");
     assert!(t.contains("[ ] Criar tela") && !t.contains("Feito"), "{t}");
     assert!(t.contains("Sem checkpoints pendentes."), "{t}");
-    assert_eq!(r["linha"], "Blueprint · ação 1.2 · Tela · 0/1");
+    assert_eq!(r["linha"], "Blueprint · Eu › Portal · ação 1.2 · Tela · 0/1");
+    assert!(t.starts_with("The Blueprint · Eu › Portal\n"), "{t}");
+}
+
+#[test]
+fn a_acao_atual_ignora_a_em_andamento_que_ja_tem_todos_os_planos_feitos() {
+    let a = |status: &str, feito: bool| json!({"status": status, "planos": [{"feito": feito}]});
+    let acoes = [a("andamento", true), a("planejado", false), a("andamento", false)];
+    assert_eq!(super::status::acao_atual(&acoes), Some(2));
+    assert_eq!(super::status::acao_atual(&acoes[..2]), Some(1));
+    assert_eq!(super::status::acao_atual(&acoes[..1]), None);
 }
 
 #[test]
@@ -22,5 +32,5 @@ fn pasta_solta_nao_tem_estado_e_a_linha_cabe_numa_linha() {
     assert_eq!(status(&m, &d, &json!({"cwd": "C:/Solta"})).unwrap(), json!({"vinculado": false}));
     ligar(&d, "C:/Proj");
     let linha = status(&m, &d, &json!({"cwd": "C:/Proj"})).unwrap()["linha"].as_str().unwrap().to_string();
-    assert!(!linha.contains('\n') && linha.chars().count() < 80, "{linha}");
+    assert!(!linha.contains('\n') && linha.chars().count() < 120, "{linha}");
 }

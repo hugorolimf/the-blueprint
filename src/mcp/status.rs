@@ -19,9 +19,10 @@ pub(super) fn pendente(a: &Value) -> bool {
     lista(&a["planos"]).iter().any(|x| x["feito"] != true)
 }
 
-/// A ação em que o trabalho está: a marcada como em andamento, senão a primeira com plano pendente.
+/// A ação em que o trabalho está: a primeira em andamento que ainda tem plano pendente, senão a primeira com plano pendente.
+/// Uma ação "em andamento" com todos os planos feitos é só uma ação que ninguém marcou como concluída: não é a atual.
 pub(super) fn acao_atual(acoes: &[Value]) -> Option<usize> {
-    acoes.iter().position(|a| a["status"] == "andamento").or_else(|| acoes.iter().position(pendente))
+    acoes.iter().position(|a| a["status"] == "andamento" && pendente(a)).or_else(|| acoes.iter().position(pendente))
 }
 
 /// `2026-10-27` → `27/10`
@@ -32,19 +33,24 @@ fn dia(data: &str) -> String {
     }
 }
 
-/// O texto do comando e a linha curta da status line.
-fn montar(estrutura: &Value, n: usize) -> (String, String) {
+fn curto(s: &str, max: usize) -> String {
+    s.chars().take(max).collect()
+}
+
+/// O texto do comando e a linha curta da status line (`workspace › blueprint · ação …`).
+fn montar(workspace: &str, estrutura: &Value, n: usize) -> (String, String) {
     let p = &estrutura["blueprint"];
+    let onde = format!("{} › {}", curto(workspace, 16), curto(texto(p, "nome"), 22));
     let acoes = lista(&p["acoes"]);
     let Some(i) = acao_atual(acoes) else {
-        let t = format!("The Blueprint · {}\nTodas as ações estão concluídas.", texto(p, "nome"));
-        return (t, format!("Blueprint · {} · concluído", texto(p, "nome")));
+        let t = format!("The Blueprint · {workspace} › {}\nTodas as ações estão concluídas.", texto(p, "nome"));
+        return (t, format!("Blueprint · {onde} · concluído"));
     };
     let a = &acoes[i];
     let numero = &numeros_das_acoes(p, n)[i];
     let planos = lista(&a["planos"]);
     let feitos = planos.iter().filter(|x| x["feito"] == true).count();
-    let mut t = format!("The Blueprint · {}\nAção {numero}: {} ({} a {}) · {feitos}/{} planos\n", texto(p, "nome"), texto(a, "nome"), dia(texto(a, "inicio")), dia(texto(a, "fim")), planos.len());
+    let mut t = format!("The Blueprint · {workspace} › {}\nAção {numero}: {} ({} a {}) · {feitos}/{} planos\n", texto(p, "nome"), texto(a, "nome"), dia(texto(a, "inicio")), dia(texto(a, "fim")), planos.len());
     for x in planos {
         t += &format!("  [{}] {}\n", if x["feito"] == true { "x" } else { " " }, texto(x, "texto"));
     }
@@ -54,8 +60,7 @@ fn montar(estrutura: &Value, n: usize) -> (String, String) {
         Some(c) => t += &format!("Próximo checkpoint: {} · {}", dia(texto(c, "data")), texto(c, "nome")),
         None => t += "Sem checkpoints pendentes.",
     }
-    let nome: String = texto(a, "nome").chars().take(40).collect();
-    (t, format!("Blueprint · ação {numero} · {nome} · {feitos}/{}", planos.len()))
+    (t, format!("Blueprint · {onde} · ação {numero} · {} · {feitos}/{}", curto(texto(a, "nome"), 30), planos.len()))
 }
 
 /// `hook/status`: o estado do blueprint da pasta (`cwd`) ou da sessão. Sem blueprint ligado: `vinculado: false` e sem texto.
@@ -65,6 +70,7 @@ pub fn status(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let tudo = d.ler_tudo(&Contexto::local())?;
     let n = acoes::numero_do_blueprint(tudo, &ws, &bp); // a folha numera as ações como <nº do projeto>.<nº da ação> (sem projetos, <nº do blueprint>.<nº da ação>)
     let Ok(estrutura) = acoes::blueprint(tudo, &ws, &bp, None) else { return Ok(json!({"vinculado": false})) };
-    let (texto, linha) = montar(&estrutura, n);
+    let nome_ws = acoes::localizar(tudo, &ws, &bp).map(|(w, _)| w.nome).unwrap_or_default();
+    let (texto, linha) = montar(&nome_ws, &estrutura, n);
     Ok(json!({"vinculado": true, "texto": texto, "linha": linha}))
 }

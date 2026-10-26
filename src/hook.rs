@@ -97,11 +97,14 @@ pub fn combinar(anterior: &str) -> i32 {
         }).unwrap_or_else(|| "bash.exe".into())
     } else { "sh".into() };
     let mut comando = Command::new(shell);
+    let mut anterior_saida = String::new();
     if let Ok(mut filho) = comando.args(["-c", anterior]).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null()).spawn() {
         if let Some(mut stdin) = filho.stdin.take() { let _ = stdin.write_all(entrada.as_bytes()); }
-        if let Ok(saida) = filho.wait_with_output() { print!("{}", String::from_utf8_lossy(&saida.stdout)); }
+        if let Ok(saida) = filho.wait_with_output() { anterior_saida = String::from_utf8_lossy(&saida.stdout).into_owned(); }
     }
-    if let Some(linha) = statusline(&base(), &entrada).filter(|l| !l.is_empty()) { println!(" {linha}"); }
+    print!("{anterior_saida}");
+    // a status line anterior pode já chamar o blueprint (por exemplo uma cópia antiga dele): não repete a linha
+    if let Some(linha) = statusline(&base(), &entrada).filter(|l| !l.is_empty() && !anterior_saida.contains(l.as_str())) { println!(" {linha}"); }
     0
 }
 
