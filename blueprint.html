@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="/web/css/projetos.css">
 <link rel="stylesheet" href="/web/css/atualizacao.css">
 <link rel="stylesheet" href="/web/css/markdown.css">
+<link rel="stylesheet" href="/web/css/roadmap.css">
 </head>
 <body class="carregando">
 <section class="login" id="login" aria-label="Entrar">
@@ -29,7 +30,7 @@
   </div>
 </section>
 <section class="entrada" id="entrada" aria-label="Selecionar workspace" hidden>
-  <header class="entrada-topo"><strong class="entrada-marca" id="entrada-marca">Workspaces</strong><div class="perfil"><span class="avatar" id="perfil-avatar" aria-hidden="true">H</span><span>Olá, <strong id="perfil-nome"></strong></span><button class="btn" id="perfil-atualizar" type="button" hidden></button><select class="btn" id="idioma" aria-label="Idioma"><option value="auto">Automático (idioma do Windows)</option><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select><button class="btn" id="perfil-sair" type="button">Trocar nome</button></div></header>
+  <header class="entrada-topo"><strong class="entrada-marca" id="entrada-marca">Workspaces</strong><div class="perfil"><span class="avatar" id="perfil-avatar" aria-hidden="true">H</span><span>Olá, <strong id="perfil-nome"></strong></span><button class="btn" id="perfil-atualizar" type="button" hidden></button><button class="btn" id="b-roadmap" type="button">Roadmap</button><select class="btn" id="idioma" aria-label="Idioma"><option value="auto">Automático (idioma do Windows)</option><option value="en">English</option><option value="pt-BR">Português (Brasil)</option></select><button class="btn" id="perfil-sair" type="button">Trocar nome</button></div></header>
   <h1 id="entrada-titulo">Seus workspaces</h1><p id="entrada-descricao">Escolha um workspace para continuar.</p>
   <div class="entrada-acoes"><button class="btn" id="entrada-voltar" type="button" hidden>← Workspaces</button><button class="btn cheio" id="entrada-novo" type="button" hidden>+ Novo blueprint</button></div>
   <p id="entrada-status" role="status"></p><div class="blueprints-grade" id="entrada-blueprints"></div>
@@ -144,6 +145,7 @@
   <iframe id="proto-quadro" title="Protótipo da ação" sandbox="allow-scripts" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
 </section>
 
+<section id="roadmap-tela" class="rm" role="dialog" aria-modal="true" aria-label="Roadmap" hidden></section>
 <script src="/web/js/i18n.js"></script>
 <script src="/web/js/base.js"></script>
 <script src="/web/js/confirmar.js"></script>
@@ -189,6 +191,7 @@
 <script src="/web/js/contexto-itens.js"></script>
 <script src="/web/js/contexto-menu.js"></script>
 <script src="/web/js/contexto.js"></script>
+<script src="/web/js/roadmap-entrada.js"></script>
 <script src="/web/js/inicio.js"></script>
 </body>
 </html>

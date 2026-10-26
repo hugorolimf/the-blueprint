@@ -1,4 +1,4 @@
-// Gera ROADMAP.md (inglês) e ROADMAP.pt-BR.md a partir de roadmap.json, a fonte única que a tela Roadmap do app também lê.
+// Gera ROADMAP.md (inglês), ROADMAP.pt-BR.md e web/js/roadmap-dados.js (o módulo que a tela Roadmap do app importa) a partir de roadmap.json, a fonte única.
 //   node scripts/gerar-roadmap.mjs              grava os dois arquivos
 //   node scripts/gerar-roadmap.mjs --conferir   sai com 1 se algum estiver diferente do que o JSON gera (roda no CI)
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -35,12 +35,15 @@ export function gerar(idioma) {
   return linhas.join("\n");
 }
 
-const alvos = [["en", "ROADMAP.md"], ["pt", "ROADMAP.pt-BR.md"]];
+const alvos = [["en", "ROADMAP.md"], ["pt", "ROADMAP.pt-BR.md"], ["js", "web/js/roadmap-dados.js"]];
+const modulo = () => `// GERADO por scripts/gerar-roadmap.mjs a partir de roadmap.json: não edite à mão.
+export const ROADMAP = ${JSON.stringify(dados)};
+`;
 if (import.meta.url === `file:///${process.argv[1].replace(/\\/g, "/")}`) {
   const conferir = process.argv.includes("--conferir");
   let erro = false;
   for (const [idioma, arquivo] of alvos) {
-    const novo = gerar(idioma), caminho = join(raiz, arquivo);
+    const novo = idioma === "js" ? modulo() : gerar(idioma), caminho = join(raiz, arquivo);
     if (conferir) {
       if (!existsSync(caminho) || readFileSync(caminho, "utf8") !== novo) { console.error(`${arquivo} está diferente do que roadmap.json gera: rode node scripts/gerar-roadmap.mjs`); erro = true; }
     } else { writeFileSync(caminho, novo); console.log(`${arquivo}: ${novo.split("\n").length} linhas`); }
