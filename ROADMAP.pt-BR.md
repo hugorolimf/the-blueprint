@@ -30,6 +30,7 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Depois* · **Perfis de ferramentas do MCP**: Uma variável de ambiente limita as ferramentas que o agente vê (executor, planejador ou completo), e as descrições ocupam menos do contexto dele.
 - *Depois* · **Linha do tempo do agente em cada ação**: Uma lista só de leitura do que o agente fez na ação e quando: começou, mudou de arquivo, concluiu um plano, bloqueou.
 - *Depois* · **Enviar comentário do plano ao agente**: Um botão no comentário do plano o envia à sessão do Claude que você escolher, só no seu clique e só no seu computador.
+- *Depois* · **Hooks do Codex para o progresso automático**: Confirmado o formato dos hooks na fonte oficial, o Codex ganha o que o Claude Code já tem: o blueprint certo ao iniciar a sessão e as edições registradas como progresso.
 
 ## Interface
 

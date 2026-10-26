@@ -128,6 +128,9 @@
       "pt": { "titulo": "Resumo de progresso por período", "resumo": "Um clique copia um resumo em Markdown do que foi concluído, do que está em andamento e do que bloqueou, com as evidências. Calculado dos seus dados, sem IA e sem rede." } },
     { "id": "comentario-ao-agente", "tema": "agentes", "estado": "depois",
       "en": { "titulo": "Send a plan comment to the agent", "resumo": "A button on a plan comment sends it to the Claude session you pick, only on your click and only on your machine." },
-      "pt": { "titulo": "Enviar comentário do plano ao agente", "resumo": "Um botão no comentário do plano o envia à sessão do Claude que você escolher, só no seu clique e só no seu computador." } }
+      "pt": { "titulo": "Enviar comentário do plano ao agente", "resumo": "Um botão no comentário do plano o envia à sessão do Claude que você escolher, só no seu clique e só no seu computador." } },
+    { "id": "hooks-codex", "tema": "agentes", "estado": "depois",
+      "en": { "titulo": "Codex hooks for automatic progress", "resumo": "Once the hook format is confirmed in the official source, Codex gets what Claude Code already has: the right blueprint at session start and edits recorded as progress." },
+      "pt": { "titulo": "Hooks do Codex para o progresso automático", "resumo": "Confirmado o formato dos hooks na fonte oficial, o Codex ganha o que o Claude Code já tem: o blueprint certo ao iniciar a sessão e as edições registradas como progresso." } }
   ]
 }

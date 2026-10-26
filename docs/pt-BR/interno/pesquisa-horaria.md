@@ -41,3 +41,13 @@ Ideias acrescentadas ao blueprint App (planejadas, não iniciadas):
 2. Enviar o comentário do plano ao agente, reaproveitando o canal por clique e por sessão (sem ampliar a exceção).
 
 Também entraram no `roadmap.json`: `resumo-progresso`, `comentario-ao-agente`.
+
+### Quarta rodada, 26 de outubro de 2026
+
+Fontes (todas secundárias; as releases oficiais do `openai/codex` não foram lidas):
+- Codex CLI: hooks estáveis desde a v0.124.0, de 23 de abril de 2026, lendo um `hooks.json` e observando as ferramentas MCP e o `apply_patch` ([Daniel Vaughan](https://codex.danielvaughan.com/2026/04/23/codex-cli-hooks-graduate-stable-v0124-mcp-observation-inline-config/)); opções `codex plugin ... --json` na v0.137 e na v0.138 alpha e `codex agents` na v0.148 alpha ([Tech Dev Notes](https://techdevnotes.com/releases/codex-cli/0.137.0), [changelog do Gradually](https://www.gradually.ai/en/changelogs/codex-cli/)).
+- ORCA v1.4.235 (20 de outubro de 2026, via [Releasebot](https://releasebot.io/updates/stablyai/orca)): rebobinar o chat, configurações por chat, saída completa do agente guardada, chats no celular retomam após reconectar. Nada a aproveitar: o The Blueprint não executa agentes, e a página já relê a fila e os dados quando o fluxo de eventos reconecta (`web/js/mcp.js`).
+
+Ideia acrescentada ao blueprint App (planejada, não iniciada): hooks do Codex para o progresso automático. Depende de a ação de pesquisa do Codex confirmar o formato antes.
+
+Também entrou no `roadmap.json`: `hooks-codex`.
