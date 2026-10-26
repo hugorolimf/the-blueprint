@@ -1,11 +1,12 @@
 //! Linha de comando. A janela nativa (sem argumentos) entra na ação 3.5.
 mod atualizar;
 mod claude;
+mod completar;
 use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
 use crate::http::{self, Config};
 use std::path::Path;
 
-const USO: &str = concat!(
+pub(crate) const USO: &str = concat!(
     "uso:\n",
     "  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n",
     "  blueprint dev                              o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n",
@@ -18,6 +19,7 @@ const USO: &str = concat!(
     "  blueprint hook sessao|statusline|status|notificacao  comandos do Claude Code registrados pelo plugin\n",
     "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
     "  blueprint atualizar [--verificar|--instalar]  procura e baixa a versão nova (--verificar só consulta; --instalar instala a baixada: é o seu clique em Atualizar)\n",
+    "  blueprint completions <powershell|bash>    imprime o script que completa os comandos no terminal\n",
     "  blueprint --version                       mostra a versão\n",
     "  blueprint registrar [--remover]           instala (ou remove) o plugin no Claude Code (skill, agente e MCP) e o MCP no Codex; o instalador faz isto",
 );
@@ -36,6 +38,16 @@ pub fn executar(args: Vec<String>) -> i32 {
             println!("blueprint {}", crate::atualizador::VERSAO);
             return 0;
         }
+        ["completions", shell] => match completar::script(shell) {
+            Some(texto) => {
+                print!("{texto}");
+                return 0;
+            }
+            None => {
+                eprintln!("shell desconhecido: use powershell ou bash");
+                return 2;
+            }
+        },
         ["serve"] => serve(),
         ["hook", evento] => return crate::hook::executar(evento),
         ["hook", "statusline", "--anterior", comando] => return crate::hook::combinar(comando),
