@@ -328,6 +328,16 @@
       "tipo": "application/json",
       "corpo": {}
     },
+    "hook de estado sem blueprint": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {}
+    },
+    "hook de estado de outro evento": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {}
+    },
     "mcp corpo grande demais": {
       "status": 413,
       "tipo": "application/json",

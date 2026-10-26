@@ -28,29 +28,32 @@ pub(super) fn travado<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
     m.lock().unwrap_or_else(|e| e.into_inner())
 }
 
-/// Consulta o vínculo atual: trocar ou remover uma pasta vale também para sessões já abertas.
+/// Consulta o vínculo atual: trocar ou remover uma pasta vale também para sessões já abertas. O `cwd` de uma worktree do git
+/// cai na pasta principal do repositório quando ele mesmo não tem vínculo (ver `worktree.rs`).
 pub(super) fn alvo(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Option<(String, String)>> {
     let cwd = texto(corpo, "cwd");
     if caminho_valido(cwd) {
-        return Ok(travado(dados).blueprint_da_pasta(&Contexto::local(), cwd)?);
+        return super::worktree::blueprint_da_pasta(dados, cwd);
     }
     Ok(mcp.sessao(texto(corpo, "session_id")))
 }
 
-/// `pasta/vincular`: liga a pasta ao blueprint (que precisa existir); ligar de novo troca.
+/// `pasta/vincular`: liga a pasta ao blueprint (que precisa existir); ligar de novo troca. Numa worktree do git o vínculo é gravado na pasta principal
+/// do repositório, para valer em todas as worktrees dele.
 pub fn vincular(dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let (cwd, ws, bp) = (texto(corpo, "cwd"), texto(corpo, "workspaceId"), texto(corpo, "blueprintId"));
     if !caminho_valido(cwd) {
         return Err(falha(400, crate::tr!("invalid cwd: the folder path, up to 500 characters", "cwd inválido: o caminho da pasta, de até 500 caracteres")).codigo("cwd-invalido"));
     }
+    let pasta = super::worktree::principal_ou(cwd);
     let mut d = travado(dados);
     acoes::blueprint(d.ler_tudo(&Contexto::local())?, ws, bp, None)?;
-    d.vincular_pasta(&Contexto::local(), cwd, ws, bp)?;
+    d.vincular_pasta(&Contexto::local(), &pasta, ws, bp)?;
     Ok(json!({"ok": true, "workspaceId": ws, "blueprintId": bp}))
 }
 
 /// A ação em que o trabalho está (a marcada como em andamento, senão a primeira com plano pendente) e seus planos pendentes.
-fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize) -> String {
+fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize, subagente: bool) -> String {
     let p = &estrutura["blueprint"];
     let acoes = lista(&p["acoes"]);
     let atual = acao_atual(acoes).map(|i| (i, &acoes[i]));
@@ -68,19 +71,37 @@ fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize) -> Str
         }
         None => t += crate::idioma::ou(" All actions are done.", " Todas as ações estão concluídas."),
     }
-    t += crate::idioma::ou(
-        " Keep it up to date through the blueprint MCP: registrar_progresso when starting each plan, marcar_concluido only with the evidence. Work outside the plan ends with registrar_trabalho and a question to the user about adding it to the blueprint.",
-        " Mantenha-o atualizado pelo MCP blueprint: registrar_progresso ao começar cada plano, marcar_concluido só com a evidência. Trabalho fora do plano termina com registrar_trabalho e uma pergunta ao usuário sobre adicioná-lo ao blueprint.",
-    );
+    t += if subagente {
+        // quem lê é o subagente (sempre em inglês): ele não marca nada, o agente principal é quem fecha os planos com evidência
+        " You are a subagent: do not mark plans done; report with registrar_progresso only if asked."
+    } else {
+        crate::idioma::ou(
+            " Keep it up to date through the blueprint MCP: registrar_progresso when starting each plan, marcar_concluido only with the evidence. Work outside the plan ends with registrar_trabalho and a question to the user about adding it to the blueprint.",
+            " Mantenha-o atualizado pelo MCP blueprint: registrar_progresso ao começar cada plano, marcar_concluido só com a evidência. Trabalho fora do plano termina com registrar_trabalho e uma pergunta ao usuário sobre adicioná-lo ao blueprint.",
+        )
+    };
     t.chars().take(CONTEXTO_MAX).collect()
+}
+
+/// O contexto do SubagentStart: o mesmo blueprint e ação atual da sessão, em inglês (é o subagente quem lê), com a regra de não marcar plano.
+/// `None` se o blueprint não existe mais.
+fn contexto_do_subagente(dados: &Mutex<Dados>, ws: &str, bp: &str) -> R<Option<String>> {
+    let mut d = travado(dados);
+    let tudo = d.ler_tudo(&Contexto::local())?;
+    let n = acoes::numero_do_blueprint(tudo, ws, bp);
+    let Ok(estrutura) = acoes::blueprint(tudo, ws, bp, None) else { return Ok(None) };
+    Ok(Some(crate::idioma::com(crate::idioma::Idioma::En, || contexto_do_blueprint(&estrutura, ws, bp, n, true))))
 }
 
 /// `hook/sessao`: o SessionStart pergunta de qual blueprint é a pasta. Devolve o texto para o contexto do agente.
 pub fn sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let Some((ws, bp)) = alvo(mcp, dados, corpo)? else {
         let cwd = texto(corpo, "cwd");
-        if caminho_valido(cwd) && travado(&mcp.pastas_avisadas).insert(cwd.replace('\\', "/").trim_end_matches('/').to_lowercase()) {
-            mcp.empurra(json!({"tipo": "pasta-sem-blueprint", "cwd": cwd}).as_object().unwrap().clone());
+        if caminho_valido(cwd) {
+            let pasta = super::worktree::principal_ou(cwd); // numa worktree, é a pasta principal que a pessoa precisa ligar
+            if travado(&mcp.pastas_avisadas).insert(pasta.replace('\\', "/").trim_end_matches('/').to_lowercase()) {
+                mcp.empurra(json!({"tipo": "pasta-sem-blueprint", "cwd": pasta}).as_object().unwrap().clone());
+            }
         }
         return Ok(json!({"vinculado": false, "contexto": crate::idioma::ou("The Blueprint: this folder is not linked to any blueprint. If it belongs to one, call listar_blueprints, confirm with the user which one and call vincular_pasta; if not, ignore this.", "The Blueprint: esta pasta não está ligada a nenhum blueprint. Se for de um, chame listar_blueprints, confirme com o usuário qual é e chame vincular_pasta; se não for, ignore.")}));
     };
@@ -93,7 +114,7 @@ pub fn sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
         // o blueprint foi apagado depois de ligado
         return Ok(json!({"vinculado": false, "contexto": crate::idioma::ou("The Blueprint: this folder's blueprint no longer exists. Call listar_blueprints and vincular_pasta with the right one.", "The Blueprint: o blueprint desta pasta não existe mais. Chame listar_blueprints e vincular_pasta com o certo.")}));
     };
-    Ok(json!({"vinculado": true, "workspaceId": ws, "blueprintId": bp, "contexto": contexto_do_blueprint(&estrutura, &ws, &bp, n)}))
+    Ok(json!({"vinculado": true, "workspaceId": ws, "blueprintId": bp, "contexto": contexto_do_blueprint(&estrutura, &ws, &bp, n, false)}))
 }
 
 /// O arquivo editado, relativo à pasta da sessão quando der, e no máximo 120 caracteres (o contrato de `onde`).
@@ -109,22 +130,39 @@ fn onde(arquivo: &str, cwd: &str) -> Option<String> {
 /// Quem fez a chamada do hook: dentro de um subagente o Claude Code manda `agent_id` e `agent_type` (a sessão principal não manda). O subagente vira um agente
 /// próprio, "tipo + 4 primeiros caracteres do id" (até 40 caracteres), com o papel pelo tipo (Explore = explorador, *review* = revisor, o resto = construtor);
 /// a sessão principal continua sendo "Claude". Devolve (nome, papel, é subagente).
-fn identidade(corpo: &Value) -> (String, &'static str, bool) {
-    let id: String = texto(corpo, "agent_id").chars().filter(|c| c.is_ascii_alphanumeric()).take(4).collect();
-    if id.is_empty() {
-        return (AGENTE.to_string(), "construtor", false);
+/// Os agentes do plugin chegam com o prefixo dele (`blueprint:blueprint-explorer`, `blueprint:blueprint-reviewer`, `blueprint:blueprint-builder`);
+/// o papel sai do nome, então eles viram explorador, revisor e construtor sem mapa à parte.
+pub(super) fn identidade(corpo: &Value) -> (String, &'static str, bool) {
+    let tipo = tipo_limpo(texto(corpo, "agent_type"));
+    match nome_do_subagente(texto(corpo, "agent_id"), texto(corpo, "agent_type")) {
+        Some(nome) => (nome, papel_do_tipo(&tipo), true),
+        None => (AGENTE.to_string(), "construtor", false),
     }
-    let tipo: String = texto(corpo, "agent_type").chars().filter(|c| !c.is_control() && *c != ';').take(30).collect();
-    let tipo = if tipo.trim().is_empty() { "subagente".to_string() } else { tipo.trim().to_string() };
-    let minusculo = tipo.to_lowercase();
-    let papel = if minusculo.contains("explore") { "explorador" } else if minusculo.contains("review") { "revisor" } else { "construtor" };
-    (format!("{tipo} {id}"), papel, true)
+}
+
+/// O tipo do subagente como nome: sem controle nem ';' (o Windows Terminal o lê como separador), até 30 caracteres; vazio vira "subagente".
+fn tipo_limpo(tipo: &str) -> String {
+    let t: String = tipo.chars().filter(|c| !c.is_control() && *c != ';').take(30).collect();
+    if t.trim().is_empty() { "subagente".to_string() } else { t.trim().to_string() }
+}
+
+/// O nome do subagente: tipo + 4 primeiros caracteres alfanuméricos do id, sem o prefixo `agent-` com que a documentação do Claude Code mostra o id no
+/// SubagentStart (senão todos virariam «Explore agen»). Sem id utilizável: None. É a única regra; o painel de subagentes (`subagentes_status`) a chama.
+pub(super) fn nome_do_subagente(id: &str, tipo: &str) -> Option<String> {
+    let id: String = id.strip_prefix("agent-").unwrap_or(id).chars().filter(|c| c.is_ascii_alphanumeric()).take(4).collect();
+    (!id.is_empty()).then(|| format!("{} {id}", tipo_limpo(tipo)))
+}
+
+/// Explore e `*explorer` = explorador, `*review*` = revisor, o resto (general-purpose, `*builder`, agentes do usuário) = construtor.
+fn papel_do_tipo(tipo: &str) -> &'static str {
+    let t = tipo.to_lowercase();
+    if t.contains("explor") { "explorador" } else if t.contains("review") { "revisor" } else { "construtor" }
 }
 
 /// O evento de progresso de `nome`. Um aviso sem plano limpa o plano do agente, então herda a ação e o plano do último aviso dele neste blueprint (senão a figura
 /// sai do plano a cada edição). Um subagente novo não tem aviso anterior: herda o plano do Claude principal se o aviso dele for recente e não concluído
 /// (assim a figura já nasce ao lado do plano); sem isso, fica no cabeçalho do blueprint.
-fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str, estado: &str) -> Value {
+pub(super) fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str, estado: &str) -> Value {
     let mut evento = json!({"tipo": "progresso", "texto": texto, "workspaceId": ws, "blueprintId": bp, "agente": nome, "papel": papel, "estado": estado});
     let agentes = mcp.agentes();
     let anterior = agentes["agentes"].as_array().and_then(|l| l.iter().find(|a| a["agente"] == nome && a["blueprintId"] == bp));
@@ -158,7 +196,8 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
 
 /// `hook/subagente`: SubagentStart põe o subagente na folha (lendo, no cabeçalho do blueprint) e SubagentStop o marca concluído com a última mensagem dele
 /// (`last_assistant_message`, até 2000 caracteres) como a mensagem de conclusão que o usuário lê ao clicar. Só indicador; sessão sem blueprint, ou evento
-/// que não veio de um subagente: não faz nada.
+/// que não veio de um subagente: não faz nada. O START ainda devolve `hookSpecificOutput.additionalContext` com o blueprint da pasta e a regra do subagente
+/// (ver `contexto_do_subagente`); o STOP nunca devolve `decision`, para nunca segurar o subagente.
 pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let (nome, papel, sub) = identidade(corpo);
     let fim = match texto(corpo, "hook_event_name") {
@@ -175,13 +214,23 @@ pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     };
     let evento = evento_de(mcp, &nome, papel, &ws, &bp, &frase, estado);
     super::linha_do_tempo::evento(mcp, dados, &evento)?;
-    Ok(json!({}))
+    if fim {
+        return Ok(json!({}));
+    }
+    Ok(match contexto_do_subagente(dados, &ws, &bp)? {
+        Some(c) => json!({"hookSpecificOutput": {"hookEventName": "SubagentStart", "additionalContext": c}}),
+        None => json!({}),
+    })
 }
-
 
 pub fn desvincular(dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let cwd = texto(corpo, "cwd");
     if !caminho_valido(cwd) { return Err(falha(400, crate::tr!("invalid cwd", "cwd inválido")).codigo("cwd-invalido")); }
-    travado(dados).desvincular_pasta(&Contexto::local(), cwd)?;
+    let principal = super::worktree::principal_ou(cwd);
+    let mut d = travado(dados);
+    d.desvincular_pasta(&Contexto::local(), cwd)?;
+    if principal != cwd {
+        d.desvincular_pasta(&Contexto::local(), &principal)?; // numa worktree, o vínculo que vale é o da pasta principal
+    }
     Ok(json!({"ok": true}))
 }

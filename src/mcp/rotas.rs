@@ -64,7 +64,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
             "blueprints" => Resposta::json(200, &com_dados(dados, ctx, |d| Ok(acoes::blueprints(d)))?),
             "blueprint" => {
                 let p = |nome: &str| pedido.parametro(nome).unwrap_or_default();
-                Resposta::json(200, &com_dados(dados, ctx, |d| acoes::blueprint(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref()))?)
+                Resposta::json(200, &com_dados(dados, ctx, |d| acoes::blueprint_lido(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref(), &p("incluir"), &p("projeto")))?)
             }
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i)).collect::<Vec<_>>()})),
@@ -136,6 +136,8 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
         "hook/fim" => Resposta::json(200, &super::sessoes::fim(mcp, &corpo)), // o SessionEnd tira a sessão da lista
         "hook/edicao" => Resposta::json(200, &hooks::edicao(mcp, dados, &corpo)?),
         "hook/subagente" => Resposta::json(200, &hooks::subagente(mcp, dados, &corpo)?),
+        "hook/estado" => Resposta::json(200, &super::hooks_estado::estado(mcp, dados, &corpo)?), // permissão, erro da API e compactação viram o estado do agente
+        "hook/subagentes" => Resposta::json(200, &super::subagentes_status::subagentes(mcp, dados, &corpo)?), // o painel de subagentes (subagentStatusLine)
         "hook/status" => Resposta::json(200, &super::status::status(mcp, dados, &corpo)?),
         "pasta/desvincular" => Resposta::json(200, &hooks::desvincular(dados, &corpo)?),
         "pasta/vincular" => Resposta::json(200, &hooks::vincular(dados, &corpo)?),

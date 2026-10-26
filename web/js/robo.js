@@ -29,15 +29,15 @@ function montaRobo() {
 function abreNotaRobo(el) {
   const nome = el.dataset.roboNome, ag = agentesAtivos().find((x) => x.agente === nome), a = ag || agenteAqui();
   if (!a) return;
-  const concluiu = ag?.estado === "concluido"; // concluído e ainda não visto: a folhinha traz a mensagem de conclusão
+  const concluiu = ag?.estado === "concluido", sub = !!ag && agenteEhSub(ag); // concluído e ainda não visto: a folhinha traz a mensagem de conclusão
   const p = D.blueprints.find((x) => x.id === a.blueprintId), f = p?.acoes.find((x) => x.id === a.acaoId), t = f?.planos.find((x) => x.id === a.planoId), pct = Number.isFinite(ag?.percentual) ? ` · ${ag.percentual}%` : "";
-  const linhas = [ag && `${ESTADO_AG[ag.estado] || ag.estado || "Trabalhando"}${ag.papel ? ` · ${PAPEL_AG[ag.papel] || ag.papel}` : ""}${pct}`, `${concluiu ? "Mensagem de conclusão" : "Agora"}: ${ag?.mensagem || a.texto || "sem detalhe"}${ag ? ` · ${haQuanto(ag.em)}${Date.now() - Date.parse(ag.em) > 120000 ? " (sem notícia nova)" : ""}` : ""}`, t && `Plano: ${t.texto}`, f && `Ação: ${numeroDaAcao(p, f)} ${f.nome || ""}`.trim(), ag?.onde?.length && `Arquivos: ${ag.onde.join(" · ")}`].filter(Boolean);
+  const linhas = [ag && `${sub && concluiu ? tr("Terminou a tarefa") : ESTADO_AG[ag.estado] || ag.estado || "Trabalhando"}${ag.papel ? ` · ${PAPEL_AG[ag.papel] || ag.papel}` : ""}${pct}`, `${concluiu ? (sub ? tr("Última tarefa") : "Mensagem de conclusão") : "Agora"}: ${ag?.mensagem || a.texto || "sem detalhe"}${ag ? ` · ${haQuanto(ag.em)}${Date.now() - Date.parse(ag.em) > 120000 ? " (sem notícia nova)" : ""}` : ""}`, t && `Plano: ${t.texto}`, f && `Ação: ${numeroDaAcao(p, f)} ${f.nome || ""}`.trim(), ag?.onde?.length && `Arquivos: ${ag.onde.join(" · ")}`].filter(Boolean);
   // Concluído = o usuário já viu que acabou: o concluído sai da folha (e a figura de um evento sem agente identificado é dispensada). Fechar só fecha a folhinha: a figura fica.
   const visto = () => { fechaNota(); if (ag) agenteMarcaVisto(ag); else { a.visto = true; render(); } };
   const parado = ["aguardando", "ocioso"].includes(ag?.estado); // aguardando ou em repouso: o mesmo botão o dispensa até ele avisar de novo
-  const dispensavel = concluiu || parado || (!ag && a === agenteAgora && a.tipo === "concluir");
+  const dispensavel = (concluiu && !sub) || parado || (!ag && a === agenteAgora && a.tipo === "concluir");
   const acompanhar = ag ? [{ rotulo: tr("Acompanhar este agente"), fn: () => { fechaNota(true); focoAbre(ag.agente); } }] : []; // a visão de acompanhamento, no cartão dele (foco.js)
-  abreNota({ rotulo: concluiu ? "Agente concluiu" : "Agente trabalhando", titulo: nome || "Agente", texto: linhas.join("\n"), acoes: [...(dispensavel ? [{ rotulo: "Concluído", fn: visto }] : []), ...acompanhar] }, el);
+  abreNota({ rotulo: concluiu ? (sub ? tr("Subagente terminou uma tarefa") : "Agente concluiu") : "Agente trabalhando", titulo: nome || "Agente", texto: linhas.join("\n"), acoes: [...(dispensavel ? [{ rotulo: "Concluído", fn: visto }] : []), ...acompanhar] }, el);
 }
 $("robo-agente").onclick = () => {
   const a = agenteAqui(), pid = a && D.blueprints.some((x) => x.id === a.blueprintId) ? a.blueprintId : "";

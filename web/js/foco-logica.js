@@ -1,6 +1,6 @@
 // ---- o modo foco, parte PURA (sem DOM; testada em foco-logica.test.mjs): os cartões da visão de acompanhamento (quem aparece e em que ordem), o agente em foco, quando seguir e rolar, o que
 // o Esc faz, desde quando o agente está no plano e quais eventos da linha do tempo são dele. O DOM fica em foco.js, foco-vista.js e foco-cartao.js.
-// Entra: os agentes de agentesAtivos() ({ agente, papel?, estado, blueprintId, acaoId, planoId, em (ISO), mensagem?, onde?, percentual?, repouso? }) e os blueprints (D.blueprints).
+// Entra: os agentes de agentesAtivos() ({ agente, papel?, estado, blueprintId, acaoId, planoId, em (ISO), mensagem?, onde?, percentual?, tokens? (painel de subagentes do Claude Code), rotulo? (o último rótulo de progresso dele), repouso? }) e os blueprints (D.blueprints).
 // Usa claudePrincipal (claude-logica.js, carregado antes) para achar o agente principal.
 const FOCO_ENTRE = [0.1, 0.9]; // faixa da janela (fração da altura) em que um alvo já está bem à vista: dentro dela nada rola
 const FOCO_EVENTOS = 3; // eventos da linha do tempo no cartão da lista
@@ -14,7 +14,7 @@ function focoCartoes(ags, blueprints) {
     const repouso = !!a.repouso || a.estado === "ocioso";
     const p = repouso ? null : (blueprints || []).find((x) => x.id === a.blueprintId), f = p?.acoes?.find((x) => x.id === a.acaoId) || null, t = f && a.planoId ? (f.planos || []).find((x) => x.id === a.planoId) || null : null;
     return { agente: a.agente || "", papel: a.papel || "", estado: repouso ? "ocioso" : a.estado, repouso, blueprintId: p ? p.id : a.blueprintId || "", acaoId: f ? f.id : "", planoId: t ? t.id : "", acaoNome: f?.nome || "", planoTexto: t?.texto || "", feito: !!t?.feito,
-      em: Date.parse(a.em) || 0, mensagem: a.mensagem || "", onde: Array.isArray(a.onde) ? a.onde : [], percentual: Number.isFinite(a.percentual) ? a.percentual : null, inicioEm: Date.parse(t?.agente?.inicioEm) || Number(t?.agente?.inicioEm) || 0 };
+      em: Date.parse(a.em) || 0, mensagem: a.mensagem || "", onde: Array.isArray(a.onde) ? a.onde : [], percentual: Number.isFinite(a.percentual) ? a.percentual : null, tokens: Number.isFinite(a.tokens) && a.tokens >= 0 ? a.tokens : null, rotulo: typeof a.rotulo === "string" ? a.rotulo : "", inicioEm: Date.parse(t?.agente?.inicioEm) || Number(t?.agente?.inicioEm) || 0 };
   });
   const principal = claudePrincipal(itens), rank = (i) => FOCO_ORDEM[i.estado] ?? 2;
   itens.sort((a, b) => (b === principal) - (a === principal) || rank(a) - rank(b) || b.em - a.em || a.agente.localeCompare(b.agente));
@@ -57,3 +57,6 @@ const focoMinutos = (desde, ate) => (desde && ate > desde ? Math.max(1, Math.rou
 
 // Os eventos da linha do tempo que são deste agente neste plano (o evento geral da ação, sem plano, também conta), do mais novo ao mais antigo.
 const focoEventosDoAgente = (eventos, i, n = FOCO_EVENTOS) => (eventos || []).filter((e) => (!e.agente || e.agente === i.agente) && (!e.alvo || !i.planoId || e.alvo === i.planoId)).slice(0, n);
+
+// Tokens do subagente em texto curto: 950 -> "950", 12300 -> "12.3k"; sem número: "".
+const focoTokens = (n) => (Number.isFinite(n) && n >= 0 ? (n < 1000 ? String(Math.round(n)) : `${(n / 1000).toFixed(1)}k`) : "");

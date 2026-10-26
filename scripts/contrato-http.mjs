@@ -91,6 +91,8 @@ async function executar(base) {
   await registra("mcp sessões (nenhuma aberta)", "GET", "/api/mcp/sessoes?workspace=sm&blueprint=p1");
   await post("hook de fim sem session_id", "hook/fim", {});
   await post("hook de subagente sem agent_id", "hook/subagente", { hook_event_name: "SubagentStart", cwd: "C:\sem\blueprint" });
+  await post("hook de estado sem blueprint", "hook/estado", { hook_event_name: "PermissionRequest", cwd: "C:\sem\blueprint", tool_name: "Bash" }); // sempre {}: nunca decide permissão
+  await post("hook de estado de outro evento", "hook/estado", { hook_event_name: "PostToolUseFailure", cwd: "C:\sem\blueprint" });
   await post("mcp corpo grande demais", "evento", { tipo: "progresso", texto: "a".repeat(300 * 1024) });
   // leitura
   await registra("mcp blueprints", "GET", "/api/mcp/blueprints");

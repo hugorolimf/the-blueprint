@@ -18,6 +18,11 @@ function claudePrincipal(ags) {
   const semPapel = ags.filter((a) => !a.papel), univ = semPapel.length ? semPapel : ags;
   return [...univ].sort((a, b) => (semPapel.length ? 0 : (a.em || 0) - (b.em || 0)) || String(a.agente || "").localeCompare(String(b.agente || "")))[0];
 }
+const CLAUDE_SUB_SOME_MS = 10 * 1000; // subagente que concluiu some da folha depois disso; só o principal fica com "Concluído" até o usuário ver
+// subagente = quem tem papel e não é o principal da lista (`em` pode ser ISO ou ms); concluído há CLAUDE_SUB_SOME_MS ou mais, ele sai
+const claudeSubSomeEm = (a) => new Date(a.em).getTime() + CLAUDE_SUB_SOME_MS;
+const claudeEhSub = (a, ags) => !!a.papel && a !== claudePrincipal(ags);
+const claudeSubSumiu = (a, ags, agora = Date.now()) => a.estado === "concluido" && claudeEhSub(a, ags) && agora >= claudeSubSomeEm(a);
 // papel da figura: o principal nunca carrega ferramenta (null); subagente sem papel válido vira construtor (suposição: é o desenho mais neutro)
 const claudePapelDe = (a, principal) => (a === principal ? null : CLAUDE_PAPEIS.includes(a.papel) ? a.papel : "construtor");
 const claudeLarguraDe = (papel) => Math.round(CLAUDE_LARGURA * (papel ? CLAUDE_ESCALA_SUB : 1));

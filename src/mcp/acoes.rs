@@ -2,7 +2,7 @@
 //! Lê os dados (`dados` é o data.json inteiro) e põe itens na fila; nada aqui altera o banco.
 use super::Mcp;
 use crate::http::pedido::{falha, ErroHttp};
-use crate::blueprint::{contexto_acao, estrutura_blueprint, mover_acoes, resumo_blueprint, validar_proposta};
+use crate::blueprint::{contexto_acao, estrutura_lida, mover_acoes, resumo_blueprint, validar_proposta};
 use crate::tempo::hoje_local;
 use serde_json::{json, Map, Value};
 use std::collections::hash_map::RandomState;
@@ -92,8 +92,13 @@ pub fn blueprints(dados: &Value) -> Value {
     json!({"hoje": hoje_local(), "workspaces": ws})
 }
 
-/// Sem `acao_id`: só a estrutura (o agente se localiza gastando pouco contexto); com `acao_id`: aquela ação inteira.
+/// Sem `acao_id`: só a estrutura COMPLETA (quem usa por dentro, como os hooks, precisa de todas as ações); com `acao_id`: aquela ação inteira.
 pub fn blueprint(dados: &Value, workspace_id: &str, blueprint_id: &str, acao_id: Option<&str>) -> R<Value> {
+    blueprint_lido(dados, workspace_id, blueprint_id, acao_id, "tudo", "")
+}
+
+/// O que o agente lê: como `blueprint`, mas a estrutura vem resumida em blueprint grande (`incluir` "ativas") e pode ser filtrada por `projeto` (ver `enxuta`).
+pub fn blueprint_lido(dados: &Value, workspace_id: &str, blueprint_id: &str, acao_id: Option<&str>, incluir: &str, projeto: &str) -> R<Value> {
     let (ws, p) = localizar(dados, workspace_id, blueprint_id)?;
     let p = p.ok_or_else(|| falha(400, crate::tr!("Send blueprint_id.", "Informe o blueprint_id.")).codigo("falta-blueprint"))?;
     if let Some(acao_id) = acao_id.filter(|f| !f.is_empty()) {
@@ -101,7 +106,7 @@ pub fn blueprint(dados: &Value, workspace_id: &str, blueprint_id: &str, acao_id:
         return Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprintId": str_de(p, "id"), "acao": acao}));
     }
     let outros: Vec<Value> = ws.blueprints.iter().filter(|x| x.get("id") != p.get("id")).map(|x| json!({"id": x.get("id"), "nome": x.get("nome")})).collect();
-    Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprint": estrutura_blueprint(p), "outros": outros}))
+    Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprint": estrutura_lida(p, incluir, projeto).map_err(|m| falha(400, m).codigo("parametro-invalido"))?, "outros": outros}))
 }
 
 /// Valida e guarda; o usuário revisa e aplica na página. Cada alvo tem uma fila de propostas numeradas: a nova entra no fim e não apaga outra.

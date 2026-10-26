@@ -48,6 +48,14 @@ impl Atividade {
         self.registros.push(Registro { nome: nome.to_string(), dados: novos, em_ms: agora_ms, seq: self.seq });
     }
 
+    /// Anota campos (`tokens`, `rotulo`, `tarefa`) num agente que já existe, sem mexer na hora do último aviso nem no plano: quem mede é o painel de subagentes do
+    /// Claude Code, não o agente. Devolve se o agente existe (a anotação nunca cria agente).
+    pub fn anotar(&mut self, nome: &str, campos: Map<String, Value>) -> bool {
+        let Some(r) = self.registros.iter_mut().find(|r| r.nome == nome) else { return false };
+        r.dados.extend(campos);
+        true
+    }
+
     /// Um plano foi marcado como concluído (a ferramenta não diz quem é o agente): quem avisou por último que trabalhava nele passa a `concluido`,
     /// com a evidência como mensagem. Devolve se achou alguém.
     pub fn concluir_plano(&mut self, agora_ms: i64, blueprint_id: &str, plano_id: &str, mensagem: &Value) -> bool {
@@ -161,6 +169,16 @@ mod tests {
         assert_eq!((um["estado"].as_str(), um["mensagem"].as_str()), (Some("concluido"), Some("cargo test passou")));
         assert_eq!(l.iter().find(|x| x["agente"] == "outro").unwrap()["estado"], "lendo", "quem está em outro plano não muda");
         assert!(!a.concluir_plano(4_000, "b", "t9", &json!("x")) && !a.concluir_plano(4_000, "b", "", &json!("x")), "sem agente no plano, nada muda");
+    }
+
+    #[test]
+    fn anotar_so_acrescenta_campos_a_quem_ja_existe() {
+        let mut a = Atividade::default();
+        a.registrar(1_000, "ana", dados(json!({"planoId": "t1", "estado": "lendo"})));
+        assert!(a.anotar("ana", dados(json!({"tokens": 1200}))));
+        assert!(!a.anotar("sem-registro", dados(json!({"tokens": 1}))) && a.lista().len() == 1, "anotar nunca cria agente");
+        let l = a.lista();
+        assert_eq!((l[0]["tokens"].clone(), l[0]["planoId"].clone(), l[0]["em"].as_str()), (json!(1200), json!("t1"), Some("1970-01-01T00:00:01.000Z")), "o plano e a hora do aviso ficam");
     }
 
     #[test]

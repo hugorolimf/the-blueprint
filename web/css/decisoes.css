@@ -1,0 +1,6 @@
+/* Decisões do blueprint: as linhas do Editar (título, estado, escolha, motivo) e o item da proposta em Planejar. */
+.decisao-ed{border-top:1px solid var(--lo);padding-top:10px;margin-bottom:12px}
+.decisao-topo{display:flex;gap:10px;align-items:center;margin-bottom:6px}
+.decisao-topo input[data-c="titulo"]{flex:1;min-width:0}
+.decisao-ed textarea{width:100%;resize:vertical}
+.decisao-prop .md{margin:4px 0}

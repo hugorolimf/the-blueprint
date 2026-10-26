@@ -19,6 +19,8 @@ Object.assign(I18N.catalogos.en, {
   "Sem plano": "No plan",
   "Agora": "Now",
   "Arquivos": "Files",
+  "Progresso": "Progress",
+  "Tokens": "Tokens",
   "sem detalhe": "no detail",
   "No plano": "On the plan",
   "desde {hora}": "since {hora}",

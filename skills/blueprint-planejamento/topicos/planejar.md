@@ -8,6 +8,7 @@
 - `observacao` (in the app: **Action instructions**): the **complete outline of the action**. It can be long (up to 20000 characters) and should carry: goal, deliverable, step by step in order, **dependencies** ("depends on action X"), decisions and assumptions, risks and the definition of done. The plans are the tickable items; the instructions tell how and why.
 - 3 to 8 plans and 1 to 3 checkpoints per action.
 - `projeto` (optional): the action's group in the blueprint, by name or id; declare them in `blueprint.projetos` (`[{ "nome": "Interface" }]`, also valid on an existing blueprint). Only with distinct lines of work (2 to 5); without the field the action stays in "Geral" (a reserved name). Details: topic `editar`.
+- **Decisions** (stack, scope, rules chosen or still open): `blueprint.decisoes` = `[{ "titulo", "escolha", "motivo", "estado": "aberta|decidida" }]`, valid on any blueprint (existing ones come in `ler_blueprint`). Put them here, not as text in an action's `observacao`. With `id` it updates (what you omit stays), without it is new; `decidida` needs `escolha`. Only decisions is valid (`acoes: []`).
 
 ## Plans
 

@@ -19,13 +19,14 @@ Workspace
 ```
 
 - A **project** is a group of actions inside the blueprint (it is not the blueprint). Use it when the blueprint has distinct lines of work; a small blueprint does not need one. List them in `blueprint.projetos` (`[{ "nome": "…" }]`) and, in each action, `projeto` (id or name). On the sheet each project is a numbered section (01, 02…) and actions are numbered per project (02.3 = project 2, action 3); refer to actions that way.
+- A **decision** is something chosen (or still open) that shapes the whole blueprint, such as the stack or a scope change. Record it in `blueprint.decisoes` (`titulo`, `escolha`, `motivo`, `estado`), not inside the action instructions; details in the topic `editar`.
 - The **percentage** of an action and of a blueprint comes only from the ticked plans and checkpoints: each item must be something anyone can mark done without argument.
 - When planning, **you never mark anything done** and never use the status `concluido`.
 - Dates use the format `yyyy-mm-dd`. Today's date comes from `ler_blueprint`.
 
 ## Read in parts (saves context)
 
-- `ler_blueprint` without `acao_id` returns only the structure: actions, plans and checkpoints with ids, dates and what is done. Enough to find your way.
+- `ler_blueprint` without `acao_id` returns only the structure: actions, plans and checkpoints with ids, dates and what is done. Enough to find your way. **In a large blueprint the structure is summarized** (the `resumidas` field says how many): actions in progress and the next planned ones stay complete, while finished and distant planned actions are one line (id, name, dates, project; no plans). To see more: `acao_id` for one action, `projeto` (id or name) for one project, `incluir: "tudo"` for every action in full (large; use it only when you need to).
 - `ler_blueprint` with `acao_id` returns that whole action (instructions, descriptions, prototypes). Read it before executing the action or rewriting its instructions.
 - This guide also comes in parts: call `guia_de_planejamento` with the `topico` for the situation.
 

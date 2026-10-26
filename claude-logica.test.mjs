@@ -10,7 +10,7 @@ import { poseDoEstado, MAX_SUBAGENTES, ESCALA, PAPEIS, POSES, QUADROS, SEQUENCIA
 const ctx = vm.createContext({ navigator: { languages: ["pt-BR"] }, location: { search: "" } });
 vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "i18n.js"), "utf8"), ctx, { filename: "i18n.js" });
 vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "claude-logica.js"), "utf8")
-  + "\nthis.api = { claudeEstadoDoEvento, claudePrincipal, claudePapelDe, claudeFigura, claudeChave, claudeChaveSvg, claudeQuadrosUnicos, claudeVisiveis, claudeLugar, claudeItens, claudeLarguraDe, claudeLarguraItem, claudePosicao, claudeProximaAcao, claudeAgenteEspera, claudeItemEspera, CLAUDE_MAX_SUB, CLAUDE_ESCALA_SUB, CLAUDE_PAPEIS, CLAUDE_FOLGA };", ctx);
+  + "\nthis.api = { claudeEstadoDoEvento, claudePrincipal, claudeEhSub, claudeSubSumiu, claudeSubSomeEm, CLAUDE_SUB_SOME_MS, claudePapelDe, claudeFigura, claudeChave, claudeChaveSvg, claudeQuadrosUnicos, claudeVisiveis, claudeLugar, claudeItens, claudeLarguraDe, claudeLarguraItem, claudePosicao, claudeProximaAcao, claudeAgenteEspera, claudeItemEspera, CLAUDE_MAX_SUB, CLAUDE_ESCALA_SUB, CLAUDE_PAPEIS, CLAUDE_FOLGA };", ctx);
 const A = ctx.api;
 const J = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
 
@@ -146,5 +146,20 @@ const emCab = J(A.claudeItemEspera(p0, f0, "1.1", () => false, itensCab));
 assert.equal(J(A.claudeItemEspera(p0, f0, "1.1", () => false, [], () => "b1|p2")).lugar, "secao:b1|p2", "ação fora de vista: a espera fica no cabeçalho do projeto dela");
 assert.deepEqual([emCab.lugar, emCab.indice, emCab.papel, emCab.principal], ["cab:b1", 1, null, false], "fora de vista: no cabeçalho, depois do agente que já está lá");
 assert.equal(J(A.claudeItens([ag("claude")], () => false)).length, 1, "a espera não entra no limite nem nos extras (é um item à parte)");
+
+// ---- subagente que concluiu some depois de 10 s; o principal fica com "Concluído" até o usuário ver (terminar a tarefa dele não é terminar o trabalho)
+{
+  const t0 = Date.parse("2026-10-26T10:00:00Z"), iso = (ms) => new Date(ms).toISOString();
+  const principal = ag("claude", { estado: "concluido", em: iso(t0) }), sub = ag("a4fe", { papel: "construtor", estado: "concluido", em: iso(t0) }), lista = [principal, sub, ag("b2", { papel: "revisor", estado: "escrevendo", em: iso(t0) })];
+  assert.equal(A.CLAUDE_SUB_SOME_MS, 10000);
+  assert.equal(A.claudeEhSub(sub, lista), true);
+  assert.equal(A.claudeEhSub(principal, lista), false);
+  assert.equal(A.claudeSubSumiu(sub, lista, t0 + 9999), false, "antes de 10 s ainda aparece");
+  assert.equal(A.claudeSubSumiu(sub, lista, t0 + 10000), true, "com 10 s some");
+  assert.equal(A.claudeSubSumiu(principal, lista, t0 + 3600000), false, "o principal concluído nunca some sozinho");
+  assert.equal(A.claudeSubSumiu({ ...lista[2] }, lista, t0 + 3600000), false, "subagente trabalhando não some");
+  assert.equal(A.claudeSubSumiu(sub, [sub], t0 + 3600000), false, "o único agente é o principal, mesmo com papel");
+  assert.equal(A.claudeSubSomeEm(sub), t0 + 10000);
+}
 
 console.log("claude-logica: ok (principal, variante por papel, pose por estado, lugar, limite, agrupamento e ordem lado a lado)");

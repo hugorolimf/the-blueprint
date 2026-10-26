@@ -11,7 +11,7 @@ const ctx = vm.createContext({ navigator: { languages: ["pt-BR"] }, location: { 
 const le = (f) => readFileSync(join(import.meta.dirname, "web", "js", f), "utf8");
 vm.runInContext(le("i18n.js"), ctx, { filename: "i18n.js" });
 vm.runInContext(le("claude-logica.js"), ctx, { filename: "claude-logica.js" });
-vm.runInContext(le("foco-logica.js") + "\nthis.api = { focoCartoes, focoEmFoco, focoLugar, focoProximo, focoDeveRolar, focoEsc, focoFixoSumiu, focoDesde, focoMinutos, focoEventosDoAgente, FOCO_EVENTOS, FOCO_HISTORICO };", ctx);
+vm.runInContext(le("foco-logica.js") + "\nthis.api = { focoCartoes, focoEmFoco, focoLugar, focoProximo, focoDeveRolar, focoEsc, focoFixoSumiu, focoDesde, focoMinutos, focoEventosDoAgente, focoTokens, FOCO_EVENTOS, FOCO_HISTORICO };", ctx);
 const A = ctx.api;
 const J = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
 const nomes = (c) => c.itens.map((i) => i.agente);
@@ -119,5 +119,14 @@ assert.deepEqual(J(A.focoEventosDoAgente(todos, eu, A.FOCO_HISTORICO)).map((e) =
 assert.deepEqual(J(A.focoEventosDoAgente(todos, { agente: "claude", planoId: "" })).map((e) => e.id), [1, 3, 4], "sem plano: todos os dele na ação");
 assert.deepEqual(J(A.focoEventosDoAgente(undefined, eu)), []);
 assert.equal(A.FOCO_EVENTOS, 3);
+
+// ---- tokens e rótulo do painel de subagentes do Claude Code: opcionais, nunca quebram o cartão
+const tk = J(A.focoCartoes([ag("sub", { tokens: 12300, rotulo: "Lendo src" })], bps).itens[0]);
+assert.deepEqual([tk.tokens, tk.rotulo], [12300, "Lendo src"]);
+const sem = J(A.focoCartoes([ag("sub"), ag("x", { tokens: "12", rotulo: 5 }), ag("y", { tokens: -3 })], bps).itens[0]);
+assert.deepEqual([sem.tokens, sem.rotulo], [null, ""], "sem tokens nem rótulo: null e vazio");
+assert.deepEqual(J(A.focoCartoes([ag("x", { tokens: "12", rotulo: 5 })], bps).itens[0]).tokens, null, "texto não é número");
+assert.deepEqual([0, 950, 999.4, 1000, 12300, 1250000].map(A.focoTokens), ["0", "950", "999", "1.0k", "12.3k", "1250.0k"]);
+assert.deepEqual([null, undefined, NaN, -1, "7"].map(A.focoTokens), ["", "", "", "", ""]);
 
 console.log("foco-logica: cartões (ordem, repouso, concluído), agente em foco, seguir, rolagem, Esc, desde quando no plano e eventos do agente conferidos");

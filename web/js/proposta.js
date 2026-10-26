@@ -78,22 +78,22 @@ function montaProposta() {
   const p = blueprintEd();
   if (!p) return;
   const c = conv(p.id), box = $("cl-prop"), topoAntes = box.querySelector(".cl-prop-lista")?.scrollTop || 0;
-  if (!c.proposta && !c.emblema && !c.dadosBlueprint && !c.mover?.length) {
+  if (!c.proposta && !c.emblema && !c.dadosBlueprint && !c.mover?.length && !c.decisoesNovas?.length) {
     box.innerHTML = `<div class="cl-prop-topo"><b>${tr("Proposta")}</b></div><div class="cl-prop-lista"><div class="cl-prop-vazio"><p>${tr("Quando o seu agente enviar uma proposta pelo MCP (propor_blueprint), ele aparece aqui, já preenchido, para você revisar e aplicar.")}</p><p><button class="btn mini" id="cu-vazio" type="button">${tr("Como conectar o agente")}</button></p></div></div>`;
     $("cu-vazio").onclick = $("cu-abrir").onclick;
     return;
   }
   const acoes = c.proposta || [];
-  const n = acoes.filter((x) => x.inc).length, marca = c.emblema?.inc, rem = c.remover || [], nr = rem.filter((x) => x.inc).length, mov = c.mover || [], nmo = mov.filter((x) => x.inc).length;
+  const n = acoes.filter((x) => x.inc).length, marca = c.emblema?.inc, rem = c.remover || [], nr = rem.filter((x) => x.inc).length, mov = c.mover || [], nmo = mov.filter((x) => x.inc).length, nd = decisoesMarcadas(c);
   const nMov = acoes.reduce((a, f) => a + f.planos.filter((t) => t.de).length + f.checkpoints.filter((m) => m.de).length, 0);
   const resumo = [acoes.length && trn(acoes.length, ["{n} ação", "{n} ações"]), nMov && trn(nMov, ["{n} movido", "{n} movidos"]), mov.length && trn(mov.length, ["{n} ação de outro blueprint", "{n} ações de outro blueprint"]), rem.length && tr("{n} para apagar", { n: rem.length })].filter(Boolean).join(" · ");
-  const rotuloBase = emNovo() ? tr("Criar blueprint") + (n ? " " + trn(n, ["com {n} ação", "com {n} ações"]) : "") + (marca ? " " + tr("e a marca") : "") : n ? trn(n, ["Aplicar {n} ação", "Aplicar {n} ações"]) + (marca ? " " + tr("e a marca") : "") + " " + tr("ao blueprint") : tr("Aplicar a marca ao blueprint");
-  const rotuloAplicar = emNovo() ? rotuloBase : (n || marca || !(nr || nmo) ? rotuloBase : "Aplicar") + (nmo ? ` · mover ${nmo}` : "") + (nr ? ` · apagar ${nr}` : "");
+  const rotuloBase = emNovo() ? tr("Criar blueprint") + (n ? " " + trn(n, ["com {n} ação", "com {n} ações"]) : "") + (marca ? " " + tr("e a marca") : "") : n ? trn(n, ["Aplicar {n} ação", "Aplicar {n} ações"]) + (marca ? " " + tr("e a marca") : "") + " " + tr("ao blueprint") : nd ? trn(nd, ["Aplicar {n} decisão", "Aplicar {n} decisões"]) : tr("Aplicar a marca ao blueprint");
+  const rotuloAplicar = emNovo() ? rotuloBase : (n || marca || nd || !(nr || nmo) ? rotuloBase : "Aplicar") + (nd && (n || marca) ? ` · ${trn(nd, ["{n} decisão", "{n} decisões"])}` : "") + (nmo ? ` · mover ${nmo}` : "") + (nr ? ` · apagar ${nr}` : "");
   const cardDados = emNovo() && c.dadosBlueprint ? `<div class="pf"><label class="f">${tr("Nome proposto")}<input data-pc="blueprint-nome" value="${esc(c.dadosBlueprint.nome)}"></label><label class="f">${tr("Descrição")}<textarea data-pc="blueprint-descricao">${esc(c.dadosBlueprint.descricao)}</textarea></label></div>` : "";
   const cardMarca = c.emblema ? `<div class="pf${c.emblema.inc ? "" : " off"}" data-marca><div class="pf-topo"><input type="checkbox" data-pc="marca-inc" aria-label="${tr("Usar esta marca")}"${c.emblema.inc ? " checked" : ""}><span class="badge${p.emblema ? "" : " nova"}">${p.emblema ? tr("Nova marca") : tr("Marca")}</span><b style="letter-spacing:.08em;text-transform:uppercase;font-size:12px">${tr("Marca da folha")}</b></div><div class="marca-previa">${previaMarca(c.emblema.pecas)}</div><p class="dica">${tr("Desenhada com as peças do anatomy ({n} peças). Fica no centro da folha do blueprint, como a marca dela.", { n: c.emblema.pecas.length })}</p></div>` : "";
   box.innerHTML = `<div class="cl-prop-topo"><b>${c.numero ? tr("Proposta nº {n}", { n: c.numero }) : tr("Proposta")}${resumo ? ` · ${resumo}` : ""}</b>${acoes.length ? `<span><button class="btn mini" data-pact="todas" type="button">${tr("Marcar todas")}</button> <button class="btn mini" data-pact="nenhuma" type="button">${tr("Nenhuma")}</button></span>` : ""}</div>
-  ${htmlFila(c)}<div class="cl-prop-lista">${htmlTopoProposta(c, p)}${cardDados}${htmlProjetosNovos(c)}${emNovo() && c.pasta ? `<p class="dica">${tr("Ao criar, ligar esta pasta ao blueprint: {pasta}", { pasta: `<strong>${esc(c.pasta)}</strong>` })}</p>` : ""}${cardMarca}${acoes.map((pf, i) => (pf.editando ? htmlPropAcao(pf, i, p) : htmlVistaAcao(pf, i, p))).join("")}${htmlMovimentos(c)}${htmlRemocoes(c, p)}</div>
-  <div class="cl-prop-acoes"><button class="btn cheio" data-pact="aplicar" type="button"${n || marca || nr || nmo || c.dadosBlueprint?.nome.trim() ? "" : " disabled"}>${rotuloAplicar}</button><button class="btn" data-pact="descartar" type="button">${tr("Descartar")}</button></div>`;
+  ${htmlFila(c)}<div class="cl-prop-lista">${htmlTopoProposta(c, p)}${cardDados}${htmlProjetosNovos(c)}${htmlDecisoesProposta(c, p)}${emNovo() && c.pasta ? `<p class="dica">${tr("Ao criar, ligar esta pasta ao blueprint: {pasta}", { pasta: `<strong>${esc(c.pasta)}</strong>` })}</p>` : ""}${cardMarca}${acoes.map((pf, i) => (pf.editando ? htmlPropAcao(pf, i, p) : htmlVistaAcao(pf, i, p))).join("")}${htmlMovimentos(c)}${htmlRemocoes(c, p)}</div>
+  <div class="cl-prop-acoes"><button class="btn cheio" data-pact="aplicar" type="button"${n || marca || nr || nmo || nd || c.dadosBlueprint?.nome.trim() ? "" : " disabled"}>${rotuloAplicar}</button><button class="btn" data-pact="descartar" type="button">${tr("Descartar")}</button></div>`;
   box.querySelector(".cl-prop-lista").scrollTop = topoAntes;
 }
 // o Claude "move" itens entre ações repetindo o texto na ação nova: tira a cópia pendente da ação de origem para não duplicar
@@ -171,17 +171,18 @@ function aplicarAcoes(p, c) {
     if (f.status === "planejado") f.progresso = 0;
   });
   if (c.emblema?.inc) { p.emblema = { pecas: c.emblema.pecas }; marca = true; }
-  return { nf, nt, nm, nmv, nr: removerItens(p, c), na: moverAcoes(p, c), marca };
+  return { nf, nt, nm, nmv, nr: removerItens(p, c), na: moverAcoes(p, c), marca, nd: aplicaDecisoes(p, c) };
 }
 function aplicarProposta() {
   const p = blueprintEd(), c = p && conv(p.id);
   if (!c || (!c.proposta && !c.emblema && !c.dadosBlueprint && !c.remover?.length && !c.mover?.length)) return;
   if (emNovo() && c.dadosBlueprint) { p.nome = c.dadosBlueprint.nome.trim(); p.descricao = c.dadosBlueprint.descricao.trim(); }
-  const { nf, nt, nm, nmv, nr, na, marca } = aplicarAcoes(p, c);
+  const { nf, nt, nm, nmv, nr, na, marca, nd } = aplicarAcoes(p, c);
+  const dec = nd ? tr(", {n} decisão(ões)", { n: nd }) : "";
   filaConclui(c); // sai da fila (ack) e abre a próxima proposta, se houver
-  c.msgs.push({ papel: "sistema", texto: tr("Aplicado: {nf} ação(s) nova(s), {nt} plano(s) e {nm} checkpoint(s) novos{mov}{trazidas}{apagados}{marca}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s) de outro blueprint", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(", e a marca da folha") : "" }) });
+  c.msgs.push({ papel: "sistema", texto: tr("Aplicado: {nf} ação(s) nova(s), {nt} plano(s) e {nm} checkpoint(s) novos{mov}{trazidas}{apagados}{marca}{dec}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s) de outro blueprint", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(", e a marca da folha") : "", dec }) });
   if (emNovo()) montaMcp(); else { avisarMonitor("proposta-aplicada", p.id); mudou(); montaHub(); if (!filaTemAberta(c)) agenteTela(false); } // aprovou e não há outra proposta esperando: a tela Planejar fecha (com outra na fila, ela abre a próxima)
-  aviso(tr("Proposta aplicada: {nf} ação(s), {nt} plano(s), {nm} checkpoint(s){mov}{trazidas}{apagados}{marca}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s)", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(" e a marca") : "" }));
+  aviso(tr("Proposta aplicada: {nf} ação(s), {nt} plano(s), {nm} checkpoint(s){mov}{trazidas}{apagados}{marca}{dec}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s)", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(" e a marca") : "", dec }));
 }
 function guardarChatDosBlueprints(c, blueprints) {
   blueprints.forEach((p, i) => {
@@ -200,7 +201,7 @@ async function criarBlueprint(comProposta) {
   if (!nome) { if (!comProposta) $("nv-nome").focus(); return aviso(tr("Defina o nome do blueprint antes de criar.")); }
   if (comProposta) aplicarProposta();
   const naFila = filaDesmonta(conv(NOVO)); // as outras propostas de blueprint novo continuam esperando; o chat segue para o blueprint criado
-  const p = { id: novoId(), nome, descricao: dados.descricao.trim(), obs: "", links: [], acoes: rascunho.acoes, emblema: rascunho.emblema, ...(rascunho.projetos?.length ? { projetos: rascunho.projetos } : {}) };
+  const p = { id: novoId(), nome, descricao: dados.descricao.trim(), obs: "", links: [], acoes: rascunho.acoes, emblema: rascunho.emblema, ...(rascunho.projetos?.length ? { projetos: rascunho.projetos } : {}), ...(rascunho.decisoes?.length ? { decisoes: rascunho.decisoes } : {}) };
   D.blueprints.push(p);
   guardarChatDosBlueprints(conv(NOVO), [p]);
   filaMonta(conv(NOVO), naFila);
@@ -237,8 +238,9 @@ $("cl-prop").addEventListener("input", (e) => {
   const el = e.target.closest("[data-pc]"), p = blueprintEd();
   if (!el || !p) return;
   const c = conv(p.id), k = el.dataset.pc, j = +el.dataset.j;
-  const atualizaBotao = () => { const n = (c.proposta || []).filter((x) => x.inc).length, b = $("cl-prop").querySelector("[data-pact=aplicar]"); if (b) b.disabled = !n && !c.emblema?.inc && !c.dadosBlueprint?.nome.trim() && !(c.remover || []).some((x) => x.inc) && !(c.mover || []).some((x) => x.inc); };
+  const atualizaBotao = () => { const n = (c.proposta || []).filter((x) => x.inc).length, b = $("cl-prop").querySelector("[data-pact=aplicar]"); if (b) b.disabled = !n && !c.emblema?.inc && !c.dadosBlueprint?.nome.trim() && !(c.remover || []).some((x) => x.inc) && !(c.mover || []).some((x) => x.inc) && !decisoesMarcadas(c); };
   if (k === "blueprint-nome" || k === "blueprint-descricao") { c.dadosBlueprint[k === "blueprint-nome" ? "nome" : "descricao"] = el.value; return atualizaBotao(); }
+  if (k === "dec-inc") { c.decisoesNovas[j].inc = el.checked; return montaProposta(); }
   if (k === "mov-inc") { c.mover[j].inc = el.checked; return montaProposta(); }
   if (k === "rem-inc") { c.remover[j].inc = el.checked; return montaProposta(); } // o rótulo do botão e a contagem dependem das marcas
   if (k === "marca-inc") { c.emblema.inc = el.checked; el.closest(".pf").classList.toggle("off", !el.checked); return atualizaBotao(); }
@@ -270,7 +272,8 @@ $("cl-prop").addEventListener("click", (e) => {
   salvar();
   if (a === "aplicar") return emNovo() ? criarBlueprint(true) : aplicarProposta();
   if (a === "descartar") { c.lote = null; filaConclui(c); salvar(); return montaMcp(); } // descarta só a aberta; as outras da fila esperam
-  if (a === "mov-todas" || a === "mov-nenhuma") (c.mover || []).forEach((x) => { x.inc = a === "mov-todas"; });
+  if (a === "dec-todas" || a === "dec-nenhuma") (c.decisoesNovas || []).forEach((x) => { x.inc = a === "dec-todas"; });
+  else if (a === "mov-todas" || a === "mov-nenhuma") (c.mover || []).forEach((x) => { x.inc = a === "mov-todas"; });
   else if (a === "rem-todas" || a === "rem-nenhuma") (c.remover || []).forEach((x) => { x.inc = a === "rem-todas"; });
   else if (a === "todas" || a === "nenhuma") c.proposta.forEach((x) => { x.inc = a === "todas"; });
   else if (a === "editar-acao" || a === "ver-acao") pf.editando = a === "editar-acao"; // leitura por padrão; a edição é um clique

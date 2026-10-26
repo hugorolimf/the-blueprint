@@ -16,6 +16,9 @@ const ARQUIVOS: &[(&str, &str)] = &[
     (".claude-plugin/marketplace.json", include_str!("../../claude-plugin/.claude-plugin/marketplace.json")),
     ("plugins/blueprint/.claude-plugin/plugin.json", include_str!("../../claude-plugin/plugins/blueprint/.claude-plugin/plugin.json")),
     ("plugins/blueprint/agents/blueprint.md", include_str!("../../claude-plugin/plugins/blueprint/agents/blueprint.md")),
+    ("plugins/blueprint/agents/blueprint-explorer.md", include_str!("../../claude-plugin/plugins/blueprint/agents/blueprint-explorer.md")),
+    ("plugins/blueprint/agents/blueprint-builder.md", include_str!("../../claude-plugin/plugins/blueprint/agents/blueprint-builder.md")),
+    ("plugins/blueprint/agents/blueprint-reviewer.md", include_str!("../../claude-plugin/plugins/blueprint/agents/blueprint-reviewer.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/SKILL.md", include_str!("../../skills/blueprint-planejamento/SKILL.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/planejar.md", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/editar.md", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
@@ -53,6 +56,7 @@ pub fn gravar(pasta: &Path, exe: &Path) -> io::Result<()> {
         let caminho = pasta.join("plugins/blueprint-terminal/assets").join(nome);
         if !fs::read(&caminho).is_ok_and(|atual| atual == bytes) { fs::write(caminho, bytes)?; }
     }
+    super::subagentes::gravar(pasta, exe)?; // settings.json do plugin: o subagentStatusLine
     let exe = exe.display().to_string();
     let mcp = json!({ "mcpServers": { NOME: { "command": exe, "args": ["--mcp"] } } });
     gravar_se_mudou(&pasta.join("plugins/blueprint/.mcp.json"), &(serde_json::to_string_pretty(&mcp).expect("json") + "\n"))?;
@@ -73,9 +77,18 @@ fn skill_status(exe: &str) -> String {
 
 /// Os hooks do plugin. Sessão: hook de comando (o SessionStart roda antes de o MCP conectar, então `mcp_tool` não serve), em forma de execução
 /// direta (`args`, sem shell, então o caminho do .exe com espaços não quebra). Edição: hook `http` direto no app, sem abrir processo a cada edição.
+/// Estado do agente: PermissionRequest, PermissionDenied, StopFailure, PreCompact e PostCompact vão todos a `hook/estado` (nomes conferidos em
+/// https://code.claude.com/docs/en/hooks.md); a rota responde sempre `{}`, então nenhum deles decide permissão nem segura o Claude Code.
+/// `PostToolUseFailure` fica de fora: ferramenta que falha é rotina e só faria ruído.
 /// shortcut: a porta é a 3000 (a padrão do app); com o app em outra porta o hook falha em silêncio, sem atrapalhar o agente.
 fn hooks(exe: &str) -> serde_json::Value {
+    let estado = || json!([{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/estado", "timeout": 5 }] }]);
     json!({ "hooks": {
+        "PermissionRequest": estado(),
+        "PermissionDenied": estado(),
+        "StopFailure": estado(),
+        "PreCompact": estado(),
+        "PostCompact": estado(),
         "SessionStart": [{ "matcher": "startup|resume|clear", "hooks": [{ "type": "command", "command": exe, "args": ["hook", "sessao"], "timeout": 5 }] }],
         "SessionEnd": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/fim", "timeout": 5 }] }],
         "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/edicao", "timeout": 5 }] }],

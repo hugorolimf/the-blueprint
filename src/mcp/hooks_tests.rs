@@ -142,10 +142,12 @@ fn o_subagente_aparece_ao_comecar_e_conclui_com_a_ultima_mensagem() {
         c.as_object_mut().unwrap().extend(extra.as_object().unwrap().clone());
         c
     };
-    assert_eq!(subagente(&m, &d, &corpo("SubagentStart", json!({}))).unwrap(), json!({}));
+    let inicio = subagente(&m, &d, &corpo("SubagentStart", json!({}))).unwrap();
+    assert_eq!(inicio["hookSpecificOutput"]["hookEventName"], "SubagentStart", "o START devolve o contexto do blueprint (ver hooks_estado_tests)");
     let a = agente_da_lista(&m, "Explore d4e5").unwrap();
     assert_eq!((a["estado"].as_str(), a["papel"].as_str()), (Some("lendo"), Some("explorador")));
-    subagente(&m, &d, &corpo("SubagentStop", json!({"last_assistant_message": "Achei 3 arquivos: a.rs, b.rs e c.rs."}))).unwrap();
+    let parada = subagente(&m, &d, &corpo("SubagentStop", json!({"last_assistant_message": "Achei 3 arquivos: a.rs, b.rs e c.rs."}))).unwrap();
+    assert_eq!(parada, json!({}), "o STOP não devolve decision nem contexto: nunca segura o subagente");
     let a = agente_da_lista(&m, "Explore d4e5").unwrap();
     assert_eq!((a["estado"].as_str(), a["mensagem"].as_str()), (Some("concluido"), Some("Achei 3 arquivos: a.rs, b.rs e c.rs.")));
     subagente(&m, &d, &corpo("SubagentStop", json!({}))).unwrap(); // sem mensagem final: uma frase padrão

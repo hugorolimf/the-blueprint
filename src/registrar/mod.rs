@@ -4,6 +4,7 @@
 //! é dito com o comando a rodar à mão. shortcut: no PATH só procura .exe, .cmd e .bat (o `codex` do npm é .cmd); sem PATHEXT inteiro.
 pub(crate) mod plugin;
 pub mod statusline;
+mod subagentes;
 #[cfg(test)]
 mod tests;
 

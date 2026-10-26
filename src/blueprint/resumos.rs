@@ -1,6 +1,7 @@
 //! O blueprint como o agente o enxerga, com os ids que ele precisa reaproveitar: porte de contextoBlueprint, estruturaBlueprint, resumoBlueprint e
 //! contextoAcao do antigo plano.mjs, mais a estimativa (`horas`) de cada plano e a média do tempo real medido.
 use super::datas::ms_do_iso;
+use super::decisoes::{decisoes_do, resumo_das_decisoes};
 use super::projetos::{nome_do_projeto, projetos_do};
 use super::texto::{lista, str_de, verdade};
 use serde_json::{json, Map, Value};
@@ -84,6 +85,9 @@ pub fn estrutura_blueprint(p: &Value) -> Value {
     let projetos = projetos_do(p);
     if !projetos.is_empty() {
         o.insert("projetos".into(), Value::Array(projetos.into_iter().map(|(id, nome)| json!({"id": id, "nome": nome})).collect()));
+    }
+    if !decisoes_do(p).is_empty() {
+        o.insert("decisoes".into(), Value::Array(resumo_das_decisoes(p)));
     }
     if let Some(real) = tempo_real(p) {
         o.insert("tempoReal".into(), real);
