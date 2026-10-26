@@ -56,9 +56,9 @@ try {
   };
   const cap = process.env.MENU_CAPTURA;
   const naAcao = await menu(".acao[data-p][data-f]", cap && `${cap}-acao.png`);
-  conferir(naAcao, ["Ir para esta ação", "Editar ação", "Adicionar plano", "Adicionar checkpoint", "Editar blueprint", "Planejar este blueprint", "Excluir ação…", "Recolher ações", "Voltar aos blueprints", "Entrar em tela cheia"], "da ação");
+  conferir(naAcao, ["Ir para esta ação", "Editar ação", "Adicionar plano", "Adicionar checkpoint", "Editar blueprint", "Planejar este blueprint", "Conversar com o plano…", "Excluir ação…", "Recolher ações", "Voltar aos blueprints", "Entrar em tela cheia"], "da ação");
   assert(naAcao.titulo.startsWith("Ação "), "cabeçalho da ação: " + naAcao.titulo);
-  assert.equal(naAcao.separadores, 3, "quatro grupos na ação concluída: abrir, editar, perigo, geral (sem Iniciar com o Claude)");
+  assert.equal(naAcao.separadores, 4, "cinco grupos na ação concluída: abrir, editar, estado (só Conversar com o plano, sem Iniciar com o Claude), perigo, geral");
   // o plano fica dentro da ação: o cabeçalho nomeia o plano e o item de estado vem depois dos de editar
   const noPlano = await menu(".chk[data-p][data-f][data-id]", cap && `${cap}-plano.png`);
   assert(noPlano.titulo.startsWith("Plano · ") || noPlano.titulo.startsWith("Checkpoint · "), "cabeçalho do plano: " + noPlano.titulo);
@@ -69,7 +69,7 @@ try {
   const aberta = await js(`(() => { const f = D.blueprints.flatMap((p) => p.acoes).find((f) => efetiva(f).status !== "concluido" && document.querySelector('.acao[data-f="' + f.id + '"]')); return f && '.acao[data-f="' + f.id + '"]'; })()`);
   assert(aberta, "há uma ação não concluída na folha");
   const naAberta = await menu(aberta);
-  conferir(naAberta, ["Ir para esta ação", "Editar ação", "Adicionar plano", "Adicionar checkpoint", "Editar blueprint", "Planejar este blueprint", "Iniciar com o Claude…", "Marcar como concluída", "Prorrogar o fim em 1 dia", "Prorrogar o fim em 1 semana", "Excluir ação…", "Recolher ações", "Voltar aos blueprints", "Entrar em tela cheia"], "da ação aberta");
+  conferir(naAberta, ["Ir para esta ação", "Editar ação", "Adicionar plano", "Adicionar checkpoint", "Editar blueprint", "Planejar este blueprint", "Iniciar com o Claude…", "Conversar com o plano…", "Marcar como concluída", "Prorrogar o fim em 1 dia", "Prorrogar o fim em 1 semana", "Excluir ação…", "Recolher ações", "Voltar aos blueprints", "Entrar em tela cheia"], "da ação aberta");
   assert.equal(naAberta.separadores, 5, "seis grupos na ação aberta: abrir, editar, estado, prazo, perigo, geral");
   assert.equal(naAberta.itens.find((i) => i.t === "Marcar como concluída").desabilitado, true, "com planos e checkpoints pendentes, concluir fica desabilitado");
   await js(`window.confirmou = []; window.confirmar = async (o) => { window.confirmou.push(o.titulo); return false; }`);

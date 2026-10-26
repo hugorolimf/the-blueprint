@@ -1,0 +1,22 @@
+/* "Conversar com o plano" (web/js/conversa.js) e "Enviar comentário ao agente" (web/js/comentario-agente.js): painel lateral e diálogo no papel do blueprint */
+.conversa{position:fixed;z-index:9;top:16px;right:16px;bottom:16px;width:min(420px,calc(100vw - 32px));display:flex;flex-direction:column;gap:10px;padding:18px 20px;box-sizing:border-box;color:var(--ink);font:12px/1.6 var(--mono);background:#0a3270;border:2px solid var(--ink);box-shadow:0 20px 56px #02132ee6,0 0 0 6px #082b5e}
+.conversa[hidden]{display:none}
+.conversa .cv-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.conversa h4{margin:0 0 4px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);font-weight:400}
+.conversa h3{margin:0;font-size:14px;letter-spacing:.05em;text-transform:uppercase}
+.conversa .cv-dica{margin:0;color:var(--mid)}
+.conversa .cv-lista{flex:1;min-height:80px;margin:0;padding:10px 12px;list-style:none;overflow:auto;border:1px dashed var(--lo);background:#082b5e99;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.conversa .cv-msg{margin:0 0 12px;padding:8px 10px;border-left:2px solid var(--lo)}
+.conversa .cv-msg.agente{border-left-color:var(--ink);background:#0c3a7866}
+.conversa .cv-msg p{margin:2px 0 6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.conversa .cv-quem{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}
+.conversa .cv-vazio{color:var(--mid)}
+.conversa .cv-envio{display:flex;flex-direction:column;gap:8px;margin:0}
+.conversa .cv-sessao{display:flex;align-items:center;gap:8px;color:var(--mid)}
+.conversa .cv-sessao select{flex:1;min-width:0;text-transform:none;letter-spacing:0}
+.conversa textarea,.comentario-agente textarea{display:block;width:100%;box-sizing:border-box;resize:vertical;padding:10px 12px;border:1px dashed var(--ink);background:#082b5e;color:var(--ink);font:12px/1.6 var(--mono)}
+.conversa textarea:focus,.comentario-agente textarea:focus{outline:2px solid var(--ink);outline-offset:1px}
+.conversa .cv-acoes{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cv-aviso{margin:0;color:var(--ink)}
+.cv-aviso.erro{color:var(--erro)}
+.comentario-agente textarea{margin-bottom:6px}
