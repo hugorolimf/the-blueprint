@@ -44,3 +44,33 @@ fn os_limites_de_corpo_sao_os_do_node() {
     assert_eq!(limite_corpo("POST", "/api/mcp/prototipo"), 2 * 1024 * 1024 + 64 * 1024);
     assert_eq!(limite_corpo("POST", "/api/mcp/proposta"), 256 * 1024);
 }
+
+fn gravar_na_versao(e: &crate::http::Estado, versao: Option<&str>, corpo: serde_json::Value) -> crate::http::pedido::Resposta {
+    let mut cab = vec![("Content-Type".to_string(), "application/json".to_string())];
+    if let Some(v) = versao { cab.push(("If-Match".into(), v.into())); }
+    despachar(e, &Pedido::novo("PUT", "/api/dados", cab, serde_json::to_vec(&corpo).unwrap()))
+}
+
+#[test]
+fn gravar_sobre_versao_velha_e_recusado_e_cada_gravacao_avisa_as_janelas() {
+    let e = estado(false);
+    let janela = e.mcp.assinar();
+    let v1 = despachar(&e, &pedido("GET", "/api/dados", &[], None)).cabecalho("x-dados-versao").unwrap().to_string();
+    let primeiro = json!({"blueprints": [{"id": "a", "nome": "A", "acoes": []}]});
+    let r = gravar_na_versao(&e, Some(&v1), primeiro.clone());
+    assert_eq!(r.status, 200);
+    let v2 = r.cabecalho("x-dados-versao").unwrap().to_string();
+    assert_ne!(v1, v2, "cada gravação sobe a versão");
+    let ev = janela.recv_timeout(std::time::Duration::from_secs(1)).expect("a gravação avisa as janelas");
+    assert_eq!((ev.nome, ev.dados), ("dados", Some(json!({"versao": v2.parse::<u64>().unwrap()}))));
+    // uma janela que ainda tem a versão velha não apaga o que a outra gravou
+    let r = gravar_na_versao(&e, Some(&v1), json!({"blueprints": [{"id": "velho", "nome": "Velho", "acoes": []}]}));
+    assert_eq!(r.status, 409);
+    assert_eq!(json_de(&r), json!({"erro": "desatualizado", "versao": v2.parse::<u64>().unwrap()}));
+    assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/dados", &[], None))), primeiro);
+    assert!(janela.try_recv().is_err(), "a gravação recusada não avisa ninguém");
+    // com aspas, como um ETag, vale igual; sem If-Match segue valendo como antes (importadores e scripts simples)
+    assert_eq!(gravar_na_versao(&e, Some(&format!("\"{v2}\"")), primeiro.clone()).status, 200);
+    assert_eq!(gravar_na_versao(&e, None, primeiro).status, 200);
+    assert_eq!(gravar_na_versao(&e, Some("lixo"), json!({"blueprints": []})).status, 409);
+}

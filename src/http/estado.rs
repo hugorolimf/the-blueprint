@@ -7,7 +7,13 @@ use crate::dados::Dados;
 use crate::erro::Resultado;
 use crate::mcp::Mcp;
 use serde_json::{json, Value};
+use std::sync::atomic::AtomicU64;
 use std::sync::Mutex;
+
+/// Versão inicial dos dados: a hora de abertura, para uma versão guardada por uma página não valer depois de o app reiniciar.
+pub fn versao_inicial() -> AtomicU64 {
+    AtomicU64::new(crate::tempo::agora_ms().max(0) as u64)
+}
 
 pub struct Estado {
     /// o que traz a janela à frente: só existe no app com janela (o servidor puro não tem)
@@ -20,6 +26,9 @@ pub struct Estado {
     pub dados: Mutex<Dados>,
     /// o data.json já serializado, para GET /api/dados não refazer o texto a cada pedido; limpo a cada gravação
     pub dados_json: Mutex<Option<Vec<u8>>>,
+    /// a versão do data.json: sobe a cada gravação e muda a cada abertura do app; a página a manda em `If-Match` e uma gravação feita sobre
+    /// uma versão velha é recusada (409), em vez de apagar o que outra janela gravou
+    pub versao_dados: AtomicU64,
     pub mcp: Mcp,
     pub assets: Assets,
 }

@@ -38,3 +38,4 @@ jobs:
           node scripts/migrar-vocabulario.test.mjs
           node atualizacao.test.mjs
           node notificacao.test.mjs
+          node sincronia.test.mjs

@@ -1,16 +1,16 @@
 {
-  "data": "2026-10-23T14:53:39.925Z",
+  "data": "2026-10-26T02:54:21.133Z",
   "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
   "respostas": {
     "GET pagina": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "741667b0ec9698ee"
+      "sha256": "570ec9ffefd9647c"
     },
     "GET pagina-html": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "741667b0ec9698ee"
+      "sha256": "570ec9ffefd9647c"
     },
     "GET emblemas": {
       "status": 200,

@@ -9,8 +9,9 @@ function mcpAgenda(ms) { clearTimeout(mcpTimer); mcpTimer = setTimeout(mcpConsul
 function mcpAssina() {
   if (typeof EventSource === "undefined") return;
   const es = new EventSource("/api/mcp/eventos");
-  es.onopen = () => { mcpSse = es; mcpConsulta(); };
+  es.onopen = () => { mcpSse = es; mcpConsulta(); carregar(); }; // ao (re)conectar, também confere se perdeu uma gravação de outra janela
   es.addEventListener("fila", () => mcpConsulta());
+  es.addEventListener("dados", dadosDeOutraJanela); // outra janela ou script gravou: busca na hora (rede.js)
   es.addEventListener("agentes", () => agentesBusca()); // a presença dos agentes mudou: o painel atualiza o cartão que mudou
   es.addEventListener("atualizacao", (e) => { try { atualizacaoRecebe(JSON.parse(e.data)); } catch {} }); // o updater: baixando, pronta (atualizacao.js)
   es.onerror = () => { mcpSse = null; mcpConsulta(); };

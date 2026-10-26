@@ -41,7 +41,8 @@ const preparaArquivo = (d) => {
 };
 let concluidosAntes = new Set();
 const concluidosAgora = () => new Set(D.blueprints.filter(projConcluido).map((p) => p.id));
-let ultimo = "";
+let ultimo = ""; // o data.json como o servidor o tem (ou como esta janela o gravou por último): a BASE para juntar edições (sincronia.js)
+let versaoDados = ""; // a versão desse texto; vai em `If-Match` e o servidor recusa (409) gravar sobre dados que outra janela já mudou
 async function carregar() {
   if (arr?.ativo || salvandoPerfil || salvandoWorkspace || timer || arquivo.chats?.some((c) => c.pensando)) return;
   try {
@@ -51,6 +52,7 @@ async function carregar() {
     const texto = await r.text();
     if (salvandoPerfil || salvandoWorkspace || timer || arquivo.chats?.some((c) => c.pensando)) return;
     falhou = false;
+    versaoDados = r.headers.get("x-dados-versao") || versaoDados;
     if (texto === ultimo && carregado) { if (hoje !== (hojeSimulado || local(new Date()))) render(); return; }
     ultimo = texto;
     arquivo = preparaArquivo(JSON.parse(texto));
@@ -75,11 +77,32 @@ function avisarMonitor(tipo, blueprintId, checkpointId = "") {
   const evento = { tipo, workspaceId: workspaceAtual.id, blueprintId, checkpointId };
   avisosDoMonitor.set(JSON.stringify(evento), evento);
 }
+const corpoDosDados = () => JSON.stringify({ ...arquivo, chats: (arquivo.chats || []).map(({ pensando, ...c }) => c) }, null, 2);
+// Outra janela (ou um script) gravou antes: traz o que o servidor tem, junta com o que está nesta tela (sincronia.js) e mostra o resultado.
+async function reconciliar(corpoMeu) {
+  const r = await fetch("/api/dados", { cache: "no-store" });
+  if (!r.ok) throw new Error(r.status);
+  const texto = await r.text();
+  const deles = JSON.parse(texto);
+  arquivo = preparaArquivo(sincMesclar(ultimo ? JSON.parse(ultimo) : deles, JSON.parse(corpoMeu), deles)); // sem base, tudo o que difere é meu (como era antes)
+  workspaceAtual = workspaceDaRota(arquivo, location.hash);
+  D = workspaceAtual?.dados || arquivo;
+  ultimo = texto;
+  versaoDados = r.headers.get("x-dados-versao") || "";
+  concluidosAntes = concluidosAgora();
+  render();
+}
 async function gravarDados() {
   const avisos = [...avisosDoMonitor.entries()];
-  const corpo = JSON.stringify({ ...arquivo, chats: (arquivo.chats || []).map(({ pensando, ...c }) => c) }, null, 2);
-  const r = await fetch("/api/dados", { method: "PUT", headers: { "content-type": "application/json" }, body: corpo });
+  let corpo, r;
+  for (let tentativa = 0; tentativa < 4; tentativa++) {
+    corpo = corpoDosDados();
+    r = await fetch("/api/dados", { method: "PUT", headers: { "content-type": "application/json", ...(versaoDados ? { "if-match": versaoDados } : {}) }, body: corpo });
+    if (r.status !== 409) break;
+    await reconciliar(corpo);
+  }
   if (!r.ok) throw new Error(r.status);
+  versaoDados = r.headers.get("x-dados-versao") || versaoDados;
   ultimo = corpo;
   // Só avisar depois de persistir: receber a proposta na fila ainda não significa aplicá-la.
   await Promise.all(avisos.map(async ([chave, evento]) => {
@@ -110,6 +133,20 @@ const mudou = () => {
   });
   concluidosAntes = agora;
 };
+// Tempo real: o servidor avisa (SSE "dados") a cada gravação; se não foi esta janela, ela busca na hora, em vez de ficar com a tela velha e depois
+// sobrescrever o que as outras gravaram. Quem está digitando não tem a tela trocada: a atualização espera o foco sair do campo.
+let dadosAdiados = false;
+const digitando = () => !!document.activeElement?.matches?.("input, textarea, select, [contenteditable]");
+function dadosDeOutraJanela(e) {
+  let n = "";
+  try { n = String(JSON.parse(e.data).versao); } catch {}
+  if (n && n === versaoDados) return; // fui eu que gravei
+  if (digitando()) { dadosAdiados = true; return; }
+  carregar();
+}
+document.addEventListener("focusout", () => {
+  if (dadosAdiados) setTimeout(() => { if (dadosAdiados && !digitando()) { dadosAdiados = false; carregar(); } }, 200);
+});
 function adicionarComentarioAgente(plano, texto, tipo, sessaoId = "") {
   if (!texto) return;
   plano.agente ||= normalizaAgente({});
