@@ -26,6 +26,8 @@
 <link rel="stylesheet" href="/web/css/impressao.css">
 <link rel="stylesheet" href="/web/css/conversa.css">
 <link rel="stylesheet" href="/web/css/terminal.css">
+<link rel="stylesheet" href="/web/css/convite.css">
+<link rel="stylesheet" href="/web/css/pessoas.css">
 </head>
 <body class="carregando">
 <section class="login" id="login" aria-label="Entrar">
@@ -34,8 +36,14 @@
     <form id="login-form"><span class="rot">Seu próximo blueprint começa aqui</span><h1>Bom ter você por aqui.</h1><p>Como podemos chamar você?<br>Depois, é só escolher seu espaço e continuar.</p><label for="login-nome">Seu nome</label><input id="login-nome" name="nome" maxlength="80" placeholder="Digite seu nome" autocomplete="nickname" required><button class="btn cheio" type="submit" disabled>Entrar no meu espaço →</button><small>Seu nome fica salvo junto dos blueprints.</small><p id="login-erro" role="status"></p></form>
   </div>
 </section>
+<section class="login convite" id="convite" aria-label="Entrar pelo convite" hidden>
+  <div class="login-folha">
+    <div class="login-ilustra"><span class="entrada-marca">The Blueprint / Equipe</span><div id="convite-arte" aria-hidden="true"></div><span class="legenda">Fig. 02 · Entrada da equipe</span></div>
+    <form id="convite-form"><span class="rot" id="convite-rot">Convite</span><h1 id="convite-titulo">Conferindo o convite…</h1><p id="convite-texto"></p><p class="convite-papel" id="convite-papel" hidden></p><div id="convite-campos" hidden><label for="convite-nome">Seu nome</label><input id="convite-nome" name="nome" maxlength="60" placeholder="Digite seu nome" autocomplete="nickname"><button class="btn cheio" type="submit">Entrar na equipe →</button></div><p id="convite-erro" role="status"></p></form>
+  </div>
+</section>
 <section class="entrada" id="entrada" aria-label="Selecionar workspace" hidden>
-  <header class="entrada-topo"><strong class="entrada-marca" id="entrada-marca">Workspaces</strong><div class="perfil"><span class="avatar" id="perfil-avatar" aria-hidden="true">H</span><span>Olá, <strong id="perfil-nome"></strong></span><button class="btn" id="perfil-atualizar" type="button" hidden></button><button class="btn" id="b-roadmap" type="button">Roadmap</button><button class="btn" id="perfil-sair" type="button">Trocar nome</button></div></header>
+  <header class="entrada-topo"><strong class="entrada-marca" id="entrada-marca">Workspaces</strong><div class="perfil"><span class="avatar" id="perfil-avatar" aria-hidden="true">H</span><span>Olá, <strong id="perfil-nome"></strong></span><button class="btn" id="perfil-atualizar" type="button" hidden></button><button class="btn" id="b-pessoas" type="button" aria-haspopup="dialog" hidden>Pessoas</button><button class="btn" id="b-acompanhar" type="button" aria-haspopup="dialog" hidden>Acompanhar</button><button class="btn" id="b-chave" type="button" aria-haspopup="dialog" hidden>Minha chave</button><button class="btn" id="b-roadmap" type="button">Roadmap</button><button class="btn" id="perfil-sair" type="button">Trocar nome</button></div></header>
   <h1 id="entrada-titulo">Seus workspaces</h1><p id="entrada-descricao">Escolha um workspace para continuar.</p>
   <div class="entrada-acoes"><button class="btn" id="entrada-voltar" type="button" hidden>← Workspaces</button><button class="btn cheio" id="entrada-novo" type="button" hidden>+ Novo blueprint</button></div>
   <p id="entrada-status" role="status"></p><div class="blueprints-grade" id="entrada-blueprints"></div>
@@ -60,6 +68,7 @@
     <button class="btn so-blueprint" id="b-fechar" type="button">Recolher tudo</button>
     <button class="btn" id="b-tela" type="button">⛶ Tela cheia</button>
     <button class="btn" id="b-ia" type="button" aria-haspopup="dialog">✦ Planejar</button>
+    <button class="btn" id="b-pessoas-folha" type="button" aria-haspopup="dialog" hidden>Pessoas</button>
     <button class="btn so-blueprint" id="b-apresentar" type="button" aria-haspopup="dialog">Apresentar</button>
   </div>
   <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button><button class="btn mini" id="periodo-andamento" type="button" aria-pressed="false">Em andamento · <span id="periodo-andamento-n">0</span></button></div></div>
@@ -141,6 +150,11 @@
   <p class="cu-corpo" id="cu-corpo"></p>
 </dialog>
 
+<dialog id="equipe" aria-labelledby="equipe-titulo">
+  <div class="cu-topo"><h3 id="equipe-titulo">Equipe</h3><button class="btn" id="equipe-fechar" type="button">Fechar</button></div>
+  <div class="eq-corpo" id="equipe-corpo"></div>
+</dialog>
+
 <section id="proto-tela" role="dialog" aria-modal="true" aria-label="Protótipo da ação" hidden>
   <header>
     <div class="tit"><span id="proto-acao">Protótipo</span><b id="proto-titulo"></b></div>
@@ -209,6 +223,8 @@
 <script src="/web/js/apresentacao-figuras.js"></script>
 <script src="/web/js/apresentacao-exportar.js"></script>
 <script src="/web/js/apresentacao.js"></script>
+<script src="/web/js/sessao.js"></script>
+<script src="/web/js/convite.js"></script>
 <script src="/web/js/inicio.js"></script>
 </body>
 </html>

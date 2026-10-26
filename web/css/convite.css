@@ -1,0 +1,10 @@
+/* entrada pelo link de convite (modo hospedado): reaproveita o desenho da tela de login (.login, .login-folha) no papel de plotagem azul */
+body.na-convite{background:radial-gradient(ellipse at 45% 35%,#14509b55,transparent 70%),linear-gradient(#ffffff12 1px,transparent 1px) 0 0/60px 60px,linear-gradient(90deg,#ffffff12 1px,transparent 1px) 0 0/60px 60px,linear-gradient(#ffffff06 1px,transparent 1px) 0 0/12px 12px,linear-gradient(90deg,#ffffff06 1px,transparent 1px) 0 0/12px 12px,#0b3268}
+body.na-convite>:not(#convite){display:none!important}
+#convite-arte{min-height:245px;display:grid;place-items:center}#convite-arte svg{width:100%;height:auto;max-height:280px}
+.convite-papel{border-left:2px solid var(--ink);padding:8px 0 8px 12px;color:var(--ink)!important}
+#convite-campos[hidden],#convite-papel[hidden]{display:none}
+#convite-erro{min-height:1.6em;color:var(--erro)}
+@media(max-width:650px){#convite-arte{min-height:130px}#convite-arte svg{max-height:150px}}
+/* modo hospedado: quem só lê (supervisor, visitante) não vê os pontos de entrada de edição; o servidor recusa de qualquer jeito */
+body.so-leitura #b-ia,body.so-leitura #entrada-novo,body.so-leitura [data-adicionar-workspace]{display:none!important}
