@@ -117,30 +117,26 @@ fn interpretar_status(status: u16, texto: &str) -> Option<bool> {
 }
 
 fn tem_linha_blueprint(cwd: &Path) -> bool {
-    cwd.ancestors().any(|pasta| {
-        ["CLAUDE.md", "AGENTS.md"].iter().any(|nome| {
-            fs::read_to_string(pasta.join(nome))
-                .is_ok_and(|texto| texto.lines().any(linha_blueprint_valida))
-        })
+    blueprint_da_pasta(cwd).is_some()
+}
+
+/// Os ids da linha `Blueprint: workspace_id …, blueprint_id …` do CLAUDE.md/AGENTS.md da pasta ou de uma pasta acima (o `blueprint hook --equipe`
+/// do convidado também usa: o app remoto não conhece as pastas desta máquina).
+pub(crate) fn blueprint_da_pasta(cwd: &Path) -> Option<(String, String)> {
+    cwd.ancestors().find_map(|pasta| {
+        ["CLAUDE.md", "AGENTS.md"].iter().find_map(|nome| fs::read_to_string(pasta.join(nome)).ok()?.lines().find_map(ids_da_linha))
     })
 }
 
-fn linha_blueprint_valida(linha: &str) -> bool {
-    let Some(resto) = linha.strip_prefix("Blueprint: workspace_id `") else {
-        return false;
-    };
-    let Some((workspace, resto)) = resto.split_once("`, blueprint_id `") else {
-        return false;
-    };
-    let Some((blueprint, _)) = resto.split_once('`') else {
-        return false;
-    };
-    [workspace, blueprint].iter().all(|id| {
-        !id.is_empty()
-            && id
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
-    })
+/// Aceita os ids com ou sem crase (`Blueprint: workspace_id `a`, blueprint_id `b`` ou `Blueprint: workspace_id a, blueprint_id b`).
+fn ids_da_linha(linha: &str) -> Option<(String, String)> {
+    let resto = linha.trim().strip_prefix("Blueprint: workspace_id ")?;
+    let (workspace, resto) = resto.split_once(", blueprint_id ")?;
+    let limpo = |s: &str| s.trim().trim_matches('`').to_string();
+    let blueprint = resto.trim_start().strip_prefix('`').map_or_else(|| resto.split([',', ' ', '.']).next().unwrap_or(""), |r| r.split('`').next().unwrap_or(""));
+    let (workspace, blueprint) = (limpo(workspace), limpo(blueprint));
+    let valido = |id: &str| !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
+    (valido(&workspace) && valido(&blueprint)).then_some((workspace, blueprint))
 }
 
 fn argumentos(plugin: &Path, exe: &Path, ligado: bool, extras: &[String]) -> Vec<OsString> {
@@ -196,10 +192,10 @@ mod tests {
 
     #[test]
     fn exige_ids_reais_na_linha_de_vinculo() {
-        assert!(linha_blueprint_valida(
-            "Blueprint: workspace_id `sm`, blueprint_id `ia-sm` (MCP `blueprint`)."
-        ));
-        assert!(!linha_blueprint_valida("Blueprint: workspace_id `<workspace_id>`, blueprint_id `<blueprint_id>` (MCP `blueprint`)."));
+        assert_eq!(ids_da_linha("Blueprint: workspace_id `sm`, blueprint_id `ia-sm` (MCP `blueprint`)."), Some(("sm".into(), "ia-sm".into())));
+        assert!(ids_da_linha("Blueprint: workspace_id `<workspace_id>`, blueprint_id `<blueprint_id>` (MCP `blueprint`).").is_none());
+        assert_eq!(ids_da_linha("Blueprint: workspace_id yuzgakl, blueprint_id mn9su6k."), Some(("yuzgakl".into(), "mn9su6k".into())), "sem crase também");
+        assert_eq!(ids_da_linha("Blueprint: workspace_id …, blueprint_id …"), None, "o modelo da linha não vale");
     }
 
     #[test]

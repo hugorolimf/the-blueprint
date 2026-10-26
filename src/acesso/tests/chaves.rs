@@ -2,14 +2,14 @@
 use super::*;
 
 /// Um pedido do agente: sem cookie e sem Origin, com a chave.
-fn do_agente(metodo: &str, url: &str, chave: &str, corpo: Option<Value>) -> Pedido {
+pub(super) fn do_agente(metodo: &str, url: &str, chave: &str, corpo: Option<Value>) -> Pedido {
     let mut p = pedido(metodo, url, None, corpo);
     p.cabecalhos.retain(|(k, _)| k != "Origin");
     p.cabecalhos.push(("Authorization".into(), format!("Bearer {chave}")));
     p
 }
 
-fn gerar(e: &Estado, cookie: &str) -> Value {
+pub(super) fn gerar(e: &Estado, cookie: &str) -> Value {
     let r = despachar(e, &pedido("POST", "/api/chave", Some(cookie), Some(json!({}))));
     assert_eq!(r.status, 201);
     json_de(&r)

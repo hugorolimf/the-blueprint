@@ -1,6 +1,6 @@
 //! Linha de comando. A janela nativa (sem argumentos) entra na ação 3.5.
 mod atualizar;
-mod claude;
+pub(crate) mod claude;
 mod completar;
 use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
 use crate::http::{self, Config};
@@ -19,11 +19,14 @@ pub(crate) const USO: &str = concat!(
     "  blueprint exportar <banco.db> <saida.json>  grava o banco como data.json\n",
     "  blueprint exportar <banco.db> <pasta> --markdown  grava um índice e um arquivo Markdown por ação de cada blueprint (só leitura)\n",
     "  blueprint hook sessao|statusline|status|notificacao  comandos do Claude Code registrados pelo plugin\n",
+    "  blueprint hook sessao|edicao|subagente|parada|fim --equipe  os hooks do plugin do convidado (blueprint conectar)\n",
     "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
     "  blueprint atualizar [--verificar|--instalar]  procura e baixa a versão nova (--verificar só consulta; --instalar instala a baixada: é o seu clique em Atualizar)\n",
     "  blueprint completions <powershell|bash>    imprime o script que completa os comandos no terminal\n",
     "  blueprint --version                       mostra a versão\n",
-    "  blueprint registrar [--remover]           instala (ou remove) o plugin no Claude Code (skill, agente e MCP) e o MCP no Codex; o instalador faz isto",
+    "  blueprint registrar [--remover]           instala (ou remove) o plugin no Claude Code (skill, agente e MCP) e o MCP no Codex; o instalador faz isto\n",
+    "  blueprint conectar <endereço> <chave>      liga o seu Claude (e o Codex) a um workspace compartilhado com você; rode de novo se o endereço mudar\n",
+    "  blueprint conectar --remover              desfaz o conectar",
 );
 
 /// Devolve o código de saída do processo.
@@ -33,6 +36,24 @@ pub fn executar(args: Vec<String>) -> i32 {
         [] => return abrir_janela(false),
         ["dev"] => return abrir_janela(true),
         ["--mcp"] => return crate::mcp::stdio::executar(),
+        ["--mcp", "--equipe"] => {
+            crate::mcp::equipe::ligar();
+            return crate::mcp::stdio::executar();
+        }
+        ["hook", evento, "--equipe"] => {
+            crate::mcp::equipe::ligar();
+            return crate::hook::executar(evento);
+        }
+        ["conectar", "--remover"] => {
+            let (texto, codigo) = crate::registrar::conectar::remover();
+            println!("{texto}");
+            return codigo;
+        }
+        ["conectar", endereco, chave] => {
+            let (texto, codigo) = crate::registrar::conectar::executar(endereco, chave);
+            println!("{texto}");
+            return codigo;
+        }
         ["watch"] => return crate::watch::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
         ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),

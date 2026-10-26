@@ -1,6 +1,7 @@
 //! Testes do acesso: um servidor hospedado sem socket (o despacho de verdade, com pedidos montados como o proxy os entrega).
 mod chaves;
 mod convites;
+mod hooks;
 mod hospedado;
 mod limite;
 mod papeis;

@@ -30,6 +30,14 @@ pub(super) fn travado<T>(m: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
 
 /// Consulta o vínculo atual: trocar ou remover uma pasta vale também para sessões já abertas.
 pub(super) fn alvo(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Option<(String, String)>> {
+    alvo_de(mcp, dados, corpo, &Contexto::local())
+}
+
+/// O membro (modo hospedado, convidado) diz o blueprint no corpo; a tabela de pastas e as sessões são só do usuário local.
+fn alvo_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Option<(String, String)>> {
+    if !ctx.local {
+        return Ok(super::membro::alvo(corpo, ctx));
+    }
     let cwd = texto(corpo, "cwd");
     if caminho_valido(cwd) {
         return Ok(travado(dados).blueprint_da_pasta(&Contexto::local(), cwd)?);
@@ -76,16 +84,27 @@ fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize) -> Str
 }
 
 /// `hook/sessao`: o SessionStart pergunta de qual blueprint é a pasta. Devolve o texto para o contexto do agente.
+#[cfg(test)]
 pub fn sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
-    let Some((ws, bp)) = alvo(mcp, dados, corpo)? else {
+    sessao_de(mcp, dados, corpo, &Contexto::local())
+}
+
+/// `hook/sessao` com o contexto de quem chamou. Do membro: sem aviso de pasta solta e sem entrar na lista de sessões (Iniciar é só local).
+pub fn sessao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Value> {
+    let Some((ws, bp)) = alvo_de(mcp, dados, corpo, ctx)? else {
+        if !ctx.local {
+            return Ok(json!({"vinculado": false}));
+        }
         let cwd = texto(corpo, "cwd");
         if caminho_valido(cwd) && travado(&mcp.pastas_avisadas).insert(cwd.replace('\\', "/").trim_end_matches('/').to_lowercase()) {
             mcp.empurra(json!({"tipo": "pasta-sem-blueprint", "cwd": cwd}).as_object().unwrap().clone());
         }
         return Ok(json!({"vinculado": false, "contexto": crate::idioma::ou("The Blueprint: this folder is not linked to any blueprint. If it belongs to one, call listar_blueprints, confirm with the user which one and call vincular_pasta; if not, ignore this.", "The Blueprint: esta pasta não está ligada a nenhum blueprint. Se for de um, chame listar_blueprints, confirme com o usuário qual é e chame vincular_pasta; se não for, ignore.")}));
     };
-    mcp.lembrar_sessao(texto(corpo, "session_id"), &ws, &bp);
-    mcp.abrir_sessao(texto(corpo, "session_id"), texto(corpo, "cwd"), &ws, &bp);
+    if ctx.local {
+        mcp.lembrar_sessao(texto(corpo, "session_id"), &ws, &bp);
+        mcp.abrir_sessao(texto(corpo, "session_id"), texto(corpo, "cwd"), &ws, &bp);
+    }
     let mut d = travado(dados);
     let tudo = d.ler_tudo(&Contexto::local())?;
     let n = acoes::numero_do_blueprint(tudo, &ws, &bp);
@@ -109,7 +128,12 @@ fn onde(arquivo: &str, cwd: &str) -> Option<String> {
 /// Quem fez a chamada do hook: dentro de um subagente o Claude Code manda `agent_id` e `agent_type` (a sessão principal não manda). O subagente vira um agente
 /// próprio, "tipo + 4 primeiros caracteres do id" (até 40 caracteres), com o papel pelo tipo (Explore = explorador, *review* = revisor, o resto = construtor);
 /// a sessão principal continua sendo "Claude". Devolve (nome, papel, é subagente).
-fn identidade(corpo: &Value) -> (String, &'static str, bool) {
+fn identidade(corpo: &Value, ctx: &Contexto) -> (String, &'static str, bool) {
+    let (nome, papel, sub) = identidade_local(corpo);
+    (super::membro::com_membro(&nome, ctx), papel, sub)
+}
+
+fn identidade_local(corpo: &Value) -> (String, &'static str, bool) {
     let id: String = texto(corpo, "agent_id").chars().filter(|c| c.is_ascii_alphanumeric()).take(4).collect();
     if id.is_empty() {
         return (AGENTE.to_string(), "construtor", false);
@@ -124,7 +148,8 @@ fn identidade(corpo: &Value) -> (String, &'static str, bool) {
 /// O evento de progresso de `nome`. Um aviso sem plano limpa o plano do agente, então herda a ação e o plano do último aviso dele neste blueprint (senão a figura
 /// sai do plano a cada edição). Um subagente novo não tem aviso anterior: herda o plano do Claude principal se o aviso dele for recente e não concluído
 /// (assim a figura já nasce ao lado do plano); sem isso, fica no cabeçalho do blueprint.
-fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str, estado: &str) -> Value {
+fn evento_de(mcp: &Mcp, ctx: &Contexto, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str, estado: &str) -> Value {
+    let principal = super::membro::com_membro(AGENTE, ctx);
     let mut evento = json!({"tipo": "progresso", "texto": texto, "workspaceId": ws, "blueprintId": bp, "agente": nome, "papel": papel, "estado": estado});
     let agentes = mcp.agentes();
     let anterior = agentes["agentes"].as_array().and_then(|l| l.iter().find(|a| a["agente"] == nome && a["blueprintId"] == bp));
@@ -133,8 +158,8 @@ fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str
             evento[campo] = v.clone();
         }
     }
-    if anterior.is_none() && nome != AGENTE {
-        if let Some((acao, plano)) = mcp.plano_de(AGENTE, bp) {
+    if anterior.is_none() && nome != principal {
+        if let Some((acao, plano)) = mcp.plano_de(&principal, bp) {
             (evento["acaoId"], evento["planoId"]) = (json!(acao), json!(plano));
         }
     }
@@ -143,11 +168,16 @@ fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str
 
 /// `hook/edicao`: o PostToolUse de Edit e Write vira `registrar_progresso` (o robô acompanha o arquivo), em nome do subagente se a edição veio de um.
 /// Sessão sem blueprint: não faz nada.
+#[cfg(test)]
 pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
-    let Some((ws, bp)) = alvo(mcp, dados, corpo)? else { return Ok(json!({})) };
+    edicao_de(mcp, dados, corpo, &Contexto::local())
+}
+
+pub fn edicao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Value> {
+    let Some((ws, bp)) = alvo_de(mcp, dados, corpo, ctx)? else { return Ok(json!({})) };
     let Some(arquivo) = corpo["tool_input"]["file_path"].as_str().and_then(|f| onde(f, texto(corpo, "cwd"))) else { return Ok(json!({})) };
-    let (nome, papel, _) = identidade(corpo);
-    let mut evento = evento_de(mcp, &nome, papel, &ws, &bp, &crate::tr!("Editing {arquivo}", "Editando {arquivo}"), "escrevendo");
+    let (nome, papel, _) = identidade(corpo, ctx);
+    let mut evento = evento_de(mcp, ctx, &nome, papel, &ws, &bp, &crate::tr!("Editing {arquivo}", "Editando {arquivo}"), "escrevendo");
     evento["onde"] = json!([arquivo]);
     if evento.get("planoId").is_none() {
         super::lembrete::editou_sem_plano(mcp, texto(corpo, "session_id"), &ws, &bp);
@@ -159,21 +189,26 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
 /// `hook/subagente`: SubagentStart põe o subagente na folha (lendo, no cabeçalho do blueprint) e SubagentStop o marca concluído com a última mensagem dele
 /// (`last_assistant_message`, até 2000 caracteres) como a mensagem de conclusão que o usuário lê ao clicar. Só indicador; sessão sem blueprint, ou evento
 /// que não veio de um subagente: não faz nada.
+#[cfg(test)]
 pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
-    let (nome, papel, sub) = identidade(corpo);
+    subagente_de(mcp, dados, corpo, &Contexto::local())
+}
+
+pub fn subagente_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Value> {
+    let (nome, papel, sub) = identidade(corpo, ctx);
     let fim = match texto(corpo, "hook_event_name") {
         "SubagentStart" => false,
         "SubagentStop" => true,
         _ => return Ok(json!({})),
     };
-    let Some((ws, bp)) = alvo(mcp, dados, corpo)?.filter(|_| sub) else { return Ok(json!({})) };
+    let Some((ws, bp)) = alvo_de(mcp, dados, corpo, ctx)?.filter(|_| sub) else { return Ok(json!({})) };
     let mensagem = texto(corpo, "last_assistant_message").trim();
     let (frase, estado) = if !fim {
         (format!("{nome} começou"), "lendo")
     } else {
         (if mensagem.is_empty() { crate::tr!("{nome} finished", "{nome} terminou") } else { mensagem.to_string() }, "concluido")
     };
-    let evento = evento_de(mcp, &nome, papel, &ws, &bp, &frase, estado);
+    let evento = evento_de(mcp, ctx, &nome, papel, &ws, &bp, &frase, estado);
     super::linha_do_tempo::evento(mcp, dados, &evento)?;
     Ok(json!({}))
 }
