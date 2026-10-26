@@ -57,3 +57,23 @@ Medido na seção (7) de `node scripts/medir-animacoes.mjs` (Edge headless, exe 
 
 - A maior parte das animações do pico é a de `desenharBarras` (barras da ação, já existente antes da ação 1.13); o deslize (`MAX_MOVIDOS`, 220) e a entrada (60) têm teto próprio e só valem para o que está na janela.
 - Com movimento reduzido ou aba oculta nenhuma animação é criada (`scripts/expandir-e2e.mjs` confere).
+
+## Terminal do app (ação "Claude Code dentro do app", 2026-10-26)
+
+Medido em 2026-10-26, Windows 11, `target/release/blueprint.exe`, com um programa falso no pseudoconsole (`cmd.exe`; o `claude` real não entra nas
+medições para não gastar tokens). Reproduzir: `node scripts/terminal-e2e.mjs target/release/blueprint.exe` (atraso, CPU da página, memória do
+servidor) e a contagem de processos filhos do servidor com duas sessões abertas. Decisão e peças em `docs/terminal-no-app.md`.
+
+| Métrica | Meta | Antes (main, da08b90) | Com o terminal | Atende |
+| --- | --- | --- | --- | --- |
+| Binário | < 5 MB | 3.360.256 B (3,20 MiB) | 3.709.952 B (3,54 MiB): +341 KB | sim |
+| Peso do xterm.js embutido (xterm.js + addon-fit + css) | — | — | 296 KB (71 KB com gzip), baixado só ao abrir o terminal | — |
+| JS e CSS do painel carregados com a página (terminal*.js, terminal.css, en-terminal.js) | — | — | 26 KB (10 KB com gzip) | — |
+| Memória privada do servidor por sessão | — | — | +0,1 MB (histórico de até 256 KB e duas threads paradas) | — |
+| Processo de console por sessão (conhost do pseudoconsole) | — | — | 1,5 MB, fora o programa (o claude custa o mesmo que no terminal externo) | — |
+| CPU do servidor em 10 s de repouso com 2 sessões abertas | 0% | — | 0,0 ms | sim |
+| CPU da página em 5 s de repouso com o terminal aberto (Edge sem janela) | 0% de trabalho do terminal | 86 a 117 ms sem o terminal (a folha e as figuras) | 14 a 16 ms com o painel aberto | sim (nenhum relógio do terminal: cursor fixo, SSE parado) |
+| Eco de tecla (do evento de entrada à letra na tela: POST, pseudoconsole, cmd, SSE, desenho do xterm) | — | — | p50 2,3 a 2,8 ms, p95 18,7 a 20,3 ms (n=20, duas execuções) | — |
+
+Leitura: o p95 de ~20 ms é o quadro de desenho do xterm (ele desenha no próximo `requestAnimationFrame`); o caminho servidor + pseudoconsole
+fica abaixo de 3 ms. Com o painel escondido não há tela nem conexão; a sessão segue no servidor sem gastar CPU.

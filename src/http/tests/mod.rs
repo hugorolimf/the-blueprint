@@ -4,6 +4,7 @@ mod atualizacao;
 mod mcp_rotas;
 mod servidor;
 mod estaticos_rotas;
+mod terminal_rotas;
 
 use super::estaticos::Assets;
 use super::pedido::{Pedido, Resposta};
@@ -31,7 +32,7 @@ pub fn estado(rede: bool) -> Estado {
     let prototipos = std::env::temp_dir().join(format!("blueprint-http-{}-{}", std::process::id(), CONTADOR.fetch_add(1, Ordering::SeqCst)));
     let mut config = Config::do_ambiente();
     (config.rede_mcp, config.prototipos, config.assets_dir) = (rede, prototipos.clone(), None);
-    Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: crate::atualizador::Atualizador::do_ambiente(&config.banco), assets: Assets::novo(None), mcp: Mcp::novo("127.0.0.1", rede, "C:/app/blueprint.exe", "http://127.0.0.1:3000", prototipos), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados: crate::http::estado::versao_inicial(), config }
+    Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: crate::atualizador::Atualizador::do_ambiente(&config.banco), assets: Assets::novo(None), mcp: Mcp::novo("127.0.0.1", rede, "C:/app/blueprint.exe", "http://127.0.0.1:3000", prototipos), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados: crate::http::estado::versao_inicial(), terminais: crate::terminal::Terminais::novo(), config }
 }
 
 /// Um pedido vindo do próprio computador (Host em loopback), com os cabeçalhos extras que o teste quiser.

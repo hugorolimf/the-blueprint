@@ -19,7 +19,7 @@ export function terminalFalso(dir) {
   return { bin, chamadas };
 }
 
-// Liga `<exe> serve` com os dados de exemplo e o `wt` falso na frente do PATH. `env` acrescenta variáveis (ex.: MCP_REDE=1). Devolve { url, porta, parar }.
+// Liga `<exe> serve` com os dados de exemplo e o `wt` falso na frente do PATH. `env` acrescenta variáveis (ex.: MCP_REDE=1). Devolve { url, porta, pid, parar }.
 export async function sobeServidor(exe, dir, falso, env = {}) {
   const porta = await portaLivre();
   copyFileSync(join(raiz, "data.exemplo.json"), join(dir, "data.json"));
@@ -29,5 +29,5 @@ export async function sobeServidor(exe, dir, falso, env = {}) {
   });
   const url = `http://127.0.0.1:${porta}`;
   for (let i = 0; i < 100; i++) { try { await fetch(url + "/api/dados"); break; } catch { await dormir(50); } }
-  return { url, porta, parar: () => { try { servidor.kill(); } catch {} } };
+  return { url, porta, pid: servidor.pid, parar: () => { try { servidor.kill(); } catch {} } };
 }

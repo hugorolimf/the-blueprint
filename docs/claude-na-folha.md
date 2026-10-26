@@ -67,6 +67,8 @@ A decisão de 2026-10-21 ("o agente é só indicador, sem clique para mandar tra
 
 ## Escolher a sessão ao iniciar a ação (contrato aprovado em 2026-10-23; implementado, ainda sem teste com um Claude real)
 
+Atualização de 2026-10-26: o diálogo ganhou **Terminal do app** como padrão (a sessão abre numa aba do painel do app, por `POST /api/terminal/iniciar`; veja `docs/terminal-no-app.md`); **Nova sessão** continua abrindo o terminal externo.
+
 Pedido do usuário em 2026-10-23: no diálogo "Iniciar a ação N?" aparecer **Nova sessão** (padrão) ou as **sessões do Claude já abertas** naquela pasta; escolhida uma, o prompt da ação vai para ela. Isso **reabre de novo** o "o Claude não recebe ordens": a exceção vale só para o clique confirmado nesse diálogo.
 
 - **Quem entrega: o canal do MCP, não o hook nem o mod.** O hook só *registra* as sessões (SessionStart/SessionEnd); o mod do terminal é indicador (a API de mods não tem chamada para escrever um prompt numa sessão aberta). O canal (`notifications/claude/channel`, `docs/monitor-e-channels.md`) já foi validado em sessão interativa real em 2026-10-22.

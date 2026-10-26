@@ -8,7 +8,7 @@ mod conversa;
 mod eventos;
 mod fila;
 mod hooks;
-mod iniciar;
+pub(crate) mod iniciar;
 mod lembrete;
 mod linha_do_tempo;
 mod registro;

@@ -14,4 +14,5 @@ pub mod mcp;
 pub mod blueprint;
 pub mod registrar;
 pub mod tempo;
+pub mod terminal;
 pub mod watch;
