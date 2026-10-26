@@ -6,7 +6,7 @@ pub mod atividade;
 pub(crate) mod cliente;
 mod conversa;
 mod eventos;
-mod fila;
+pub(crate) mod fila;
 mod hooks;
 pub(crate) mod iniciar;
 mod lembrete;

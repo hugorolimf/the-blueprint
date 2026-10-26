@@ -1,7 +1,7 @@
 //! As rotas /api/mcp/* (porte de `rota` do mcp.mjs): só esta máquina, JSON em todo POST, e erros JSON como `{ "erro", "codigo", "params"? }` (`ErroHttp::json`), o texto no idioma do pedido.
 use super::acoes::{self, id_prototipo_valido};
 use super::hooks;
-use super::permissao::{permitido, so_loopback};
+use super::permissao::{permitido, pode_gravar_item, pode_ler_item, so_loopback};
 use super::{FluxoSse, Mcp};
 use crate::contexto::Contexto;
 use crate::dados::Dados;
@@ -20,49 +20,67 @@ pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
 }
 
 /// Com o Contexto resolvido no despacho.
-pub fn rota_com(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, _ctx: &Contexto) -> Resposta {
-    if !permitido(mcp, pedido) {
-        return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
-    }
+pub fn rota_com(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let recurso = pedido.caminho.trim_start_matches("/api/mcp/");
-    if (recurso == "iniciar" || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
-        return Resposta::texto(403, "text/plain", crate::tr!("starting an action only works on this machine (not even MCP_REDE=1 opens it)", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)"));
+    if ctx.local {
+        if !permitido(mcp, pedido) {
+            return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
+        }
+        if (recurso == "iniciar" || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
+            return Resposta::texto(403, "text/plain", crate::tr!("starting an action only works on this machine (not even MCP_REDE=1 opens it)", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)"));
+        }
+    } else if let Err(e) = exige_hospedado(dados, pedido, recurso, ctx) {
+        return e.resposta();
     }
-    match executar(mcp, dados, pedido, recurso) {
-        Ok(resposta) => resposta,
-        Err(e) => e.resposta(),
-    }
+    // modo hospedado: cada item que esta chamada puser na fila leva quem mandou
+    let autor = (!ctx.local).then(|| json!({"id": ctx.usuario, "nome": ctx.nome}));
+    super::fila::com_autor(autor, || executar(mcp, dados, pedido, recurso, ctx)).unwrap_or_else(|e| e.resposta())
+}
+
+/// O papel alcança o recurso? (o corpo do POST traz o alvo; JSON torto segue para `executar`, que responde o erro de sempre)
+fn exige_hospedado(dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx: &Contexto) -> Result<(), ErroHttp> {
+    let corpo: Value = serde_json::from_slice(&pedido.corpo).unwrap_or(Value::Null);
+    let mut d = dados.lock().unwrap_or_else(|e| e.into_inner());
+    super::permissao::exige_hospedado(ctx, recurso, pedido, &corpo, d.ler_tudo(&Contexto::local())?)
 }
 
 /// Reenvia um registro guardado com o app fechado (`pendentes.rs`) à mesma rota POST que o agente usaria ao vivo, com a mesma validação. Não confere Host nem
 /// Origin: quem escreveu o arquivo já tinha acesso à pasta de dados do usuário.
 pub fn reenviar(mcp: &Mcp, dados: &Mutex<Dados>, recurso: &str, corpo: &Value) -> (u16, Value) {
     let pedido = Pedido::novo("POST", &format!("/api/mcp/{recurso}"), vec![("content-type".into(), "application/json".into())], corpo.to_string().into_bytes());
-    let resposta = executar(mcp, dados, &pedido, recurso).unwrap_or_else(|e| e.resposta());
+    let resposta = executar(mcp, dados, &pedido, recurso, &Contexto::local()).unwrap_or_else(|e| e.resposta());
     (resposta.status, serde_json::from_slice(resposta.bytes()).unwrap_or(Value::Null))
 }
 
-/// Roda `f` com o data.json inteiro em mãos (a cópia em memória da camada de dados).
-fn com_dados<T>(dados: &Mutex<Dados>, f: impl FnOnce(&Value) -> Result<T, ErroHttp>) -> Result<T, ErroHttp> {
+/// Roda `f` com o data.json em mãos (a cópia em memória da camada de dados), só com o que `ctx` lê (`acesso::filtro`).
+fn com_dados<T>(dados: &Mutex<Dados>, ctx: &Contexto, f: impl FnOnce(&Value) -> Result<T, ErroHttp>) -> Result<T, ErroHttp> {
     let mut d = dados.lock().unwrap_or_else(|e| e.into_inner());
-    f(d.ler_tudo(&Contexto::local())?)
+    f(&crate::acesso::filtro::filtrar(d.ler_tudo(&Contexto::local())?, ctx))
 }
 
-fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> Result<Resposta, ErroHttp> {
+fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx: &Contexto) -> Result<Resposta, ErroHttp> {
     if pedido.metodo == "GET" {
         return Ok(match recurso {
-            "blueprints" => Resposta::json(200, &com_dados(dados, |d| Ok(acoes::blueprints(d)))?),
+            "blueprints" => Resposta::json(200, &com_dados(dados, ctx, |d| Ok(acoes::blueprints(d)))?),
             "blueprint" => {
                 let p = |nome: &str| pedido.parametro(nome).unwrap_or_default();
-                Resposta::json(200, &com_dados(dados, |d| acoes::blueprint(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref()))?)
+                Resposta::json(200, &com_dados(dados, ctx, |d| acoes::blueprint(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref()))?)
             }
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
-            "fila" => Resposta::json(200, &json!({"itens": mcp.itens()})),
+            "fila" => Resposta::json(200, &json!({"itens": mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i)).collect::<Vec<_>>()})),
             "sessoes" => Resposta::json(200, &mcp.sessoes_do_blueprint(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default())), // as sessões do Claude abertas no blueprint
             "conversa" => Resposta::json(200, &mcp.conversa(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default(), &pedido.parametro("acao").unwrap_or_default())), // a conversa da ação (só memória)
-            "agentes" => Resposta::json(200, &mcp.agentes()), // quem está trabalhando agora (presença, só memória)
+            "agentes" => {
+                // quem está trabalhando agora (presença, só memória); no modo hospedado, só nos blueprints que o papel lê
+                let mut a = mcp.agentes();
+                if let Some(lista) = a["agentes"].as_array_mut().filter(|_| !ctx.local) {
+                    lista.retain(|ag| pode_ler_item(ctx, ag));
+                }
+                Resposta::json(200, &a)
+            }
             "linha-do-tempo" => Resposta::json(200, &super::linha_do_tempo::listar(dados, pedido)?), // o que o agente fez na ação, do mais recente ao mais antigo
-            "info" => Resposta::json(200, &json!({"arquivo": mcp.arquivo, "url": mcp.url, "exe": true})), // a página mostra como registrar o servidor MCP no agente
+            // a página mostra como registrar o servidor MCP no agente (no modo hospedado, sem o caminho do servidor: a tela da chave dá os comandos)
+            "info" => Resposta::json(200, &json!({"arquivo": if ctx.local { mcp.arquivo.as_str() } else { "blueprint" }, "url": mcp.url, "exe": true})),
             "eventos" => {
                 let mut fluxo = FluxoSse::novo(mcp.assinar());
                 // `?canal=&cwd=`: a conexão é de uma sessão com o canal ligado e ela é destinatária enquanto durar
@@ -88,11 +106,11 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
     }
     Ok(match recurso {
         "proposta" => {
-            let (status, resposta) = com_dados(dados, |d| acoes::proposta(mcp, d, &corpo))?;
+            let (status, resposta) = com_dados(dados, ctx, |d| acoes::proposta(mcp, d, &corpo))?;
             Resposta::json(status, &resposta)
         }
         "registro" => {
-            let (status, resposta) = com_dados(dados, |d| super::registro::registro(mcp, d, &corpo))?;
+            let (status, resposta) = com_dados(dados, ctx, |d| super::registro::registro(mcp, d, &corpo))?;
             if status == 200 {
                 super::lembrete::registrado(mcp, &hooks::texto(&corpo, "workspaceId"), &hooks::texto(&corpo, "blueprintId"));
             }
@@ -107,8 +125,8 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             Resposta::json(200, &r)
         }
         "hook/parada" => Resposta::json(200, &super::lembrete::parada(mcp, &corpo)), // o Stop do turno (ver lembrete.rs)
-        "aviso" => Resposta::json(200, &com_dados(dados, |d| super::eventos::aviso(mcp, d, &corpo))?),
-        "prototipo" => Resposta::json(200, &com_dados(dados, |d| acoes::prototipo(mcp, d, &corpo))?),
+        "aviso" => Resposta::json(200, &com_dados(dados, ctx, |d| super::eventos::aviso(mcp, d, &corpo))?),
+        "prototipo" => Resposta::json(200, &com_dados(dados, ctx, |d| acoes::prototipo(mcp, d, &corpo))?),
         // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
         "hook/sessao" => Resposta::json(200, &hooks::sessao(mcp, dados, &corpo)?),
         "hook/fim" => Resposta::json(200, &super::sessoes::fim(mcp, &corpo)), // o SessionEnd tira a sessão da lista
@@ -135,10 +153,16 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             Resposta::json(200, &json!({"ok": true}))
         }
         "fila/ack" => {
-            let ids: HashSet<i64> = corpo.get("ids").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_i64).collect()).unwrap_or_default();
+            let mut ids: HashSet<i64> = corpo.get("ids").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_i64).collect()).unwrap_or_default();
+            if !ctx.local {
+                // aplicar ou descartar exige gravar no alvo de cada item
+                let gravaveis: HashSet<i64> = mcp.itens().iter().filter(|i| pode_gravar_item(ctx, i)).filter_map(|i| i["id"].as_i64()).collect();
+                ids.retain(|id| gravaveis.contains(id));
+            }
             mcp.ack(&ids);
-            corpo.get("propostas").and_then(Value::as_array).into_iter().flatten().for_each(|p| mcp.ack_proposta(p)); // propostas pela chave: ver `Fila::ack_proposta`
-            corpo.get("registros").and_then(Value::as_array).into_iter().flatten().for_each(|r| mcp.ack_registro(r)); // registros: a contagem e a chave são próprias
+            let do_ctx = |v: &&Value| ctx.local || pode_gravar_item(ctx, v);
+            corpo.get("propostas").and_then(Value::as_array).into_iter().flatten().filter(do_ctx).for_each(|p| mcp.ack_proposta(p)); // propostas pela chave: ver `Fila::ack_proposta`
+            corpo.get("registros").and_then(Value::as_array).into_iter().flatten().filter(do_ctx).for_each(|r| mcp.ack_registro(r)); // registros: a contagem e a chave são próprias
             Resposta::json(200, &json!({"ok": true}))
         }
         _ => nao_encontrado(),

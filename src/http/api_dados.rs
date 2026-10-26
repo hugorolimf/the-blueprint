@@ -18,6 +18,17 @@ fn versao_pedida(pedido: &Pedido) -> Option<u64> {
 
 pub fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     match pedido.metodo.as_str() {
+        // modo hospedado: cada um lê só o que o papel alcança (acesso::filtro), serializado por pedido; quem lê tudo usa a cópia de sempre
+        "GET" if !crate::acesso::filtro::le_tudo(ctx) => {
+            let mut dados = estado.dados.lock().unwrap_or_else(|e| e.into_inner());
+            let versao = estado.versao_dados.load(Ordering::SeqCst);
+            match dados.ler_tudo(ctx).map(|tudo| serde_json::to_vec(&crate::acesso::filtro::filtrar(tudo, ctx))) {
+                Ok(Ok(bytes)) => Resposta::texto(200, "application/json", bytes).com("x-dados-versao", &versao.to_string()),
+                _ => Resposta::texto(500, "text/plain", "erro"),
+            }
+        }
+        // o PUT troca o arquivo inteiro: com dados filtrados apagaria o que a pessoa não vê, então no modo hospedado é só do dono de todos
+        "PUT" if !crate::acesso::filtro::le_tudo(ctx) => Resposta::json(403, &json!({"erro": crate::tr!("save by changes (POST /api/mudancas); replacing everything is only for the server owner", "grave por mudanças (POST /api/mudancas); trocar tudo é só do dono do servidor"), "codigo": "use-mudancas"})),
         "GET" => {
             let mut guardado = estado.dados_json.lock().unwrap_or_else(|e| e.into_inner());
             if guardado.is_none() {

@@ -9,12 +9,22 @@ pub struct Pedido {
     pub consulta: String,
     pub cabecalhos: Vec<(String, String)>,
     pub corpo: Vec<u8>,
+    /// o endereço do par da conexão (o servidor preenche; vazio = desconhecido, e o modo hospedado não confia nele)
+    pub ip: String,
 }
 
 impl Pedido {
     pub fn novo(metodo: &str, url: &str, cabecalhos: Vec<(String, String)>, corpo: Vec<u8>) -> Pedido {
         let (caminho, consulta) = url.split_once('?').unwrap_or((url, ""));
-        Pedido { metodo: metodo.to_uppercase(), caminho: caminho.to_string(), consulta: consulta.to_string(), cabecalhos, corpo }
+        Pedido { metodo: metodo.to_uppercase(), caminho: caminho.to_string(), consulta: consulta.to_string(), cabecalhos, corpo, ip: String::new() }
+    }
+
+    /// O valor de um cookie (`Cookie: a=1; bp_sessao=...`).
+    pub fn cookie(&self, nome: &str) -> Option<&str> {
+        self.cabecalhos.iter().filter(|(k, _)| k.eq_ignore_ascii_case("cookie")).flat_map(|(_, v)| v.split(';')).find_map(|par| {
+            let (k, v) = par.trim().split_once('=')?;
+            (k == nome).then_some(v)
+        })
     }
 
     pub fn cabecalho(&self, nome: &str) -> Option<&str> {
@@ -110,10 +120,12 @@ pub struct ErroHttp {
 fn codigo_do_status(status: u16) -> &'static str {
     match status {
         400 => "invalido",
+        401 => "sem-sessao",
         403 => "proibido",
         404 => "nao-encontrado",
         409 => "conflito",
         413 => "grande-demais",
+        429 => "muitas-tentativas",
         _ => "interno",
     }
 }
@@ -153,7 +165,15 @@ impl From<crate::erro::Erro> for ErroHttp {
             Erro::Formato(m) => falha(400, m),
             Erro::NaoEncontrado(m) => falha(404, m),
             Erro::Proibido(m) => falha(403, m),
+            Erro::Http(e) => *e,
             outro => falha(500, outro.to_string()),
         }
+    }
+}
+
+/// `Dados::transacao` só conhece `Erro`: a regra de uma rota que precisa do próprio código (`ultimo-dono`, 404, 403) passa por aqui.
+impl From<ErroHttp> for crate::erro::Erro {
+    fn from(e: ErroHttp) -> Self {
+        crate::erro::Erro::Http(Box::new(e))
     }
 }

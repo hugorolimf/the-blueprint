@@ -6,6 +6,19 @@ use std::collections::{HashMap, HashSet};
 
 const FILA_MAX: usize = 200;
 
+thread_local! {
+    /// quem pôs o item (modo hospedado): `{id, nome}` do membro, valendo só durante a chamada da rota nesta thread
+    static AUTOR: std::cell::RefCell<Option<Value>> = const { std::cell::RefCell::new(None) };
+}
+
+/// Roda `f` com o autor dos itens que ela empurrar (None = app local: o item sai sem `autor`, como sempre).
+pub fn com_autor<T>(autor: Option<Value>, f: impl FnOnce() -> T) -> T {
+    let antes = AUTOR.with(|a| a.replace(autor));
+    let r = f();
+    AUTOR.with(|a| *a.borrow_mut() = antes);
+    r
+}
+
 #[derive(Default)]
 pub struct Fila {
     pub itens: Vec<Value>,
@@ -28,6 +41,9 @@ impl Fila {
         self.proximo += 1;
         item.insert("id".into(), Value::from(self.proximo));
         item.insert("em".into(), Value::String(crate::tempo::iso_utc_agora()));
+        if let Some(autor) = AUTOR.with(|a| a.borrow().clone()) {
+            item.insert("autor".into(), autor);
+        }
         let novo = Value::Object(item);
         self.itens.push(novo.clone());
         if self.itens.len() > FILA_MAX {

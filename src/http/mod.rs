@@ -7,7 +7,7 @@ pub mod estaticos;
 mod estado;
 pub mod pedido;
 mod prototipos;
-mod rotas;
+pub(crate) mod rotas;
 mod servidor;
 
 #[cfg(test)]
