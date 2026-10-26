@@ -14,3 +14,7 @@ Comandos: `blueprint` (janela), `blueprint --version`, `blueprint atualizar [--v
 ## Completar comandos
 
 `blueprint completions powershell` e `blueprint completions bash` imprimem um script que completa os subcomandos. No PowerShell, ponha `blueprint completions powershell | Out-String | Invoke-Expression` no seu perfil; no Bash, `source <(blueprint completions bash)` no `~/.bashrc`.
+
+## Exportar como Markdown
+
+`blueprint exportar <banco.db> <pasta> --markdown` grava uma pasta por blueprint, com um índice `README.md` e um arquivo por ação (datas, estado, planos com a evidência, checkpoints). É só leitura: o banco continua sendo a fonte e nada é importado de volta. Faça commit da pasta junto do código se quiser o plano versionado.

@@ -13,8 +13,8 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Entregue* · **Workspace → Blueprint → Projeto → Ação → Plano/Checkpoint**: Um modelo de planejamento com folha de blueprint, projetos como seções numeradas e numeração por ação.
 - *Entregue* · **Prazos no ritmo da IA e tempo real medido**: Planos de 0,5 a 4 h, ações de 1 a 3 dias; o app mede quanto cada plano realmente levou.
 - *Entregue* · **Propor, aplicar e provar**: O agente só propõe; você aplica. Marcar um plano como feito exige evidência (o comando ou teste e o resultado).
+- *Entregue* · **Exportar o blueprint como arquivos Markdown**: Um arquivo por ação mais um índice, legível no GitHub e versionado com o código. Só leitura: o banco continua sendo a fonte.
 - *Em seguida* · **Apresentação e impressão do blueprint**: Transformar um blueprint em proposta de projeto, cronograma ou relatório de andamento para clientes e empresas, imprimível em A4 e exportável em um HTML único. A IA também cria figuras interativas do Anatomy que explicam o projeto em construção, mostradas num sandbox e trocadas por um instantâneo estático na impressão.
-- *Em seguida* · **Exportar o blueprint como arquivos Markdown**: Um arquivo por ação mais um índice, legível no GitHub e versionado com o código. Só leitura: o banco continua sendo a fonte.
 - *Depois* · **Importar e exportar Markdown e Issues do GitHub**: Levar planos entre o Blueprint, arquivos Markdown de um repositório e gerenciadores de issues.
 - *Depois* · **Um worktree do Git por ação**: Iniciar uma ação no próprio worktree para agentes em paralelo não se atropelarem (ideia vista no ORCA e no Vibe Kanban).
 - *Depois* · **Importar issues do GitHub como proposta**: Issues abertas viram ações e planos numa proposta numerada que você revisa e aplica. Nada é gravado antes do clique.

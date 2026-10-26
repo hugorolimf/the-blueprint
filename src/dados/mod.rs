@@ -7,6 +7,7 @@ pub mod formato;
 mod importar;
 mod itens;
 mod linhas;
+pub mod markdown;
 pub mod migracoes;
 mod pastas;
 

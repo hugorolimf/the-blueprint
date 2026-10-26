@@ -16,6 +16,7 @@ pub(crate) const USO: &str = concat!(
     "  blueprint claude [args]                    abre o Claude Code com o plugin; ativa o agente se a pasta estiver ligada\n",
     "  blueprint importar <data.json> <banco.db>   copia o data.json para o banco (o arquivo não é alterado)\n",
     "  blueprint exportar <banco.db> <saida.json>  grava o banco como data.json\n",
+    "  blueprint exportar <banco.db> <pasta> --markdown  grava um índice e um arquivo Markdown por ação de cada blueprint (só leitura)\n",
     "  blueprint hook sessao|statusline|status|notificacao  comandos do Claude Code registrados pelo plugin\n",
     "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
     "  blueprint atualizar [--verificar|--instalar]  procura e baixa a versão nova (--verificar só consulta; --instalar instala a baixada: é o seu clique em Atualizar)\n",
@@ -62,6 +63,9 @@ pub fn executar(args: Vec<String>) -> i32 {
             return codigo;
         }
         ["importar", json, banco] => importar_arquivo(Path::new(json), Path::new(banco)).map(|c| format!("importado: {c}")),
+        ["exportar", banco, pasta, "--markdown"] => {
+            crate::dados::markdown::exportar_markdown(Path::new(banco), Path::new(pasta)).map(|n| format!("{n} arquivos Markdown em {pasta}"))
+        }
         ["exportar", banco, saida] => exportar_arquivo(Path::new(banco), Path::new(saida)).map(|_| format!("exportado para {saida}")),
         _ => {
             eprintln!("{USO}");

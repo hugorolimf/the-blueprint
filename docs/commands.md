@@ -16,3 +16,7 @@ The subcommand names (`atualizar`, `importar`, `exportar`, `registrar`) are in P
 ## Shell completions
 
 `blueprint completions powershell` and `blueprint completions bash` print a script that completes the subcommands. In PowerShell, add `blueprint completions powershell | Out-String | Invoke-Expression` to your profile; in Bash, add `source <(blueprint completions bash)` to `~/.bashrc`.
+
+## Export as Markdown
+
+`blueprint exportar <database.db> <folder> --markdown` writes one folder per blueprint, with a `README.md` index and one file per action (dates, status, plans with their evidence, checkpoints). It is read-only: the database stays the source, and nothing is imported back. Commit the folder next to your code if you want the plan versioned.
