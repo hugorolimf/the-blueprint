@@ -1,16 +1,16 @@
 {
-  "data": "2026-10-26T04:01:00.511Z",
+  "data": "2026-10-26T13:36:08.309Z",
   "origem": "blueprint.exe com os dados de teste de scripts/contrato-http.mjs (a versão original veio do servidor Node)",
   "respostas": {
     "GET pagina": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "4573dc488585bddc"
+      "sha256": "1275e185b3124047"
     },
     "GET pagina-html": {
       "status": 200,
       "tipo": "text/html",
-      "sha256": "4573dc488585bddc"
+      "sha256": "1275e185b3124047"
     },
     "GET emblemas": {
       "status": 200,
@@ -1365,6 +1365,42 @@
             "workspaceId": "sm"
           }
         ]
+      }
+    },
+    "mcp linha do tempo da ação": {
+      "status": 200,
+      "tipo": "application/json",
+      "corpo": {
+        "eventos": [
+          {
+            "agente": null,
+            "alvo": "m1",
+            "em": "<mascarado>",
+            "estado": null,
+            "onde": null,
+            "texto": "",
+            "tipo": "checkpoint-feito"
+          },
+          {
+            "agente": null,
+            "alvo": "t2",
+            "em": "<mascarado>",
+            "estado": null,
+            "onde": null,
+            "texto": "x",
+            "tipo": "progresso"
+          },
+          {
+            "agente": null,
+            "alvo": "t1",
+            "em": "<mascarado>",
+            "estado": null,
+            "onde": null,
+            "texto": "",
+            "tipo": "concluir"
+          }
+        ],
+        "limite": 50
       }
     },
     "ack": {

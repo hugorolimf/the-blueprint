@@ -126,6 +126,7 @@ async function executar(base) {
   await post("evento checkpoint inexistente", "evento", ev("checkpoint-nao-feito", "x", { acaoId: "f1", checkpointId: "nao" }));
   await post("evento texto longo", "evento", ev("progresso", "a".repeat(5000)));
   await registra("mcp fila depois dos eventos", "GET", "/api/mcp/fila");
+  await registra("mcp linha do tempo da ação", "GET", "/api/mcp/linha-do-tempo?workspace=sm&blueprint=p1&acao=f1"); // só os eventos com ação, sem a evidência
   await post("ack", "fila/ack", { ids: [1, 2, 3, 99] });
   await registra("mcp fila depois do ack", "GET", "/api/mcp/fila");
   // protótipos

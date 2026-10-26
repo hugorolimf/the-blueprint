@@ -1,0 +1,16 @@
+/* a linha do tempo do agente na folha da ação (web/js/linha-do-tempo.js): lista compacta, a mais recente em cima, no papel do blueprint.
+   A linha tracejada e o marcador ficam dentro de cada item (::before e ::after), para a rolagem da lista não cortar o marcador. */
+.nota-folha .ldt{margin:14px 0 0}
+.nota-folha .ldt h5{margin:0 0 6px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);font-weight:400}
+.nota-folha .ldt ol{list-style:none;margin:0;padding:0 4px 0 0;max-height:168px;overflow:auto;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.nota-folha .ldt li{position:relative;display:grid;grid-template-columns:auto 1fr;gap:10px;padding:3px 0 3px 16px;font-size:11px;line-height:1.45}
+.nota-folha .ldt li::before{content:"";position:absolute;left:3px;top:0;bottom:0;border-left:1px dashed var(--lo)}
+.nota-folha .ldt li::after{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;box-sizing:border-box;background:var(--paper);border:1px solid var(--mid)}
+.nota-folha .ldt li.ldt-concluir::after,.nota-folha .ldt li.ldt-checkpoint-feito::after{background:var(--ink);border-color:var(--ink)}
+.nota-folha .ldt li.ldt-bloqueio::after,.nota-folha .ldt li.ldt-nao-concluida::after{background:var(--erro);border-color:var(--erro)}
+.nota-folha .ldt li.ldt-bloqueio div{color:var(--erro)}
+.nota-folha .ldt time{color:var(--mid);white-space:nowrap;font-variant-numeric:tabular-nums}
+.nota-folha .ldt div{min-width:0;overflow-wrap:anywhere}
+.nota-folha .ldt .ldt-ag{color:var(--mid)}
+.nota-folha .ldt .ldt-alvo{display:block;color:var(--lo)}
+.nota-folha .ldt-vazio{margin:0;font-size:11px;color:var(--mid)}
