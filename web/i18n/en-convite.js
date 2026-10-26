@@ -6,7 +6,7 @@ Object.assign(I18N.catalogos.en, {
   // convite.js
   "Convite": "Invite", "Conferindo o convite…": "Checking the invite…", "Abra o link completo": "Open the full link",
   "O link de convite termina com # e um código. Abra de novo o link inteiro que você recebeu, nesta janela.": "The invite link ends with # and a code. Open the whole link you received again, in this window.",
-  "Convite indisponível": "Invite unavailable", "Convite · {papel}": "Invite · {papel}", "Você foi convidado para {nome}.": "You were invited to {nome}.",
+  "Convite indisponível": "Invite unavailable", "Convite · {papel}": "Invite · {papel}", "Você foi convidado para {nome}.": "You were invited to {nome}.", "Você foi convidado para este servidor.": "You were invited to this server.",
   "Como a equipe vai chamar você? O nome aparece para as outras pessoas; não é senha.": "What should the team call you? Other people see this name; it is not a password.",
   "Entrando…": "Joining…", "Servidor da equipe": "Team server", "Entre pelo link de convite": "Join with your invite link",
   "Este The Blueprint é de uma equipe. Para entrar, abra o link de convite que você recebeu; se não tem um, peça a quem administra o servidor.": "This The Blueprint belongs to a team. To join, open the invite link you received; if you do not have one, ask whoever runs the server.",

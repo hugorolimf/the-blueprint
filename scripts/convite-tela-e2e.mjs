@@ -21,8 +21,9 @@ try {
   await ana.js(`document.getElementById("convite-form").requestSubmit()`);
   assert.match(await ana.js(`document.getElementById("convite-erro").textContent`), /Digite seu nome/, "nome vazio é recusado na própria página");
   await ana.js(`document.getElementById("convite-nome").value = "Ana"; document.getElementById("convite-form").requestSubmit()`);
-  await ana.ate(`location.pathname === "/" && location.hash.startsWith("#/c/") && typeof sessao !== "undefined" && sessao.modo === "servidor"`, 10000, "entrou e foi para o workspace");
-  await ana.ate(`!document.getElementById("b-pessoas").hidden && document.getElementById("perfil-nome").textContent === "Ana"`, 8000, "perfil com o nome da sessão e o botão Pessoas");
+  await ana.ate(`location.pathname === "/" && !location.hash.includes("convite") && typeof sessao !== "undefined" && sessao.modo === "servidor"`, 10000, "entrou (o dono do servidor cai na lista de workspaces)");
+  await ana.ate(`document.getElementById("b-pessoas").offsetParent !== null && document.getElementById("perfil-nome").textContent === "Ana"`, 8000, "lista de workspaces com o nome da sessão e o botão Pessoas visível");
+  await ana.js(`location.hash = "/c/sm"`); // abre o workspace raiz, como o clique no cartão
   assert.equal(await ana.js(`document.getElementById("perfil-sair").textContent`), "Sair", "no modo hospedado o botão é Sair");
   assert.equal(await ana.js(`history.length <= 3 && !location.href.includes(${JSON.stringify(segredos[0])})`), true, "o convite não ficou na URL");
 

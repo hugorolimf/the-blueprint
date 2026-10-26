@@ -58,7 +58,14 @@ const MUTACOES = [
   M("acesso: a fila do MCP só mostra o que o papel lê", "src/mcp/rotas.rs", "mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i))", "mcp.itens().into_iter().filter(|_| true)"),
   M("acesso: visitante não lê os comentários do agente", "src/acesso/filtro.rs", 'agente.remove("comentarios");', 'agente.get("comentarios");'),
   M("acesso: nunca rebaixar o último dono", "src/acesso/rotas_pessoas.rs", "if papel != Papel::Dono && era_dono(t, membro, ws)? && membros::donos_do_workspace(t, ws, membro)? == 0 {", "if false {"),
-  M("acesso: protótipo só para quem lê o blueprint", "src/http/rotas.rs", 'if !ctx.local && caminho.starts_with("/prototipos/") && !prototipo_visivel(estado, caminho, ctx) {', "if false {"),
+  // da revisão de segurança (docs/seguranca-servidor.md): rode só estas com `node scripts/mutacoes.mjs "[telas]"`
+  M("acesso: [telas] cookie Secure no modo hospedado", "src/acesso/sessoes.rs", "Path=/; Max-Age={max_age_s}; Secure\")", "Path=/; Max-Age={max_age_s}\")"),
+  M("acesso: [telas] só o hash da sessão no banco", "src/acesso/sessoes.rs", "sessoes::criar(conn, &segredo::hash(&valor), &s,", "sessoes::criar(conn, &valor, &s,"),
+  M("acesso: [telas] só o hash da chave de MCP no banco", "src/acesso/chaves.rs", "sessoes::gravar_chave(conn, &segredo::hash(&chave), membro_id,", "sessoes::gravar_chave(conn, &chave, membro_id,"),
+  M("acesso: [telas] nunca remover o último dono", "src/acesso/rotas_pessoas.rs", "alvo_no_workspace(t, membro, ws)?;\n        if era_dono(t, membro, ws)?", "alvo_no_workspace(t, membro, ws)?;\n        if false && era_dono(t, membro, ws)?"),
+  // sem mutação para `"chats" | "usuario" if ctx.visitante` (filtro.rs): o visitante nunca lê a raiz inteira, então o ramo `!le_raiz` já os tira
+  // e a mutação seria equivalente (sobrevive sem mudar nada); visitante-supervisor-e2e.mjs confere a resposta no navegador.
+  M("acesso: protótipo só para quem lê o blueprint","src/http/rotas.rs", 'if !ctx.local && caminho.starts_with("/prototipos/") && !prototipo_visivel(estado, caminho, ctx) {', "if false {"),
 ];
 
 const filtro = process.argv[2] || "";

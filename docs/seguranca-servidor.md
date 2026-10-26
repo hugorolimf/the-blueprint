@@ -47,21 +47,36 @@ Verificações:
 
 ## Mutações (`scripts/mutacoes.mjs`)
 
-O `mutacoes.mjs` quebra regras no código Rust e exige que algum `cargo test` falhe. As regras novas vivem no backend da ACESSO (`src/acesso/`),
-que não está neste branch: escrever a mutação sem ver o trecho exato faria o script acusar "o trecho não existe mais". **A conferir após
-integrar** (rebase sobre a ACESSO), uma mutação por regra, com o trecho real:
+O `mutacoes.mjs` quebra regras no código Rust e exige que algum `cargo test` falhe. A ACESSO já pôs as suas (grupo `acesso:`): HTTPS pelo
+proxy e só do par confiável, Host público, Origin, Referrer-Policy, rotas só locais, 401 sem sessão, hash do convite, convite inválido não
+entra, limite por IP, cookie HttpOnly, supervisor e visitante não gravam, só o dono administra, escopo de blueprint, filtro do `GET /api/dados`,
+`PUT` só do dono de todos, papel no MCP, fila filtrada, comentários do visitante, último dono não é rebaixado e protótipo só para quem lê.
 
-- `X-Forwarded-Proto` exigido (403 `https-obrigatorio`) e só do par confiável (loopback ou `BLUEPRINT_PROXY`);
-- `Origin` conferida em pedido com cookie que não é GET/HEAD;
-- `Referrer-Policy: no-referrer` em toda resposta;
-- segredo guardado como `sha256` (convite, sessão, chave) e comparado pelo hash;
-- limite de tentativas (10 por IP em 15 min) e resposta igual para convite inexistente, vencido, revogado ou esgotado;
-- cookie com `HttpOnly`, `SameSite=Lax` e `Secure` no hospedado;
-- `Contexto::pode`: visitante nunca grava, supervisor nunca grava, último dono não sai (`ultimo-dono`);
-- filtro do visitante: só o blueprint do link, sem `agente.comentarios`;
-- rotas só locais ausentes no hospedado.
+Esta revisão acrescentou o que faltava da lista (grupo `[telas]`; `node scripts/mutacoes.mjs "[telas]"`, ~18 s por mutação). Resultado em
+2026-10-26, todas mortas por algum teste:
 
-## Pendências desta frente
+| Mutação | Morta por |
+| --- | --- |
+| cookie sem `Secure` no modo hospedado | `acesso::tests::convites::colaborador_entra_pelo_link_com_nome_e_cookie` |
+| sessão gravada em claro, sem o hash | `acesso::tests::convites::trocar_o_link_revoga_o_antigo_e_entrega_outro` (+13) |
+| chave de MCP gravada em claro | `acesso::tests::chaves::o_agente_do_colaborador_grava_com_a_chave_dele` (+2) |
+| remover o último dono | `acesso::tests::papeis::papel_e_remocao_nunca_deixam_o_workspace_sem_dono` |
 
-- Rodar os três e2e com `--rust target/debug/blueprint.exe` depois do merge da ACESSO (e da SINCRONIA) e marcar aqui o que passou.
-- Se o binário imprimir o link do dono em outro formato, ajustar a leitura em `subirStub` (procura `/convite#<segredo>` na saída).
+Sem mutação: o ramo `"chats" | "usuario" if ctx.visitante` de `filtro.rs` é redundante (o visitante nunca lê a raiz inteira, e o ramo
+`!le_raiz` já tira os dois); a mutação sobreviveu sem mudar o comportamento. A resposta do visitante é conferida no navegador pelo e2e.
+
+## Resultado contra o binário real (2026-10-26)
+
+Depois do merge da ACESSO, com `target/debug/blueprint.exe` (`serve --hospedar` atrás do proxy de teste do stub):
+
+- `node scripts/convite-tela-e2e.mjs --rust target/debug/blueprint.exe`: ok.
+- `node scripts/visitante-supervisor-e2e.mjs --rust target/debug/blueprint.exe`: ok.
+- `node scripts/seguranca-servidor-e2e.mjs --rust target/debug/blueprint.exe`: ok, inclusive cookie com `Secure` e banco sem nenhum
+  segredo em claro.
+
+Com isso, os itens 2 a 13, 15 e 17 (menos o HSTS) passam de "a conferir após integrar" para **verificados contra o binário real**. Continuam
+dependendo de testes da própria ACESSO: o 403 `https-obrigatorio` sem o cabeçalho (item 1, coberto pelo `servidor-e2e.mjs` e pela mutação),
+o log do binário sem segredo (item 3), o `--mcp` remoto com 401 `chave-invalida` (item 14), os protótipos do visitante (item 16) e o HSTS.
+
+Ajustes da integração: o dono de todos (`'*'`) entra em `/` (a lista de workspaces) e o convite dele vem com o nome do workspace vazio (a tela
+diz "este servidor"); o visitante não chama o MCP (403 em `/api/mcp/*`), para não repetir consultas que só falhariam.

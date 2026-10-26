@@ -3,7 +3,7 @@
 // apaga da barra com replaceState ANTES de qualquer pedido e o manda só no corpo de POST /api/convite/conferir e /entrar. No fim,
 // location.replace(destino) troca a página sem deixar o convite no histórico. A mesma tela serve para "sem sessão" (semSessao()).
 const segredoDoFragmento = (hash) => { const s = String(hash || "").replace(/^#/, "").trim(); return /^[A-Za-z0-9_-]{20,200}$/.test(s) ? s : ""; };
-// só destinos da própria página (/#/c/<ws> ou /#/p/<bp>): uma resposta estranha nunca leva a outro site
+// só destinos da própria página ("/" para o dono do servidor, /#/c/<ws> ou /#/p/<bp>): uma resposta estranha nunca leva a outro site
 const destinoSeguro = (d) => (/^\/#\/[cp]\/[^\s/?#]+$/.test(String(d || "")) ? d : "/");
 // nome: 1 a 60 caracteres sem controle (o servidor confere de novo); devolve o código de erro ou ""
 const problemaDoNome = (nome) => { const n = String(nome || "").trim(); return !n ? "falta-nome" : n.length > 60 || /[\u0000-\u001f\u007f]/.test(n) ? "nome-invalido" : ""; };
@@ -18,7 +18,7 @@ function mostrarEntradaConvite(estado, extra = {}) {
     "conferindo": [tr("Convite"), tr("Conferindo o convite…"), ""],
     "sem-segredo": [tr("Convite"), tr("Abra o link completo"), tr("O link de convite termina com # e um código. Abra de novo o link inteiro que você recebeu, nesta janela.")],
     "invalido": [tr("Convite"), tr("Convite indisponível"), extra.erro || textoDoErro("convite-invalido")],
-    "nome": [tr("Convite · {papel}", { papel: nomeDoPapel(papel) }), tr("Você foi convidado para {nome}.", { nome: alvo }), tr("Como a equipe vai chamar você? O nome aparece para as outras pessoas; não é senha.")],
+    "nome": [tr("Convite · {papel}", { papel: nomeDoPapel(papel) }), alvo ? tr("Você foi convidado para {nome}.", { nome: alvo }) : tr("Você foi convidado para este servidor."),tr("Como a equipe vai chamar você? O nome aparece para as outras pessoas; não é senha.")],
     "entrando": [tr("Convite"), tr("Entrando…"), ""],
     "sem-sessao": [tr("Servidor da equipe"), tr("Entre pelo link de convite"), tr("Este The Blueprint é de uma equipe. Para entrar, abra o link de convite que você recebeu; se não tem um, peça a quem administra o servidor.")],
   }[estado];

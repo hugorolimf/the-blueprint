@@ -16,7 +16,7 @@ try {
   await ana.ir(S.linkDono);
   await ana.ate(`!document.getElementById("convite-campos").hidden`, 8000, "entrada do dono");
   await ana.js(`document.getElementById("convite-nome").value = "Ana"; document.getElementById("convite-form").requestSubmit()`);
-  await ana.ate(`location.hash.startsWith("#/c/") && sessao.modo === "servidor"`, 10000, "dono entrou");
+  await ana.ate(`location.pathname === "/" && typeof sessao !== "undefined" && sessao.modo === "servidor"`, 10000, "dono entrou");
 
   // cabeçalhos: Referrer-Policy, nosniff e no-store na API; X-Frame-Options na página
   const cab = (rota) => ana.js(`fetch(${JSON.stringify(rota)}, { cache: "no-store" }).then((r) => Object.fromEntries(["referrer-policy", "x-content-type-options", "cache-control", "x-frame-options"].map((h) => [h, r.headers.get(h)])))`);

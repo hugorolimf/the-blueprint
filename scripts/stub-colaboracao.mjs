@@ -25,7 +25,7 @@ const PESO = { visitante: 0, supervisor: 1, colaborador: 2, dono: 3 };
 function estado(dados) {
   return { dados, versao: Date.now(), membros: new Map(), acessos: [], convites: new Map(), sessoes: new Map(), chaves: new Map(), atividade: [], falhas: new Map() };
 }
-const nomeWs = (E, ws) => ws === "*" ? "este servidor" : ws === "sm" ? E.dados.empresa : (E.dados.workspaces || []).find((w) => w.id === ws)?.nome || ws;
+const nomeWs = (E, ws) => ws === "*" ? "" : ws === "sm" ? E.dados.empresa : (E.dados.workspaces || []).find((w) => w.id === ws)?.nome || ws;
 const blueprintsDe = (E) => [...E.dados.blueprints.map((b) => ({ ws: "sm", b })), ...(E.dados.workspaces || []).flatMap((w) => w.blueprints.map((b) => ({ ws: w.id, b })))];
 function criarConvite(E, { papel, workspaceId, blueprintId = "", abre = "folha", horas = 168, usosMax = 1, criadoPor = null }) {
   const s = segredo(), c = { id: id16(), hash: sha(s), papel, workspaceId, blueprintId, abre, criadoPor, criadoEm: agoraIso(), expiraEm: new Date(Date.now() + horas * 36e5).toISOString(), usosMax, usos: 0, revogadoEm: null, horas };
@@ -85,7 +85,7 @@ function rotas(E, ctx, metodo, rota, q, corpo, origem) {
     }
     c.usos++;
     ativ(E, ctx, "entrou", c.workspaceId === "*" ? "" : c.workspaceId, c.id);
-    const destino = c.papel === "visitante" ? `/#/p/${c.blueprintId}` : `/#/c/${c.workspaceId === "*" ? "sm" : c.workspaceId}`;
+    const destino = c.papel === "visitante" ? `/#/p/${c.blueprintId}` : c.workspaceId === "*" ? "/" : `/#/c/${c.workspaceId}`;
     return [200, { ok: true, destino }, { "set-cookie": `bp_sessao=${s}; HttpOnly; SameSite=Lax; Path=/; Max-Age=2592000` }];
   }
   if (metodo === "POST" && rota === "/api/sessao/sair") {
@@ -244,7 +244,7 @@ function proxy(req, res, alvo, url, reg) {
     res.writeHead(r.statusCode, cab);
     r.pipe(res);
   });
-  p.on("error", () => { res.writeHead(502); res.end(); });
+  p.on("error", () => { if (!res.headersSent) res.writeHead(502); res.end(); }); // o binário fechou no meio (fim do teste)
   req.pipe(p);
 }
 
