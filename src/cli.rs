@@ -11,6 +11,7 @@ pub(crate) const USO: &str = concat!(
     "  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n",
     "  blueprint dev                              o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n",
     "  blueprint serve                          liga o servidor (HOST, PORT, BLUEPRINT_DB, DADOS_ARQ, PROTOTIPOS_DIR, MCP_REDE)\n",
+    "  blueprint serve --hospedar [--novo-link-dono]  servidor de equipe atrás de um proxy HTTPS (BLUEPRINT_URL_PUBLICA; veja docs/hospedar.md)\n",
     "  blueprint --mcp                             servidor MCP por stdio, para o agente (claude mcp add blueprint -- blueprint --mcp)\n",
     "  blueprint watch                             acompanha avisos do blueprint desta pasta (BLUEPRINT_URL)\n",
     "  blueprint claude [args]                    abre o Claude Code com o plugin; ativa o agente se a pasta estiver ligada\n",
@@ -49,7 +50,10 @@ pub fn executar(args: Vec<String>) -> i32 {
                 return 2;
             }
         },
+        ["serve"] if std::env::var("BLUEPRINT_HOSPEDAR").as_deref() == Ok("1") => hospedar(false),
         ["serve"] => serve(),
+        ["serve", "--hospedar"] => hospedar(false),
+        ["serve", "--hospedar", "--novo-link-dono"] | ["serve", "--novo-link-dono", "--hospedar"] => hospedar(true),
         ["hook", evento] => return crate::hook::executar(evento),
         ["hook", "statusline", "--anterior", comando] => return crate::hook::combinar(comando),
         ["registrar", "--status-line"] | ["registrar", "--status-line", "--remover"] => {
@@ -100,6 +104,25 @@ fn abrir_janela(_dev: bool) -> i32 {
 fn serve() -> Result<String, crate::erro::Erro> {
     let servidor = http::iniciar(Config::do_ambiente())?;
     println!("The Blueprint (beta) em {} · MCP: {} --mcp", servidor.url, servidor.estado.config.exe.display());
+    servidor.aguardar();
+    Ok("servidor encerrado".into())
+}
+
+/// `blueprint serve --hospedar`: o servidor de equipe (docs/hospedar.md). Imprime o link do dono uma vez (docs/colaboracao.md, seção 4).
+fn hospedar(novo_link_dono: bool) -> Result<String, crate::erro::Erro> {
+    let config = Config::hospedado(novo_link_dono).map_err(crate::erro::Erro::Formato)?;
+    let url_publica = config.hospedagem.as_ref().map(|h| h.url_publica.clone()).unwrap_or_default();
+    let servidor = http::iniciar(config)?;
+    println!("{}", crate::tr!("The Blueprint (beta) hosted at {url_publica} (listening on {})", "The Blueprint (beta) hospedado em {url_publica} (escutando em {})", servidor.url));
+    let link = crate::acesso::convites::link_dono(&mut servidor.estado.dados.lock().unwrap_or_else(|e| e.into_inner()), &url_publica, novo_link_dono, crate::tempo::agora_ms())?;
+    match link {
+        crate::acesso::convites::LinkDono::Novo(link) => {
+            println!("{}", crate::tr!("Owner link (valid for 24 h, single use; it is printed only now):", "Link do dono (vale 24 h, uso único; só é impresso agora):"));
+            println!("  {link}");
+        }
+        crate::acesso::convites::LinkDono::JaImpresso => println!("{}", crate::tr!("the owner link was already printed; for a new one use --novo-link-dono", "o link do dono já foi impresso; para um novo use --novo-link-dono")),
+        crate::acesso::convites::LinkDono::TemDono => {}
+    }
     servidor.aguardar();
     Ok("servidor encerrado".into())
 }

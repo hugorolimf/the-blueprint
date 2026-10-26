@@ -68,7 +68,8 @@ try {
   assert.equal(r.status, 200, await r.clone().text());
   await dormir(1500);
   const painel = await js(`document.getElementById("cl-prop").textContent`);
-  assert(painel.includes("1 ação") && (await js(`[...document.querySelectorAll("#cl-prop input")].some((i) => i.value === "Ação do teste")`)), "a proposta aparece na tela Planejar: " + painel.slice(0, 300) + " | " + (await js(`String(workspaceAtual?.id) + " " + hub.hidden`)));
+  // a ação chega em modo de leitura (htmlVistaAcao); só vira campo de texto ao clicar em editar
+  assert(painel.includes("1 ação") && painel.includes("Ação do teste"), "a proposta aparece na tela Planejar: " + painel.slice(0, 300) + " | " + (await js(`String(workspaceAtual?.id) + " " + hub.hidden`)));
   await js(`document.querySelector('[data-pact="aplicar"]').click()`);
   await dormir(2500);
   gravado = achaBlueprint(await lido(), blueprint.id);
@@ -94,7 +95,8 @@ try {
   await dormir(3000);
   await js(`abertos[${JSON.stringify(blueprint.id)}] = true; render()`);
   await dormir(500);
-  assert((await js(`document.body.textContent`)).includes("~4 h") || (await js(`[...document.querySelectorAll("svg text")].some((x) => x.textContent.includes("~4 h") || x.textContent.includes("~2 h"))`)), "a folha mostra a estimativa ao lado do plano depois de recarregar");
+  // desde 28cea79 a folha soma as horas no cabeçalho ("N h de desenvolvimento"), não mostra mais "~N h" em cada plano
+  assert(/\d+ h de desenvolvimento/.test(await js(`document.body.textContent`)), "a folha mostra as horas estimadas depois de recarregar");
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(1500);
 

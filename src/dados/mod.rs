@@ -1,7 +1,11 @@
 //! A camada de dados: o único lugar do programa que conhece o SQLite. As rotas e o MCP só falam com `Dados`, sempre passando o `Contexto`.
 //! Leituras saem de uma cópia em memória (refeita só depois de uma gravação); toda gravação é uma transação, então nunca fica pela metade.
 pub mod arquivo;
+pub mod atividade;
 pub mod contagens;
+pub mod convites;
+pub mod membros;
+pub mod sessoes;
 mod exportar;
 pub mod formato;
 mod importar;
@@ -51,6 +55,15 @@ impl Dados {
 
     pub fn conexao(&self) -> &Connection {
         &self.conn
+    }
+
+    /// Roda `f` numa transação (as tabelas de acesso: membros, convites, sessões, chaves e atividade). Fora do data.json: não invalida o cache.
+    /// Erro em `f` desfaz tudo.
+    pub fn transacao<T>(&mut self, f: impl FnOnce(&rusqlite::Transaction) -> Resultado<T>) -> Resultado<T> {
+        let tx = self.conn.transaction()?;
+        let valor = f(&tx)?;
+        tx.commit()?;
+        Ok(valor)
     }
 
     /// O data.json inteiro (o que `GET /api/dados` devolve).
