@@ -4,6 +4,7 @@ pub mod acoes;
 mod ajuste;
 pub mod atividade;
 pub(crate) mod cliente;
+mod conversa;
 mod eventos;
 mod fila;
 mod hooks;
@@ -19,6 +20,8 @@ pub mod stdio;
 
 #[cfg(test)]
 mod ajuste_tests;
+#[cfg(test)]
+mod conversa_tests;
 #[cfg(test)]
 mod hooks_tests;
 #[cfg(test)]
@@ -77,6 +80,8 @@ pub struct Mcp {
     canais: sessoes::Canais,
     /// sessões com edição sem plano ainda não registrada (o Stop devolve o lembrete; ver `lembrete`)
     sem_registro: Mutex<lembrete::Pendentes>,
+    /// a conversa de cada ação com o agente (só memória; ver `conversa`)
+    conversas: Mutex<conversa::Conversas>,
 }
 
 /// Quantas sessões lembrar; passou disso, esquece todas (cada hook seguinte volta a achar a pasta no banco).
@@ -84,7 +89,7 @@ const MAX_SESSOES: usize = 64;
 
 impl Mcp {
     pub fn novo(host: &str, rede: bool, arquivo: &str, url: &str, prototipos: PathBuf) -> Mcp {
-        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()) }
+        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()), conversas: Default::default() }
     }
 
     pub fn lembrar_sessao(&self, session_id: &str, workspace_id: &str, blueprint_id: &str) {

@@ -124,6 +124,11 @@ impl Mcp {
 
     /// O pedido de iniciar a ação vai à sessão `canal_id`, que precisa estar conectada e ser de uma pasta deste blueprint. Erro: (status, código, frase).
     pub(super) fn entregar_pedido(&self, workspace_id: &str, blueprint_id: &str, canal_id: &str, pedido: &str) -> Result<(), (u16, &'static str, &'static str)> {
+        self.entregar_ao_canal("iniciar-acao", workspace_id, blueprint_id, canal_id, pedido)
+    }
+
+    /// O mesmo endereçamento para os outros textos do usuário (`comentario-plano`, `conversa-usuario`; ver `conversa.rs`): o `watch.rs` dá o prefixo de cada um.
+    pub(super) fn entregar_ao_canal(&self, evento: &'static str, workspace_id: &str, blueprint_id: &str, canal_id: &str, pedido: &str) -> Result<(), (u16, &'static str, &'static str)> {
         let Some(cwd) = self.canais.lock().unwrap_or_else(|e| e.into_inner()).get(canal_id).cloned() else {
             return Err((410, "sessao-caiu", "Essa sessão não está mais conectada ao app."));
         };
@@ -131,7 +136,7 @@ impl Mcp {
         if !da_pasta {
             return Err((409, "sessao-de-outra-pasta", "Essa sessão não é de uma pasta deste blueprint."));
         }
-        self.notificar("iniciar-acao", Some(json!({"workspaceId": workspace_id, "blueprintId": blueprint_id, "canalId": canal_id, "texto": pedido})));
+        self.notificar(evento, Some(json!({"workspaceId": workspace_id, "blueprintId": blueprint_id, "canalId": canal_id, "texto": pedido})));
         Ok(())
     }
 }

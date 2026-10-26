@@ -19,7 +19,7 @@ pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
         return Resposta::texto(403, "text/plain", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)");
     }
     let recurso = pedido.caminho.trim_start_matches("/api/mcp/");
-    if recurso == "iniciar" && !so_loopback(mcp, pedido) {
+    if (recurso == "iniciar" || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
         return Resposta::texto(403, "text/plain", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)");
     }
     match executar(mcp, dados, pedido, recurso) {
@@ -53,6 +53,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens()})),
             "sessoes" => Resposta::json(200, &mcp.sessoes_do_blueprint(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default())), // as sessões do Claude abertas no blueprint
+            "conversa" => Resposta::json(200, &mcp.conversa(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default(), &pedido.parametro("acao").unwrap_or_default())), // a conversa da ação (só memória)
             "agentes" => Resposta::json(200, &mcp.agentes()), // quem está trabalhando agora (presença, só memória)
             "info" => Resposta::json(200, &json!({"arquivo": mcp.arquivo, "url": mcp.url, "exe": true})), // a página mostra como registrar o servidor MCP no agente
             "eventos" => {
@@ -117,6 +118,9 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             };
             Resposta::json(status, &resposta)
         }
+        // comentário do plano e conversa com o plano (ver conversa.rs): ida pelo canal da sessão escolhida, volta pela ferramenta responder_conversa
+        "conversa" => { let (status, r) = super::conversa::enviar(mcp, dados, &corpo)?; Resposta::json(status, &r) }
+        "conversa/resposta" => { let (status, r) = super::conversa::responder(mcp, dados, &corpo)?; Resposta::json(status, &r) }
         "prototipo/remover" => {
             // chamado pela página ao excluir; só mexe em arquivos com id gerado por aqui
             let id = corpo.get("prototipoId").and_then(Value::as_str).filter(|i| id_prototipo_valido(i)).ok_or_else(|| falha(400, "prototipoId inválido"))?;

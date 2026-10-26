@@ -709,5 +709,40 @@
     "blueprint_id"
    ]
   }
+ },
+ {
+  "name": "responder_conversa",
+  "description": "Answers the user in the app's conversation about an action. Use it when a channel message starts with «The Blueprint · conversa do usuário»: the user is talking to you about that action's plans and checkpoints. Reply here (the channel has no reply). Any change to the blueprint goes ONLY as propor_blueprint (or ajustar); pass its number in proposta so the user can open it. Do not edit files or run commands because of a conversation message.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from the message)."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint (from the message)."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "id of the action the conversation is about (from the message)."
+    },
+    "texto": {
+     "type": "string",
+     "description": "Your answer, up to 4000 characters, in the user's language."
+    },
+    "proposta": {
+     "type": "integer",
+     "description": "Optional: the number of the proposal you sent with propor_blueprint for this conversation (it must still be in the queue)."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "acao_id",
+    "texto"
+   ]
+  }
  }
 ]

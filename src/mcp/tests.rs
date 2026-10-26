@@ -145,7 +145,7 @@ fn as_ferramentas_do_mcp() {
     let nomes: Vec<&str> = r["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
     assert_eq!(
         nomes,
-        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "registrar_trabalho", "anexar_prototipo", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta"]
+        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "registrar_trabalho", "anexar_prototipo", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta", "responder_conversa"]
     );
     let propor = r["result"]["tools"].as_array().unwrap().iter().find(|t| t["name"] == "propor_blueprint").unwrap();
     assert!(propor["inputSchema"]["properties"].get("remover").is_some(), "a ferramenta já conhece mover e apagar");
