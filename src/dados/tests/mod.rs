@@ -2,6 +2,7 @@
 //! lista ausente x vazia, null, número inteiro x fracionário, campo desconhecido e campo mapeado com tipo inesperado.
 mod ida_e_volta;
 mod itens;
+mod linha_do_tempo;
 mod migracoes;
 mod pastas;
 mod projetos;

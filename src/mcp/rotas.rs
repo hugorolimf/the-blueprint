@@ -54,6 +54,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens()})),
             "sessoes" => Resposta::json(200, &mcp.sessoes_do_blueprint(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default())), // as sessões do Claude abertas no blueprint
             "agentes" => Resposta::json(200, &mcp.agentes()), // quem está trabalhando agora (presença, só memória)
+            "linha-do-tempo" => Resposta::json(200, &super::linha_do_tempo::listar(dados, pedido)?), // o que o agente fez na ação, do mais recente ao mais antigo
             "info" => Resposta::json(200, &json!({"arquivo": mcp.arquivo, "url": mcp.url, "exe": true})), // a página mostra como registrar o servidor MCP no agente
             "eventos" => {
                 let mut fluxo = FluxoSse::novo(mcp.assinar());
@@ -91,7 +92,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
             Resposta::json(status, &resposta)
         }
         "evento" => {
-            let r = com_dados(dados, |d| acoes::evento(mcp, d, &corpo))?;
+            let r = super::linha_do_tempo::evento(mcp, dados, &corpo)?; // acoes::evento e, se for de uma ação, a linha do tempo
             // um progresso com plano também conta como registro: some o lembrete da sessão
             if corpo.get("planoId").and_then(Value::as_str).is_some_and(|p| !p.is_empty()) {
                 super::lembrete::registrado(mcp, &hooks::texto(&corpo, "workspaceId"), &hooks::texto(&corpo, "blueprintId"));

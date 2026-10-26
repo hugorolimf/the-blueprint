@@ -148,8 +148,7 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     if evento.get("planoId").is_none() {
         super::lembrete::editou_sem_plano(mcp, texto(corpo, "session_id"), &ws, &bp);
     }
-    let mut d = travado(dados);
-    acoes::evento(mcp, d.ler_tudo(&Contexto::local())?, &evento)?;
+    super::linha_do_tempo::evento(mcp, dados, &evento)?;
     Ok(json!({}))
 }
 
@@ -171,8 +170,7 @@ pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
         (if mensagem.is_empty() { format!("{nome} terminou") } else { mensagem.to_string() }, "concluido")
     };
     let evento = evento_de(mcp, &nome, papel, &ws, &bp, &frase, estado);
-    let mut d = travado(dados);
-    acoes::evento(mcp, d.ler_tudo(&Contexto::local())?, &evento)?;
+    super::linha_do_tempo::evento(mcp, dados, &evento)?;
     Ok(json!({}))
 }
 

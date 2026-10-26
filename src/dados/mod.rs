@@ -6,6 +6,7 @@ mod exportar;
 pub mod formato;
 mod importar;
 mod itens;
+mod linha_do_tempo;
 mod linhas;
 pub mod markdown;
 pub mod migracoes;
@@ -15,6 +16,7 @@ mod pastas;
 mod tests;
 
 pub use contagens::Contagens;
+pub use linha_do_tempo::{EventoLinha, LIMITE_POR_ACAO};
 
 use crate::contexto::Contexto;
 use crate::erro::Resultado;
@@ -101,6 +103,16 @@ impl Dados {
     pub fn desvincular_pasta(&mut self, ctx: &Contexto, caminho: &str) -> Resultado<()> {
         ctx.exige_editar()?;
         pastas::desvincular(&self.conn, caminho)
+    }
+
+    /// Anota um evento do agente na linha do tempo da ação. Fora do data.json: não invalida o cache.
+    pub fn gravar_linha_do_tempo(&mut self, ctx: &Contexto, agora_ms: i64, evento: &EventoLinha) -> Resultado<()> {
+        ctx.exige_editar()?;
+        linha_do_tempo::gravar(&mut self.conn, agora_ms, evento)
+    }
+
+    pub fn linha_do_tempo(&self, _ctx: &Contexto, workspace_id: &str, blueprint_id: &str, acao_id: &str) -> Resultado<Value> {
+        linha_do_tempo::listar(&self.conn, workspace_id, blueprint_id, acao_id)
     }
 
     pub fn adicionar_comentario(&mut self, ctx: &Contexto, plano_id: &str, comentario: &Value) -> Resultado<()> {

@@ -9,6 +9,7 @@ mod fila;
 mod hooks;
 mod iniciar;
 mod lembrete;
+mod linha_do_tempo;
 mod registro;
 pub mod pendentes;
 pub(crate) mod permissao;
@@ -27,6 +28,8 @@ mod iniciar_tests;
 mod lembrete_tests;
 #[cfg(test)]
 mod lembrete_rota_tests;
+#[cfg(test)]
+mod linha_do_tempo_tests;
 #[cfg(test)]
 mod pendentes_tests;
 #[cfg(test)]
