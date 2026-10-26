@@ -553,3 +553,65 @@ Uma mudança ao vivo:
     |                                              <-- reconecta com Last-Event-ID ------------------
     |                                              reenvia os lotes depois da versão, ou "recarregar" -->  GET /api/dados + sincMesclar
 ```
+
+## Compartilhar pelo app
+
+Ação "Compartilhar um workspace pelo próprio app" (2026-10-26): o app de mesa dá acesso a **um** workspace por um quick tunnel da Cloudflare,
+sem servidor. Guia de uso: [compartilhar.md](compartilhar.md). Código: `src/compartilhar/` (`mod.rs` estado e ciclo, `tunel.rs` cloudflared,
+`fluxo.rs` SSE curto, `rotas.rs` API) e os pontos de entrada em `src/http/rotas.rs` (`despachar_convidado`) e `src/http/servidor.rs`
+(`escutar_convidados`).
+
+**Como ficou.**
+- **Porta dos convidados.** Ligar abre um segundo `tiny_http` em `127.0.0.1:0`; o túnel aponta para ele. Todo pedido dessa porta vai a
+  `despachar_convidado`, que reaproveita o `acesso::despachar` do modo hospedado com uma `Hospedagem` montada da URL do túnel em tempo de
+  execução (`Compartilhar::porta_aberta`), e o contexto resolvido passa por `compartilhar::so_do_workspace` (só os acessos do workspace
+  compartilhado; nunca `local`, nem o `'*'`). A porta local não muda: lá o contexto continua `Contexto::local()`. Separar por porta, não por
+  cabeçalho, porque o túnel conecta de loopback.
+- **Cabeçalhos do túnel (medidos com o cloudflared 2026.10.4):** par `127.0.0.1`, `Host` = o host público, `X-Forwarded-Proto: https`,
+  `Origin` do navegador e `X-Forwarded-For` com o IP real por último (a Cloudflare acrescenta; um `X-Forwarded-For` forjado pelo cliente
+  fica antes). As conferências do modo hospedado servem sem mudança; o último endereço só alimenta o limite de tentativas.
+- **URL pública em tempo de execução:** `compartilhar::hospedagem(estado)` = a do `serve --hospedar` ou a do compartilhamento ligado. As rotas
+  de acesso a usam no lugar de `config.hospedagem`.
+- **O dono local enquanto compartilha:** na porta local, `/api/pessoas*`, `/api/convites*` e `/api/atividade` passam a existir e rodam com
+  `compartilhar::dono_local(ws)` (membro `local`, dono só do workspace compartilhado), então convite de outro workspace ou de `'*'` leva 403
+  pelas regras de sempre e o link sai na URL do túnel. `/api/sessao` continua `{"modo":"local"}`; `/api/chave` e `/api/convite/*` continuam
+  `so-servidor` na porta local (são do convidado).
+- **Túnel:** `cloudflared` 2026.10.4, SHA-256 `411b16d40c8d872243efeb52c550053d00af0a8a97fbb32e730fb8aba429eaa8` (o `digest` do asset
+  `cloudflared-windows-amd64.exe` na release oficial, conferido com `sha256sum` e com o `Checksum` que o próprio cloudflared imprime), em
+  `%APPDATA%\Blueprint\bin\cloudflared-<versão>.exe`, baixado pelo curl do atualizador (só https, só hosts de release do GitHub), conferido a
+  cada execução, num Job Object com `KILL_ON_JOB_CLOSE`. O endereço vem da saída de erro (`https://<palavras-com-hífen>.trycloudflare.com`;
+  `api.trycloudflare.com` e as outras URLs do log não contam), que continua sendo lida até o fim; se o processo sai sozinho, o estado vira
+  `erro` e a porta fecha. `BLUEPRINT_TUNEL_COMANDO` troca o programa (testes).
+- **Estados:** `desligado` → (`baixando`) → `ligando` → `ligado` | `erro`; cada mudança vai à página local pelo evento `compartilhar` do SSE do
+  MCP. Uma `geracao` descarta o que termina em segundo plano depois de um desligar. Desligado, não há listener, processo nem thread.
+
+**Desvios do pedido (com motivo).**
+1. **SSE pelo quick tunnel (plano B).** Medido em 2026-10-26 com o cloudflared real e um servidor de eco: o trycloudflare.com segura a
+   resposta em fluxo até ela terminar (41 eventos, um por segundo, chegaram todos aos 42 s; no loopback, um por segundo). Na porta dos
+   convidados, `compartilhar::fluxo::curto` termina cada SSE (`/api/eventos` e `/api/mcp/eventos`) logo depois do primeiro evento ou do
+   batimento de 25 s, e o `EventSource` reconecta sozinho com `Last-Event-ID` (a retomada da seção 6 já existia). Como o tiny_http mantém a
+   conexão viva, esse fluxo sai com `Transfer-Encoding: chunked` e o pedaço final, senão o túnel nunca vê o fim. **Sem mudança na página.**
+   Medido de ponta a ponta pelo túnel real: o lote chegou ao convidado cerca de 45 ms depois da resposta do `POST /api/mudancas` do dono.
+   Custo: uma reconexão a cada evento e a cada 25 s por aba de convidado e por fluxo; o `onopen` do SSE do MCP (`mcp.js`) refaz `mcpConsulta()`
+   e `carregar()` a cada reconexão. A porta local continua com o fluxo aberto (zero trabalho em repouso no modo local). Mudança logo depois
+   de outra espera o `retry: 3000` da reconexão.
+2. **`PUT /api/dados`** dá 404 `so-local` só na porta dos convidados (no modo hospedado continua sendo do dono `'*'`).
+3. **SSE do MCP de quem não é local** (modo hospedado e convidados): sem o canal de sessão (`?canal=` é ignorado) e filtrado por
+   `mcp::permissao::evento_visivel`, que corta `iniciar-acao`, `comentario-plano` e `conversa-usuario` (levam o texto do usuário local às
+   sessões dele), `atualizacao` e `compartilhar`, e o que traz `workspaceId` fora do que o papel lê. Antes, um membro do modo hospedado
+   recebia esses eventos; ali eles não eram emitidos, mas no app local com convidados seriam.
+4. **Presença** continua só no modo hospedado: os convidados não veem avatares (a `Sincronia` nasce com a presença desligada no modo local).
+5. **Cookie por endereço.** A sessão do convidado pertence ao host do túnel; um endereço novo pede convite novo, e entrar de novo cria outro
+   membro (o anterior fica na lista de pessoas, que o dono pode remover).
+6. **Último dono.** O usuário local não é membro, então a regra `ultimo-dono` vale entre os convidados: o dono local não rebaixa nem remove o
+   único convidado dono sem antes promover outro. Aceito por ora.
+
+**Limites conhecidos.** O cloudflared entra no job logo depois de nascer (o `Command` não cria suspenso; ele não abre filhos nesse instante).
+O DNS do endereço novo pode levar alguns segundos, e uma consulta cedo demais pode ficar em cache negativo por até um minuto (visto no teste).
+Download sem barra de progresso (só o estado `baixando`). Só Windows (no Linux só com `BLUEPRINT_TUNEL_COMANDO`).
+
+**Testes:** `cargo test compartilhar` (cada rota só local em 404 pela porta dos convidados, com e sem sessão de dono; convidado sem sessão
+não lê nada; convidado de um workspace não vê outro, nem com acesso antigo à raiz; Host, Origin e HTTPS do túnel; porta local igual e
+convites na URL do túnel; API, um compartilhamento por vez, Atualizar recusando, filtro do SSE do MCP; hash errado apagado e recusado;
+endereço só do quick tunnel; túnel falso ligando, atendendo pela porta de verdade, SSE terminando em pedaços com o lote, desligar fechando a
+porta; túnel que cai virando `erro`).
