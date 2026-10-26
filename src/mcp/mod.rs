@@ -26,6 +26,8 @@ mod iniciar_tests;
 #[cfg(test)]
 mod lembrete_tests;
 #[cfg(test)]
+mod lembrete_rota_tests;
+#[cfg(test)]
 mod pendentes_tests;
 #[cfg(test)]
 mod projetos_tests;
@@ -70,7 +72,7 @@ pub struct Mcp {
     /// session_id do Claude Code → (workspace_id, blueprint_id), lembrado pelo hook de sessão (só memória; o próximo SessionStart refaz)
     sessoes: Mutex<HashMap<String, (String, String)>>,
     /// as sessões abertas por blueprint, com a pasta (lista do diálogo Iniciar; ver `sessoes`)
-    abertas: Mutex<sessoes::Abertas>,
+    abertas: std::sync::Arc<Mutex<sessoes::Abertas>>,
     /// as sessões com o canal ligado, conectadas agora (destinatários do pedido de iniciar uma ação)
     canais: sessoes::Canais,
     /// sessões com edição sem plano ainda não registrada (o Stop devolve o lembrete; ver `lembrete`)
@@ -82,7 +84,7 @@ const MAX_SESSOES: usize = 64;
 
 impl Mcp {
     pub fn novo(host: &str, rede: bool, arquivo: &str, url: &str, prototipos: PathBuf) -> Mcp {
-        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Mutex::new(HashMap::new()), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()) }
+        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()) }
     }
 
     pub fn lembrar_sessao(&self, session_id: &str, workspace_id: &str, blueprint_id: &str) {

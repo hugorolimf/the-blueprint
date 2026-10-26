@@ -3,20 +3,28 @@
 //! Canal: um `blueprint --mcp` com `BLUEPRINT_CHANNEL=1` abre o SSE com `?canal=<id>&cwd=<pasta>`; enquanto a conexão vive ele é um destinatário, e o pedido de
 //! iniciar uma ação vai a ele pelo evento `iniciar-acao` (ver `watch.rs`).
 //! shortcut: sem pid, não dá para juntar a sessão do hook com o processo do canal. A lista mostra cada canal da pasta como entrega possível e, no máximo, as
-//! sessões da pasta que sobram como "sem canal" (só copiar o prompt); uma sessão que cai sem SessionEnd fica até o app reiniciar. Trocar por pid se o uso pedir.
+//! sessões da pasta que sobram como "sem canal" (só copiar o prompt). Trocar por pid se o uso pedir.
+//! Expiração: uma sessão que cai sem SessionEnd sai da lista depois de `PRAZO` sem sinal (SessionStart, qualquer hook com o session_id dela, canal da pasta
+//! que cai); numa pasta com canal vivo nenhuma sessão expira. É preguiçosa: só ao listar, sem thread nem relógio em repouso.
 use super::hooks::{caminho_valido, texto};
 use super::Mcp;
 use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 /// Quantas sessões lembrar; passou disso, esquece todas (o próximo SessionStart de cada uma a registra de novo).
 pub(super) const MAX_ABERTAS: usize = 64;
+/// shortcut: 24 h sem sinal é heurística (uma sessão viva pode passar a noite parada esperando o usuário; uma morta fica até um dia na lista);
+/// trocar pelo pid do processo do Claude se sessões mortas ou sumidas incomodarem.
+pub(super) const PRAZO: Duration = Duration::from_secs(24 * 3600);
 
 pub(super) struct Sessao {
     cwd: String,
     workspace_id: String,
     blueprint_id: String,
+    /// o último sinal de vida (ver `PRAZO`)
+    visto: Instant,
 }
 
 pub(super) type Abertas = HashMap<String, Sessao>;
@@ -28,16 +36,27 @@ fn normal(c: &str) -> String {
     c.replace('\\', "/").trim_end_matches('/').to_lowercase()
 }
 
-/// Tira o canal da lista quando a conexão SSE dele fecha.
+/// Tira o canal da lista quando a conexão SSE dele fecha; a queda conta como o último sinal das sessões da pasta, e dali segue o `PRAZO`.
 pub(super) struct Guarda {
     canais: Canais,
+    abertas: Arc<Mutex<Abertas>>,
     id: String,
 }
 
 impl Drop for Guarda {
     fn drop(&mut self) {
-        self.canais.lock().unwrap_or_else(|e| e.into_inner()).remove(&self.id);
+        let Some(pasta) = self.canais.lock().unwrap_or_else(|e| e.into_inner()).remove(&self.id) else { return };
+        let agora = Instant::now();
+        for s in self.abertas.lock().unwrap_or_else(|e| e.into_inner()).values_mut().filter(|s| normal(&s.cwd) == normal(&pasta)) {
+            s.visto = agora;
+        }
     }
+}
+
+/// Esquece as sessões sem sinal há `PRAZO` ou mais, menos as de pasta com canal vivo (sem pid não dá para saber qual sessão é a do canal).
+fn expirar(a: &mut Abertas, canais: &[(String, String)], agora: Instant) {
+    let vivas: Vec<String> = canais.iter().map(|(_, c)| normal(c)).collect();
+    a.retain(|_, s| agora.saturating_duration_since(s.visto) < PRAZO || vivas.contains(&normal(&s.cwd)));
 }
 
 impl Mcp {
@@ -50,7 +69,18 @@ impl Mcp {
         if a.len() >= MAX_ABERTAS && !a.contains_key(session_id) {
             a.clear();
         }
-        a.insert(session_id.into(), Sessao { cwd: cwd.into(), workspace_id: workspace_id.into(), blueprint_id: blueprint_id.into() });
+        a.insert(session_id.into(), Sessao { cwd: cwd.into(), workspace_id: workspace_id.into(), blueprint_id: blueprint_id.into(), visto: Instant::now() });
+    }
+
+    /// Um hook chegou com o `session_id`: a sessão está viva (renova o `PRAZO`). Sessão que não está na lista: nada.
+    pub(super) fn sinal_sessao(&self, session_id: &str) {
+        self.sinal_sessao_em(session_id, Instant::now());
+    }
+
+    pub(super) fn sinal_sessao_em(&self, session_id: &str, agora: Instant) {
+        if let Some(s) = self.abertas.lock().unwrap_or_else(|e| e.into_inner()).get_mut(session_id) {
+            s.visto = agora;
+        }
     }
 
     pub(super) fn fechar_sessao(&self, session_id: &str) {
@@ -64,16 +94,21 @@ impl Mcp {
             return None;
         }
         self.canais.lock().unwrap_or_else(|e| e.into_inner()).insert(id.into(), cwd.into());
-        Some(Guarda { canais: self.canais.clone(), id: id.into() })
+        Some(Guarda { canais: self.canais.clone(), abertas: self.abertas.clone(), id: id.into() })
     }
 
     /// As sessões abertas do blueprint: cada canal da pasta (`canal: true`, dá para entregar) e as sessões que sobram sem canal (`canal: false`).
     pub(super) fn sessoes_do_blueprint(&self, workspace_id: &str, blueprint_id: &str) -> Value {
-        let a = self.abertas.lock().unwrap_or_else(|e| e.into_inner());
-        let mut do_bp: Vec<(&String, &Sessao)> = a.iter().filter(|(_, s)| s.workspace_id == workspace_id && s.blueprint_id == blueprint_id).collect();
-        do_bp.sort_by(|x, y| x.0.cmp(y.0));
+        self.sessoes_do_blueprint_em(workspace_id, blueprint_id, Instant::now())
+    }
+
+    pub(super) fn sessoes_do_blueprint_em(&self, workspace_id: &str, blueprint_id: &str, agora: Instant) -> Value {
+        let mut a = self.abertas.lock().unwrap_or_else(|e| e.into_inner());
         let mut canais: Vec<(String, String)> = self.canais.lock().unwrap_or_else(|e| e.into_inner()).iter().map(|(i, c)| (i.clone(), c.clone())).collect();
         canais.sort();
+        expirar(&mut a, &canais, agora);
+        let mut do_bp: Vec<(&String, &Sessao)> = a.iter().filter(|(_, s)| s.workspace_id == workspace_id && s.blueprint_id == blueprint_id).collect();
+        do_bp.sort_by(|x, y| x.0.cmp(y.0));
         let mut pastas: Vec<String> = do_bp.iter().map(|(_, s)| normal(&s.cwd)).collect();
         pastas.sort();
         pastas.dedup();

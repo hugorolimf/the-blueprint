@@ -75,6 +75,9 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str) -> 
         return Ok(Resposta::texto(415, "text/plain", "envie application/json"));
     }
     let corpo: Value = if pedido.corpo.is_empty() { json!({}) } else { serde_json::from_slice(&pedido.corpo).map_err(|e| falha(400, e.to_string()))? };
+    if recurso.starts_with("hook/") {
+        mcp.sinal_sessao(hooks::texto(&corpo, "session_id")); // qualquer hook da sessão prova que ela está viva (expiração em sessoes.rs)
+    }
     Ok(match recurso {
         "proposta" => {
             let (status, resposta) = com_dados(dados, |d| acoes::proposta(mcp, d, &corpo))?;
