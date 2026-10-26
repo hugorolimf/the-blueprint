@@ -1,27 +1,26 @@
-# Segurança / Security
+# Security
 
-## Modelo de ameaça
+[Português](docs/pt-BR/SECURITY.md)
 
-O app é **local-first**: roda na sua máquina e confia em quem já alcança a sua máquina.
+## Threat model
 
-- **Rotas `/api/mcp/*`** só respondem em loopback (`127.0.0.1` ou `localhost`), conferem o cabeçalho `Host` e, quando existe, o `Origin`, e exigem `content-type: application/json` em todo `POST`. Elas **não têm token**: quem alcança o loopback já alcança `/api/dados`.
-- **`MCP_REDE=1`** libera essas rotas para a rede. Use só em rede confiável e por sua conta e risco: sem token, qualquer máquina que alcance a porta lê e propõe alterações. Para hospedar, ponha um proxy reverso com TLS e autenticação na frente.
-- **O que o agente envia não altera os seus dados sozinho:** planos são propostas que você aplica na tela; remover é um pedido que você aprova item a item; concluir um plano ou checkpoint exige evidência, que fica registrada como comentário.
-- **Protótipos de ação** são HTML de terceiros (o seu agente gera). Eles são servidos com `Content-Security-Policy: sandbox allow-scripts; default-src 'none'…` e mostrados num `iframe sandbox="allow-scripts"` de **origem opaca**, sem rede e sem acesso ao app. Nunca se adiciona `allow-same-origin`. Cada arquivo tem um id de 16 caracteres hexadecimais e o servidor recusa qualquer outro caminho.
-- **Arquivos estáticos:** o servidor entrega apenas uma lista fixa (`blueprint.html`, `emblemas.mjs`, `agentes-figura.mjs`, `web/**`, `kit/**`); `data.json`, o banco e o código-fonte nunca saem por HTTP.
-- **Gravação:** o banco SQLite (WAL) é gravado em transação; uma gravação inválida deixa tudo como estava. O corpo de cada pedido tem limite de tamanho.
-- O **MCP por stdio** (`blueprint --mcp`) é um cliente HTTP fino do servidor local; não abre portas.
+The app is **local-first**: it runs on your machine and trusts whoever can already reach your machine.
 
-Essas regras têm testes (`cargo test`) e o script `scripts/mutacoes.mjs` quebra cada uma de propósito para provar que algum teste falha.
+- **`/api/mcp/*` routes** only answer on loopback (`127.0.0.1` or `localhost`), check the `Host` header and, when present, `Origin`, and require `content-type: application/json` on every `POST`. They have **no token**: whoever reaches loopback already reaches `/api/dados`.
+- **`MCP_REDE=1`** opens those routes to the network. Use it only on a trusted network and at your own risk: without a token, any machine that reaches the port reads and proposes changes. To host it, put a reverse proxy with TLS and authentication in front.
+- **What the agent sends never changes your data by itself:** plans are proposals you apply on screen; removing is a request you approve item by item; completing a plan or checkpoint requires evidence, which is kept as a comment.
+- **Action prototypes** are third-party HTML (your agent generates it). They are served with `Content-Security-Policy: sandbox allow-scripts; default-src 'none'…` and shown in an `iframe sandbox="allow-scripts"` with an **opaque origin**, no network and no access to the app. `allow-same-origin` is never added. Each file has a 16-character hexadecimal id and the server refuses any other path.
+- **Static files:** the server delivers only a fixed list (`blueprint.html`, `emblemas.mjs`, `agentes-figura.mjs`, `web/**`, `kit/**`); `data.json`, the database and the source code never leave over HTTP.
+- **Writes:** the SQLite database (WAL) is written in a transaction; an invalid write leaves everything as it was. Each request body has a size limit. Writes to `/api/dados` are versioned (`If-Match`, a `409` on stale data), so two windows cannot overwrite each other.
+- **The stdio MCP** (`blueprint --mcp`) is a thin HTTP client of the local server; it opens no ports.
+- **Updates** only make a `GET` to GitHub Releases and verify the installer's SHA-256 against the release's `SHA256SUMS`. That proves integrity, not authenticity: signing the release is on the [roadmap](ROADMAP.md).
 
-## Reportar uma vulnerabilidade
+These rules have tests (`cargo test`) and the script `scripts/mutacoes.mjs` breaks each one on purpose to prove that some test fails.
 
-Não abra uma issue pública. Use **GitHub → Security → Report a vulnerability** (private vulnerability reporting) neste repositório e descreva o que viu, como reproduzir e o impacto. Responderemos o quanto antes; correções saem numa nova versão e são citadas nas notas da release.
+## Reporting a vulnerability
 
-## Versões suportadas
+Do not open a public issue. Use **GitHub → Security → Report a vulnerability** (private vulnerability reporting) on this repository and describe what you saw, how to reproduce it and the impact. We will answer as soon as we can; fixes ship in a new version and are named in the release notes.
 
-Só a versão mais recente recebe correções de segurança.
+## Supported versions
 
----
-
-**English summary.** Local-first app: `/api/mcp/*` only answers on loopback (Host/Origin checked, JSON-only POSTs, no token). `MCP_REDE=1` exposes them to the network at your own risk. Agent input never changes your data without you applying it; phase prototypes run in an opaque-origin sandboxed iframe with no network. Report vulnerabilities privately through GitHub's *Report a vulnerability*.
+Only the latest version receives security fixes.

@@ -1,14 +1,16 @@
 # The Blueprint v0.1.1 (beta)
 
-## Novidades
+[Português](pt-BR/release-v0.1.1.md)
 
-- **`registrar_trabalho`:** o agente registra o que já fez fora do plano; aparece na tela Planejar como "Registro nº N" e só entra no blueprint quando você clica em Adicionar. O plugin do Claude Code lembra o agente ao parar se houve edição sem plano.
-- **Menu do botão direito redesenhado**, com a marca do terminal na faixa.
-- **Animação ao expandir e recolher** as seções da folha.
-- Testes de ponta a ponta da atualização automática pela interface e com o instalador real.
+## What is new
 
-## Como instalar
+- **`registrar_trabalho`:** the agent records what it already did outside the plan; it shows up on the Plan screen as "Record no. N" and only enters the blueprint when you click Add. The Claude Code plugin reminds the agent when it stops if there was an edit without a plan.
+- **A redesigned right-click menu**, with the terminal mark in the strip.
+- **An animation when expanding and collapsing** the sheet's sections.
+- End-to-end tests of the automatic update through the interface and with the real installer.
 
-Baixe `Blueprint-0.1.1-instalador.exe` abaixo (instala só para o seu usuário). Quem já tem o app recebe a atualização sozinho e instala com um clique em Atualizar. O `SHA256SUMS` traz o hash do instalador.
+## How to install
 
-O instalador não é assinado: o Windows pode avisar na primeira execução.
+Download `Blueprint-0.1.1-instalador.exe` below (it installs for your user only). Anyone who already has the app gets the update by itself and installs it with one click on Update. The `SHA256SUMS` carries the installer's hash.
+
+The installer is not signed: Windows may warn on the first run.

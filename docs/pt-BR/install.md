@@ -1,6 +1,6 @@
 # Instalar
 
-[Voltar ao README](../README.pt-BR.md)
+[Voltar ao README](../../README.pt-BR.md) · [English](../model.md)
 
 ## Windows 10/11 (janela, bandeja e instalador)
 
@@ -14,4 +14,4 @@ O instalador não coloca o `blueprint` no PATH: o plugin do Claude Code já fica
 
 ## Desempenho (medido)
 
-Binário de 2,5 MB, servidor com ~11 MB de memória e 0% de CPU em repouso, `GET /api/dados` abaixo de 5 ms, janela visível em ~0,1 s. Detalhes em [`referencias/relatorio-medicao.md`](../referencias/relatorio-medicao.md).
+Binário de 2,5 MB, servidor com ~11 MB de memória e 0% de CPU em repouso, `GET /api/dados` abaixo de 5 ms, janela visível em ~0,1 s. Detalhes em [`referencias/relatorio-medicao.md`](../../referencias/relatorio-medicao.md).

@@ -1,6 +1,6 @@
 # Desenvolver e testar
 
-[Voltar ao README](../README.pt-BR.md)
+[Voltar ao README](../../README.pt-BR.md) · [English](../development.md)
 
 ```
 cargo dev                                    # o app em modo dev, com recarga automática (precisa do cargo-watch)
@@ -15,4 +15,4 @@ node agentes-figura.test.mjs
 node scripts/migrar-vocabulario.test.mjs
 ```
 
-Verificações de ponta a ponta (precisam do `target/release/blueprint.exe` e, as de tela, do Microsoft Edge): `scripts/contrato-http.mjs`, `fumaca-rust.mjs`, `ui-e2e.mjs`, `robo-e2e.mjs`, `painel-agentes-e2e.mjs`, `capturas.mjs --comparar`, `mutacoes.mjs` (quebra as regras de segurança de propósito e confere que algum teste falha) e `testar-instalador.mjs`. Veja [CONTRIBUTING.md](CONTRIBUTING.md).
+Verificações de ponta a ponta (precisam do `target/release/blueprint.exe` e, as de tela, do Microsoft Edge): `scripts/contrato-http.mjs`, `fumaca-rust.mjs`, `ui-e2e.mjs`, `robo-e2e.mjs`, `painel-agentes-e2e.mjs`, `capturas.mjs --comparar`, `mutacoes.mjs` (quebra as regras de segurança de propósito e confere que algum teste falha) e `testar-instalador.mjs`. Veja [CONTRIBUTING.md](../../CONTRIBUTING.md).

@@ -1,5 +1,7 @@
 # Avisos do app ao Claude Code
 
+> Portuguese only for now (a technical reference for maintainers). Documentação só em português por enquanto.
+
 `blueprint watch` acompanha `/api/mcp/eventos` por SSE, em `http://127.0.0.1:3000` ou `BLUEPRINT_URL`. O monitor do plugin o inicia com `when: always`; não precisa de `userConfig` nem de flag de canal. O instalador grava o caminho absoluto do executável no comando. O manifesto usa `experimental.monitors`.
 
 O alvo vem da ligação da pasta no banco, consultada por `hook/sessao` a cada reconexão. Assim, a linha `Blueprint:` no arquivo de instruções não precisa existir para o filtro funcionar. Pastas sem ligação ficam silenciosas. O processo dorme entre tentativas de conexão (1, 2, 4, 8, 16 e 30 segundos); uma conexão aberta bloqueia esperando dados. Não há sondagem em repouso.

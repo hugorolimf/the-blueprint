@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  Beta · Windows 10/11 · MIT · <a href="README.pt-BR.md">Português</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="docs/comparacao.md">How it compares</a>
+  Beta · Windows 10/11 · MIT · <a href="README.pt-BR.md">Português</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="docs/comparison.md">How it compares</a>
 </p>
 
 ![A blueprint sheet with projects, actions, plans and checkpoints](docs/img/blueprint.png)
@@ -35,7 +35,7 @@ Your coding agent (Claude Code, Codex) plans and builds fast. The cost is a plan
 4. Ask: *"Plan this project in The Blueprint."* The proposal arrives in the app; review it on **Planejar** and apply it.
 5. Ask: *"Start the first action."* As the agent works, the Claude walks to the plan on the sheet, and each plan is checked with its evidence.
 
-Not on Windows, or no installer? Build it with [Rust](https://rustup.rs): `cargo build --release`, then `blueprint serve` runs the same app as a local web server at `http://127.0.0.1:3000` ([details](docs/comandos.md), in Portuguese).
+Not on Windows, or no installer? Build it with [Rust](https://rustup.rs): `cargo build --release`, then `blueprint serve` runs the same app as a local web server at `http://127.0.0.1:3000` ([details](docs/commands.md)).
 
 ## How it works
 
@@ -48,31 +48,31 @@ Workspace
          └─ Checkpoint  name, date, done
 ```
 
-The agent reads the structure, proposes changes, reports progress and marks plans done through MCP tools (`listar_blueprints`, `ler_blueprint`, `propor_blueprint`, `registrar_progresso`, `marcar_concluido` and more; [full list](docs/mcp.md)). You start an action yourself, with a confirmed click or the `blueprint claude` command, so the app never sends work to an agent on its own. Plans are sized for AI pace (0.5 to 4 hours) and the app measures how long each one really took. [The model in detail](docs/modelo.md).
+The agent reads the structure, proposes changes, reports progress and marks plans done through MCP tools (`listar_blueprints`, `ler_blueprint`, `propor_blueprint`, `registrar_progresso`, `marcar_concluido` and more; [full list](docs/mcp.md)). You start an action yourself, with a confirmed click or the `blueprint claude` command, so the app never sends work to an agent on its own. Plans are sized for AI pace (0.5 to 4 hours) and the app measures how long each one really took. [The model in detail](docs/model.md).
 
 ## Documentation
 
-All guides are in Portuguese for now; the English versions are tracked in the [roadmap](ROADMAP.md).
+The guides are English first; each has a Portuguese version in [`docs/pt-BR/`](docs/pt-BR/).
 
 | | |
 | --- | --- |
-| [Install from source, performance](docs/instalacao.md) | installer details, data folder, measured numbers |
+| [Install from source, performance](docs/install.md) | installer details, data folder, measured numbers |
 | [Claude Code plugin](docs/claude-code.md) | skill, agent, hooks, status line, `/blueprint:status`, the terminal panel |
 | [MCP and other agents](docs/mcp.md) | tools, Codex, offline queue |
-| [Updates](docs/atualizacoes.md) | background download, SHA-256 check, install only on your click |
-| [Server and commands](docs/comandos.md) | `blueprint serve`, environment variables, every subcommand |
-| [Development](docs/desenvolvimento.md) | `cargo dev`, tests, end-to-end checks |
-| [How it compares](docs/comparacao.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
+| [Updates](docs/updates.md) | background download, SHA-256 check, install only on your click |
+| [Server and commands](docs/commands.md) | `blueprint serve`, environment variables, every subcommand |
+| [Development](docs/development.md) | `cargo dev`, tests, end-to-end checks |
+| [How it compares](docs/comparison.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
 
 ## FAQ
 
 **Does the app run my agent or spend tokens by itself?** No. You start an action, and only then Claude Code runs, as usual.
 
-**Does it send my data anywhere?** No account and no telemetry. The only network call is a `GET` to GitHub Releases to look for updates, which you can turn off ([how](docs/atualizacoes.md)).
+**Does it send my data anywhere?** No account and no telemetry. The only network call is a `GET` to GitHub Releases to look for updates, which you can turn off ([how](docs/updates.md)).
 
 **Where is my data?** In `%APPDATA%\Blueprint\blueprint.db`. `blueprint exportar` writes it to JSON.
 
-**Windows shows a SmartScreen warning.** If it does, compare the installer's SHA-256 with the `SHA256SUMS` file in the same release.
+**Windows shows a SmartScreen or Defender warning.** The installer is not code-signed yet, so that can happen on the first run. Compare its SHA-256 with the `SHA256SUMS` file in the same release; signed releases are on the [roadmap](ROADMAP.md).
 
 **macOS and Linux?** Not yet; see the [roadmap](ROADMAP.md). The server mode works anywhere you can build it.
 

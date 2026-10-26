@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  Beta · Windows 10/11 · MIT · <a href="README.md">English</a> · <a href="ROADMAP.pt-BR.md">Roadmap</a> · <a href="docs/comparacao.md">Comparação</a>
+  Beta · Windows 10/11 · MIT · <a href="README.md">English</a> · <a href="ROADMAP.pt-BR.md">Roadmap</a> · <a href="docs/pt-BR/comparison.md">Comparação</a>
 </p>
 
 ![Uma folha de blueprint com projetos, ações, planos e checkpoints](docs/img/blueprint.png)
@@ -35,7 +35,7 @@ O seu agente de código (Claude Code, Codex) planeja e constrói rápido. O cust
 4. Peça: *"Planeje este projeto no The Blueprint."* A proposta chega ao app; revise em **Planejar** e aplique.
 5. Peça: *"Inicie a primeira ação."* Enquanto o agente trabalha, o Claude anda até o plano na folha e cada plano é marcado com a evidência.
 
-Fora do Windows, ou sem o instalador? Compile com o [Rust](https://rustup.rs): `cargo build --release`, e `blueprint serve` roda o mesmo app como servidor web local em `http://127.0.0.1:3000` ([detalhes](docs/comandos.md)).
+Fora do Windows, ou sem o instalador? Compile com o [Rust](https://rustup.rs): `cargo build --release`, e `blueprint serve` roda o mesmo app como servidor web local em `http://127.0.0.1:3000` ([detalhes](docs/pt-BR/commands.md)).
 
 ## Como funciona
 
@@ -48,29 +48,29 @@ Workspace
          └─ Checkpoint  nome, data, feito
 ```
 
-O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos como feitos por ferramentas MCP (`listar_blueprints`, `ler_blueprint`, `propor_blueprint`, `registrar_progresso`, `marcar_concluido` e outras; [lista completa](docs/mcp.md)). Quem inicia uma ação é você, com um clique confirmado ou o comando `blueprint claude`, então o app nunca manda trabalho a um agente por conta própria. Os planos têm o tamanho do ritmo da IA (de 0,5 a 4 horas) e o app mede quanto cada um realmente levou. [O modelo em detalhe](docs/modelo.md).
+O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos como feitos por ferramentas MCP (`listar_blueprints`, `ler_blueprint`, `propor_blueprint`, `registrar_progresso`, `marcar_concluido` e outras; [lista completa](docs/pt-BR/mcp.md)). Quem inicia uma ação é você, com um clique confirmado ou o comando `blueprint claude`, então o app nunca manda trabalho a um agente por conta própria. Os planos têm o tamanho do ritmo da IA (de 0,5 a 4 horas) e o app mede quanto cada um realmente levou. [O modelo em detalhe](docs/pt-BR/model.md).
 
 ## Documentação
 
 | | |
 | --- | --- |
-| [Instalação e desempenho](docs/instalacao.md) | detalhes do instalador, pasta de dados, números medidos |
-| [Plugin do Claude Code](docs/claude-code.md) | skill, agente, hooks, status line, `/blueprint:status`, o painel no terminal |
-| [MCP e outros agentes](docs/mcp.md) | ferramentas, Codex, fila com o app fechado |
-| [Atualizações](docs/atualizacoes.md) | download em segundo plano, conferência do SHA-256, instala só no seu clique |
-| [Servidor e comandos](docs/comandos.md) | `blueprint serve`, variáveis de ambiente, todos os subcomandos |
-| [Desenvolvimento](docs/desenvolvimento.md) | `cargo dev`, testes, verificações de ponta a ponta |
-| [Comparação](docs/comparacao.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
+| [Instalação e desempenho](docs/pt-BR/install.md) | detalhes do instalador, pasta de dados, números medidos |
+| [Plugin do Claude Code](docs/pt-BR/claude-code.md) | skill, agente, hooks, status line, `/blueprint:status`, o painel no terminal |
+| [MCP e outros agentes](docs/pt-BR/mcp.md) | ferramentas, Codex, fila com o app fechado |
+| [Atualizações](docs/pt-BR/updates.md) | download em segundo plano, conferência do SHA-256, instala só no seu clique |
+| [Servidor e comandos](docs/pt-BR/commands.md) | `blueprint serve`, variáveis de ambiente, todos os subcomandos |
+| [Desenvolvimento](docs/pt-BR/development.md) | `cargo dev`, testes, verificações de ponta a ponta |
+| [Comparação](docs/pt-BR/comparison.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
 
 ## Perguntas frequentes
 
 **O app roda o meu agente ou gasta tokens sozinho?** Não. Você inicia uma ação e só então o Claude Code roda, como de costume.
 
-**Ele envia meus dados para algum lugar?** Sem conta e sem telemetria. A única chamada de rede é um `GET` às Releases do GitHub para procurar atualização, que dá para desligar ([como](docs/atualizacoes.md)).
+**Ele envia meus dados para algum lugar?** Sem conta e sem telemetria. A única chamada de rede é um `GET` às Releases do GitHub para procurar atualização, que dá para desligar ([como](docs/pt-BR/updates.md)).
 
 **Onde ficam os meus dados?** Em `%APPDATA%\Blueprint\blueprint.db`. O `blueprint exportar` grava em JSON.
 
-**O Windows mostra um aviso do SmartScreen.** Se mostrar, compare o SHA-256 do instalador com o arquivo `SHA256SUMS` da mesma release.
+**O Windows mostra um aviso do SmartScreen ou do Defender.** O instalador ainda não tem assinatura de código, então isso pode acontecer na primeira execução. Compare o SHA-256 dele com o arquivo `SHA256SUMS` da mesma release; releases assinadas estão no [roadmap](ROADMAP.pt-BR.md).
 
 **macOS e Linux?** Ainda não; veja o [roadmap](ROADMAP.pt-BR.md). O modo servidor funciona onde você conseguir compilar.
 
@@ -79,8 +79,8 @@ O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos c
 ## Roadmap, contribuir e segurança
 
 - [ROADMAP.pt-BR.md](ROADMAP.pt-BR.md): o que existe, o que está sendo feito e o que vem depois.
-- [CONTRIBUTING.md](CONTRIBUTING.md): ideias e boas primeiras issues são bem-vindas nas [Issues](https://github.com/hugorolimf/the-blueprint/issues).
-- [SECURITY.md](SECURITY.md): as rotas do MCP só respondem em loopback; protótipos rodam num sandbox de origem opaca.
+- [CONTRIBUTING.md](docs/pt-BR/CONTRIBUTING.md): ideias e boas primeiras issues são bem-vindas nas [Issues](https://github.com/hugorolimf/the-blueprint/issues).
+- [SECURITY.md](docs/pt-BR/SECURITY.md): as rotas do MCP só respondem em loopback; protótipos rodam num sandbox de origem opaca.
 
 ## Licença
 

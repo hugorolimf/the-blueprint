@@ -1,6 +1,8 @@
 # Blueprint e os parecidos
 
-Uma comparação honesta, com o que foi possível verificar nas páginas dos projetos em 25/10/2026 (fontes e números em [docs/interno/pesquisa-referencias.md](interno/pesquisa-referencias.md)). Onde o Blueprint perde, está escrito.
+[English](../comparison.md)
+
+Uma comparação honesta, com o que foi possível verificar nas páginas dos projetos em 25/10/2026 (fontes e números em [docs/interno/pesquisa-referencias.md](interno/research.md)). Onde o Blueprint perde, está escrito.
 
 | | **The Blueprint** | [Backlog.md](https://github.com/MrLesk/Backlog.md) | [Task Master](https://github.com/eyaltoledano/claude-task-master) | [Vibe Kanban](https://github.com/BloopAI/vibe-kanban) | [Plane](https://github.com/makeplane/plane) |
 | --- | --- | --- | --- | --- | --- |
@@ -23,7 +25,7 @@ Uma comparação honesta, com o que foi possível verificar nas páginas dos pro
 
 - **Maturidade e comunidade.** O Blueprint está na v0.1 e tem 3 estrelas; todos os outros têm anos de uso e comunidade.
 - **Plataformas.** O Blueprint é Windows na janela; Backlog.md, Task Master e Vibe Kanban instalam por npm em qualquer sistema.
-- **Equipes.** O Plane tem usuários, papéis, sprints e documentos prontos; o modo colaborativo do Blueprint ainda é só desenho (veja o [ROADMAP](../ROADMAP.md)).
+- **Equipes.** O Plane tem usuários, papéis, sprints e documentos prontos; o modo colaborativo do Blueprint ainda é só desenho (veja o [ROADMAP](../../ROADMAP.pt-BR.md)).
 - **Dados no repositório.** O Backlog.md guarda as tarefas em Markdown no próprio Git, o que dá histórico e revisão por pull request; o Blueprint guarda num banco local (e exporta para JSON).
 
 ## Qual escolher

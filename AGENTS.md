@@ -1,43 +1,48 @@
-# AGENTS.md — guia para agentes que trabalham neste repositório
+# AGENTS.md — guide for agents working in this repository
 
-The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interface web. Vocabulário fixo: **Workspace → Blueprint → Projeto (opcional) → Ação → Plano / Checkpoint** (nada de "fase", "tarefa", "marco"; **única exceção, pedida pelo usuário em 2026-10-23:** o aviso na tela de que o agente concluiu um plano se chama "Tarefa concluída" ("Tarefa não concluída"), porque "plano" também é a proposta que o agente envia e o aviso confundia; "projeto" é só o grupo de ações dentro do blueprint, nunca o nome do blueprint).
+[Português](docs/pt-BR/AGENTS.md)
 
-## Mapa
+The Blueprint (beta), a local-first roadmap in Rust (`blueprint.exe`) with a web interface. Fixed vocabulary: **Workspace → Blueprint → Project (optional) → Action → Plan / Checkpoint** (no "phase", "task", "milestone"; **the only exception, requested by the user on 2026-10-23:** the on-screen notice that the agent completed a plan is called "Tarefa concluída" ("Tarefa não concluída") in Portuguese and "Task completed" in English, because "plan" is also the proposal the agent sends and the notice was confusing; "project" is only the group of actions inside the blueprint, never the name of the blueprint). The code, the database and the MCP field names are in Portuguese; the interface and the documentation are English first.
 
-| Onde | O quê |
+## Map
+
+| Where | What |
 | --- | --- |
-| `src/dados/` | única camada que fala com o SQLite (migrações em `src/dados/migracoes/NNN_*.sql`; `formato.rs` mapeia o JSON para tabelas) |
-| `src/blueprint/` | validação das propostas do agente (`validar_proposta`), prazos, resumos para `ler_blueprint` |
-| `src/mcp/` | fila em memória, ações do MCP, atividade dos agentes, SSE, `ferramentas.json` e `instrucoes.txt` (a fonte da verdade do MCP) |
-| `src/http/` | servidor HTTP síncrono (`tiny_http`), rotas puras, estáticos com ETag e gzip |
-| `src/janela/` | janela WebView2, bandeja e instância única (só Windows) |
-| `web/`, `blueprint.html` | interface: CSS em `web/css`, scripts clássicos em `web/js` na ordem listada em `blueprint.html` |
-| `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | kit isométrico (anatomy) e figuras; rodam no navegador |
-| `skills/blueprint-planejamento/` | o guia que o agente lê pelo MCP (`guia_de_planejamento`) |
-| `scripts/` | verificações de ponta a ponta (contrato HTTP, e2e com Edge, mutações, medições, instalador) |
+| `src/dados/` | the only layer that talks to SQLite (migrations in `src/dados/migracoes/NNN_*.sql`; `formato.rs` maps the JSON to tables) |
+| `src/blueprint/` | validation of the agent's proposals (`validar_proposta`), deadlines, summaries for `ler_blueprint` |
+| `src/mcp/` | the in-memory queue, MCP actions, agent activity, SSE, `ferramentas.json` and `instrucoes.txt` (the source of truth of the MCP, written in English) |
+| `src/http/` | the synchronous HTTP server (`tiny_http`), pure routes, static files with ETag and gzip, the versioned `/api/dados` |
+| `src/janela/` | the WebView2 window, tray and single instance (Windows only) |
+| `web/`, `blueprint.html` | the interface: CSS in `web/css`, classic scripts in `web/js` in the order listed in `blueprint.html`, language catalogs in `web/i18n` |
+| `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | the isometric kit (Anatomy) and figures; they run in the browser |
+| `skills/blueprint-planejamento/` | the guide the agent reads through the MCP (`guia_de_planejamento`), in English |
+| `scripts/` | end-to-end checks (HTTP contract, Edge e2e, mutations, measurements, installer, the video recorder) |
+| `roadmap.json` | the single source of the public roadmap (generates `ROADMAP.md` and the app's Roadmap screen) |
 
-## Comandos
+## Commands
 
 ```
-cargo test                        # testes Rust (um tests.rs por módulo)
+cargo test                        # Rust tests (one tests.rs per module)
 cargo build --release             # target/release/blueprint.exe
 node emblemas.test.mjs && node agentes-figura.test.mjs && node agentes-claude.test.mjs && node scripts/migrar-vocabulario.test.mjs
-node scripts/contrato-http.mjs    # API contra referencias/api-snapshots.json
-node scripts/ui-e2e.mjs           # interface no Edge sem janela
+node i18n.test.mjs && node scripts/i18n-completude.mjs
+node scripts/contrato-http.mjs    # the API against referencias/api-snapshots.json
 node scripts/capturas.mjs --comparar
 ```
 
-## Regras
+## Rules
 
-- Arquivos de até 350 linhas (teto 500 com motivo no topo). Um arquivo, uma responsabilidade.
-- Poucas dependências; sem framework nem bundler na interface.
-- Segurança: `/api/mcp/*` só em loopback, `Host` e `Origin` conferidos, todo POST `application/json`; protótipos em `iframe sandbox="allow-scripts"` de origem opaca (nunca `allow-same-origin`). O que o agente envia é proposta; concluir exige evidência.
-- Mudou o MCP? Atualize `src/mcp/ferramentas.json`, `instrucoes.txt` (a regra e os nomes das ferramentas ficam nos primeiros 512 caracteres: o Codex só lê isso), o guia em `skills/` e os testes em `src/mcp/tests.rs`.
-- Não coloque dados reais no repositório: use `data.exemplo.json`.
+- Files of at most 350 lines (ceiling 500 with the reason at the top). One file, one responsibility.
+- Few dependencies; no framework or bundler in the interface.
+- **No emojis. Figures are drawn with Anatomy. The app's theme applies everywhere** (screens, prototypes, videos, documents).
+- Every user-visible text goes through `tr()` and has an English catalog entry (`web/i18n`); documentation is English first, with Portuguese in `docs/pt-BR/`.
+- Security: `/api/mcp/*` loopback only, `Host` and `Origin` checked, every POST `application/json`; prototypes in an opaque-origin `iframe sandbox="allow-scripts"` (never `allow-same-origin`). What the agent sends is a proposal; completing requires evidence. Writes to `/api/dados` carry `If-Match`.
+- Changed the MCP? Update `src/mcp/ferramentas.json`, `instrucoes.txt` (the rule and the tool names stay in the first 512 characters: Codex only reads that), the guide in `skills/` and the tests in `src/mcp/tests.rs`.
+- Do not put real data in the repository: use `data.exemplo.json` or `data.exemplo.en.json`.
 
-## Usar o The Blueprint enquanto trabalha
+## Use The Blueprint while you work
 
-Se o app estiver rodando e o MCP `blueprint` registrado (`claude mcp add blueprint -- <caminho>\blueprint.exe --mcp`), mantenha o blueprint atualizado: planeje com `propor_blueprint`, avise o que está fazendo com `registrar_progresso` e conclua com `marcar_concluido` + evidência. A linha que liga uma pasta ao blueprint é:
+If the app is running and the `blueprint` MCP is registered (`claude mcp add blueprint -- <path>\blueprint.exe --mcp`), keep the blueprint up to date: plan with `propor_blueprint`, say what you are doing with `registrar_progresso` and finish with `marcar_concluido` + evidence. The line that links a folder to the blueprint is:
 
 ```
 Blueprint: workspace_id `<workspace_id>`, blueprint_id `<blueprint_id>` (MCP `blueprint`).

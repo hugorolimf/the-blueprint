@@ -1,5 +1,7 @@
 # Movimento de expandir e recolher (ação 1.13)
 
+> Portuguese only for now (a technical reference for maintainers). Documentação só em português por enquanto.
+
 Decisão de 2026-10-23, para o usuário aprovar no checkpoint «Usuário aprovou o movimento de expandir e recolher».
 
 ## O que muda na tela

@@ -1,5 +1,7 @@
 # Texto de divulgação (rascunho)
 
+> Portuguese only for now (a technical reference for maintainers). Documentação só em português por enquanto.
+
 **The Blueprint (beta)** — um roadmap local-first para quem trabalha com agentes de IA.
 
 O seu agente (Claude Code, Codex…) planeja e atualiza o roadmap pelo MCP; você revisa numa folha de blueprint e só aplica o que concordar. Concluir um plano exige evidência (o teste que rodou, o resultado). Um binário Rust de 2,5 MB, SQLite, interface web numa janela nativa, sem nuvem.

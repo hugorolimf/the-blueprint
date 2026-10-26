@@ -1,44 +1,52 @@
-# Como contribuir
+# How to contribute
 
-Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos.
+[Português](docs/pt-BR/CONTRIBUTING.md)
 
-## Vocabulário (importante)
+Thank you! The project is small on purpose. Before a big change, open an issue so we can talk about it. What is planned and what is being built is in the [ROADMAP](ROADMAP.md).
 
-O modelo é **Workspace → Blueprint → Projeto (opcional) → Ação → Plano / Checkpoint**. "Projeto" é o grupo de ações dentro de um blueprint (campos `projetos`, `projetoId` e `projeto`); não o use como nome do blueprint. Não use "fase", "tarefa" nem "marco" no código, na interface, no MCP ou nos documentos (existem só no script de migração e na migração SQL `002_vocabulario.sql`). Em português, "plano" é o item marcável; a proposta inteira do agente é uma **proposta** (`propor_blueprint`).
+## Vocabulary (important)
 
-## Regras de código
+The model is **Workspace → Blueprint → Project (optional) → Action → Plan / Checkpoint**. "Project" is the group of actions inside a blueprint (the fields `projetos`, `projetoId` and `projeto`); do not use it as the name of the blueprint. Do not use "phase", "task" or "milestone" in the code, the interface, the MCP or the documents (they exist only in the migration script and in the SQL migration `002_vocabulario.sql`). A "plan" is the tickable item; the agent's whole submission is a **proposal** (`propor_blueprint`). The code, the database and the MCP field names are in Portuguese (`acao`, `plano`, `feito`…); the interface and the documentation are in English first.
 
-- **Arquivos pequenos:** no máximo 350 linhas; o teto absoluto é 500 e só com o motivo escrito no topo do arquivo. Um arquivo, uma responsabilidade; nada de `utils` genérico.
-- **Um teste por módulo** (`tests.rs` ou `tests/` ao lado do módulo Rust). Mudou uma regra de segurança ou de dados? Escreva o teste que falha sem a mudança.
-- **Poucas dependências.** Rust: só crates que valem o peso (nada de `tokio` se um servidor síncrono resolve). Navegador: sem framework e sem bundler; scripts clássicos carregados na ordem de `blueprint.html` (`inicio.js` por último).
-- **O kit isométrico** (`kit/`, `emblemas.mjs`) roda no navegador e não vai para Rust; mudou o desenho? Rode `node emblemas.test.mjs` e `node agentes-figura.test.mjs` e só regrave as referências de propósito.
-- **Protótipos** nunca ganham `allow-same-origin`. As rotas `/api/mcp/*` continuam só em loopback.
-- `blueprint.html` usa fim de linha CRLF; edite com cuidado, sem converter o arquivo inteiro.
+## Code rules
 
-## Desenvolver
+- **Small files:** at most 350 lines; the absolute ceiling is 500 and only with the reason written at the top of the file. One file, one responsibility; no generic `utils`.
+- **One test per module** (`tests.rs` or `tests/` next to the Rust module). Changed a security or data rule? Write the test that fails without the change.
+- **Few dependencies.** Rust: only crates worth their weight (no `tokio` if a synchronous server does the job). Browser: no framework and no bundler; classic scripts loaded in the order of `blueprint.html` (`inicio.js` last).
+- **The isometric kit** (`kit/`, `emblemas.mjs`) runs in the browser and does not go to Rust; changed the drawing? Run `node emblemas.test.mjs` and `node agentes-figura.test.mjs` and only re-record the references on purpose.
+- **Prototypes** never get `allow-same-origin`. The `/api/mcp/*` routes stay loopback-only.
+- `blueprint.html` uses CRLF line endings; edit it with care, without converting the whole file.
+- **No emojis** anywhere in the project. If you need a figure, draw it with Anatomy. Everything visual uses the app's own theme (`web/css/tokens.css`).
+- **Every text the user reads goes through `tr()`** and needs an English entry in `web/i18n/` (see [Develop and test](docs/development.md#languages)); `node scripts/i18n-completude.mjs` fails otherwise.
+- **Documentation is written in English first**; the Portuguese version lives in `docs/pt-BR/` with the same file name.
 
-`cargo dev` abre o app em modo dev (janela nativa, com os seus dados; feche o app antes): salvar `web/` ou `kit/` recarrega a janela; salvar `src/` recompila e reabre (precisa de `cargo install cargo-watch`, uma vez; sem ele, `cargo run -- dev`). `node dev.mjs` é a alternativa no navegador, com banco de exemplo em `.dev/`. Nenhum dos dois roda testes.
+## Develop
 
-## Rodar os testes
+`cargo dev` opens the app in dev mode (a native window, with your data; close the app first): saving `web/` or `kit/` reloads the window; saving `src/` rebuilds and reopens (needs `cargo install cargo-watch`, once; without it, `cargo run -- dev`). `node dev.mjs` is the browser alternative, with a sample database in `.dev/`. Neither runs tests.
+
+## Run the tests
 
 ```
 cargo test
 node emblemas.test.mjs
 node agentes-figura.test.mjs
+node i18n.test.mjs
+node scripts/i18n-completude.mjs
 node scripts/migrar-vocabulario.test.mjs
 cargo build --release
-node scripts/contrato-http.mjs       # as respostas da API contra referencias/api-snapshots.json
+node scripts/contrato-http.mjs       # the API's answers against referencias/api-snapshots.json
 node scripts/fumaca-rust.mjs
-node scripts/ui-e2e.mjs              # precisa do Microsoft Edge
-node scripts/capturas.mjs --comparar # as 7 telas, pixel a pixel (hash)
+node scripts/idioma-e2e.mjs          # needs Microsoft Edge
+node scripts/roadmap-e2e.mjs         # needs Microsoft Edge
+node scripts/capturas.mjs --comparar # the 7 screens, pixel by pixel (hash)
 ```
 
-Mudou de propósito uma resposta da API ou a aparência de uma tela? Regrave a referência (`contrato-http.mjs --gravar`, `capturas.mjs --gravar`), confira a diferença e diga no pull request o que mudou e por quê.
+Changed an API answer or the look of a screen on purpose? Re-record the reference (`contrato-http.mjs --gravar`, `capturas.mjs --gravar`), check the difference and say in the pull request what changed and why.
 
 ## Pull requests
 
-1. Uma mudança por PR, com o porquê na descrição.
-2. `cargo test` e os testes `node` verdes (a CI roda os mesmos em Linux e Windows).
-3. Atualize a documentação e o guia do agente (`skills/blueprint-planejamento/`) se mudou o MCP.
+1. One change per PR, with the why in the description.
+2. `cargo test` and the `node` tests green (CI runs the same ones on Linux and Windows).
+3. Update the documentation and the agent guide (`skills/blueprint-planejamento/`) if the MCP changed.
 
-Issues boas para começar têm o rótulo **good first issue**.
+Good first issues carry the **good first issue** label.

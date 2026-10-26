@@ -1,5 +1,7 @@
 # Marca do Blueprint no Claude Code
 
+> Portuguese only for now (a technical reference for maintainers). Documentação só em português por enquanto.
+
 O lançador `blueprint claude` extrai e carrega `blueprint-terminal` com um segundo
 `--plugin-dir`. O plugin principal continua fornecendo skill, agente, MCP e hooks.
 A marca não consulta dados do app, não inicia processos e não usa polling.

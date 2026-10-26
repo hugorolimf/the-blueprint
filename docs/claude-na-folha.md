@@ -1,5 +1,7 @@
 # O Claude na folha (contrato, 2026-10-22)
 
+> Portuguese only for now (a technical reference for maintainers). Documentação só em português por enquanto.
+
 O agente que trabalha no app aparece na folha como o próprio **Claude**, desenhado com o anatomy (`agentes-claude.mjs`), e os subagentes aparecem como versões dele do **mesmo tamanho** (decisão do usuário, 2026-10-22). Este documento é o contrato entre o desenho (esta ação) e o movimento pela folha (ação seguinte). Prévia para aprovar o desenho: `referencias/claude-previa.html`.
 
 ## O que ele é

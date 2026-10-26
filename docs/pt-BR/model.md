@@ -1,6 +1,6 @@
 # O modelo: Workspace, Blueprint, Projeto, Ação, Plano e Checkpoint
 
-[Voltar ao README](../README.pt-BR.md)
+[Voltar ao README](../../README.pt-BR.md) · [English](../model.md)
 
 ```
 Workspace

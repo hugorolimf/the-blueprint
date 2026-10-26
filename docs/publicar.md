@@ -1,5 +1,7 @@
 # Publicar no GitHub (passo a passo)
 
+> Portuguese only for now (a technical reference for maintainers). Documentação só em português por enquanto.
+
 > Estado em 2026-11: o repositório `hugorolimf/the-blueprint` já existe (passos 1 a 4 feitos). Para as próximas versões use **"Publicar uma versão nova"** no fim deste arquivo; os passos 1 a 7 ficam como histórico e para quem for publicar a partir de um clone novo.
 
 Cada passo cria algo público ou irreversível, por isso é seu o comando.

@@ -1,12 +1,14 @@
 # The Blueprint v0.1.3 (beta)
 
-## Novidades
+[Português](pt-BR/release-v0.1.3.md)
 
-- **Escolher a sessão ao iniciar uma ação:** o botão "Iniciar com o Claude" oferece "Nova sessão" ou uma sessão do Claude que já está aberta na pasta. O pedido chega a ela pelo canal da sessão; a que não tem canal só recebe o texto para você copiar. A "Nova sessão" já abre com o canal ligado (`--canal`).
-- Ajustes no estilo do diálogo e nas instruções do MCP.
+## What is new
 
-## Como instalar
+- **Choose the session when starting an action:** the "Start with Claude" button offers "New session" or a Claude session that is already open in the folder. The request reaches it through the session's channel; one without a channel only receives the text for you to copy. "New session" already opens with the channel on (`--canal`).
+- Tweaks to the dialog's style and to the MCP instructions.
 
-Baixe `Blueprint-0.1.3-instalador.exe` abaixo (instala só para o seu usuário). Quem está na 0.1.2 recebe a atualização sozinho (botão ao lado do nome, na tela Workspaces) e instala com um clique em Atualizar. Quem está na 0.1.0 ou 0.1.1 precisa instalar esta à mão uma vez, porque essas versões não conseguem baixar atualizações. O `SHA256SUMS` traz o hash do instalador.
+## How to install
 
-O instalador não é assinado: o Windows ou o Defender pode avisar ou bloquear na primeira execução.
+Download `Blueprint-0.1.3-instalador.exe` below (it installs for your user only). Anyone on 0.1.2 gets the update by itself (a button next to the name, on the Workspaces screen) and installs it with one click on Update. Anyone on 0.1.0 or 0.1.1 has to install this one by hand once, because those versions cannot download updates. The `SHA256SUMS` carries the installer's hash.
+
+The installer is not signed: Windows or Defender may warn or block on the first run.

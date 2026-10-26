@@ -40,6 +40,7 @@ jobs:
           node notificacao.test.mjs
           node sincronia.test.mjs
           node scripts/conferir-readmes.mjs
+          node scripts/conferir-links.mjs
           node i18n.test.mjs
           node scripts/i18n-completude.mjs
           node scripts/gerar-roadmap.mjs --conferir

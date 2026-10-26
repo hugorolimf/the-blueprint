@@ -1,5 +1,7 @@
 # Posicionamento do The Blueprint
 
+[English](../../interno/positioning.md)
+
 Decisões tomadas em 25/10/2026 (o usuário delegou; ele pode contrariar qualquer uma).
 
 ## Para quem é
@@ -22,4 +24,4 @@ O agente propõe, você aprova, e concluir exige evidência. Tudo local, num exe
 
 ## O que não prometer
 
-Não prometer suporte a Mac e Linux, colaboração em equipe ou aplicativo de celular: estão no [ROADMAP](../../ROADMAP.md) como planos, não como entrega. Dizer que é beta e Windows na janela.
+Não prometer suporte a Mac e Linux, colaboração em equipe ou aplicativo de celular: estão no [ROADMAP](../../../ROADMAP.pt-BR.md) como planos, não como entrega. Dizer que é beta e Windows na janela.

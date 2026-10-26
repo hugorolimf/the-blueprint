@@ -1,30 +1,31 @@
-# Conectar outros agentes (MCP)
+# Connect other agents (MCP)
 
-[Voltar ao README](../README.pt-BR.md)
+[Back to the README](../README.md) · [Português](pt-BR/mcp.md)
 
-No **Codex** (e no Claude Code sem o plugin), ligue só o MCP. O instalador e o `blueprint registrar` já fazem isso no Codex que acharem no PATH. À mão, com o app aberto (ou `blueprint serve` rodando):
+In **Codex** (and in Claude Code without the plugin), connect only the MCP. The installer and `blueprint registrar` already do this for any Codex they find on the PATH. By hand, with the app open (or `blueprint serve` running):
 
 ```
-claude mcp add blueprint -- <caminho>\blueprint.exe --mcp
-codex mcp add blueprint -- <caminho>\blueprint.exe --mcp
+claude mcp add blueprint -- <path>\blueprint.exe --mcp
+codex mcp add blueprint -- <path>\blueprint.exe --mcp
 ```
 
-Se o app não estiver em `http://127.0.0.1:3000`, passe `BLUEPRINT_URL` (`claude mcp add blueprint -e BLUEPRINT_URL=http://127.0.0.1:3917 -- …`). A tela **Planejar → Como conectar** mostra o comando exato. Sem o plugin do Claude Code, o agente não sabe sozinho de qual blueprint é a pasta: grave no `CLAUDE.md` ou `AGENTS.md` dela a linha `Blueprint: workspace_id `…`, blueprint_id `…` (MCP `blueprint`).` (o agente descobre os ids com `listar_blueprints`).
+If the app is not at `http://127.0.0.1:3000`, pass `BLUEPRINT_URL` (`claude mcp add blueprint -e BLUEPRINT_URL=http://127.0.0.1:3917 -- …`). The **Plan → How to connect** screen shows the exact command. Without the Claude Code plugin, the agent does not know on its own which blueprint the folder belongs to: write this line in the folder's `CLAUDE.md` or `AGENTS.md`: `Blueprint: workspace_id `…`, blueprint_id `…` (MCP `blueprint`).` (the agent finds the ids with `listar_blueprints`).
 
-**Com o app fechado** o agente continua registrando: `registrar_progresso`, `marcar_concluido`, `marcar_checkpoint_feito`, `propor_blueprint`, `anexar_prototipo` e `vincular_pasta` ficam guardados em arquivos em `%APPDATA%\Blueprint\pendentes\` e, quando o app abre, entram na fila, na ordem, com a mesma validação (a tela os aplica ao abrir o workspace). O que o app recusar na abertura fica em `pendentesecusados\` com o motivo. As ferramentas de leitura (`ler_blueprint`, `listar_blueprints`) precisam do app aberto.
+**With the app closed** the agent keeps registering: `registrar_progresso`, `marcar_concluido`, `marcar_checkpoint_feito`, `propor_blueprint`, `anexar_prototipo` and `vincular_pasta` are kept in files under `%APPDATA%\Blueprint\pendentes\` and, when the app opens, they enter the queue, in order, with the same validation (the screen applies them when you open the workspace). What the app refuses on opening goes to `pendentes\recusados\` with the reason. The read tools (`ler_blueprint`, `listar_blueprints`) need the app to be open.
 
-Ferramentas:
+Tools (their names are fixed; their descriptions and the planning guide are written in English for the agent):
 
-| Ferramenta | Para quê |
+| Tool | What it is for |
 | --- | --- |
-| `listar_blueprints` | workspaces e blueprints, com ids |
-| `guia_de_planejamento` | o guia por partes (`planejar`, `editar`, `executar`, `prototipos`) |
-| `ler_blueprint` | só a estrutura, ou uma ação inteira (`acao_id`) |
-| `propor_blueprint` | propõe ações, planos e checkpoints (parciais completam o que existe; remover é pedido que você aprova) |
-| `registrar_progresso`, `reportar_bloqueio` | o que está fazendo agora; aparece na folha como o Claude (uma figura por agente, no plano em que ele trabalha) |
-| `marcar_concluido`, `marcar_nao_concluido` | plano concluído (com evidência) ou não |
-| `marcar_checkpoint_feito`, `marcar_checkpoint_nao_feito` | idem para checkpoints |
-| `anexar_prototipo` | protótipo HTML autocontido de uma ação, visto num visor isolado |
-| `vincular_pasta` | liga a pasta da sessão a um blueprint (o app guarda o vínculo) |
+| `listar_blueprints` | workspaces and blueprints, with ids |
+| `guia_de_planejamento` | the guide in parts (`planejar`, `editar`, `executar`, `prototipos`) |
+| `ler_blueprint` | only the structure, or a whole action (`acao_id`) |
+| `propor_blueprint` | proposes actions, plans and checkpoints (partial ones complete what exists; deleting is a request you approve) |
+| `registrar_progresso`, `reportar_bloqueio` | what it is doing now; it shows on the sheet as Claude (one figure per agent, on the plan it works on) |
+| `marcar_concluido`, `marcar_nao_concluido` | a plan completed (with evidence) or not |
+| `marcar_checkpoint_feito`, `marcar_checkpoint_nao_feito` | the same for checkpoints |
+| `registrar_trabalho` | records what was already done outside the plan; it only enters the blueprint if you click Add |
+| `anexar_prototipo` | a self-contained HTML prototype of an action, seen in an isolated viewer |
+| `vincular_pasta` | links the session's folder to a blueprint (the app keeps the link) |
 
-O guia que o agente lê está em [`skills/blueprint-planejamento/`](skills/blueprint-planejamento/SKILL.md).
+The guide the agent reads is in [`skills/blueprint-planejamento/`](../skills/blueprint-planejamento/SKILL.md).

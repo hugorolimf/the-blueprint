@@ -10,7 +10,8 @@ const perfil = (t) => ({
   codigo: (t.match(/^```/gm) || []).length / 2,
   linhasDeTabela: (t.match(/^\|/gm) || []).length,
   imagens: (t.match(/!\[|<img /g) || []).length,
-  linksParaDocs: [...t.matchAll(/\]\((docs\/[^)#]+)/g)].map((m) => m[1]).sort().join(","),
+  // as docs em português ficam em docs/pt-BR/ com o mesmo nome; CONTRIBUTING e SECURITY ficam na raiz em inglês e em docs/pt-BR/ em português
+  linksParaDocs: [...t.matchAll(/\]\((docs\/[^)#]+|CONTRIBUTING\.md|SECURITY\.md)/g)].map((m) => m[1].replace("pt-BR/", "").replace(/^docs\/(CONTRIBUTING|SECURITY)\.md$/, "$1.md")).filter((x) => !/^docs\/$/.test(x)).sort().join(","),
 });
 const [en, pt] = [perfil(ler("README.md")), perfil(ler("README.pt-BR.md"))];
 const diferentes = Object.keys(en).filter((k) => en[k] !== pt[k]);

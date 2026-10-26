@@ -1,5 +1,7 @@
 # Pesquisa de referências (25/10/2026)
 
+[English](../../interno/research.md)
+
 Registro do que foi consultado para o posicionamento, o README e o roadmap. Tudo veio da API pública do GitHub e de páginas oficiais em 25/10/2026; números mudam, refaça a consulta antes de citá-los.
 
 ## Projetos do gênero (GitHub API, 25/10/2026)
