@@ -3,5 +3,5 @@
   "version": "0.1.0",
   "experimental": { "monitors": "./monitors/monitors.json" },
   "author": { "name": "The Blueprint" },
-  "description": "Planeja e acompanha blueprints no app The Blueprint: skill de planejamento, agente blueprint e o MCP do app."
+  "description": "Plans and follows blueprints in The Blueprint app: a planning skill, the blueprint agent and the app's MCP."
 }

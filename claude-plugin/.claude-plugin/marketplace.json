@@ -1,17 +1,17 @@
 {
   "name": "blueprint-local",
-  "description": "O plugin do The Blueprint, instalado pelo próprio app (blueprint registrar)",
+  "description": "The Blueprint plugin, installed by the app itself (blueprint registrar)",
   "owner": { "name": "The Blueprint" },
   "plugins": [
     {
       "name": "blueprint",
       "source": "./plugins/blueprint",
-      "description": "Planeja e acompanha blueprints no app The Blueprint: skill, agente e MCP"
+      "description": "Plans and follows blueprints in The Blueprint app: skill, agent and MCP"
     },
     {
       "name": "blueprint-terminal",
       "source": "./plugins/blueprint-terminal",
-      "description": "Marca e painel do The Blueprint no terminal do Claude Code"
+      "description": "The Blueprint mark and panel in the Claude Code terminal"
     }
   ]
 }

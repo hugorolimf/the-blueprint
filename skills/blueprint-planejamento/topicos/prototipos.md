@@ -1,9 +1,9 @@
-# Protótipos de ação
+# Action prototypes
 
-Quando o usuário pedir um **protótipo** de uma ação (uma tela, um dashboard, uma figura que mostre a ideia), gere-o e anexe com `anexar_prototipo(workspace_id, blueprint_id, acao_id, titulo, html)`. O app o mostra num visor ao lado da ação: ícone de tela na folha do blueprint, ou "Ver protótipo" no botão direito da ação.
+When the user asks for a **prototype** of an action (a screen, a dashboard, a figure that shows the idea), generate it and attach it with `anexar_prototipo(workspace_id, blueprint_id, acao_id, titulo, html)`. The app shows it in a viewer next to the action: a screen icon on the blueprint sheet, or "View prototype" in the action's right-click menu.
 
-- O `html` é **um documento HTML único e autocontido**: CSS, SVG e JavaScript inline. Sem imagens ou bibliotecas de fora e sem chamadas de rede: o visor roda isolado (sandbox, sem rede, sem acesso ao app) e bloqueia o que vier de fora. Máximo de 2 MB.
-- Para figuras e explicações visuais, **use a skill anatomy** (figuras isométricas em SVG, com título, dica e movimento calmo) e entregue o resultado já embutido num HTML. Para telas, use HTML e CSS simples.
-- Dados de exemplo, nunca dados reais do usuário; deixe claro no próprio protótipo que é uma simulação.
-- Para **revisar**, chame de novo com o `prototipo_id` (vem em `ler_blueprint` com `acao_id`, em `prototipos`): ele é substituído, não duplicado. Sem `prototipo_id`, vira um protótipo novo da ação.
-- O protótipo não conta no progresso e não muda planos nem checkpoints; ele ilustra as instruções da ação.
+- The `html` is **a single, self-contained HTML document**: CSS, SVG and JavaScript inline. No outside images or libraries and no network calls: the viewer runs isolated (sandbox, no network, no access to the app) and blocks whatever comes from outside. 2 MB maximum.
+- For figures and visual explanations, **use the anatomy skill** (isometric SVG figures, with a title, a hint and calm motion) and deliver the result already embedded in an HTML file. For screens, use plain HTML and CSS.
+- Use sample data, never the user's real data; make it clear in the prototype itself that it is a simulation.
+- To **revise**, call again with the `prototipo_id` (it comes in `ler_blueprint` with `acao_id`, under `prototipos`): it is replaced, not duplicated. Without `prototipo_id` it becomes a new prototype of the action.
+- The prototype does not count toward progress and does not change plans or checkpoints; it illustrates the action's instructions.

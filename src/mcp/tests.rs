@@ -133,7 +133,7 @@ fn o_servidor_stdio_se_apresenta_como_o_de_node() {
     assert_eq!(rpc("initialize", json!({"protocolVersion": "1999"}))["result"]["protocolVersion"], "2025-06-18");
     // o que o Codex lê: regras e nomes das ferramentas nos primeiros 512 caracteres
     let inicio: String = r["result"]["instructions"].as_str().unwrap().chars().take(512).collect();
-    for t in ["SEMPRE atualizado", "CLAUDE.md", "listar_blueprints", "propor_blueprint", "registrar_progresso", "marcar_concluido", "marcar_checkpoint_feito", "reportar_bloqueio", "registrar_trabalho", "nunca salva sozinho"] {
+    for t in ["ALWAYS up to date", "CLAUDE.md", "listar_blueprints", "propor_blueprint", "registrar_progresso", "marcar_concluido", "marcar_checkpoint_feito", "reportar_bloqueio", "registrar_trabalho", "never saves alone"] {
         assert!(inicio.contains(t), "instruções: {t} nos primeiros 512");
     }
     assert_eq!(rpc("ping", json!({}))["result"], json!({}));
@@ -158,14 +158,14 @@ fn propor_blueprint_conhece_a_fila_e_o_agente_aprende_a_ajustar() {
     for campo in ["ajustar", "substituir"] {
         assert_eq!(propor["inputSchema"]["properties"][campo]["type"], "integer", "{campo}");
     }
-    assert!(propor["description"].as_str().unwrap().contains("FILA"));
+    assert!(propor["description"].as_str().unwrap().contains("QUEUE"));
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
     let editar = editar["result"]["content"][0]["text"].as_str().unwrap();
-    assert!(editar.contains("ajustar: <número>") && editar.contains("+a1.p2") && editar.contains("substituir"), "o guia explica o ajuste");
+    assert!(editar.contains("ajustar: <number>") && editar.contains("+a1.p2") && editar.contains("substituir"), "o guia explica o ajuste");
     let instrucoes = rpc("initialize", json!({}))["result"]["instructions"].as_str().unwrap().to_string();
-    assert!(instrucoes.contains("ajustar: <número>"), "as instruções falam do ajuste");
+    assert!(instrucoes.contains("ajustar: <number>"), "as instruções falam do ajuste");
     let inicio: String = instrucoes.chars().take(512).collect();
-    assert!(inicio.contains("propor_blueprint") && inicio.contains("SEMPRE atualizado"), "a regra e os nomes continuam nos primeiros 512");
+    assert!(inicio.contains("propor_blueprint") && inicio.contains("ALWAYS up to date"), "a regra e os nomes continuam nos primeiros 512");
     let ids = json!([{"id": "+a1", "nome": "Nova", "planos": [{"id": "+a1.p1", "texto": "Criar a tela"}], "checkpoints": []}, {"id": "f1", "nome": "Base", "planos": [], "checkpoints": [{"id": "+f1.c1", "nome": "Pronto"}]}]);
     let texto = super::stdio::ids_provisorios(&ids);
     assert!(texto.contains("- ação +a1 \"Nova\"; planos: +a1.p1 \"Criar a tela\"") && texto.contains("- ação f1 \"Base\"; checkpoints: +f1.c1 \"Pronto\""), "{texto}");
@@ -182,16 +182,16 @@ fn erros_de_protocolo() {
 fn o_guia_vem_por_partes_sem_o_cabecalho() {
     let indice = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {}}));
     let texto = indice["result"]["content"][0]["text"].as_str().unwrap();
-    assert!(texto.starts_with("# Planejar um blueprint") && !texto.contains("description:"), "{}", &texto[..60.min(texto.len())]);
+    assert!(texto.starts_with("# Plan a blueprint") && !texto.contains("description:"), "{}", &texto[..60.min(texto.len())]);
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
-    assert!(editar["result"]["content"][0]["text"].as_str().unwrap().contains("Mover"));
+    assert!(editar["result"]["content"][0]["text"].as_str().unwrap().contains("Move"));
     for topico in ["planejar", "editar", "executar", "prototipos"] {
         let r = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": topico}}));
-        assert!(r["result"]["content"][0]["text"].as_str().unwrap().chars().count() < 4000, "o tópico {topico} cabe em menos de 4.000 caracteres");
+        assert!(r["result"]["content"][0]["text"].as_str().unwrap().chars().count() < 4500, "o tópico {topico} cabe em menos de 4.500 caracteres"); // o guia em inglês é ~5% mais longo que o português (era 4.000)
     }
     let planejar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "planejar"}}));
     let planejar = planejar["result"]["content"][0]["text"].as_str().unwrap();
-    assert!(planejar.contains("## Prazos no ritmo da IA") && planejar.contains("`horas`") && planejar.contains("de 1 a 3 dias"), "a régua de prazos da IA está no tópico planejar");
+    assert!(planejar.contains("## Deadlines at AI pace") && planejar.contains("`horas`") && planejar.contains("1 to 3 calendar days"), "a régua de prazos da IA está no tópico planejar");
     let ruim = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "nada"}}));
     assert_eq!(ruim["result"]["isError"], true);
     assert!(ruim["result"]["content"][0]["text"].as_str().unwrap().contains("Tópico desconhecido: nada"));

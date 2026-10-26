@@ -1,66 +1,66 @@
-# Planejar: ações, planos e checkpoints
+# Plan a blueprint: actions, plans and checkpoints
 
-## Ações
+## Actions
 
-- `nome`: curto e específico (ex.: "Terminal real do agente"), não "Ação 1".
-- `inicio` e `fim`: sequência sem buracos nem conflitos. Ações novas começam **hoje ou depois**, salvo se o usuário pedir datas passadas.
-- `status`: `planejado` ou `andamento` (andamento só se o trabalho já começou).
-- `observacao` (no app: **Instruções da ação**): o **roteiro completo da ação**. Pode ser longo (até 20000 caracteres) e deve trazer: objetivo, entrega, passo a passo na ordem, **dependências** ("depende da ação X"), decisões e suposições, riscos e critério de pronto. Os planos são os itens marcáveis; as instruções contam como e por quê.
-- De 3 a 8 planos e de 1 a 3 checkpoints por ação.
-- `projeto` (opcional): grupo da ação no blueprint, por nome ou id; declare-os em `blueprint.projetos` (`[{ "nome": "Interface" }]`, vale também em blueprint existente). Só com frentes distintas (2 a 5); sem o campo a ação fica em "Geral" (nome reservado). Detalhes: tópico `editar`.
+- `nome`: short and specific (e.g. "Real terminal for the agent"), not "Action 1".
+- `inicio` and `fim`: a sequence with no gaps or conflicts. New actions start **today or later**, unless the user asks for past dates.
+- `status`: `planejado` or `andamento` (andamento only if the work has already started).
+- `observacao` (in the app: **Action instructions**): the **complete outline of the action**. It can be long (up to 20000 characters) and should carry: goal, deliverable, step by step in order, **dependencies** ("depends on action X"), decisions and assumptions, risks and the definition of done. The plans are the tickable items; the instructions tell how and why.
+- 3 to 8 plans and 1 to 3 checkpoints per action.
+- `projeto` (optional): the action's group in the blueprint, by name or id; declare them in `blueprint.projetos` (`[{ "nome": "Interface" }]`, also valid on an existing blueprint). Only with distinct lines of work (2 to 5); without the field the action stays in "Geral" (a reserved name). Details: topic `editar`.
 
-## Planos
+## Plans
 
-**Título (`texto`)**: até **45 caracteres**, começando com **verbo no infinitivo**, acionável.
+**Title (`texto`)**: up to **45 characters**, starting with a **verb in the infinitive form**, actionable.
 
-| Bom | Ruim |
+| Good | Bad |
 | --- | --- |
-| Validar a pasta e a raiz Git | Pasta |
-| Criar rota de parar o agente | Fazer a parte do servidor |
-| Cobrir erros com testes | Testes e outras coisas diversas |
+| Validate the folder and the Git root | Folder |
+| Create a route to stop the agent | Do the server part |
+| Cover errors with tests | Tests and other assorted things |
 
-**Descrição**: obrigatória em plano novo, concreta, com três partes:
+**Description**: required on a new plan, concrete, with three parts:
 
 ```
-Escopo: o que entra (e o que não entra).
-Resultado esperado: o que existirá quando estiver pronto.
-Validação: como provar que está pronto — de preferência um comando ou teste ("node x.test.mjs passa"), ou um comportamento observável.
+Scope: what goes in (and what does not).
+Expected result: what will exist when it is done.
+Validation: how to prove it is done — preferably a command or test ("node x.test.mjs passes"), or an observable behavior.
 ```
 
-**Tamanho**: cabe em **uma sessão de trabalho** (poucas horas). Se precisa de "e depois...", divida; se é trivial demais, junte.
+**Size**: fits in **one work session** (a few hours). If it needs "and then...", split it; if it is too trivial, merge it.
 
-**Ordem**: na ordem em que devem ser feitas; dependências entre ações vão nas instruções da ação.
+**Order**: in the order they must be done; dependencies between actions go in the action's instructions.
 
-Cite arquivos ou módulos **somente** se você os viu na pasta. Nunca invente caminhos, APIs ou fatos do negócio: quando faltar informação, proponha algo razoável e diga que é suposição.
+Cite files or modules **only** if you have seen them in the folder. Never invent paths, APIs or business facts: when information is missing, propose something reasonable and say it is an assumption.
 
 ## Checkpoints
 
-- **Checkpoints verificáveis**: uma entrega, uma decisão ou uma demonstração ("Fluxo ponta a ponta validado"), não uma atividade ("Trabalhar no fluxo").
-- `data` dentro do período da ação, normalmente perto do fim ou de um risco importante.
-- Nome curto, que alguém responde com sim ou não.
+- **Verifiable checkpoints**: a deliverable, a decision or a demonstration ("End-to-end flow validated"), not an activity ("Work on the flow").
+- `data` within the action's period, usually near the end or near an important risk.
+- A short name that someone can answer with yes or no.
 
-## Prazos no ritmo da IA
+## Deadlines at AI pace
 
-Quem executa é a IA: prazos curtos, em sequência, a partir de hoje, sem buracos de mais de 2 dias.
+The one executing is the AI: short deadlines, in sequence, starting today, with no gaps of more than 2 days.
 
-- **Plano:** de 0,5 a 4 h de trabalho do agente (acima de 8 h, divida). Informe `horas` (0,5 a 16) em cada plano novo.
-- **Ação:** de 1 a 3 dias corridos. Mais que isso só com motivo escrito nas instruções (espera por pessoa, CI, publicação, terceiro).
-- **Tempo do usuário** (revisar, aprovar, testar em máquina real) vira checkpoint com data, nunca folga escondida no prazo.
-- Bom: ação de 2 dias com 4 planos de 1 a 3 h. Ruim: ação de 3 semanas com 5 planos de 1 dia.
+- **Plan:** 0.5 to 4 h of agent work (above 8 h, split it). Give `horas` (0.5 to 16) on every new plan.
+- **Action:** 1 to 3 calendar days. More only with a written reason in the instructions (waiting on a person, CI, publishing, a third party).
+- **The user's time** (reviewing, approving, testing on a real machine) becomes a dated checkpoint, never hidden slack in the deadline.
+- Good: a 2-day action with 4 plans of 1 to 3 h. Bad: a 3-week action with 5 plans of 1 day.
 
-## Nível de detalhe
+## Level of detail
 
-**Enxuto** (poucos planos, descrições de uma linha), **padrão** (o descrito acima) ou **detalhado** (mais planos pequenos, validação por comando em todos, riscos nas instruções). Sem pedido, use o padrão.
+**Lean** (few plans, one-line descriptions), **standard** (as described above) or **detailed** (more small plans, command validation on all of them, risks in the instructions). Without a request, use standard.
 
-## Blueprint novo
+## New blueprint
 
-Sem `blueprint_id`, envie também `blueprint: { nome, descricao }` (nome curto, descrição de uma ou duas frases). Proponha o nome; não exija que o usuário escolha.
+Without `blueprint_id`, also send `blueprint: { nome, descricao }` (a short name, a description of one or two sentences). Propose the name; do not require the user to choose.
 
-## Antes de enviar, confira
+## Before sending, check
 
-- [ ] Títulos com verbo no infinitivo e até 45 caracteres; nenhum repetido na ação.
-- [ ] Todo plano novo com descrição (escopo, resultado, validação).
-- [ ] Todo plano novo com `horas`; ações de até 3 dias (ou com motivo) e sem buracos entre elas.
-- [ ] Datas `aaaa-mm-dd`, `fim` depois de `inicio`, checkpoints dentro da ação, sem datas passadas sem pedido.
-- [ ] Nada marcado como feito; ids só os que você leu em `ler_blueprint`.
-- [ ] Fatos inventados? Se sim, vire suposição declarada.
+- [ ] Titles with a verb in the infinitive and up to 45 characters; none repeated within the action.
+- [ ] Every new plan has a description (scope, result, validation).
+- [ ] Every new plan has `horas`; actions of up to 3 days (or with a reason) and no gaps between them.
+- [ ] Dates `yyyy-mm-dd`, `fim` after `inicio`, checkpoints inside the action, no past dates without a request.
+- [ ] Nothing marked done; ids only the ones you read in `ler_blueprint`.
+- [ ] Invented facts? If so, turn them into declared assumptions.

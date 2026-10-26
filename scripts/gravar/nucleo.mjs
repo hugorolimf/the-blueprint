@@ -19,7 +19,8 @@ const CURSOR = `(() => { if (document.getElementById("cur-gravacao")) return;
   addEventListener("mousemove", (e) => { c.style.left = e.clientX + "px"; c.style.top = e.clientY + "px"; }, true);
   addEventListener("mousedown", () => c.classList.add("p"), true); addEventListener("mouseup", () => c.classList.remove("p"), true); })()`;
 
-export async function abrirAmbiente({ exe, dados = join(raiz, "data.exemplo.json"), largura = 1280, altura = 800, extraEnv = {}, idioma = "" }) {
+export async function abrirAmbiente({ exe, dados, largura = 1280, altura = 800, extraEnv = {}, idioma = "" }) {
+  dados ||= join(raiz, /^pt/i.test(idioma) ? "data.exemplo.json" : "data.exemplo.en.json"); // os dados de exemplo no mesmo idioma da interface
   if (!EDGE) throw new Error("precisa do Microsoft Edge");
   const tmp = mkdtempSync(join(tmpdir(), "gravar-"));
   copyFileSync(dados, join(tmp, "dados.json"));
@@ -40,7 +41,7 @@ export async function abrirAmbiente({ exe, dados = join(raiz, "data.exemplo.json
   const js = async (expr) => { const r = await cdp("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails).slice(0, 400)); return r.result.result.value; };
   await cdp("Emulation.setDeviceMetricsOverride", { width: largura, height: altura, deviceScaleFactor: 1, mobile: false });
   await cdp("Runtime.enable"); await cdp("Page.enable");
-  const A = { url, js, cdp, erros, fechar, largura, altura, mouse: { x: largura / 2, y: altura / 2 }, porta,
+  const A = { url, js, cdp, erros, fechar, largura, altura, idioma: idioma || "en-US", mouse: { x: largura / 2, y: altura / 2 }, porta,
     async ir(hash, espera = 2500) { await cdp("Page.navigate", { url: `${url}/${hash}` }); await dormir(espera); await js(`location.hash = ${JSON.stringify(hash.replace(/^#?/, ""))}`).catch(() => {}); await dormir(600); await js(CURSOR); },
     async mover(x, y, passos = 14) { // desliza o cursor, no ritmo de uma mão
       const { x: x0, y: y0 } = A.mouse;
@@ -78,7 +79,7 @@ export function codificar(quadros, base, { gif = null } = {}) {
   mkdirSync(resolve(base, ".."), { recursive: true });
   const exec = (args) => { const r = spawnSync("ffmpeg", ["-y", "-loglevel", "error", ...args], { encoding: "utf8" }); if (r.status !== 0) throw new Error("ffmpeg: " + (r.stderr || "").slice(0, 400)); };
   exec(["-f", "concat", "-safe", "0", "-i", join(dir, "lista.txt"), "-vf", "fps=30,format=yuv420p", "-c:v", "libx264", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", `${base}.mp4`]);
-  if (gif) exec(["-i", `${base}.mp4`, "-vf", `fps=${gif.fps || 15},scale=${gif.largura || 960}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4`, "-loop", "0", `${base}.gif`]);
+  if (gif) exec(["-t", String(gif.segundos || 14), "-i", `${base}.mp4`, "-vf", `fps=${gif.fps || 10},scale=${gif.largura || 720}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=${gif.cores || 64}:stats_mode=diff[p];[b][p]paletteuse=dither=none`, "-loop", "0", `${base}.gif`]);
   rmSync(dir, { recursive: true, force: true });
   return { quadros: quadros.length, duracao: +(quadros.at(-1).t - quadros[0].t + 0.4).toFixed(1) };
 }

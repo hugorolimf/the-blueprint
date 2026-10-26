@@ -1,49 +1,48 @@
 ---
 name: blueprint-planejamento
-description: Cria, detalha e revisa o planejamento de um blueprint no app The Blueprint (ações, planos e checkpoints, com datas e critérios de validação). Use sempre que o pedido for planejar um blueprint, propor ou detalhar ações, planos ou checkpoints, revisar prazos ou montar a estrutura de um blueprint novo no roadmap.
+description: Creates, details and reviews the plan of a blueprint in The Blueprint app (actions, plans and checkpoints, with dates and validation criteria). Use whenever the request is to plan a blueprint, propose or detail actions, plans or checkpoints, review deadlines or set up the structure of a new blueprint in the roadmap.
 ---
 
-# Planejar um blueprint no The Blueprint
+# Plan a blueprint in The Blueprint
 
-Você ajuda o usuário a montar e executar o planejamento de um blueprint no app **The Blueprint**. A proposta que você envia aparece no app, onde ele revisa, edita e só então aplica. Nada muda no roadmap até ele aplicar.
+You help the user build and carry out the plan of a blueprint in the **The Blueprint** app. The proposal you send appears in the app, where the user reviews it, edits it and only then applies it. Nothing in the roadmap changes until they apply it. Talk to the user in the language they speak to you; the field names below are fixed.
 
-## O modelo do app
+## The app's model
 
 ```
 Workspace
-└─ Blueprint            nome, descrição
-   └─ Projeto          nome (opcional: agrupa ações; sem projeto a ação fica em "Geral")
-      └─ Ação          nome, inicio, fim, status (planejado | andamento), instruções (campo `observacao`)
-         ├─ Plano      texto (título curto), descrição, feito
-         └─ Checkpoint nome, data, feito
+└─ Blueprint            nome, descricao
+   └─ Project           nome (optional: groups actions; without a project the action stays in "Geral")
+      └─ Action         nome, inicio, fim, status (planejado | andamento), instructions (field `observacao`)
+         ├─ Plan        texto (short title), descricao, feito
+         └─ Checkpoint  nome, data, feito
 ```
 
-- **Projeto** é o grupo de ações dentro do blueprint (não é o blueprint). Use quando o blueprint tem frentes de trabalho distintas; blueprint pequeno não precisa. Lista em `blueprint.projetos` (`[{ "nome": "…" }]`) e, em cada ação, `projeto` (id ou nome). Na folha cada projeto é uma seção numerada (01, 02…) e as ações são numeradas por projeto (02.3 = projeto 2, ação 3); chame as ações assim.
+- A **project** is a group of actions inside the blueprint (it is not the blueprint). Use it when the blueprint has distinct lines of work; a small blueprint does not need one. List them in `blueprint.projetos` (`[{ "nome": "…" }]`) and, in each action, `projeto` (id or name). On the sheet each project is a numbered section (01, 02…) and actions are numbered per project (02.3 = project 2, action 3); refer to actions that way.
+- The **percentage** of an action and of a blueprint comes only from the ticked plans and checkpoints: each item must be something anyone can mark done without argument.
+- When planning, **you never mark anything done** and never use the status `concluido`.
+- Dates use the format `yyyy-mm-dd`. Today's date comes from `ler_blueprint`.
 
-- A **porcentagem** da ação e do blueprint vem só dos planos e checkpoints marcados: cada item precisa ser algo que alguém consegue marcar como feito sem discussão.
-- Ao planejar, **você nunca marca nada como feito** e nunca usa o status `concluido`.
-- Datas no formato `aaaa-mm-dd`. O dia de hoje vem de `ler_blueprint`.
+## Read in parts (saves context)
 
-## Leia por partes (economiza contexto)
+- `ler_blueprint` without `acao_id` returns only the structure: actions, plans and checkpoints with ids, dates and what is done. Enough to find your way.
+- `ler_blueprint` with `acao_id` returns that whole action (instructions, descriptions, prototypes). Read it before executing the action or rewriting its instructions.
+- This guide also comes in parts: call `guia_de_planejamento` with the `topico` for the situation.
 
-- `ler_blueprint` sem `acao_id` devolve só a estrutura: ações, planos e checkpoints com ids, datas e o que está feito. Basta para se localizar.
-- `ler_blueprint` com `acao_id` devolve aquela ação inteira (instruções, descrições, protótipos). Leia antes de executar a ação ou de reescrever as instruções dela.
-- Este guia também vem por partes: chame `guia_de_planejamento` com o `topico` da situação.
-
-| Situação | `topico` |
+| Situation | `topico` |
 | --- | --- |
-| Criar um blueprint ou ações novas, detalhar planos e checkpoints | `planejar` |
-| Mudar prazo, escopo ou ordem de algo que já existe | `editar` |
-| Começar a trabalhar na pasta: ligar a pasta ao blueprint, registrar e marcar | `executar` |
-| Mostrar uma ideia de uma ação (tela, figura) | `prototipos` |
-| Já fez algo fora do plano (ajuste pontual): registrar e perguntar se adiciona | `executar` |
+| Create a blueprint or new actions, detail plans and checkpoints | `planejar` |
+| Change the deadline, scope or order of something that exists | `editar` |
+| Start working in the folder: link the folder to the blueprint, register and tick | `executar` |
+| Show an idea for an action (a screen, a figure) | `prototipos` |
+| You already did something outside the plan (a one-off adjustment): register it and ask whether to add it | `executar` |
 
-## Como trabalhar (nesta ordem)
+## How to work (in this order)
 
-0. **Só planeja o que ainda não foi feito.** O que já foi feito fora do plano vai para `registrar_trabalho` (registro, não proposta), e você pergunta se o usuário quer adicionar ao blueprint.
-1. **Entenda antes de propor.** `listar_blueprints` e `ler_blueprint`. Se a proposta depende do código, explore a pasta (só leitura) e cite apenas arquivos que você viu. Se o pedido for ambíguo, faça **até 3 perguntas objetivas** e espere a resposta. Não pergunte o que dá para descobrir lendo.
-2. **Esqueleto primeiro.** Para blueprint novo ou grande, pense nas ações (de 3 a 6) e nas datas antes dos detalhes.
-3. **Proponha com `propor_blueprint`.** Corrija os erros devolvidos até passar. Depois diga ao usuário, em poucas linhas, o que propôs, o que supôs e o que ficou em aberto.
-4. **Itere.** Nos ajustes, envie de novo só o que muda (tópico `editar`).
+0. **Only plan what has not been done yet.** Whatever was already done outside the plan goes to `registrar_trabalho` (a record, not a proposal), and you ask the user whether they want to add it to the blueprint.
+1. **Understand before proposing.** `listar_blueprints` and `ler_blueprint`. If the proposal depends on the code, explore the folder (read only) and cite only files you have seen. If the request is ambiguous, ask **up to 3 objective questions** and wait for the answer. Do not ask what you can find out by reading.
+2. **Skeleton first.** For a new or large blueprint, think about the actions (3 to 6) and the dates before the details.
+3. **Propose with `propor_blueprint`.** Fix the returned errors until it passes. Then tell the user, in a few lines, what you proposed, what you assumed and what is left open.
+4. **Iterate.** For adjustments, send again only what changes (topic `editar`).
 
-Blueprint novo: a proposta leva a pasta da sessão e o app só a vincula quando o usuário aplica. Pasta sem vínculo: escolha pelo aviso no app; o campo Pasta do projeto permite trocar e remover.
+New blueprint: the proposal carries the session folder and the app only links it when the user applies it. A folder without a link: choose from the notice in the app; the Project folder field lets the user change or remove it.

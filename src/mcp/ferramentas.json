@@ -1,7 +1,7 @@
 [
  {
   "name": "listar_blueprints",
-  "description": "Lista os workspaces e blueprints do The Blueprint, com ids, nome e quantidade de ações. Chame no começo.",
+  "description": "Lists the workspaces and blueprints in The Blueprint, with ids, names and number of actions. Call it first.",
   "inputSchema": {
    "type": "object",
    "properties": {}
@@ -9,7 +9,7 @@
  },
  {
   "name": "guia_de_planejamento",
-  "description": "Devolve o guia de planejamento por partes. Sem topico: o índice (modelo do app, ordem de trabalho e qual tópico ler). Tópicos: planejar (ações, planos, checkpoints, checklist), editar (mudar o que existe), executar (ligar a pasta, registrar e marcar), prototipos. Chame antes de planejar.",
+  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos. Call it before planning.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -27,21 +27,21 @@
  },
  {
   "name": "ler_blueprint",
-  "description": "Sem acao_id: a estrutura do blueprint (ações, planos e checkpoints com ids, datas e o que está feito), a data de hoje e os outros blueprints do workspace. Com acao_id: aquela ação inteira (instruções, descrições dos planos, protótipos). Leia a ação inteira antes de executá-la ou de reescrever suas instruções. Após aviso informativo do monitor ou canal, consulte aqui o estado persistido.",
+  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids, dates and what is done), today's date and the other blueprints in the workspace. With acao_id: that whole action (instructions, plan descriptions, prototypes). Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "Opcional: id da ação a ler por inteiro."
+     "description": "Optional: id of the action to read in full."
     }
    },
    "required": [
@@ -52,29 +52,29 @@
  },
  {
   "name": "propor_blueprint",
-  "description": "Envia a proposta ao app para o usuário revisar e aplicar (nada muda antes disso). Cada envio entra na FILA do blueprint com um número e nunca apaga outra proposta; a resposta traz o número e os ids provisórios (+a1, +a1.p2…). Para corrigir uma proposta que ainda está na fila, use `ajustar: <número>` e mande só o que muda (ação, plano ou checkpoint pelo id provisório); `substituir: <número>` troca a proposta inteira. Inclua só as ações novas ou alteradas. Ação nova vai completa; ação existente vai com o id e só o que muda (o que não vier fica como está, nada é apagado). Mover: cite o id do plano/checkpoint na ação de destino. Apagar: lista `remover`, que o usuário aprova na tela. Sem blueprint_id, é um blueprint novo: inclua blueprint: {nome, descricao}. Devolve os erros de formato para você corrigir. Blueprint novo inclui a pasta da sessão; o vínculo só é criado quando o usuário aplica no app.",
+  "description": "Sends the proposal to the app for the user to review and apply (nothing changes before that). Each submission goes into the blueprint's QUEUE with a number and never erases another proposal; the reply carries the number and the provisional ids (+a1, +a1.p2…). To fix a proposal that is still in the queue, use `ajustar: <number>` and send only what changes (action, plan or checkpoint by provisional id); `substituir: <number>` replaces the whole proposal. Include only the new or changed actions. A new action goes in full; an existing action goes with its id and only what changes (whatever is missing stays as it is, nothing is erased). Move: cite the plan/checkpoint id in the destination action. Delete: the `remover` list, which the user approves on screen. Without blueprint_id it is a new blueprint: include blueprint: {nome, descricao}. It returns format errors for you to fix. A new blueprint carries the session folder; the link is only created when the user applies it in the app.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "Vazio para criar um blueprint novo."
+     "description": "Empty to create a new blueprint."
     },
     "mensagem": {
      "type": "string",
-     "description": "Resumo curto do que propõe e do que supôs."
+     "description": "A short summary of what it proposes and what it assumed."
     },
     "ajustar": {
      "type": "integer",
-     "description": "Número de uma proposta que ainda está na fila: só o que vier muda nela (nada some por omissão) e a proposta inteira é revalidada. Ação, plano e checkpoint novos dela se citam pelo id provisório (+a1, +a1.p2, +a1.c1) devolvido ao propor."
+     "description": "Number of a proposal that is still in the queue: only what you send changes in it (nothing disappears by omission) and the whole proposal is revalidated. Its new actions, plans and checkpoints are cited by the provisional id (+a1, +a1.p2, +a1.c1) returned when proposing."
     },
     "substituir": {
      "type": "integer",
-     "description": "Número de uma proposta da fila a trocar por esta, inteira (só quando o usuário quiser refazê-la do zero)."
+     "description": "Number of a queued proposal to replace with this one, entirely (only when the user wants to redo it from scratch)."
     },
     "blueprint": {
      "type": "object",
@@ -95,31 +95,31 @@
          }
         }
        },
-       "description": "Projetos (grupos de ações) que devem existir neste blueprint; um nome que já existe é o mesmo projeto. Vale também em blueprint existente."
+       "description": "Projects (groups of actions) that must exist in this blueprint; a name that already exists is the same project. Also valid on an existing blueprint."
       }
      },
-     "description": "nome e descricao só em blueprint novo; projetos vale em qualquer blueprint."
+     "description": "nome and descricao only on a new blueprint; projetos is valid on any blueprint."
     },
     "acoes": {
      "type": "array",
      "items": {
       "type": "object",
-      "description": "Ação nova: nome, inicio, fim, planos e checkpoints. Ação existente: id e só o que muda; campos, planos e checkpoints que não vierem ficam como estão (nada é apagado).",
+      "description": "New action: nome, inicio, fim, planos and checkpoints. Existing action: id and only what changes; fields, plans and checkpoints you do not send stay as they are (nothing is erased).",
       "properties": {
        "id": {
         "type": "string",
-        "description": "id da ação existente (de ler_blueprint); vazio se for nova."
+        "description": "id of the existing action (from ler_blueprint); empty if it is new."
        },
        "nome": {
         "type": "string"
        },
        "inicio": {
         "type": "string",
-        "description": "aaaa-mm-dd"
+        "description": "yyyy-mm-dd"
        },
        "fim": {
         "type": "string",
-        "description": "aaaa-mm-dd"
+        "description": "yyyy-mm-dd"
        },
        "status": {
         "type": "string",
@@ -130,35 +130,35 @@
        },
        "observacao": {
         "type": "string",
-        "description": "INSTRUÇÕES DA AÇÃO: o que fazer, o roteiro completo desta ação (objetivo, entrega, passo a passo, dependências, decisões, riscos, critério de pronto). Pode ser longo (até 20000 caracteres)."
+        "description": "ACTION INSTRUCTIONS: what to do, the complete outline of this action (goal, deliverable, step by step, dependencies, decisions, risks, definition of done). It can be long (up to 20000 characters)."
        },
        "projeto": {
         "type": "string",
-        "description": "Projeto da ação: id ou nome de um projeto do blueprint (ou de blueprint.projetos desta proposta). Vazio ou \"Geral\" tira a ação do projeto; sem o campo ela fica onde está."
+        "description": "The action's project: id or name of a project of the blueprint (or of blueprint.projetos in this proposal). Empty or \"Geral\" takes the action out of its project; without the field it stays where it is."
        },
        "planos": {
         "type": "array",
         "items": {
          "type": "object",
-         "description": "Plano novo: texto e descricao obrigatórios. Existente: id e só o que muda. Com o id de um plano de OUTRA ação, ela é movida para esta ação (mantém id e feito).",
+         "description": "New plan: texto and descricao are required. Existing: id and only what changes. With the id of a plan from ANOTHER action, it is moved to this action (keeps id and feito).",
          "properties": {
           "id": {
            "type": "string",
-           "description": "id do plano existente (de ler_blueprint); vazio se for nova."
+           "description": "id of the existing plan (from ler_blueprint); empty if it is new."
           },
           "texto": {
            "type": "string",
-           "description": "Título: verbo no infinitivo, até 45 caracteres."
+           "description": "Title: a verb in the infinitive form, up to 45 characters."
           },
           "descricao": {
            "type": "string",
-           "description": "Escopo, resultado esperado e validação (de preferência um comando ou teste)."
+           "description": "Scope, expected result and validation (preferably a command or test)."
           },
           "horas": {
            "type": "number",
            "minimum": 0.5,
            "maximum": 16,
-           "description": "Estimativa de trabalho do agente em horas (de 0,5 a 16; o ideal é de 0,5 a 4; acima de 8, divida o plano)."
+           "description": "The agent's work estimate in hours (0.5 to 16; ideally 0.5 to 4; above 8, split the plan)."
           }
          }
         }
@@ -167,7 +167,7 @@
         "type": "array",
         "items": {
          "type": "object",
-         "description": "Novo: nome e data. Existente: id e só o que muda. Com o id de um checkpoint de OUTRA ação, ele é movido para esta (informe a data nova, dentro do período).",
+         "description": "New: nome and data. Existing: id and only what changes. With the id of a checkpoint from ANOTHER action, it is moved to this one (give the new date, within the period).",
          "properties": {
           "id": {
            "type": "string"
@@ -177,7 +177,7 @@
           },
           "data": {
            "type": "string",
-           "description": "aaaa-mm-dd, dentro do período da ação"
+           "description": "yyyy-mm-dd, within the action's period"
           }
          }
         }
@@ -187,13 +187,13 @@
     },
     "mover": {
      "type": "array",
-     "description": "Leva ações inteiras de OUTRO blueprint do mesmo workspace para este (com planos, checkpoints, feito e protótipos). O usuário revisa na tela; use para unir blueprints.",
+     "description": "Brings whole actions from ANOTHER blueprint in the same workspace into this one (with plans, checkpoints, done state and prototypes). The user reviews it on screen; use it to merge blueprints.",
      "items": {
       "type": "object",
       "properties": {
        "acao_id": {
         "type": "string",
-        "description": "id da ação em outro blueprint (de ler_blueprint)."
+        "description": "id of the action in the other blueprint (from ler_blueprint)."
        },
        "motivo": {
         "type": "string"
@@ -208,7 +208,7 @@
      "type": "array",
      "items": {
       "type": "object",
-      "description": "Pedido de remoção: o usuário marca e aprova na tela, nada some antes disso. Só acao_id apaga a ação inteira.",
+      "description": "Removal request: the user ticks and approves it on screen, nothing disappears before that. Only acao_id deletes the whole action.",
       "properties": {
        "acao_id": {
         "type": "string"
@@ -221,14 +221,14 @@
        },
        "motivo": {
         "type": "string",
-        "description": "Por que remover."
+        "description": "Why it should be removed."
        }
       },
       "required": [
        "acao_id"
       ]
      },
-     "description": "Planos, checkpoints ou ações a apagar, para o usuário aprovar."
+     "description": "Plans, checkpoints or actions to delete, for the user to approve."
     }
    },
    "required": [
@@ -239,42 +239,42 @@
  },
  {
   "name": "registrar_trabalho",
-  "description": "Registra no blueprint o que você JÁ fez e não estava no plano (ajuste pontual, correção pedida na conversa). NÃO é proposta (proposta é trabalho futuro): entra na fila como \"Registro nº N\" e nada é salvo antes de o usuário adicionar. Marque feito: true com a evidência no que foi feito; deixe sem feito o que ficou pendente (plano, checkpoint ou ação aberta). Depois de enviar, avise o usuário e pergunte se quer adicionar. Aceita ação existente (id) ou nova, com datas passadas.",
+  "description": "Records in the blueprint what you ALREADY did that was not in the plan (a one-off adjustment, a fix asked for in the conversation). It is NOT a proposal (a proposal is future work): it enters the queue as \"Record no. N\" and nothing is saved before the user adds it. Mark feito: true with the evidence on what was done; leave without feito what is still pending (plan, checkpoint or open action). After sending, tell the user and ask whether they want to add it. Accepts an existing action (id) or a new one, with past dates.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint que já existe (de listar_blueprints)."
+     "description": "id of the blueprint that already exists (from listar_blueprints)."
     },
     "mensagem": {
      "type": "string",
-     "description": "Resumo curto do que foi feito."
+     "description": "A short summary of what was done."
     },
     "acoes": {
      "type": "array",
      "items": {
       "type": "object",
-      "description": "Ação existente: id e só os planos/checkpoints que mudam. Ação nova: nome, inicio, fim, planos e checkpoints.",
+      "description": "Existing action: id and only the plans/checkpoints that change. New action: nome, inicio, fim, planos and checkpoints.",
       "properties": {
        "id": {
         "type": "string",
-        "description": "id da ação existente (de ler_blueprint); vazio se for nova."
+        "description": "id of the existing action (from ler_blueprint); empty if it is new."
        },
        "nome": {
         "type": "string"
        },
        "inicio": {
         "type": "string",
-        "description": "aaaa-mm-dd (pode ser passado)"
+        "description": "yyyy-mm-dd (may be in the past)"
        },
        "fim": {
         "type": "string",
-        "description": "aaaa-mm-dd"
+        "description": "yyyy-mm-dd"
        },
        "status": {
         "type": "string",
@@ -285,43 +285,43 @@
        },
        "observacao": {
         "type": "string",
-        "description": "Instruções da ação, só em ação nova."
+        "description": "The action's instructions, only on a new action."
        },
        "projeto": {
         "type": "string",
-        "description": "Projeto da ação: id ou nome de um projeto do blueprint."
+        "description": "The action's project: id or name of a project of the blueprint."
        },
        "planos": {
         "type": "array",
         "items": {
          "type": "object",
-         "description": "Plano novo: texto e descricao. Existente: id e feito/evidencia.",
+         "description": "New plan: texto and descricao. Existing: id and feito/evidencia.",
          "properties": {
           "id": {
            "type": "string",
-           "description": "id do plano existente (de ler_blueprint); vazio se for novo."
+           "description": "id of the existing plan (from ler_blueprint); empty if it is new."
           },
           "texto": {
            "type": "string",
-           "description": "Título: verbo no infinitivo, até 45 caracteres."
+           "description": "Title: a verb in the infinitive form, up to 45 characters."
           },
           "descricao": {
            "type": "string",
-           "description": "Escopo, resultado e validação."
+           "description": "Scope, result and validation."
           },
           "horas": {
            "type": "number",
            "minimum": 0.5,
            "maximum": 16,
-           "description": "Horas de trabalho."
+           "description": "Hours of work."
           },
           "feito": {
            "type": "boolean",
-           "description": "true no que JÁ foi feito (exige evidencia); omita ou false no que ficou pendente."
+           "description": "true on what is ALREADY done (requires evidencia); omit or false on what is still pending."
           },
           "evidencia": {
            "type": "string",
-           "description": "Comando ou teste rodado e o resultado (até 1000 caracteres). Obrigatória com feito: true."
+           "description": "The command or test that was run and its result (up to 1000 characters). Required with feito: true."
           }
          }
         }
@@ -339,15 +339,15 @@
           },
           "data": {
            "type": "string",
-           "description": "aaaa-mm-dd, dentro do período da ação"
+           "description": "yyyy-mm-dd, within the action's period"
           },
           "feito": {
            "type": "boolean",
-           "description": "true no que JÁ foi feito (exige evidencia); omita ou false no que ficou pendente."
+           "description": "true on what is ALREADY done (requires evidencia); omit or false on what is still pending."
           },
           "evidencia": {
            "type": "string",
-           "description": "Comando ou teste rodado e o resultado (até 1000 caracteres). Obrigatória com feito: true."
+           "description": "The command or test that was run and its result (up to 1000 characters). Required with feito: true."
           }
          }
         }
@@ -365,33 +365,33 @@
  },
  {
   "name": "anexar_prototipo",
-  "description": "Anexa a uma ação um protótipo visual: um documento HTML AUTOCONTIDO (tudo inline, sem rede nem bibliotecas externas), por exemplo uma figura isométrica feita com a skill anatomy ou uma tela simulada. O usuário o vê num visor isolado ao lado da ação, na folha do blueprint. Para revisar um protótipo existente, passe o prototipo_id (de ler_blueprint): ele é substituído, não duplicado. Máximo de 2 MB.",
+  "description": "Attaches a visual prototype to an action: a SELF-CONTAINED HTML document (everything inline, no network and no external libraries), for example an isometric figure made with the anatomy skill or a simulated screen. The user sees it in an isolated viewer next to the action, on the blueprint sheet. To revise an existing prototype, pass the prototipo_id (from ler_blueprint): it is replaced, not duplicated. 2 MB maximum.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "titulo": {
      "type": "string",
-     "description": "Nome curto do protótipo."
+     "description": "A short name for the prototype."
     },
     "html": {
      "type": "string",
-     "description": "Documento HTML completo e autocontido."
+     "description": "The complete, self-contained HTML document."
     },
     "prototipo_id": {
      "type": "string",
-     "description": "Só para substituir um protótipo existente da ação."
+     "description": "Only to replace an existing prototype of the action."
     }
    },
    "required": [
@@ -405,33 +405,33 @@
  },
  {
   "name": "registrar_progresso",
-  "description": "Avisa o usuário da etapa em andamento (uma frase curta) e põe você no painel de agentes. Mande agente (o seu nome; subagentes usam o próprio), estado e onde ao começar e ao mudar de arquivo. Com acao_id e plano_id, o robô do agente aparece ao lado desse plano na folha do blueprint: mande-os ao começar cada plano.",
+  "description": "Tells the user which step is under way (one short sentence) and puts you in the agents panel. Send agente (your name; subagents use their own), estado and onde when you start and when you change file. With acao_id and plano_id, the agent's figure appears next to that plan on the blueprint sheet: send them when you start each plan.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "texto": {
      "type": "string",
-     "description": "O que está fazendo agora."
+     "description": "What you are doing now."
     },
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "plano_id": {
      "type": "string",
-     "description": "id do plano (de ler_blueprint)."
+     "description": "id of the plan (from ler_blueprint)."
     },
     "agente": {
      "type": "string",
-     "description": "Seu nome, estável durante o trabalho (até 40 caracteres, sem caracteres de controle). Subagentes usam o próprio nome. É o que identifica você no painel de agentes."
+     "description": "Your name, stable during the work (up to 40 characters, no control characters). Subagents use their own name. It is what identifies you in the agents panel."
     },
     "papel": {
      "type": "string",
@@ -440,7 +440,7 @@
       "construtor",
       "revisor"
      ],
-     "description": "O que você faz: explorador lê, construtor escreve, revisor testa."
+     "description": "What you do: explorador reads, construtor writes, revisor tests."
     },
     "estado": {
      "type": "string",
@@ -452,7 +452,7 @@
       "bloqueado",
       "concluido"
      ],
-     "description": "O que está fazendo agora."
+     "description": "What you are doing now."
     },
     "onde": {
      "type": "array",
@@ -460,13 +460,13 @@
       "type": "string"
      },
      "maxItems": 5,
-     "description": "Até 5 caminhos (arquivos ou pastas, de até 120 caracteres) em que está trabalhando agora."
+     "description": "Up to 5 paths (files or folders, up to 120 characters each) you are working on now."
     },
     "percentual": {
      "type": "integer",
      "minimum": 0,
      "maximum": 100,
-     "description": "Quanto do plano já foi feito."
+     "description": "How much of the plan is already done."
     }
    },
    "required": [
@@ -476,29 +476,29 @@
  },
  {
   "name": "marcar_concluido",
-  "description": "Marca UM plano como concluído. Exige a evidência real: o comando ou teste rodado e o resultado. Sem evidência, não chame.",
+  "description": "Marks ONE plan as done. It requires real evidence: the command or test that was run and its result. Without evidence, do not call it.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "plano_id": {
      "type": "string",
-     "description": "id do plano (de ler_blueprint)."
+     "description": "id of the plan (from ler_blueprint)."
     },
     "evidencia": {
      "type": "string",
-     "description": "Comando/teste rodado e o resultado."
+     "description": "The command/test that was run and its result."
     }
    },
    "required": [
@@ -512,25 +512,25 @@
  },
  {
   "name": "marcar_nao_concluido",
-  "description": "Informa que um plano não foi concluído e por quê; ele continua pendente.",
+  "description": "Reports that a plan was not completed and why; it stays pending.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "plano_id": {
      "type": "string",
-     "description": "id do plano (de ler_blueprint)."
+     "description": "id of the plan (from ler_blueprint)."
     },
     "motivo": {
      "type": "string"
@@ -547,29 +547,29 @@
  },
  {
   "name": "marcar_checkpoint_feito",
-  "description": "Marca UM checkpoint de uma ação como atingido. Exige a evidência real: a demonstração, o comando ou teste e o resultado. Sem evidência, não chame; só quando o checkpoint foi cumprido de fato.",
+  "description": "Marks ONE checkpoint of an action as reached. It requires real evidence: the demonstration, the command or test and the result. Without evidence, do not call it; only when the checkpoint was actually met.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "checkpoint_id": {
      "type": "string",
-     "description": "id do checkpoint (de ler_blueprint, em checkpoints da ação)."
+     "description": "id of the checkpoint (from ler_blueprint, under the action's checkpoints)."
     },
     "evidencia": {
      "type": "string",
-     "description": "Como o checkpoint foi cumprido: comando/teste rodado e o resultado."
+     "description": "How the checkpoint was met: the command/test that was run and its result."
     }
    },
    "required": [
@@ -583,25 +583,25 @@
  },
  {
   "name": "marcar_checkpoint_nao_feito",
-  "description": "Informa que um checkpoint não foi atingido e por quê; ele continua pendente.",
+  "description": "Reports that a checkpoint was not reached and why; it stays pending.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "checkpoint_id": {
      "type": "string",
-     "description": "id do checkpoint (de ler_blueprint, em checkpoints da ação)."
+     "description": "id of the checkpoint (from ler_blueprint, under the action's checkpoints)."
     },
     "motivo": {
      "type": "string"
@@ -618,33 +618,33 @@
  },
  {
   "name": "reportar_bloqueio",
-  "description": "Avisa que você travou e precisa do usuário (acesso, decisão, informação). Aceita os mesmos campos de atividade de registrar_progresso (agente, papel, onde...), e o estado vira bloqueado.",
+  "description": "Reports that you are stuck and need the user (access, a decision, information). It accepts the same activity fields as registrar_progresso (agente, papel, onde...), and the state becomes bloqueado.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "texto": {
      "type": "string",
-     "description": "O que falta."
+     "description": "What is missing."
     },
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     },
     "acao_id": {
      "type": "string",
-     "description": "id da ação (de ler_blueprint)."
+     "description": "id of the action (from ler_blueprint)."
     },
     "plano_id": {
      "type": "string",
-     "description": "id do plano (de ler_blueprint)."
+     "description": "id of the plan (from ler_blueprint)."
     },
     "agente": {
      "type": "string",
-     "description": "Seu nome, estável durante o trabalho (até 40 caracteres, sem caracteres de controle). Subagentes usam o próprio nome. É o que identifica você no painel de agentes."
+     "description": "Your name, stable during the work (up to 40 characters, no control characters). Subagents use their own name. It is what identifies you in the agents panel."
     },
     "papel": {
      "type": "string",
@@ -653,7 +653,7 @@
       "construtor",
       "revisor"
      ],
-     "description": "O que você faz: explorador lê, construtor escreve, revisor testa."
+     "description": "What you do: explorador reads, construtor writes, revisor tests."
     },
     "estado": {
      "type": "string",
@@ -665,7 +665,7 @@
       "bloqueado",
       "concluido"
      ],
-     "description": "O que está fazendo agora."
+     "description": "What you are doing now."
     },
     "onde": {
      "type": "array",
@@ -673,13 +673,13 @@
       "type": "string"
      },
      "maxItems": 5,
-     "description": "Até 5 caminhos (arquivos ou pastas, de até 120 caracteres) em que está trabalhando agora."
+     "description": "Up to 5 paths (files or folders, up to 120 characters each) you are working on now."
     },
     "percentual": {
      "type": "integer",
      "minimum": 0,
      "maximum": 100,
-     "description": "Quanto do plano já foi feito."
+     "description": "How much of the plan is already done."
     }
    },
    "required": [
@@ -689,17 +689,17 @@
  },
  {
   "name": "vincular_pasta",
-  "description": "Liga a pasta em que você está a um blueprint. Depois disso, toda sessão do Claude aberta nessa pasta (ou numa subpasta) já começa sabendo o blueprint e a ação atual, e as edições viram progresso. Use quando o contexto da sessão disser que a pasta não está ligada, e só depois de o usuário confirmar qual blueprint é. Ligar de novo troca o blueprint.",
+  "description": "Links the folder you are in to a blueprint. After that, every Claude session opened in that folder (or a subfolder) starts out knowing the blueprint and the current action, and edits become progress. Use it when the session context says the folder is not linked, and only after the user confirms which blueprint it is. Linking again switches the blueprint.",
   "inputSchema": {
    "type": "object",
    "properties": {
     "workspace_id": {
      "type": "string",
-     "description": "id do workspace (de listar_blueprints); \"sm\" é o workspace raiz."
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
     },
     "blueprint_id": {
      "type": "string",
-     "description": "id do blueprint (de listar_blueprints)."
+     "description": "id of the blueprint (from listar_blueprints)."
     }
    },
    "required": [
