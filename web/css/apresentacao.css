@@ -1,0 +1,70 @@
+/* tela Apresentação (web/js/apresentacao.js) e as páginas dela (web/js/apresentacao-modelo.js). As páginas são 16:9 e se medem em unidades de contêiner (cqw),
+   então o mesmo desenho serve na prévia, na tela cheia, na impressão e no HTML exportado. As cores são as de tokens.css, repetidas em .ap-pagina para o arquivo exportado ficar sozinho. */
+body.ap-aberto{overflow:hidden}
+.ap{position:fixed;inset:0;z-index:30;display:flex;flex-direction:column;overflow:hidden;color:var(--ink);
+  background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,radial-gradient(ellipse at 50% 30%,#1250a0 0,#0c3a78 62%,#082b5e 100%)}
+.ap[hidden]{display:none}
+.ap *{scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.ap-acoes{display:flex;flex-wrap:wrap;gap:8px}
+.ap-tipo{display:grid;gap:4px;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--lo);background:#0c3a7866;color:var(--ink);font:12px var(--mono);cursor:pointer}
+.ap-tipo b{text-transform:uppercase;letter-spacing:.04em}.ap-tipo span{color:var(--mid)}
+.ap-tipo:hover,.ap-tipo:focus-visible{border-color:var(--ink);outline:none;background:#17539f66}
+.ap-tipo[aria-pressed=true]{border-color:var(--ink);background:#17539f;box-shadow:inset 3px 0 0 var(--ink)}
+.ap-dica{margin:8px 0 0;color:var(--mid);font-size:11px}
+.ap-previa{overflow-y:auto;padding:26px 32px 40px;outline:none}
+.ap-previa>.ap-pagina{max-width:1040px;margin:0 auto 26px;box-shadow:0 10px 36px #02132e99}
+
+/* a página */
+.ap-pagina{--paper:#0c3a78;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+  container-type:size;position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;color:var(--ink);font-family:var(--mono);break-after:page;break-inside:avoid;border:1px solid var(--lo);
+  background:linear-gradient(#ffffff14 1px,transparent 1px) 0 0/5cqw 5cqw,linear-gradient(90deg,#ffffff14 1px,transparent 1px) 0 0/5cqw 5cqw,radial-gradient(ellipse at 50% 20%,#1250a0 0,#0c3a78 70%,#082b5e 100%)}
+.ap-int{position:absolute;inset:0;padding:4.6cqw 6cqw 5.4cqw;display:flex;flex-direction:column;gap:1.3cqw;font-size:1.3cqw;line-height:1.5}
+.ap-int p,.ap-int h2,.ap-int h3,.ap-int ol,.ap-int ul{margin:0}
+.ap-rot,.ap-sec{font-size:.95cqw;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);font-weight:400}
+.ap-titulo{font-size:3.3cqw;font-weight:500;letter-spacing:-.03em;line-height:1.15}.ap-titulo small{font-size:1.1cqw;color:var(--mid);letter-spacing:.04em;font-weight:400}
+.ap-sub,.ap-nota,.ap-vazio,.ap-obs p{color:var(--mid)}.ap-nota{font-size:1.1cqw}
+.ap-so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.ap-rodape{position:absolute;left:6cqw;right:6cqw;bottom:2cqw;display:flex;justify-content:space-between;gap:2cqw;color:var(--lo);font-size:.9cqw;letter-spacing:.12em;text-transform:uppercase}
+.ap-rodape span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* capa */
+.ap-capa{flex:1;display:flex;align-items:center;justify-content:space-between;gap:4cqw}
+.ap-capa-texto{flex:1 1 52%;display:grid;gap:1.4cqw}
+.ap-capa .ap-titulo{font-size:5.4cqw;line-height:1.08;overflow-wrap:anywhere}.ap-capa .ap-sub{font-size:1.6cqw;max-width:40ch}
+.ap-capa .ap-titulo,.ap-capa .ap-sub{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;-webkit-line-clamp:3}.ap-capa .ap-sub{-webkit-line-clamp:4}
+.ap-data{color:var(--lo);font-size:1cqw;letter-spacing:.14em;text-transform:uppercase}
+.ap-figura{flex:0 0 40%;margin:0}.ap-figura svg{display:block;width:100%;height:auto;max-height:62cqh}
+
+/* resumo e projetos */
+.ap-geral{display:flex;align-items:center;gap:2.4cqw}.ap-grande{font-size:5.4cqw;font-weight:500;letter-spacing:-.04em;line-height:1}
+.ap-barra{flex:1;height:1.1cqw;border:1px solid var(--lo);background:#082b5e99}.ap-barra i{display:block;height:100%;width:calc(var(--p) * 1%);background:var(--ink)}
+.ap-geral .ap-barra{height:1.5cqw}.ap-meta+.ap-barra{flex:none}
+.ap-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2cqw}
+.ap-kpi{display:grid;gap:.3cqw;padding:1.1cqw 1.3cqw;border:1px solid var(--lo);background:#082b5ecc}.ap-kpi b{font-size:2.5cqw;font-weight:500}.ap-kpi span{font-size:.95cqw;letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}
+.ap-alerta{color:var(--erro);letter-spacing:.04em}
+.ap-lista{list-style:none;padding:0;display:grid}
+.ap-lista li{display:grid;grid-template-columns:5cqw minmax(0,1fr) auto 6cqw;gap:1.4cqw;align-items:baseline;padding:.55cqw 0;border-bottom:1px dashed var(--faint)}
+.ap-num{color:var(--mid)}.ap-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ap-datas{color:var(--mid);font-size:1.05cqw}
+.ap-pct{text-align:right}.ap-pct[data-status=concluido]{font-weight:700}.ap-pct[data-status=planejado]{color:var(--mid)}
+
+/* ação */
+.ap-meta{display:flex;flex-wrap:wrap;align-items:center;gap:1.2cqw;color:var(--mid)}
+.ap-status{padding:.15cqw .8cqw;border:1px solid var(--lo);font-size:.95cqw;letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}
+.ap-obs{display:grid;gap:.5cqw;max-width:80ch}.ap-obs p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ap-itens{list-style:none;padding:0;display:grid;gap:.45cqw}
+.ap-itens li{display:grid;grid-template-columns:1.5cqw minmax(0,1fr) auto;gap:1.2cqw;align-items:center}
+.ap-marca{width:1.3cqw;height:1.3cqw;border:1px solid var(--mid);display:inline-block}.ap-cp .ap-marca{border-radius:50%}
+.ap-marca[data-feito="1"]{background:var(--ink);box-shadow:inset 0 0 0 .22cqw var(--paper)}
+.ap-texto{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ap-meta-item{color:var(--mid);font-size:1.05cqw}
+
+/* fim */
+.ap-links{list-style:none;padding:0;display:grid;gap:.8cqw}.ap-links li{display:grid;gap:.2cqw}.ap-url{color:var(--mid);overflow-wrap:anywhere}
+
+/* apresentar: uma página por vez, no tamanho da tela */
+.ap-palco{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:#02132e;outline:none}
+.ap-palco[hidden]{display:none}
+.ap-palco-pagina{width:min(100vw,calc(100vh * 16 / 9));cursor:pointer}.ap-palco .ap-pagina{border:0}
+.ap-palco-barra{position:absolute;left:50%;transform:translateX(-50%);bottom:10px;display:flex;align-items:center;gap:8px;color:var(--mid);font:11px var(--mono);opacity:.3;transition:opacity .2s}
+.ap-palco-barra:hover,.ap-palco-barra:focus-within{opacity:1}
+@media (max-width:760px){.ap .ed-corpo{grid-template-columns:1fr;grid-template-rows:auto 1fr}.ap .ed-lateral{border-right:0;border-bottom:1px solid var(--lo)}.ap-previa{padding:14px 12px 40px}}
+@media (prefers-reduced-motion:reduce){.ap-palco-barra{transition:none}}

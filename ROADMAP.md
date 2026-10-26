@@ -15,7 +15,7 @@ Shipped · Doing now · Next · Later
 - *Shipped* · **Propose, apply, prove**: The agent only proposes; you apply. Marking a plan done requires evidence (the command or test and its result).
 - *Shipped* · **Export a blueprint as Markdown files**: One file per action plus an index, readable on GitHub and versioned with the code. Read-only: the database stays the source.
 - *Shipped* · **Import GitHub issues as a proposal**: Open issues become actions and plans in a numbered proposal that you review and apply. Nothing is saved before your click.
-- *Next* · **Presentation and print of a blueprint**: Turn a blueprint into a project proposal, a schedule or a progress report for clients and companies, printable to A4 and exportable as one HTML file. The AI also builds interactive Anatomy figures that explain the project being built, shown in a sandbox and replaced by a static snapshot when printed.
+- *Doing now* · **Presentation and print of a blueprint**: Turn a blueprint into a project proposal, a schedule or a progress report for clients and companies, printable to A4 and exportable as one HTML file. The AI also builds interactive Anatomy figures that explain the project being built, shown in a sandbox and replaced by a static snapshot when printed.
 - *Later* · **Import and export Markdown and GitHub Issues**: Move plans between the Blueprint, Markdown files in a repository and issue trackers.
 - *Later* · **One Git worktree per action**: Start an action in its own worktree so parallel agents do not step on each other (an idea seen in ORCA and Vibe Kanban).
 

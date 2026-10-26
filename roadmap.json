@@ -24,7 +24,7 @@
     { "id": "evidencia", "tema": "planejamento", "estado": "entregue",
       "en": { "titulo": "Propose, apply, prove", "resumo": "The agent only proposes; you apply. Marking a plan done requires evidence (the command or test and its result)." },
       "pt": { "titulo": "Propor, aplicar e provar", "resumo": "O agente só propõe; você aplica. Marcar um plano como feito exige evidência (o comando ou teste e o resultado)." } },
-    { "id": "apresentacao", "tema": "planejamento", "estado": "proximo",
+    { "id": "apresentacao", "tema": "planejamento", "estado": "agora",
       "en": { "titulo": "Presentation and print of a blueprint", "resumo": "Turn a blueprint into a project proposal, a schedule or a progress report for clients and companies, printable to A4 and exportable as one HTML file.", "detalhe": "The AI also builds interactive Anatomy figures that explain the project being built, shown in a sandbox and replaced by a static snapshot when printed." },
       "pt": { "titulo": "Apresentação e impressão do blueprint", "resumo": "Transformar um blueprint em proposta de projeto, cronograma ou relatório de andamento para clientes e empresas, imprimível em A4 e exportável em um HTML único.", "detalhe": "A IA também cria figuras interativas do Anatomy que explicam o projeto em construção, mostradas num sandbox e trocadas por um instantâneo estático na impressão." } },
     { "id": "markdown", "tema": "planejamento", "estado": "depois",

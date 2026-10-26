@@ -7,7 +7,7 @@
 const I18N = {
   fonte: "pt-BR",
   suportados: { "pt-BR": "Português (Brasil)", en: "English" },
-  areas: ["base", "folha", "avisos", "contexto", "planejar", "edicao", "resto", "roadmap"], // arquivos de web/i18n/<idioma>-<área>.js; só liste áreas que existem (cada uma é um pedido a mais)
+  areas: ["base", "folha", "avisos", "contexto", "planejar", "edicao", "resto", "roadmap", "impressao", "apresentacao"], // arquivos de web/i18n/<idioma>-<área>.js; só liste áreas que existem (cada uma é um pedido a mais)
   catalogos: { en: {} },
   ativo: "pt-BR",
 };
