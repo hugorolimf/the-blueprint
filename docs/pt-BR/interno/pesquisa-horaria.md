@@ -61,3 +61,7 @@ Decisão da rodada: o blueprint já tem 77 ações, então esta rodada só regis
 ### Sexta rodada, 26 de outubro de 2026
 
 Nenhuma entrada do changelog do Claude Code de outubro de 2026 apareceu. Guias de terceiros ([claudelog](https://www.claudelog.com/faqs/what-is-plugins-system-in-claude-code/), [fast.io](https://fast.io/resources/claude-code-plugins-development-guide.md)) dizem que o Claude Code carrega as ferramentas MCP sob demanda ("MCP Tool Search", até 95% menos contexto) e lista `http` e `mcp_tool` entre os tipos de hook; as duas afirmações não foram conferidas na documentação oficial. Se o carregamento sob demanda for real, os "Perfis de ferramentas do MCP" valem sobretudo para agentes que não o têm (o Codex entre eles), então a ação deve começar medindo o custo de contexto em cada agente. Nenhuma ação nova.
+
+### Sétima rodada, 26 de outubro de 2026
+
+Backlog.md: a busca não devolveu nada sobre o projeto, então não há fonte nova. O [changelog do Plane](https://plane.so/changelog/commercial) lista Releases e Collections no Wiki na versão self-hosted 2.6.0 (18/05/2026), um widget "Catch Up" na tela inicial do celular com o modo Autopilot e Skills do Plane AI na versão mobile 2.4.0 (31/07/2026) e o progresso de subitens contando os cancelados (3.3.2, 07/10/2026); isso vem de um resumo da busca, não da leitura de cada entrada. A ideia do "Catch Up" já é coberta pelo "resumo de progresso por período" planejado, e contar cancelados não se aplica (o Blueprint não tem estado cancelado). Nenhuma ação nova; a rodada volta a executar.
