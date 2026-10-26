@@ -42,7 +42,13 @@ pub(super) fn executar(extras: &[String]) -> i32 {
             return 1;
         }
     };
-    let pasta = crate::http::config::pasta_do_app().join("claude-plugin");
+    let (pasta, exe) = match plugin_e_exe(&crate::http::config::pasta_do_app(), &exe) {
+        Ok(par) => par,
+        Err(e) => {
+            eprintln!("erro: não consegui preparar o plugin: {e}");
+            return 1;
+        }
+    };
     if let Err(e) = crate::registrar::plugin::gravar(&pasta, &exe) {
         eprintln!("erro: não consegui preparar o plugin: {e}");
         return 1;
@@ -64,6 +70,27 @@ pub(super) fn executar(extras: &[String]) -> i32 {
             1
         }
     }
+}
+
+/// Onde gravar o plugin e qual .exe ele chama. Um build de desenvolvimento (dentro de `target`) não pode tomar o plugin do dia a dia
+/// (toda sessão nova do Claude passaria a usar o .exe de teste) nem prender o .exe que o cargo recompila ("Acesso negado"):
+/// usa `claude-plugin-dev` e uma cópia do .exe, uma por compilação; as cópias velhas saem quando nenhuma sessão as segura mais.
+fn plugin_e_exe(app: &Path, exe: &Path) -> std::io::Result<(std::path::PathBuf, std::path::PathBuf)> {
+    if !exe.components().any(|c| c.as_os_str() == "target") {
+        return Ok((app.join("claude-plugin"), exe.to_path_buf()));
+    }
+    let pasta = app.join("claude-plugin-dev");
+    let carimbo = fs::metadata(exe)?.modified()?.duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs());
+    let bin = pasta.join("bin");
+    let copia = bin.join(format!("blueprint-{carimbo}.exe"));
+    if !copia.exists() {
+        fs::create_dir_all(&bin)?;
+        for velha in fs::read_dir(&bin)?.flatten() {
+            let _ = fs::remove_file(velha.path()); // a que ainda está em uso fica para a próxima vez
+        }
+        fs::copy(exe, &copia)?;
+    }
+    Ok((pasta, copia))
 }
 
 fn blueprint_ligado(cwd: &Path) -> bool {
@@ -149,6 +176,22 @@ mod tests {
             .unwrap()
             .as_nanos();
         std::env::temp_dir().join(format!("blueprint-claude-{}-{id}", std::process::id()))
+    }
+
+    #[test]
+    fn build_de_desenvolvimento_usa_plugin_proprio_e_copia_do_exe() {
+        let raiz = pasta_temporaria();
+        let app = raiz.join("app");
+        let instalado = raiz.join("Programs").join("blueprint.exe");
+        assert_eq!(plugin_e_exe(&app, &instalado).unwrap(), (app.join("claude-plugin"), instalado));
+        let dev = raiz.join("target").join("dev").join("debug").join("blueprint.exe");
+        fs::create_dir_all(dev.parent().unwrap()).unwrap();
+        fs::write(&dev, b"exe").unwrap();
+        let (pasta, copia) = plugin_e_exe(&app, &dev).unwrap();
+        assert_eq!(pasta, app.join("claude-plugin-dev"), "o plugin do dia a dia não é tocado");
+        assert!(copia.starts_with(pasta.join("bin")) && fs::read(&copia).unwrap() == b"exe", "o plugin chama a cópia, não o .exe do cargo");
+        assert_eq!(plugin_e_exe(&app, &dev).unwrap().1, copia, "mesma compilação, mesma cópia");
+        let _ = fs::remove_dir_all(raiz);
     }
 
     #[test]
