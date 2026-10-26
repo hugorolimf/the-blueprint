@@ -58,6 +58,7 @@ Entregue · Fazendo agora · Em seguida · Depois
 - *Depois* · **Modo colaborativo**: Um modo servidor com membros, papéis (dono, colaborador, supervisor, visitante) e links de convite, ao vivo entre pessoas. Primeiro o desenho; a correção de sincronia entregue agora é o primeiro tijolo.
 - *Depois* · **Link público de leitura**: Compartilhar uma proposta ou o andamento com um cliente por um link revogável.
 - *Depois* · **Resumo de progresso por período**: Um clique copia um resumo em Markdown do que foi concluído, do que está em andamento e do que bloqueou, com as evidências. Calculado dos seus dados, sem IA e sem rede.
+- *Depois* · **Responsável por plano: pessoa ou o agente dela**: Com várias pessoas no mesmo blueprint, cada plano pode dizer de quem é; filtro Meus planos, e o agente de cada pessoa pega os planos dela pelo MCP.
 
 ## Comunidade
 
