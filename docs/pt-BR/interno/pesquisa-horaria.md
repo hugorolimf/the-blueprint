@@ -51,3 +51,9 @@ Fontes (todas secundárias; as releases oficiais do `openai/codex` não foram li
 Ideia acrescentada ao blueprint App (planejada, não iniciada): hooks do Codex para o progresso automático. Depende de a ação de pesquisa do Codex confirmar o formato antes.
 
 Também entrou no `roadmap.json`: `hooks-codex`.
+
+### Quinta rodada, 26 de outubro de 2026
+
+O Task Master deixa escolher quais ferramentas MCP carregar com a variável de ambiente `TASK_MASTER_TOOLS` (`all`, `standard`, `core` ou uma lista própria; o padrão é um conjunto enxuto de sete), conforme a [documentação de MCP](https://docs.task-master.dev/capabilities/mcp.md). A data em que isso entrou não foi confirmada. Isso reforça a ação já planejada "Perfis de ferramentas do MCP", então nenhuma ação nova foi criada. Focalboard: só apareceu um servidor MCP da comunidade e nada de 2026.
+
+Decisão da rodada: o blueprint já tem 77 ações, então esta rodada só registra a fonte e passa a executar.

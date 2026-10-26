@@ -51,3 +51,9 @@ Sources (all secondary; the official `openai/codex` releases were not read):
 Idea added to the blueprint App (planned, not started): Codex hooks for automatic progress. It depends on the Codex research action confirming the format first.
 
 Also added to `roadmap.json`: `hooks-codex`.
+
+### Fifth round, 26 Oct 2026
+
+Task Master lets you choose which MCP tools load with the `TASK_MASTER_TOOLS` environment variable (`all`, `standard`, `core` or a custom list; the default is a lean set of seven), per its [MCP documentation](https://docs.task-master.dev/capabilities/mcp.md). When it was added could not be confirmed. This supports the already planned action "MCP tool profiles", so no new action was created. Focalboard: only a community MCP server turned up and nothing from 2026.
+
+Round decision: the blueprint already holds 77 actions, so this round only logs the source and moves on to execute.
