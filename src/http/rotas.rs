@@ -115,7 +115,7 @@ fn mostrar_janela(estado: &Estado, pedido: &Pedido) -> Resposta {
     }
     match estado.ao_mostrar.lock().unwrap_or_else(|e| e.into_inner()).as_ref() {
         Some(f) => {
-            f();
+            f(serde_json::from_slice::<serde_json::Value>(&pedido.corpo).ok().and_then(|v| v["url"].as_str().map(String::from)));
             Resposta::json(200, &serde_json::json!({"ok": true}))
         }
         None => Resposta::texto(404, "text/plain", "sem janela"),

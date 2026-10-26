@@ -23,8 +23,8 @@ pub fn versao_e_sincronia(presenca: bool) -> (AtomicU64, crate::sincronia::Sincr
 }
 
 pub struct Estado {
-    /// o que traz a janela à frente: só existe no app com janela (o servidor puro não tem)
-    pub ao_mostrar: Mutex<Option<Box<dyn Fn() + Send>>>,
+    /// o que traz a janela à frente (ou abre o convite da equipe, se veio o link `blueprint://convite…`): só existe no app com janela (o servidor puro não tem)
+    pub ao_mostrar: Mutex<Option<Box<dyn Fn(Option<String>) + Send>>>,
     /// o que encerra o app depois de o instalador da atualização ser lançado (só a janela o define)
     pub ao_sair: Mutex<Option<Box<dyn Fn() + Send>>>,
     /// acha, baixa e confere a versão nova; só instala quando o usuário clica (src/atualizador)

@@ -45,6 +45,10 @@ async function gerar() {
       <small>${tr("Liga o seu Claude Code (com o progresso automático na folha) e o Codex. Precisa do The Blueprint instalado neste computador. Se o endereço mudar, rode o comando de novo com o endereço novo.")}</small>
       <b>Claude Code</b><code>${esc(c.claude)}</code><button class="btn mini" type="button" data-copiar="${esc(c.claude)}">${tr("Copiar")}</button>
       <b>Codex</b><code>${esc(c.codex)}</code><button class="btn mini" type="button" data-copiar="${esc(c.codex)}">${tr("Copiar")}</button>`;
+    if (window.ipc) { // na janela do app instalado (equipe.rs): um clique liga o Claude e o Codex deste computador, sem copiar comando; o app pergunta antes
+      n.insertAdjacentHTML("afterbegin", `<button class="btn cheio" type="button" id="eq-chave-conectar">${tr("Conectar meu Claude neste computador")}</button>`);
+      $("eq-chave-conectar").onclick = () => { window.ipc.postMessage(`conectar ${j.chave}`); $("eq-chave-status").textContent = tr("Confirme na janela do app."); };
+    }
     n.querySelectorAll("[data-copiar]").forEach((b) => b.addEventListener("click", async () => {
       try { await navigator.clipboard.writeText(b.dataset.copiar); b.textContent = tr("Copiado"); }
       catch { getSelection().selectAllChildren(b.previousElementSibling); $("eq-chave-status").textContent = tr("Selecionei o texto: copie com Ctrl+C."); }

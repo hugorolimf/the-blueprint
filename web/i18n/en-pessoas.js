@@ -27,6 +27,7 @@ Object.assign(I18N.catalogos.en, {
   "Você ainda não tem chave.": "You do not have a key yet.", "Trocar a chave?": "Replace the key?", "A chave atual deixa de valer na hora; o agente que a usa precisa da nova.": "The current key stops working right away; the agent using it needs the new one.",
   "A chave só aparece agora. Copie o comando do seu agente e rode no terminal.": "The key is shown only now. Copy your agent's command and run it in the terminal.",
   "Um comando": "One command",
+  "Conectar meu Claude neste computador": "Connect my Claude on this computer", "Confirme na janela do app.": "Confirm in the app window.",
   "Liga o seu Claude Code (com o progresso automático na folha) e o Codex. Precisa do The Blueprint instalado neste computador. Se o endereço mudar, rode o comando de novo com o endereço novo.": "Connects your Claude Code (with automatic progress on the sheet) and Codex. It needs The Blueprint installed on this computer. If the address changes, run the command again with the new address.",
   "Chave": "Key", "Selecionei o texto: copie com Ctrl+C.": "Text selected: copy it with Ctrl+C.", "Revogar a chave?": "Revoke the key?",
   "O agente que usa esta chave para de acessar o servidor na hora.": "The agent using this key loses access to the server right away.",

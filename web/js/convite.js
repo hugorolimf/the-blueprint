@@ -15,6 +15,7 @@ function mostrarEntradaConvite(estado, extra = {}) {
   $("convite").hidden = false;
   const info = conviteInfo || {}, papel = info.papel || "", alvo = info.blueprint?.nome || info.workspace?.nome || "";
   const textos = {
+    "app": [tr("Convite"), tr("Abrindo o The Blueprint…"), tr("Se o app instalado não abrir, a versão web continua aqui em instantes.")],
     "conferindo": [tr("Convite"), tr("Conferindo o convite…"), ""],
     "sem-segredo": [tr("Convite"), tr("Abra o link completo"), tr("O link de convite termina com # e um código. Abra de novo o link inteiro que você recebeu, nesta janela.")],
     "invalido": [tr("Convite"), tr("Convite indisponível"), extra.erro || textoDoErro("convite-invalido")],
@@ -32,11 +33,33 @@ function mostrarEntradaConvite(estado, extra = {}) {
   if (estado === "nome") $("convite-nome").focus();
   if (typeof EMB !== "undefined" && EMB && !$("convite-arte").firstChild) $("convite-arte").innerHTML = previaMarca(EMB.BLUEPRINT, 390, 280);
 }
+// O app instalado vem antes da versão web: tenta blueprint:// (o instalador registra o protocolo; src/janela/equipe.rs). Quem abriu a janela do
+// app já está nele (window.ipc), e ?web pula a tentativa. O navegador pergunta e a página perde o foco quando o app existe; sem foco perdido em
+// 2,5 s, ou com "Continuar no navegador", segue na web. O app só recebe o endereço e o segredo (o mesmo do fragmento), nunca vai ao servidor por aqui.
+const AVISO_APP_MS = 2500;
+function tentarApp(segredo) {
+  return new Promise((seguir) => {
+    let respondeu = false;
+    const marca = () => { respondeu = true; };
+    addEventListener("blur", marca, { once: true });
+    document.addEventListener("visibilitychange", marca, { once: true });
+    $("convite-web").hidden = false;
+    $("convite-web").onclick = () => seguir();
+    location.href = `blueprint://convite?u=${location.origin}&s=${segredo}`;
+    setTimeout(() => { if (!respondeu) seguir(); }, AVISO_APP_MS);
+  });
+}
 async function entradaPeloConvite() {
   conviteSegredo = segredoDoFragmento(location.hash);
+  const semApp = typeof window !== "undefined" && window.ipc || new URLSearchParams(location.search).has("web");
   history.replaceState(null, "", "/convite"); // o segredo sai da barra e do histórico antes de qualquer pedido
   emblemasProntos.then(() => { if (!$("convite").hidden && EMB && !$("convite-arte").firstChild) $("convite-arte").innerHTML = previaMarca(EMB.BLUEPRINT, 390, 280); });
   if (!conviteSegredo) return mostrarEntradaConvite("sem-segredo");
+  if (!semApp) {
+    mostrarEntradaConvite("app");
+    await tentarApp(conviteSegredo);
+    $("convite-web").hidden = true;
+  }
   mostrarEntradaConvite("conferindo");
   try { conviteInfo = await equipeApi("/api/convite/conferir", { segredo: conviteSegredo }); }
   catch (e) { conviteSegredo = ""; return mostrarEntradaConvite("invalido", { erro: e.message }); }

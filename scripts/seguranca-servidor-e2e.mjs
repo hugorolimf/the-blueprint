@@ -68,7 +68,7 @@ try {
   assert.equal(ultimo.status, 429, "limite de tentativas");
   assert.equal(ultimo.corpo.codigo, "muitas-tentativas");
   assert.ok(ultimo.corpo.params?.segundos > 0, "diz quanto esperar");
-  await outro.ir(`${S.url}/convite#${segredos.at(-1)}`);
+  await outro.ir(`${S.url}/convite?web#${segredos.at(-1)}`);
   await outro.ate(`/Espere \\d+ s/.test(document.getElementById("convite-texto").textContent + document.getElementById("convite-erro").textContent)`, 8000, "a tela mostra a espera em segundos");
 
   // nenhum segredo viajou na URL ou no Referer; no binário real, nenhum segredo está em claro no banco

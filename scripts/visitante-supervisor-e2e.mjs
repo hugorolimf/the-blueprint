@@ -36,7 +36,7 @@ try {
 
   // 2. o visitante entra sem nome e cai na apresentação do blueprint
   const vera = await abrir("vera");
-  await entrar(vera, `${S.url}/convite#${publico.split("#")[1]}`);
+  await entrar(vera, `${S.url}/convite?web#${publico.split("#")[1]}`);
   assert.equal(await vera.js(`location.hash`), `#/p/${BP}`, "destino: o blueprint do link");
   await vera.ate(`!!document.getElementById("apresentacao-tela") && !document.getElementById("apresentacao-tela").hidden`, 8000, "abre a apresentação");
   assert.equal(await vera.js(`document.body.classList.contains("so-leitura") && getComputedStyle(document.getElementById("b-ia")).display === "none"`), true, "só leitura: sem Planejar");
@@ -55,7 +55,7 @@ try {
   const conv = await ana.api("/api/convites", { workspaceId: "sm", papel: "supervisor", validadeHoras: 24, usosMax: 1 });
   assert.equal(conv.status, 201, "dono cria convite de supervisor");
   const carla = await abrir("carla");
-  await entrar(carla, `${S.url}/convite#${conv.corpo.link.split("#")[1]}`, "Carla");
+  await entrar(carla, `${S.url}/convite?web#${conv.corpo.link.split("#")[1]}`, "Carla");
   await carla.ate(`!document.getElementById("b-acompanhar").hidden`, 5000, "supervisor vê Acompanhar");
   assert.equal(await carla.js(`document.body.classList.contains("so-leitura")`), true, "supervisor só lê");
   await carla.clicar("#b-acompanhar");

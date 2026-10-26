@@ -34,8 +34,12 @@ pub fn registrar_porta(porta: u16) {
     let _ = std::fs::write(arquivo_da_porta(), porta.to_string());
 }
 
-/// Pede à instância aberta que mostre a janela. Devolve se ela respondeu.
-pub fn pedir_que_mostre() -> bool {
+/// Pede à instância aberta que mostre a janela (ou, com `link`, o `blueprint://convite…` que o navegador entregou). Devolve se ela respondeu.
+pub fn pedir_que_mostre(link: Option<&str>) -> bool {
     let Some(porta) = std::fs::read_to_string(arquivo_da_porta()).ok().and_then(|t| t.trim().parse::<u16>().ok()) else { return false };
-    requisitar_em(&format!("http://127.0.0.1:{porta}"), "POST", "/api/app/mostrar", Some("{}")).is_ok_and(|(status, _)| status == 200)
+    // esta execução acabou de ser lançada pelo usuário; sem isto o Windows deixa a janela da primeira instância atrás do navegador
+    // SAFETY: sem ponteiros; só concede à primeira instância o direito de ir para a frente.
+    unsafe { windows_sys::Win32::UI::WindowsAndMessaging::AllowSetForegroundWindow(windows_sys::Win32::UI::WindowsAndMessaging::ASFW_ANY) };
+    let corpo = serde_json::json!({ "url": link }).to_string();
+    requisitar_em(&format!("http://127.0.0.1:{porta}"), "POST", "/api/app/mostrar", Some(&corpo)).is_ok_and(|(status, _)| status == 200)
 }

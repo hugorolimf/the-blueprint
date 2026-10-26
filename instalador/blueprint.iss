@@ -62,6 +62,13 @@ Name: "{autoprograms}\{#Nome}"; Filename: "{app}\{#Exe}"
 Name: "{autodesktop}\{#Nome}"; Filename: "{app}\{#Exe}"; Tasks: atalhodesktop
 Name: "{autostartup}\{#Nome}"; Filename: "{app}\{#Exe}"; Tasks: iniciar
 
+[Registry]
+; o protocolo blueprint://: o link de convite da equipe abre o app instalado antes da versão web (a página /convite tenta este protocolo primeiro; src/janela/equipe.rs).
+; HKA = só o usuário numa instalação comum, todos os usuários numa instalação "para todos"; roda de novo a cada atualização, então o caminho nunca fica velho
+Root: HKA; Subkey: "Software\Classes\blueprint"; ValueType: string; ValueData: "URL:The Blueprint"; Flags: uninsdeletekey
+Root: HKA; Subkey: "Software\Classes\blueprint"; ValueName: "URL Protocol"; ValueType: string; ValueData: ""
+Root: HKA; Subkey: "Software\Classes\blueprint\shell\open\command"; ValueType: string; ValueData: """{app}\{#Exe}"" ""%1"""
+
 [Run]
 ; `blueprint registrar` instala o plugin `blueprint` (skill, agente, MCP, hooks) e o mod `blueprint-terminal` (marca e estado do blueprint no painel do terminal),
 ; ambos embutidos no .exe, e cai em `claude mcp add --scope user …` se o plugin falhar; também roda e `codex mcp add …` com o caminho instalado (de novo a cada atualização, sem duplicar).

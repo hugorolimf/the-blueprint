@@ -21,6 +21,16 @@ see [Hosting The Blueprint for a team](hospedar.md). Design and contract: [colab
 To stop, click **Turn off** in the same dialog: the tunnel goes down and the guest port closes. Quitting the app also stops it (the tunnel
 process lives in a Job Object and dies with the app). Hiding the window in the tray does **not** stop it.
 
+## Opening the invite in the installed app
+
+The installer registers the `blueprint://` protocol. When a guest opens an invite link, the page first tries to open **the installed
+app**: the browser asks once ("Open The Blueprint?"), the app asks which address it is opening, and a window of its own shows the shared
+workspace (same sign-in by name, same screens, separate from your own local window). If the app is not installed, or does not answer in
+2.5 s, the web version continues in the same tab (a "Continue in the browser" button is always there; `?web` after `/convite` skips the
+attempt). Only a valid `https://` address and an invite code in the format the server generates are accepted; anything else just opens
+the app normally. In that window, **My key → Generate key** also shows **Connect my Claude on this computer**: after a native question
+with the address, it does what `blueprint conectar` does (next section), with no command to copy.
+
 ## The guest's Claude
 
 A guest can connect their own Claude Code (and Codex) to the shared workspace with one command. They need The Blueprint installed on

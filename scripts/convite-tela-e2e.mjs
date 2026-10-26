@@ -45,7 +45,7 @@ try {
 
   // 3. a pessoa entra pelo nome, vê o próprio papel e gera a chave de MCP
   const bruno = await abrir("bruno");
-  await bruno.ir(`${S.url}/convite#${segredos[1]}`);
+  await bruno.ir(`${S.url}/convite?web#${segredos[1]}`);
   await bruno.ate(`!document.getElementById("convite-campos").hidden`, 8000, "Bruno vê a entrada");
   assert.match(await bruno.js(`document.getElementById("convite-papel").textContent`), /^Colaborador:/);
   await bruno.js(`document.getElementById("convite-nome").value = "Bruno"; document.getElementById("convite-form").requestSubmit()`);
@@ -78,7 +78,7 @@ try {
   // 5. Bruno perde a sessão: ao recarregar, a página mostra a entrada pelo convite; o link de uso único não serve de novo
   await bruno.ir(`${S.url}/`, 1500);
   await bruno.ate(`!document.getElementById("convite").hidden && /Entre pelo link de convite/.test(document.getElementById("convite-titulo").textContent)`, 8000, "sem sessão: tela de entrada");
-  await bruno.ir(`${S.url}/convite#${segredos[1]}`);
+  await bruno.ir(`${S.url}/convite?web#${segredos[1]}`);
   await bruno.ate(`/Convite indisponível/.test(document.getElementById("convite-titulo").textContent)`, 8000, "link já usado: indisponível");
   const sair = await ana.api("/api/sessao/sair", {});
   assert.equal(sair.status, 200, "sair encerra a sessão");

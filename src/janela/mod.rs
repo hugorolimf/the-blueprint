@@ -5,6 +5,7 @@ pub mod atualizando;
 pub mod bandeja;
 pub mod console;
 pub mod dev;
+pub mod equipe;
 pub mod icone;
 pub mod instancia;
 
@@ -20,8 +21,10 @@ use tao::window::{Fullscreen, Window, WindowBuilder};
 use wry::{NewWindowResponse, PageLoadEvent, WebContext, WebView, WebViewBuilder};
 
 /// O que o laço da janela recebe de fora (bandeja, servidor, carregamento da página).
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum Evento {
+    /// o convite confirmado pelo usuário: abre a janela da equipe (equipe.rs)
+    Equipe(equipe::Convite),
     /// trazer a janela à frente (clique na bandeja, segunda execução)
     Mostrar,
     /// a página terminou de carregar: pode mostrar a janela
@@ -52,8 +55,9 @@ fn abrir_no_navegador(url: &str) {
 }
 
 /// Um WebView novo na janela. Chamado na abertura e toda vez que a janela volta da bandeja (ao sair, o WebView é destruído).
-fn criar_webview(window: &Window, contexto: &mut WebContext, url: &str, dev: bool, avisa: impl Fn() + 'static, proxy: EventLoopProxy<Evento>) -> Result<WebView, wry::Error> {
-    let origem = url.to_string();
+/// `origem` é até onde a página pode navegar (o servidor local, ou o da equipe); só a janela da equipe (https) aceita o IPC `conectar`.
+fn criar_webview(window: &Window, contexto: &mut WebContext, url: &str, origem: &str, dev: bool, avisa: impl Fn() + 'static, proxy: EventLoopProxy<Evento>) -> Result<WebView, wry::Error> {
+    let (origem, origem_ipc) = (origem.to_string(), origem.to_string());
     WebViewBuilder::new_with_web_context(contexto)
         .with_devtools(dev) // F12 só no modo dev
         .with_url(url)
@@ -66,6 +70,8 @@ fn criar_webview(window: &Window, contexto: &mut WebContext, url: &str, dev: boo
         .with_ipc_handler(move |req| {
             if req.body() == "tela-cheia" {
                 let _ = proxy.send_event(Evento::TelaCheia);
+            } else if let Some(chave) = req.body().strip_prefix("conectar ").filter(|_| origem_ipc.starts_with("https://")) {
+                equipe::pedir_conexao(origem_ipc.trim_end_matches('/').to_string(), chave.trim().to_string());
             }
         })
         .with_navigation_handler(move |destino| destino.starts_with(&origem) || destino.starts_with("about:") || destino.starts_with("data:") || destino.starts_with("blob:"))
@@ -90,17 +96,19 @@ fn iniciar_servidor(mut config: Config) -> Resultado<Servidor> {
 
 /// O app com janela. Só volta (com código de saída) se a janela nem chegou a abrir; ao sair pela bandeja o processo termina.
 /// `dev` (`blueprint dev`): o mesmo app, mas com a interface lida da pasta do projeto, F12 e recarga ao salvar; fechar a janela encerra tudo.
-pub fn abrir(dev: bool) -> i32 {
+/// `link`: o `blueprint://convite?…` que o navegador entregou (equipe.rs); um link que não vale abre o app como sem link.
+pub fn abrir(dev: bool, link: Option<String>) -> i32 {
+    let convite = link.as_deref().and_then(equipe::convite_do_link);
     if instancia::garantir() == Instancia::JaAberta {
         if dev {
             // mesmo banco e mesma porta: dois processos teriam filas do MCP separadas e a janela ficaria com dados velhos
             eprintln!("O The Blueprint já está aberto (veja a bandeja). O modo dev usa o mesmo banco e a mesma porta: feche o app (bandeja → Sair) e rode de novo.");
             return 1;
         }
-        instancia::pedir_que_mostre();
+        instancia::pedir_que_mostre(link.as_deref().filter(|_| convite.is_some()));
         return 0;
     }
-    match preparar(dev) {
+    match preparar(dev, convite) {
         Ok(()) => 0,
         Err(e) => {
             mensagem_de_erro(&format!("O The Blueprint (beta) não conseguiu abrir: {e}"));
@@ -115,7 +123,7 @@ fn mensagem_de_erro(texto: &str) {
     let _ = std::fs::write(pasta_do_app().join("erro.txt"), texto);
 }
 
-fn preparar(dev: bool) -> Resultado<()> {
+fn preparar(dev: bool, convite: Option<equipe::Convite>) -> Resultado<()> {
     let event_loop = EventLoopBuilder::<Evento>::with_user_event().build();
     let proxy = event_loop.create_proxy();
     let mut config = Config::do_app();
@@ -147,9 +155,17 @@ fn preparar(dev: bool) -> Resultado<()> {
         servidor.estado.atualizador.ao_abrir(); // recupera o instalador já baixado e verifica em segundo plano (no máximo uma vez por dia)
     }
     let mostrar = proxy.clone();
-    *servidor.estado.ao_mostrar.lock().unwrap_or_else(|e| e.into_inner()) = Some(Box::new(move || {
-        let _ = mostrar.send_event(Evento::Mostrar);
+    // a segunda execução manda o link do convite junto (rota /api/app/mostrar): confirmado, abre a janela da equipe; sem link, traz a janela
+    *servidor.estado.ao_mostrar.lock().unwrap_or_else(|e| e.into_inner()) = Some(Box::new(move |link| match link.as_deref().and_then(equipe::convite_do_link) {
+        Some(convite) => equipe::pedir_abertura(mostrar.clone(), convite),
+        None => {
+            let _ = mostrar.send_event(Evento::Mostrar);
+        }
     }));
+    let so_equipe = convite.is_some(); // aberto pelo link: a janela principal fica na bandeja até alguém pedir
+    if let Some(convite) = convite {
+        equipe::pedir_abertura(proxy.clone(), convite);
+    }
 
     let icone = icone::janela().map_err(falha)?;
     let window = WindowBuilder::new()
@@ -168,7 +184,8 @@ fn preparar(dev: bool) -> Resultado<()> {
             let _ = p.send_event(Evento::Carregou);
         }
     };
-    let mut webview = Some(criar_webview(&window, &mut contexto, &url, dev, avisa.clone(), proxy.clone()).map_err(falha)?);
+    let mut webview = Some(criar_webview(&window, &mut contexto, &url, &url, dev, avisa.clone(), proxy.clone()).map_err(falha)?);
+    let mut equipe_janela = None;
     {
         // se a página demorar ou falhar, a janela aparece mesmo assim em 2 s
         let p = proxy.clone();
@@ -179,7 +196,7 @@ fn preparar(dev: bool) -> Resultado<()> {
     }
     let mut bandeja = None;
 
-    event_loop.run(move |evento, _, fluxo| {
+    event_loop.run(move |evento, alvo, fluxo| {
         *fluxo = ControlFlow::Wait; // zero trabalho em repouso: só acorda com um evento
         match evento {
             Event::NewEvents(StartCause::Init) => bandeja = bandeja::criar(proxy.clone(), &servidor.estado.atualizador.json()).ok(),
@@ -200,18 +217,25 @@ fn preparar(dev: bool) -> Resultado<()> {
                 a.definir_automatica(!a.automatica());
             }
             Event::UserEvent(Evento::Carregou) => {
-                if !window.is_visible() {
+                if !window.is_visible() && !so_equipe {
                     window.set_visible(true);
                     window.set_focus();
                 }
             }
             Event::UserEvent(Evento::Mostrar) => {
                 if webview.is_none() {
-                    webview = criar_webview(&window, &mut contexto, &url, dev, avisa.clone(), proxy.clone()).ok(); // volta da bandeja: o Carregou mostra a janela
+                    webview = criar_webview(&window, &mut contexto, &url, &url, dev, avisa.clone(), proxy.clone()).ok(); // volta da bandeja: o Carregou mostra a janela
                 }
                 window.set_minimized(false);
                 window.set_visible(true);
                 window.set_focus();
+            }
+            Event::UserEvent(Evento::Equipe(convite)) => {
+                equipe_janela = None; // um convite novo troca a janela da equipe
+                equipe_janela = equipe::abrir_janela(alvo, &mut contexto, &convite, proxy.clone()).ok();
+            }
+            Event::WindowEvent { event: WindowEvent::CloseRequested, window_id, .. } if equipe_janela.as_ref().is_some_and(|(_, w): &(WebView, Window)| w.id() == window_id) => {
+                equipe_janela = None; // fechar a janela da equipe a destrói; o app e a janela principal seguem
             }
             Event::UserEvent(Evento::TelaCheia) => {
                 let cheia = window.fullscreen().is_none();

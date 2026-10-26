@@ -21,6 +21,16 @@ computador, veja [Hospedar o The Blueprint para uma equipe](hospedar.md). Desenh
 Para parar, clique em **Desligar** no mesmo diálogo: o túnel cai e a porta dos convidados fecha. Sair do app também desliga (o processo do
 túnel vive num Job Object e morre com o app). Esconder a janela na bandeja **não** desliga.
 
+## Abrir o convite no app instalado
+
+O instalador registra o protocolo `blueprint://`. Quando o convidado abre o link de convite, a página tenta primeiro abrir **o app
+instalado**: o navegador pergunta uma vez ("Abrir o The Blueprint?"), o app pergunta qual endereço está abrindo e uma janela própria mostra o
+workspace compartilhado (mesma entrada pelo nome, mesmas telas, separada da sua janela local). Se o app não estiver instalado, ou não
+responder em 2,5 s, a versão web continua na mesma aba (o botão "Continuar no navegador" está sempre lá; `?web` depois de `/convite` pula a
+tentativa). Só vale endereço `https://` e código de convite no formato que o servidor gera; qualquer outra coisa só abre o app normalmente.
+Nessa janela, **Minha chave → Gerar chave** mostra também **Conectar meu Claude neste computador**: depois de uma pergunta nativa com o
+endereço, faz o que o `blueprint conectar` faz (próxima seção), sem comando para copiar.
+
 ## O Claude do convidado
 
 O convidado pode ligar o próprio Claude Code (e o Codex) ao workspace compartilhado com um comando. Ele precisa do The Blueprint instalado

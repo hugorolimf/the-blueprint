@@ -9,7 +9,8 @@ use std::path::Path;
 pub(crate) const USO: &str = concat!(
     "uso:\n",
     "  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n",
-    "  blueprint dev                              o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n",
+    "  blueprint blueprint://convite?u=<endereço>&s=<segredo>  o link de convite da equipe, entregue pelo navegador (o instalador registra o protocolo)\n",
+    "  blueprint dev                            o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n",
     "  blueprint serve                          liga o servidor (HOST, PORT, BLUEPRINT_DB, DADOS_ARQ, PROTOTIPOS_DIR, MCP_REDE)\n",
     "  blueprint serve --hospedar [--novo-link-dono]  servidor de equipe atrás de um proxy HTTPS (BLUEPRINT_URL_PUBLICA; veja docs/hospedar.md)\n",
     "  blueprint --mcp                             servidor MCP por stdio, para o agente (claude mcp add blueprint -- blueprint --mcp)\n",
@@ -33,8 +34,9 @@ pub(crate) const USO: &str = concat!(
 pub fn executar(args: Vec<String>) -> i32 {
     let a: Vec<&str> = args.iter().map(String::as_str).collect();
     let resultado = match a.as_slice() {
-        [] => return abrir_janela(false),
-        ["dev"] => return abrir_janela(true),
+        [] => return abrir_janela(false, None),
+        ["dev"] => return abrir_janela(true, None),
+        [link] if link.starts_with("blueprint:") => return abrir_janela(false, Some(link.to_string())), // o navegador entrega o convite ao app instalado
         ["--mcp"] => return crate::mcp::stdio::executar(),
         ["--mcp", "--equipe"] => {
             crate::mcp::equipe::ligar();
@@ -113,12 +115,12 @@ pub fn executar(args: Vec<String>) -> i32 {
 
 /// Sem argumentos: o app com janela (Windows).
 #[cfg(windows)]
-fn abrir_janela(dev: bool) -> i32 {
-    crate::janela::abrir(dev)
+fn abrir_janela(dev: bool, link: Option<String>) -> i32 {
+    crate::janela::abrir(dev, link)
 }
 
 #[cfg(not(windows))]
-fn abrir_janela(_dev: bool) -> i32 {
+fn abrir_janela(_dev: bool, _link: Option<String>) -> i32 {
     eprintln!("{USO}");
     2
 }

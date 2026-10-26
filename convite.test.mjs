@@ -7,15 +7,15 @@ import { join } from "node:path";
 import vm from "node:vm";
 
 const SEGREDO = "Ab3_dE-fGhIjKlMnOpQrStUvWxYz0123456789abcd"; // 43 caracteres base64url, como o servidor gera
-function contexto({ hash = "", respostas = {}, idioma = "pt-BR" } = {}) {
-  const els = {}, el = (id) => (els[id] ||= { id, textContent: "", value: "", hidden: true, firstChild: null, innerHTML: "", disabled: false, focus() {}, querySelector: () => el(id + ":botao"), set onclick(f) {}, set onsubmit(f) { this.submit = f; } });
-  const eventos = [], ouvintes = {};
+function contexto({ hash = "", respostas = {}, idioma = "pt-BR", search = "?web" } = {}) {
+  const els = {}, el = (id) => (els[id] ||= { id, textContent: "", value: "", hidden: true, firstChild: null, innerHTML: "", disabled: false, focus() {}, querySelector: () => el(id + ":botao"), set onclick(f) { this.clique = f; }, set onsubmit(f) { this.submit = f; } });
+  const eventos = [], ouvintes = {}, timers = [];
   const ctx = vm.createContext({
     addEventListener: (tipo, f) => { ouvintes[tipo] = f; },
     navigator: { languages: [idioma] }, URLSearchParams, Intl, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
-    location: { search: "", pathname: "/convite", hash, replace: (u) => eventos.push(["replace", u]) },
+    location: { search, origin: "https://equipe.exemplo.com", href: "", pathname: "/convite", hash, replace: (u) => eventos.push(["replace", u]) },
     history: { replaceState: (_a, _b, u) => { eventos.push(["replaceState", u]); ctx.location.hash = ""; } },
-    document: { body: { classList: { add() {}, remove() {}, toggle() {} } } },
+    document: { body: { classList: { add() {}, remove() {}, toggle() {} } }, addEventListener() {} }, setTimeout: (f) => timers.push(f),
     fetch: async (url, op = {}) => { eventos.push(["fetch", url, op.body || ""]); const [status, corpo] = respostas[url] || [404, { codigo: "so-local" }]; return { ok: status < 300, status, json: async () => corpo }; },
     emblemasProntos: Promise.resolve(), EMB: null, previaMarca: () => "",
   });
@@ -25,7 +25,7 @@ function contexto({ hash = "", respostas = {}, idioma = "pt-BR" } = {}) {
   if (idioma === "en") ["en-convite.js", "en-base.js"].forEach((c) => carrega("i18n", c));
   carrega("js", "sessao.js"); carrega("js", "convite.js");
   vm.runInContext("this.api = { segredoDoFragmento, destinoSeguro, problemaDoNome, papelNoEscopo, poderesDaSessao, textoDoErro, entradaPeloConvite, entrarPeloConvite, nomeDoPapel };", ctx);
-  return { api: ctx.api, els, eventos, ouvintes, ctx };
+  return { api: ctx.api, els, eventos, ouvintes, ctx, timers };
 }
 const espera = () => new Promise((r) => setTimeout(r, 0));
 
@@ -106,4 +106,25 @@ assert.equal(en.nomeDoPapel("supervisor"), "Supervisor");
   v.ouvintes.hashchange(); await espera();
   assert.deepEqual(v.eventos.slice(-2), [["replaceState", "/convite"], ["fetch", "/api/convite/conferir", JSON.stringify({ segredo: SEGREDO })]]);
 }
-console.log("convite: ok (segredo fora da URL, replaceState antes do pedido, destino seguro, papel por escopo, botões por papel, erros por código, inglês)");
+// o app instalado vem antes da web: tenta blueprint:// e, sem resposta, segue; com o foco perdido espera o clique em "Continuar no navegador"
+{
+  const respostas = { "/api/convite/conferir": [200, { papel: "colaborador", workspace: { id: "w1", nome: "Equipe" }, blueprint: null, abre: null, pedeNome: true }] };
+  const semApp = contexto({ hash: "#" + SEGREDO, respostas, search: "" });
+  const p = semApp.api.entradaPeloConvite();
+  assert.equal(semApp.ctx.location.href, "blueprint://convite?u=https://equipe.exemplo.com&s=" + SEGREDO, "o app é tentado primeiro, com o segredo só neste link");
+  assert.equal(semApp.els["convite-titulo"].textContent, "Abrindo o The Blueprint…");
+  assert.equal(semApp.eventos.filter((e) => e[0] === "fetch").length, 0, "a web só começa depois");
+  semApp.timers[0](); await p;
+  assert.equal(semApp.eventos.filter((e) => e[0] === "fetch").length, 1, "o app não respondeu: segue na versão web");
+  const comApp = contexto({ hash: "#" + SEGREDO, respostas, search: "" });
+  const q = comApp.api.entradaPeloConvite();
+  comApp.ouvintes.blur(); comApp.timers[0](); await espera();
+  assert.equal(comApp.eventos.filter((e) => e[0] === "fetch").length, 0, "o app respondeu: a web espera");
+  comApp.els["convite-web"].clique(); await q;
+  assert.equal(comApp.eventos.filter((e) => e[0] === "fetch").length, 1, "Continuar no navegador segue na web");
+  const dentro = contexto({ hash: "#" + SEGREDO, respostas, search: "" });
+  dentro.ctx.window = { ipc: {} }; // a janela do próprio app (ou ?web) não tenta o protocolo de novo
+  await dentro.api.entradaPeloConvite();
+  assert.equal(dentro.ctx.location.href, "");
+}
+console.log("convite: ok (app primeiro,  segredo fora da URL, replaceState antes do pedido, destino seguro, papel por escopo, botões por papel, erros por código, inglês)");

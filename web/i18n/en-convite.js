@@ -8,6 +8,8 @@ Object.assign(I18N.catalogos.en, {
   "O link de convite termina com # e um código. Abra de novo o link inteiro que você recebeu, nesta janela.": "The invite link ends with # and a code. Open the whole link you received again, in this window.",
   "Convite indisponível": "Invite unavailable", "Convite · {papel}": "Invite · {papel}", "Você foi convidado para {nome}.": "You were invited to {nome}.", "Você foi convidado para este servidor.": "You were invited to this server.",
   "Como a equipe vai chamar você? O nome aparece para as outras pessoas; não é senha.": "What should the team call you? Other people see this name; it is not a password.",
+  "Abrindo o The Blueprint…": "Opening The Blueprint…", "Se o app instalado não abrir, a versão web continua aqui em instantes.": "If the installed app does not open, the web version continues here in a moment.",
+  "Continuar no navegador": "Continue in the browser",
   "Entrando…": "Joining…", "Servidor da equipe": "Team server", "Entre pelo link de convite": "Join with your invite link",
   "Este The Blueprint é de uma equipe. Para entrar, abra o link de convite que você recebeu; se não tem um, peça a quem administra o servidor.": "This The Blueprint belongs to a team. To join, open the invite link you received; if you do not have one, ask whoever runs the server.",
   // sessao.js e entrada.js: papéis
