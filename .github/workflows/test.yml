@@ -39,3 +39,5 @@ jobs:
           node atualizacao.test.mjs
           node notificacao.test.mjs
           node sincronia.test.mjs
+          node scripts/conferir-readmes.mjs
+          node scripts/gerar-roadmap.mjs --conferir
