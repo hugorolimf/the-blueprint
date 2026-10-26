@@ -16,6 +16,7 @@ function mcpAssina() {
   es.addEventListener("agentes", () => agentesBusca()); // a presença dos agentes mudou: o painel atualiza o cartão que mudou
   es.addEventListener("conversa", (e) => { try { conversaRecebe(JSON.parse(e.data)); } catch {} }); // a IA respondeu na conversa de uma ação (conversa.js)
   es.addEventListener("atualizacao", (e) => { try { atualizacaoRecebe(JSON.parse(e.data)); } catch {} }); // o updater: baixando, pronta (atualizacao.js)
+  es.addEventListener("compartilhar", (e) => { try { compartilharRecebe(JSON.parse(e.data)); } catch {} }); // o túnel do Compartilhar mudou de estado (sessao.js)
   es.onerror = () => { mcpSse = null; mcpConsulta(); };
 }
 // a fila só é aplicada ao workspace aberto: ao entrar num workspace (ou quando os dados chegam depois da conexão SSE), consulta de novo,
