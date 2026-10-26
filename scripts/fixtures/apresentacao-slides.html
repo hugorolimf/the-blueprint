@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sample slides</title>
+<!-- Exemplo de páginas 16:9 (o desenho de apresentacao.css, com o estilo mínimo copiado aqui para o teste não depender dele). Duas páginas; dados inventados. -->
+<link rel="stylesheet" href="/web/css/tokens.css"><link rel="stylesheet" href="/web/css/impressao.css">
+<style>
+body{margin:0;background:var(--paper);color:var(--ink);font:12px/1.4 var(--mono)}
+.ap-pagina{container-type:size;position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:#0c3a78;color:#eaf4ff;border:1px solid #5b93d0;break-inside:avoid}
+.ap-int{position:absolute;inset:0;padding:4cqw 6cqw;font-size:1.6cqw;display:flex;flex-direction:column;gap:1.3cqw}
+.ap-titulo{font-size:3.3cqw;margin:0}
+</style>
+<script>Object.defineProperty(navigator, "languages", { value: ["pt-BR"] });</script><script src="/web/js/i18n.js"></script><script src="/web/js/apresentacao-exportar.js"></script></head><body>
+<main id="doc">
+  <section class="ap-pagina" data-tipo="capa"><div class="ap-int"><h1 class="ap-titulo">Sample slides</h1><p>Sixteen by nine, printed on a landscape A4.</p></div></section>
+  <section class="ap-pagina" data-tipo="acao"><div class="ap-int"><h2 class="ap-titulo">Action 01.1: Print layout</h2><p>Blue paper, as on the screen.</p></div></section>
+</main></body></html>

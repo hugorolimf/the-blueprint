@@ -1,0 +1,52 @@
+/* Impressão da apresentação e a folha avulsa do arquivo exportado. Cada página é <section class="ap-pagina" data-tipo="capa|resumo|projeto|acao|fim">.
+   Dois jeitos de página, os dois com quebra certa e cor preservada:
+   - FLUXO (padrão): folha A4 em pé, fundo claro (economiza tinta) com o traço azul da marca; o conteúdo escorre para a página seguinte sem cortar plano, checkpoint nem figura.
+     Capa .ap-capa, título .ap-titulo, figura <figure class="ap-figura"> (as figuras do anatomy foram desenhadas para o papel azul: cada uma leva o seu quadro azul).
+   - SLIDE (.ap-slide, que o exportador põe nas páginas 16:9 de apresentacao.css, as que têm .ap-int): A4 deitado com a página 16:9 centralizada e no tema azul do app, como na tela. */
+@page{size:A4;margin:14mm 14mm 18mm;
+  @bottom-center{content:counter(page) " / " counter(pages);font:9px ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;color:#2f66aa}}
+@page ap-slide{size:A4 landscape;margin:0}
+
+/* o arquivo exportado (body.ap-solo) na tela: o fluxo vira folhas A4 sobre fundo neutro; o slide fica na largura da tela */
+@media screen{
+  body.ap-solo{margin:0;padding:24px 0;background:#d4e0ef}
+  body.ap-solo .ap-pagina:not(.ap-slide){width:210mm;min-height:297mm;margin:0 auto 24px;padding:14mm 14mm 18mm;background:#fff;color:#0b2a55;box-shadow:0 6px 28px #02132e55}
+  body.ap-solo .ap-slide{width:min(1040px,calc(100vw - 32px));margin:0 auto 24px;box-shadow:0 6px 28px #02132e55}
+}
+
+@media print{
+  html,body{margin:0;background:#fff;color:#0b2a55}
+  .ap-pagina,.ap-pagina *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ap-nao-imprimir,[data-nao-imprimir]{display:none !important}
+  a{color:inherit;text-decoration:none}
+
+  .ap-pagina{break-after:page;page-break-after:always}
+  .ap-pagina:last-child,.ap-pagina:last-of-type{break-after:auto;page-break-after:auto}
+
+  /* slide: 16:9 na largura do A4 deitado (297 mm), centralizado na altura (210 - 167 = 43 mm de branco, repartidos) */
+  .ap-pagina.ap-slide{page:ap-slide;position:relative;top:21mm;width:297mm;max-width:none;margin:0;box-shadow:none;break-inside:avoid} /* top, não margin: a margem junto de uma quebra forçada é descartada */
+
+  /* fluxo */
+  .ap-pagina:not(.ap-slide){
+    --paper:#fff;--ink:#0b2a55;--mid:#2f66aa;--lo:#5b93d0;--faint:#b9cde6;
+    display:block;position:static;width:auto;min-height:0;margin:0;padding:0;background:none;box-shadow:none;color:#0b2a55;
+    font:11px/1.45 ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;break-inside:auto;
+
+    .ap-titulo{margin:0 0 6mm;padding-bottom:2mm;border-bottom:1.2px solid #0c3a78;color:#0b2a55;font-size:18px;letter-spacing:.06em;text-transform:uppercase;break-after:avoid}
+    h2,h3,h4{color:#0b2a55;break-after:avoid}
+    p{orphans:3;widows:3}
+
+    /* a capa ocupa a página inteira (297 - 14 - 18 = 265 mm de área útil; 1 mm de folga evita uma página em branco) */
+    .ap-capa{display:flex;flex-direction:column;justify-content:center;gap:8mm;height:264mm;padding:0 10mm;border:1.5px solid #0c3a78;break-inside:avoid;
+      background:linear-gradient(#0c3a7814 1px,transparent 1px) 0 0/10mm 10mm,linear-gradient(90deg,#0c3a7814 1px,transparent 1px) 0 0/10mm 10mm}
+    .ap-capa .ap-titulo{border:0;font-size:30px;line-height:1.15}
+
+    /* nada de plano, checkpoint, linha de tabela ou figura cortado ao meio */
+    li,tr,figure,[class*="ap-plano"],[class*="ap-check"],[class*="ap-linha"]{break-inside:avoid;page-break-inside:avoid}
+    thead{display:table-header-group}
+
+    .ap-figura{--paper:#0c3a78;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;margin:4mm 0;padding:3mm;background:#0c3a78;color:#eaf4ff;border-radius:2px}
+    .ap-figura figcaption{color:#9cc4ee;font-size:9px}
+    svg,img{max-width:100%;height:auto}
+  }
+}

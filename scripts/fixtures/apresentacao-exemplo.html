@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Sample presentation</title>
+<!-- Documento de exemplo da apresentação (frente de impressão): cinco tipos de página e uma ação longa que passa de uma página. Sete páginas A4 esperadas. Dados inventados. -->
+<link rel="stylesheet" href="/web/css/tokens.css"><link rel="stylesheet" href="/web/css/impressao.css">
+<style>
+body{margin:0;background:var(--paper);color:var(--ink);font:12px/1.4 var(--mono)}
+@media screen{.ap-pagina{padding:24px}}
+ul.ap-lista{list-style:none;margin:0;padding:0}
+.ap-plano{display:flex;justify-content:space-between;gap:12px;padding:2.2mm 0;border-bottom:1px dashed var(--faint)}
+.ap-horas{color:var(--mid)}
+</style>
+<script>Object.defineProperty(navigator, "languages", { value: ["pt-BR"] });</script><script src="/web/js/i18n.js"></script><script src="/web/js/apresentacao-exportar.js"></script></head><body>
+<main class="ap-doc" id="doc">
+  <section class="ap-pagina" data-tipo="capa"><div class="ap-capa"><h1 class="ap-titulo">Sample blueprint</h1><p>A printed walk through the plan: projects, actions, plans and checkpoints.</p><figure class="ap-figura"><svg viewBox="0 0 220 120" width="220" height="120" role="img" aria-label="Sample figure"><path d="M110 14 L190 54 L110 94 L30 54 Z" fill="#1250a0" stroke="#eaf4ff"/><path d="M30 54 L110 94 L110 112 L30 72 Z" fill="#0c3a78" stroke="#eaf4ff"/><path d="M190 54 L110 94 L110 112 L190 72 Z" fill="#082b5e" stroke="#eaf4ff"/></svg><figcaption>Sample figure (simulated data)</figcaption></figure></div></section>
+  <section class="ap-pagina" data-tipo="resumo"><h2 class="ap-titulo">Summary</h2><p>3 projects, 12 actions, 41 plans. Sample data only.</p><ul class="ap-lista"><li class="ap-plano"><span>Planned</span><span>8</span></li><li class="ap-plano"><span>In progress</span><span>3</span></li><li class="ap-plano"><span>Done</span><span>1</span></li></ul></section>
+  <section class="ap-pagina" data-tipo="projeto"><h2 class="ap-titulo">Project 01: Interface</h2><p>Everything the person sees and clicks.</p><figure class="ap-figura"><svg viewBox="0 0 220 120" width="220" height="120" role="img" aria-label="Sample figure"><path d="M110 14 L190 54 L110 94 L30 54 Z" fill="#1250a0" stroke="#eaf4ff"/><path d="M30 54 L110 94 L110 112 L30 72 Z" fill="#0c3a78" stroke="#eaf4ff"/><path d="M190 54 L110 94 L110 112 L190 72 Z" fill="#082b5e" stroke="#eaf4ff"/></svg><figcaption>Sample figure (simulated data)</figcaption></figure></section>
+  <section class="ap-pagina" data-tipo="acao"><h2 class="ap-titulo">Action 01.1: Print layout</h2><p>A4 pages with a light background and the blue line of the mark.</p><ul class="ap-lista"><li class="ap-plano"><span>Page size and margins</span><span class="ap-horas">1 h</span></li><li class="ap-plano"><span>Page breaks</span><span class="ap-horas">2 h</span></li></ul></section>
+  <section class="ap-pagina" data-tipo="acao"><h2 class="ap-titulo">Action 01.2: A long action</h2>
+    <ul class="ap-lista">
+      <li class="ap-plano"><span>Sample plan 01: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 02: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 03: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 04: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 05: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 06: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 07: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 08: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 09: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 10: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 11: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 12: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 13: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 14: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 15: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 16: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 17: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 18: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 19: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 20: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 21: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 22: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 23: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 24: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 25: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 26: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 27: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 28: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 29: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 30: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 31: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 32: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 33: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 34: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 35: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 36: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+      <li class="ap-plano"><span>Sample plan 37: write the check and its evidence</span><span class="ap-horas">0.5 h</span></li>
+      <li class="ap-plano"><span>Sample plan 38: write the check and its evidence</span><span class="ap-horas">1 h</span></li>
+      <li class="ap-plano"><span>Sample plan 39: write the check and its evidence</span><span class="ap-horas">2 h</span></li>
+      <li class="ap-plano"><span>Sample plan 40: write the check and its evidence</span><span class="ap-horas">3 h</span></li>
+    </ul></section>
+  <section class="ap-pagina" data-tipo="fim"><h2 class="ap-titulo">The end</h2><p>Made with The Blueprint.</p></section>
+</main></body></html>
