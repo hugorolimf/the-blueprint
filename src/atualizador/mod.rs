@@ -25,8 +25,11 @@ use std::path::PathBuf;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, Mutex};
 
-/// A versão deste executável.
-pub const VERSAO: &str = env!("CARGO_PKG_VERSION");
+/// A versão deste executável. `BLUEPRINT_VERSAO_COMPILADA` na hora do `cargo build` (só testes: scripts/atualizacao-real-e2e.mjs) troca a do Cargo.toml.
+pub const VERSAO: &str = match option_env!("BLUEPRINT_VERSAO_COMPILADA") {
+    Some(v) => v,
+    None => env!("CARGO_PKG_VERSION"),
+};
 
 type Ouvinte = Box<dyn Fn(&Value) + Send>;
 
