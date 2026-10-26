@@ -202,6 +202,11 @@ impl Terminais {
         travar(&self.sessoes).iter().find(|s| s.id == id).cloned()
     }
 
+    /// Quantas sessões ainda têm o processo rodando (o updater não fecha o app com alguma viva).
+    pub fn vivas(&self) -> usize {
+        travar(&self.sessoes).iter().filter(|s| s.viva()).count()
+    }
+
     pub fn listar(&self) -> Value {
         Value::Array(travar(&self.sessoes).iter().map(|s| s.json()).collect())
     }

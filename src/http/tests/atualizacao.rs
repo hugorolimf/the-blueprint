@@ -35,6 +35,18 @@ fn sem_atualizacao_pronta_o_clique_nao_instala_nada() {
     assert_eq!(json_de(&r)["codigo"], "sem-atualizacao", "{}", texto_de(&r));
 }
 
+#[cfg(windows)]
+#[test]
+fn sessao_viva_no_terminal_do_app_impede_atualizar() {
+    let e = estado(false);
+    assert_eq!(crate::http::atualizacao::bloqueio(&e), None);
+    let cmd = crate::terminal::citar(&std::env::var("ComSpec").unwrap_or_else(|_| "C:\\Windows\\System32\\cmd.exe".into()));
+    let s = e.terminais.abrir(&format!("{cmd} /q /k"), &std::env::temp_dir(), crate::terminal::Info::default(), 80, 24).unwrap();
+    assert!(crate::http::atualizacao::bloqueio(&e).is_some_and(|m| m.contains("terminal do app")));
+    assert!(e.terminais.fechar(&s.id));
+    assert_eq!(crate::http::atualizacao::bloqueio(&e), None, "fechada a sessão, atualizar volta a valer");
+}
+
 #[test]
 fn a_preferencia_automatica_exige_um_booleano() {
     let e = estado(false);
