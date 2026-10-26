@@ -23,6 +23,8 @@ const limpa = (d) => {
     links: (Array.isArray(p.links) ? p.links : []).map((l) => ({ id: l.id || novoId(), rotulo: l.rotulo || "", url: l.url || "" })),
     // projetos (opcionais): só existem os campos quando há projeto, então os dados antigos abrem e voltam iguais
     ...(Array.isArray(p.projetos) && p.projetos.some((x) => x && x.id) ? { projetos: p.projetos.filter((x) => x && x.id).map((x) => ({ id: String(x.id), nome: String(x.nome || "") })) } : {}),
+    // decisões (opcionais), do mesmo jeito
+    ...(Array.isArray(p.decisoes) && p.decisoes.some((x) => x && x.id) ? { decisoes: p.decisoes.filter((x) => x && x.id).map((x) => ({ id: String(x.id), titulo: String(x.titulo || ""), escolha: String(x.escolha || ""), motivo: String(x.motivo || ""), estado: x.estado === "aberta" ? "aberta" : "decidida", em: String(x.em || "").slice(0, 40) })) } : {}),
     acoes: (Array.isArray(p.acoes) ? p.acoes : []).map((f) => ({
       id: f.id || novoId(), nome: f.nome || "", inicio: f.inicio || "", fim: f.fim || "", obs: f.obs || "", ...(f.projetoId ? { projetoId: String(f.projetoId) } : {}),
       status: ROTULO[f.status] ? f.status : "planejado", progresso: Number(f.progresso) || 0,

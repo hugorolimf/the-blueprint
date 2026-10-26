@@ -12,6 +12,7 @@ pub(crate) mod equipe;
 mod eventos;
 pub(crate) mod fila;
 mod hooks;
+mod hooks_estado;
 pub(crate) mod iniciar;
 mod lembrete;
 mod linha_do_tempo;
@@ -23,17 +24,25 @@ pub mod rotas;
 mod sessoes;
 mod status;
 pub mod stdio;
+mod worktree;
+mod subagentes_status;
 
 #[cfg(test)]
 mod ajuste_tests;
 #[cfg(test)]
 mod conversa_tests;
 #[cfg(test)]
+mod hooks_estado_tests;
+#[cfg(test)]
 mod hooks_tests;
+#[cfg(test)]
+mod worktree_tests;
 #[cfg(test)]
 mod idioma_tests;
 #[cfg(test)]
 mod iniciar_tests;
+#[cfg(test)]
+mod leitura_tests;
 #[cfg(test)]
 mod lembrete_tests;
 #[cfg(test)]
@@ -56,6 +65,8 @@ mod sessoes_entrega_tests;
 mod sessoes_tests;
 #[cfg(test)]
 mod status_tests;
+#[cfg(test)]
+mod subagentes_status_tests;
 #[cfg(test)]
 mod tests;
 
@@ -159,6 +170,13 @@ impl Mcp {
     pub fn registrar_atividade(&self, nome: &str, dados: Map<String, Value>) {
         self.atividade.lock().unwrap_or_else(|e| e.into_inner()).registrar(crate::tempo::agora_ms(), nome, dados);
         self.avisar("agentes");
+    }
+
+    /// Anota campos num agente já conhecido (tokens e rótulo do painel de subagentes; ver `subagentes_status`) e avisa a página.
+    pub fn anotar_atividade(&self, nome: &str, campos: Map<String, Value>) {
+        if self.atividade.lock().unwrap_or_else(|e| e.into_inner()).anotar(nome, campos) {
+            self.avisar("agentes");
+        }
     }
 
     /// O plano em que o agente `nome` trabalha agora (aviso recente e não concluído), para o subagente novo herdar.

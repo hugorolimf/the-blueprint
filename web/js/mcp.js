@@ -35,6 +35,7 @@ function mcpProposta(i) {
     proposta: normalizaProposta(i.proposta.acoes, p || { acoes: [] }),
     remover: (i.proposta.remover || []).map((r) => ({ ...r, inc: false })), // apagar nunca vem marcado: o usuário aprova item a item
     projetosNovos: (i.proposta.projetos || []).filter((x) => !x.id).map((x) => x.nome), // projetos que a proposta cria (projetos-editor.js)
+    decisoesNovas: (i.proposta.decisoes || []).map((d) => ({ ...d, inc: true })), // decisões que a proposta traz (decisoes.js)
     mover: (i.proposta.mover || []).map((r) => ({ ...r, inc: true })), // mover só leva a ação inteira, sem apagar nada: vem marcado, e o usuário desmarca o que não quer
     dadosBlueprint: p ? null : { nome: i.proposta.blueprint.nome, descricao: i.proposta.blueprint.descricao },
     pasta: p ? null : i.pasta || null,

@@ -72,6 +72,11 @@ try {
   await espera(tem("revisor", "Revisor", "Testando", "Ação 1.2", "Plano 3", "Revisando o plano 3"), "o subagente tem o cartão dele (papel, estado, ação, plano)");
   assert.deepEqual(await nomes(), ["Claude", "revisor"], "o principal vem primeiro");
   await captura("lista");
+  // ---- subagente que conclui: some sozinho depois de 10 s (terminar a tarefa dele não é terminar o trabalho); quem trabalha continua
+  await avisa({ tipo: "progresso", texto: "Pesquisa terminada", agente: "pesquisa", papel: "explorador", estado: "concluido", acaoId: "f2", planoId: "t3" });
+  await espera(async () => (await nomes()).includes("pesquisa"), "o subagente que concluiu aparece por uns segundos");
+  await dormir(10800);
+  assert.deepEqual(await nomes(), ["Claude", "revisor"], "o subagente concluído sumiu sozinho depois de 10 s");
 
   // ---- seguir: dois avisos seguidos; o cartão acompanha o agente até o plano 15
   await progresso("t2", "Passando para o plano dois");
@@ -139,6 +144,17 @@ try {
   await js(`agentesLista = [...agentesLista, { agente: "dormindo", estado: "ocioso", blueprintId: "p1", workspaceId: workspaceAtual.id, em: new Date().toISOString(), mensagem: "" }]; agentesAtualiza()`);
   await espera(tem("dormindo", "Em repouso: sem plano"), "o agente em repouso aparece sem plano");
   await captura("repouso");
+  await tecla("Escape");
+
+  // ---- o painel de subagentes do Claude Code (subagentStatusLine): o cartão do subagente mostra os tokens, e falhou não parece concluído
+  assert.equal((await postJson(`${dados.url}/api/mcp/pasta/vincular`, { cwd: "C:/Proj", workspaceId: "sm", blueprintId: "p1" })).status, 200);
+  await postJson(`${dados.url}/api/mcp/hook/subagente`, { hook_event_name: "SubagentStart", cwd: "C:/Proj", agent_id: "d4e5f6a7", agent_type: "Explore" });
+  const painel = (extra) => postJson(`${dados.url}/api/mcp/hook/subagentes`, { cwd: "C:/Proj", session_id: "s1", columns: 80, tasks: [{ id: "d4e5f6a7", agentType: "Explore", status: "running", description: "Explorar", label: "Lendo o painel", tokenCount: 12300, ...extra }] });
+  assert.equal((await painel({})).status, 200);
+  if (!(await aberta())) await js(`document.getElementById("b-foco").click()`);
+  await espera(tem("Explore d4e5", "Tokens 12.3k", "Lendo o painel"), "o cartão do subagente mostra os tokens do painel e o rótulo");
+  assert.equal((await painel({ status: "failed" })).status, 200);
+  await espera(tem("Explore d4e5", "Bloqueado"), "subagente que falhou fica Bloqueado, não Concluído");
   await tecla("Escape");
 
   assert.deepEqual(erros, [], "sem erro de JavaScript na página");

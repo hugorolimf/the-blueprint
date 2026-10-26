@@ -65,11 +65,12 @@ impl Mcp {
         if session_id.is_empty() || !caminho_valido(cwd) {
             return;
         }
+        let cwd = super::worktree::principal_ou(cwd); // a sessão numa worktree conta na pasta principal, a do vínculo e a do canal
         let mut a = self.abertas.lock().unwrap_or_else(|e| e.into_inner());
         if a.len() >= MAX_ABERTAS && !a.contains_key(session_id) {
             a.clear();
         }
-        a.insert(session_id.into(), Sessao { cwd: cwd.into(), workspace_id: workspace_id.into(), blueprint_id: blueprint_id.into(), visto: Instant::now() });
+        a.insert(session_id.into(), Sessao { cwd, workspace_id: workspace_id.into(), blueprint_id: blueprint_id.into(), visto: Instant::now() });
     }
 
     /// Um hook chegou com o `session_id`: a sessão está viva (renova o `PRAZO`). Sessão que não está na lista: nada.
@@ -93,7 +94,7 @@ impl Mcp {
         if id.is_empty() || id.len() > 32 || !id.bytes().all(|b| b.is_ascii_alphanumeric()) || !caminho_valido(cwd) {
             return None;
         }
-        self.canais.lock().unwrap_or_else(|e| e.into_inner()).insert(id.into(), cwd.into());
+        self.canais.lock().unwrap_or_else(|e| e.into_inner()).insert(id.into(), super::worktree::principal_ou(cwd));
         Some(Guarda { canais: self.canais.clone(), abertas: self.abertas.clone(), id: id.into() })
     }
 

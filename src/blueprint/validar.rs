@@ -1,6 +1,7 @@
 //! `validar_proposta`: porte de `validarPlano` do antigo plano.mjs. `blueprint` é o blueprint atual (None num blueprint novo);
 //! com erros a proposta não é aceita (`proposta` fica None).
 use super::datas::dia_valido;
+use super::decisoes::decisoes_propostas;
 use super::itens::{checkpoints, planos, Cenario};
 use super::mover::movidas;
 use super::prazos::{avisos_da_acao, avisos_de_buracos, Nova};
@@ -44,10 +45,15 @@ pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, hoje: &str, re
     if !projetos_novos.is_empty() {
         proposta.insert("projetos".into(), Value::Array(projetos_novos.clone()));
     }
+    let decisoes = decisoes_propostas(dados_blueprint, blueprint, &mut erros);
+    if !decisoes.is_empty() {
+        proposta.insert("decisoes".into(), Value::Array(decisoes));
+    }
     proposta.insert("mensagem".into(), Value::String(truncar(&campo(entrada, "mensagem"), 3000)));
     let pedidos = lista(entrada.get("remover"));
     let enviadas = lista(entrada.get("acoes"));
-    if enviadas.is_empty() && pedidos.is_empty() && lista(entrada.get("mover")).is_empty() {
+    let so_decisoes = !lista(dados_blueprint.and_then(|b| b.get("decisoes"))).is_empty(); // proposta só de decisões vale sem ações
+    if enviadas.is_empty() && pedidos.is_empty() && lista(entrada.get("mover")).is_empty() && !so_decisoes {
         erros.push(crate::tr!("`acoes` is required: a list with at least one action (or `remover`/`mover`).", "`acoes` é obrigatório: uma lista com ao menos uma ação (ou `remover`/`mover`)."));
         return Validacao { erros, avisos, proposta: None };
     }

@@ -4,6 +4,7 @@
 //! subagente, parada e fim vão ao endereço do `blueprint conectar` com a chave.)
 //!   sessao           SessionStart: injeta o blueprint e a ação atual no contexto do agente
 //!   statusline       a linha curta da status line (lê o JSON da sessão na entrada padrão)
+//!   subagentes       o subagentStatusLine do plugin: uma linha JSON por subagente do painel (src/hook_subagentes.rs)
 //!   status           o estado completo, em texto, da pasta atual (usado por /blueprint:status)
 //!   statusline-config  imprime o trecho de settings.json que liga a status line (opt-in; o plugin não entrega status line)
 use crate::mcp::cliente::requisitar;
@@ -41,10 +42,20 @@ fn pasta_da_entrada(entrada: &Value) -> Option<&str> {
     entrada["workspace"]["current_dir"].as_str().or_else(|| entrada["cwd"].as_str())
 }
 
+/// A linha do blueprint (do app) seguida dos segmentos da própria entrada (contexto, limites, worktree, agente; ver `hook_extras`). Sem o app, só os segmentos;
+/// sem nenhum dos dois, nada.
 fn statusline(base: &str, entrada: &str) -> Option<String> {
     let e: Value = serde_json::from_str(entrada).ok()?;
-    let corpo = json!({"session_id": e["session_id"], "cwd": pasta_da_entrada(&e)?}).to_string();
-    perguntar(base, "hook/status", &corpo)?.get("linha")?.as_str().map(String::from)
+    let linha = pasta_da_entrada(&e).and_then(|pasta| {
+        let corpo = json!({"session_id": e["session_id"], "cwd": pasta}).to_string();
+        perguntar(base, "hook/status", &corpo)?.get("linha")?.as_str().map(String::from)
+    });
+    let extras = crate::hook_extras::segmentos(&e);
+    match (linha, extras.is_empty()) {
+        (linha, true) => linha,
+        (Some(l), false) => Some(format!("{l} · {extras}")),
+        (None, false) => Some(extras),
+    }
 }
 
 fn status(base: &str, pasta: &str) -> String {
@@ -98,6 +109,7 @@ pub fn executar(evento: &str) -> i32 {
         "edicao" | "subagente" | "parada" | "fim" => corpo_do_hook(entrada_padrao(), equipe).and_then(|c| repassar(&base(), evento, &c)).map(|v| v.to_string()),
         "notificacao" => notificacao(&entrada_padrao()).map(|v| v.to_string()),
         "statusline" => statusline(&base(), &entrada_padrao()),
+        "subagentes" => crate::hook_subagentes::saida(&base(), &entrada_padrao()),
         "status" => Some(status(&base(), &std::env::current_dir().map(|p| p.display().to_string()).unwrap_or_default())),
         "statusline-config" => std::env::current_exe().ok().map(|e| serde_json::to_string_pretty(&trecho_da_status_line(&e.display().to_string())).unwrap_or_default()),
         _ => None,

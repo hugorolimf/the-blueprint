@@ -1,5 +1,12 @@
 // Inglês: a tela Editar (blueprint, ações, planos, checkpoints, links, confirmações de exclusão). Chave = texto-fonte em português (web/js/i18n.js).
 Object.assign(I18N.catalogos.en, {
+  // decisões do blueprint (web/js/decisoes.js)
+  "Decisões": "Decisions", "Em aberto": "Open", "Decidida": "Decided", "Escolha": "Choice", "Motivo": "Reason", "+ Decisão": "+ Decision",
+  "O que foi decidido (ex.: Servidor)": "What was decided (e.g. Server)", "Título da decisão": "Decision title", "Estado da decisão": "Decision state", "Remover decisão": "Remove decision",
+  "O que foi escolhido": "What was chosen", "Por que": "Why", "Remover decisão?": "Remove decision?", "sem título": "untitled", "A decisão \"{nome}\" será removida.": "The decision \"{nome}\" will be removed.",
+  "Nenhuma decisão registrada. Stack, escopo e regras escolhidas ficam aqui, fora das instruções das ações.": "No decisions recorded. The stack, scope and rules you chose live here, apart from the action instructions.",
+  "O seu agente propõe decisões em Planejar; você escolhe quais aplicar. Uma decisão em aberto ainda espera a escolha.": "Your agent proposes decisions in Plan; you choose which to apply. An open decision is still waiting for a choice.",
+  "{n} decisão": ["{n} decision", "{n} decisions"], "Aplicar {n} decisão": ["Apply {n} decision", "Apply {n} decisions"], ", {n} decisão(ões)": ", {n} decision(s)",
   "Concluída": "Completed", "Checkpoints": "Checkpoints", "⤡ Sair da tela cheia": "⤡ Exit full screen",
   // itens
   "Plano feito": "Plan done", "Descreva o plano": "Describe the plan", "Texto do plano": "Plan text", "Horas estimadas do plano": "Estimated hours for the plan",

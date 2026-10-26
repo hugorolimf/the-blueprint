@@ -35,13 +35,15 @@ try {
   const pasta = join(env.APPDATA, "Blueprint", "claude-plugin", "plugins", "blueprint");
   // hooks que o registrar grava: sessão, edição, subagentes (início e fim) e notificação; os de HTTP apontam para as rotas do app
   const hooks = JSON.parse(readFileSync(join(pasta, "hooks", "hooks.json"), "utf8")).hooks;
-  for (const evento of ["SessionStart", "PostToolUse", "SubagentStart", "SubagentStop", "Notification", "Stop"]) assert.ok(hooks[evento]?.[0]?.hooks?.[0], `hooks.json sem ${evento}`);
+  for (const evento of ["SessionStart", "PostToolUse", "SubagentStart", "SubagentStop", "Notification", "Stop", "PermissionRequest", "PermissionDenied", "StopFailure", "PreCompact", "PostCompact"]) assert.ok(hooks[evento]?.[0]?.hooks?.[0], `hooks.json sem ${evento}`);
   assert.match(hooks.PostToolUse[0].hooks[0].url, /\/api\/mcp\/hook\/edicao$/);
   assert.match(hooks.SessionEnd[0].hooks[0].url, /\/api\/mcp\/hook\/fim$/, "SessionEnd tira a sessão da lista");
   for (const evento of ["SubagentStart", "SubagentStop"]) assert.match(hooks[evento][0].hooks[0].url, /\/api\/mcp\/hook\/subagente$/, `${evento} avisa o app`);
+  for (const evento of ["PermissionRequest", "PermissionDenied", "StopFailure", "PreCompact", "PostCompact"]) assert.match(hooks[evento][0].hooks[0].url, /\/api\/mcp\/hook\/estado$/, `${evento} muda o estado do agente`);
+  assert.equal(hooks.PostToolUseFailure, undefined, "falha de ferramenta é rotina: sem hook");
   if (temCodex) assert.match(codexMcp(), /blueprint/, "o MCP blueprint deve estar registrado no Codex");
   assert.match(rodar("claude", ["plugin", "validate", pasta]), /Validation passed/);
-  assert.match(rodar("claude", ["plugin", "details", "blueprint@blueprint-local"]), /Skills \(2\)[\s\S]*Agents \(1\)[\s\S]*MCP servers \(1\)/);
+  assert.match(rodar("claude", ["plugin", "details", "blueprint@blueprint-local"]), /Skills \(2\)[\s\S]*Agents \(4\)[\s\S]*MCP servers \(1\)/);
   for (let vez = 1; vez <= 2; vez++) {
     rodar(exe, ["registrar", "--remover"]);
     assert.match(rodar("claude", ["plugin", "list"]), /No plugins installed/, `remover #${vez}`);

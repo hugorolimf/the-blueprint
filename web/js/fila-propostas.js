@@ -2,10 +2,10 @@
 // A proposta ABERTA fica nos campos de sempre do chat (c.proposta, c.remover, c.mover, c.dadosBlueprint, c.pasta, c.mensagem) e traz c.numero, c.criadaEm
 // e c.em (do servidor); as outras ficam em c.fila, com os mesmos campos. A proposta só sai da fila do servidor quando o usuário a aplica ou descarta
 // (ack pelo número e pela criadaEm); o servidor guarda a fila só em memória, então ela some quando o app reinicia.
-const FILA_CAMPOS = ["proposta", "remover", "mover", "projetosNovos", "dadosBlueprint", "pasta", "mensagem"];
+const FILA_CAMPOS = ["proposta", "remover", "mover", "projetosNovos", "decisoesNovas", "dadosBlueprint", "pasta", "mensagem"];
 const FILA_IDENT = ["numero", "criadaEm", "em"];
 
-const filaTemAberta = (c) => !!(c.proposta || c.dadosBlueprint || c.remover?.length || c.mover?.length);
+const filaTemAberta = (c) => !!(c.proposta || c.dadosBlueprint || c.remover?.length || c.mover?.length || c.decisoesNovas?.length);
 const filaOrdena = (lista) => lista.sort((a, b) => (a.numero ?? 0) - (b.numero ?? 0));
 // a proposta aberta como uma entrada de c.fila (null se não há)
 function filaAbertaComoEntrada(c) {

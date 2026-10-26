@@ -29,7 +29,7 @@
  },
  {
   "name": "ler_blueprint",
-  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids, dates and what is done), today's date and the other blueprints in the workspace. With acao_id: that whole action (instructions, plan descriptions, prototypes). Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
+  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids, dates and what is done), today's date and the other blueprints in the workspace. In a large blueprint the structure is SUMMARIZED: actions in progress and the next planned ones stay complete; finished and distant planned actions shrink to one line (id, name, dates, project; no plans). `resumidas` says how many; pass incluir: \"tudo\" for everything, projeto to read one project, or acao_id for one action. With acao_id: that whole action (instructions, plan descriptions, prototypes). Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -43,7 +43,16 @@
     },
     "acao_id": {
      "type": "string",
-     "description": "Optional: id of the action to read in full."
+     "description": "Optional: id of the action to read in full (always the whole action, even a finished one)."
+    },
+    "incluir": {
+     "type": "string",
+     "enum": ["ativas", "tudo"],
+     "description": "Optional, structure only. \"ativas\" (default): summarize finished and distant planned actions when the blueprint is large. \"tudo\": every action in full (can be tens of thousands of characters)."
+    },
+    "projeto": {
+     "type": "string",
+     "description": "Optional, structure only: id or name of a project (or \"Geral\") to list only its actions."
     }
    },
    "required": [
@@ -98,9 +107,39 @@
         }
        },
        "description": "Projects (groups of actions) that must exist in this blueprint; a name that already exists is the same project. Also valid on an existing blueprint."
+      },
+      "decisoes": {
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "description": "id of an existing decision (from ler_blueprint); empty for a new one."
+         },
+         "titulo": {
+          "type": "string",
+          "description": "The question that was decided, up to 120 characters."
+         },
+         "escolha": {
+          "type": "string",
+          "description": "What was chosen (up to 2000 characters). Required when estado is decidida."
+         },
+         "motivo": {
+          "type": "string",
+          "description": "Why (up to 3000 characters)."
+         },
+         "estado": {
+          "type": "string",
+          "enum": ["aberta", "decidida"],
+          "description": "aberta while undecided; decidida once chosen. Default: decidida when escolha is sent."
+         }
+        }
+       },
+       "description": "Decisions of this blueprint (stack, scope, rules). Put them here, not in an action's instructions. An item with id updates that decision (what you omit stays); without id it is new. A proposal with only decisoes is valid (send acoes: [])."
       }
      },
-     "description": "nome and descricao only on a new blueprint; projetos is valid on any blueprint."
+     "description": "nome and descricao only on a new blueprint; projetos and decisoes are valid on any blueprint."
     },
     "acoes": {
      "type": "array",

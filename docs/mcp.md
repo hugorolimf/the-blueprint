@@ -19,7 +19,7 @@ Tools (their names are fixed; their descriptions and the planning guide are writ
 | --- | --- |
 | `listar_blueprints` | workspaces and blueprints, with ids |
 | `guia_de_planejamento` | the guide in parts (`planejar`, `editar`, `executar`, `prototipos`) |
-| `ler_blueprint` | only the structure, or a whole action (`acao_id`) |
+| `ler_blueprint` | only the structure (summarized in a large blueprint: `incluir: "tudo"` for all of it, `projeto` for one project), or a whole action (`acao_id`) |
 | `propor_blueprint` | proposes actions, plans and checkpoints (partial ones complete what exists; deleting is a request you approve) |
 | `registrar_progresso`, `reportar_bloqueio` | what it is doing now; it shows on the sheet as Claude (one figure per agent, on the plan it works on) |
 | `marcar_concluido`, `marcar_nao_concluido` | a plan completed (with evidence) or not |

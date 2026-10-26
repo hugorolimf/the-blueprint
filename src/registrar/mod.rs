@@ -7,6 +7,7 @@ pub mod conectar;
 mod conectar_tests;
 pub(crate) mod plugin;
 pub mod statusline;
+mod subagentes;
 #[cfg(test)]
 mod tests;
 

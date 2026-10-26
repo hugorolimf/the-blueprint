@@ -167,7 +167,8 @@ fn chamar(nome: &str, a: &Value) -> R {
         "ler_blueprint" => {
             let acao = opcional(a, "acao_id");
             let acao = if acao.trim().is_empty() { String::new() } else { format!("&acao={}", codificar(acao.trim())) };
-            let rota = format!("blueprint?workspace={}&blueprint={}{acao}", codificar(&texto(a, "workspace_id")?), codificar(&texto(a, "blueprint_id")?));
+            let filtro: String = ["incluir", "projeto"].iter().map(|k| (k, opcional(a, k))).filter(|(_, v)| !v.trim().is_empty()).map(|(k, v)| format!("&{k}={}", codificar(v.trim()))).collect();
+            let rota = format!("blueprint?workspace={}&blueprint={}{acao}{filtro}", codificar(&texto(a, "workspace_id")?), codificar(&texto(a, "blueprint_id")?));
             Ok(servidor(&rota, "GET", None)?.to_string()) // compacto: cada byte vai para o contexto do agente
         }
         "propor_blueprint" => {

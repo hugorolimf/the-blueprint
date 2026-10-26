@@ -26,6 +26,7 @@ function htmlDetBlueprint(p, pi) {
   <div class="card" data-pasta-blueprint><h3>${tr("Pasta do projeto")}</h3><p role="status">${tr("Carregando vínculo…")}</p></div>
   <div class="card"><h3>${tr("Marca da folha")}<small>${p.emblema ? tr("{n} peças", { n: p.emblema.pecas.length }) : tr("sem marca")}</small></h3><div class="marca-previa">${p.emblema ? previaMarca(p.emblema.pecas, 330, 230, progressoDe(p)) : `<p class="vazio">${tr("Este blueprint ainda não tem marca. A IA desenha uma marca para o blueprint.")}</p>`}</div>${p.emblema ? '<label class="f" style="margin-top:8px">' + tr("Prévia do progresso da marca") + '<input type="range" min="0" max="100" step="5" data-prev-marca value="' + Math.round(progressoDe(p) * 100) + '"></label>' : ""}<div class="acoes">${p.emblema ? '<button class="btn mini perigo" data-act="marca-remover" type="button">' + tr("Remover marca") + '</button>' : ""}</div></div>
   ${htmlProjetosEd(p)}
+  ${htmlDecisoesEd(p)}
   <div class="card"><h3>${tr("Links")}<small>${p.links.length || ""}</small></h3>${p.links.length ? p.links.map(htmlLinkEd).join("") : `<p class="vazio">${tr("Nenhum link. Adicione o site, o ambiente de homologação, a documentação…")}</p>`}<div class="acoes"><button class="btn mini" data-act="add-link" type="button">${tr("+ Link")}</button></div></div>
   <div class="card"><h3>${tr("Zona de perigo")}</h3><button class="btn perigo" data-act="del-blueprint" type="button">${tr("Excluir este blueprint…")}</button></div>`;
 }
@@ -102,6 +103,8 @@ pm.addEventListener("input", (e) => {
   if (!el || !p) return;
   const c = el.dataset.c, val = el.type === "checkbox" ? el.checked : el.value;
   if (c === "obs" && el.matches("textarea")) mdPrevia(el); // prévia em markdown ao lado do campo
+  const dc = el.closest(".decisao-ed");
+  if (dc) { editarDecisao(p, dc.dataset.dc, c, val); return mudou(); }
   const pj = el.closest(".projeto-ed");
   if (pj) { renomearProjeto(p, pj.dataset.pj, val, c); montaListaManual(); return mudou(); }
   const lr = el.closest(".link-ed");
@@ -260,6 +263,13 @@ pm.addEventListener("click", (e) => {
     const x = novoProjeto(p);
     montaManual();
     foca(`[data-pj="${x.id}"] [data-c=nome]`);
+  } else if (a === "add-decisao") {
+    const x = novaDecisao(p);
+    montaManual();
+    foca(`[data-dc="${x.id}"] [data-c=titulo]`);
+  } else if (a === "del-decisao") {
+    const id = b.closest(".decisao-ed").dataset.dc, x = (p.decisoes || []).find((y) => y.id === id);
+    apagar(tr("Remover decisão?"), tr(`A decisão "{nome}" será removida.`, { nome: nomeDe(x?.titulo, tr("sem título")) }), () => { removerDecisao(p, id); });
   } else if (a === "del-projeto") {
     const id = b.closest(".projeto-ed").dataset.pj, n = contaAcoesDoProjeto(p, id);
     apagar(tr("Remover projeto?"), tr(`O projeto "{nome}" será removido{extra}.`, { nome: nomeDe(nomeDoProjeto(p, id), tr("sem nome")), extra: n ? tr("; as {n} ação(ões) dele voltam ao Geral (nenhuma ação é apagada)", { n }) : "" }), () => removerProjeto(p, id));

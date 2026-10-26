@@ -43,12 +43,15 @@ async function agentesBusca() {
 const agenteVenceEm = (a) => (a.estado === "concluido" ? Infinity : Date.parse(a.em) + agentesVida); // quando ele vai para o repouso por falta de aviso
 const agenteRepousa = (a) => a.estado === "ocioso" || (a.estado !== "concluido" && Date.now() >= agenteVenceEm(a));
 // os agentes do workspace aberto (os que repousam vêm como "ocioso", sem ação nem plano: a folha os põe parados no cabeçalho)
-const agentesAtivos = () => agentesLista.filter((a) => a.workspaceId === workspaceAtual?.id && !(agenteVisto(a) && (["concluido", "aguardando", "ocioso"].includes(a.estado) || agenteRepousa(a)))).map((a) => (agenteRepousa(a) ? { ...a, estado: "ocioso", acaoId: "", planoId: "", repouso: true } : a));
+const agentesDoWorkspace = () => agentesLista.filter((a) => a.workspaceId === workspaceAtual?.id);
+const agenteEhSub = (a) => claudeEhSub(a, agentesDoWorkspace()); // terminar a tarefa dele não é terminar o trabalho: sem mensagem de conclusão, e some sozinho (claudeSubSumiu)
+const agentesAtivos = () => agentesDoWorkspace().filter((a) => !claudeSubSumiu(a, agentesDoWorkspace()) && !(agenteVisto(a) && (["concluido", "aguardando", "ocioso"].includes(a.estado) || agenteRepousa(a)))).map((a) => (agenteRepousa(a) ? { ...a, estado: "ocioso", acaoId: "", planoId: "", repouso: true } : a));
 
 function agentesAtualiza() {
   const trabalhando = agentesLista.filter((a) => a.workspaceId === workspaceAtual?.id && !agenteRepousa(a) && a.estado !== "concluido");
   clearTimeout(agentesExpira); // um relógio só, até o próximo agente ir para o repouso
   if (typeof terminalAtualizaAbas === "function") terminalAtualizaAbas(); // o estado das abas do terminal do app vem destes avisos
   if (typeof focoDepoisDoRender === "function") focoDepoisDoRender(); // o modo foco e a faixa do plano acompanhado seguem a presença dos agentes (foco.js)
-  if (trabalhando.length) agentesExpira = setTimeout(() => { agentesAtualiza(); render(); }, Math.max(1000, Math.min(...trabalhando.map((a) => agenteVenceEm(a) - Date.now())) + 500));
+  const lista = agentesDoWorkspace(), prazos = [...trabalhando.map(agenteVenceEm), ...lista.filter((a) => a.estado === "concluido" && claudeEhSub(a, lista) && !claudeSubSumiu(a, lista)).map(claudeSubSomeEm)]; // e o subagente que concluiu, até sumir
+  if (prazos.length) agentesExpira = setTimeout(() => { agentesAtualiza(); render(); }, Math.max(1000, Math.min(...prazos) - Date.now() + 500));
 }
