@@ -23,7 +23,7 @@ const limpar = () => { try { edge.kill(); } catch {} servidor?.parar(); setTimeo
 process.on("exit", limpar);
 const memoriaMB = (pid) => Number(execFileSync("powershell", ["-NoProfile", "-Command", `(Get-Process -Id ${pid}).PrivateMemorySize64`], { encoding: "utf8" }).trim()) / 1048576;
 try {
-  servidor = await sobeServidor(exe, dir, terminalFalso(dir), { BLUEPRINT_TERMINAL_COMANDO: "cmd.exe /q /k" });
+  servidor = await sobeServidor(exe, dir, terminalFalso(dir), { BLUEPRINT_TERMINAL_COMANDO: "cmd.exe /q /k prompt $g" });
   assert.equal((await fetch(`${servidor.url}/api/mcp/pasta/vincular`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ cwd: pasta, workspaceId: "sm", blueprintId: "bp1a2b3" }) })).status, 200);
   let alvo;
   for (let i = 0; i < 100 && !alvo; i++) { try { alvo = (await (await fetch(`http://127.0.0.1:${depuracao}/json/list`)).json()).find((t) => t.type === "page"); } catch {} await dormir(100); }
@@ -61,6 +61,8 @@ try {
   assert.equal(await js(`typeof globalThis.Terminal`), "function", "o xterm carregou sob demanda");
   assert.match(await js(`document.querySelector("#terminal-painel [role=tab][aria-selected=true]").textContent`), /^1\.2 · /, "a aba tem o número e o nome da ação");
   await espera(`document.activeElement?.classList.contains("xterm-helper-textarea")`, "o foco vai para o terminal");
+  assert.equal(await js(`getComputedStyle(document.querySelector(".term-tela .xterm-viewport")).backgroundColor`), await js(`(() => { const d = document.createElement("i"); d.style.color = getComputedStyle(document.documentElement).getPropertyValue("--paper"); document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; })()`), "o fundo do terminal é o papel azul do app (--paper)");
+  assert.match(await js(`getComputedStyle(document.querySelector(".term-tela .xterm-rows")).fontFamily`), /Cascadia Mono|Consolas/, "a fonte é a mono do app (--mono)");
 
   // 3. teclas e eco (o programa falso é o cmd)
   await cdp("Input.insertText", { text: "set /a 6*7" });
@@ -101,6 +103,13 @@ try {
   await js(`document.querySelector(".term-tela .xterm-helper-textarea").focus()`);
   await tecla("F6", "F6", 117);
   assert.equal(await js(`document.activeElement?.getAttribute("role")`), "tab", "F6 tira o foco do terminal e o leva às abas");
+  await js(`document.querySelector(".term-tela .xterm-helper-textarea").focus()`);
+  await tecla("F6", "F6", 117, 8);
+  assert.equal(await js(`document.activeElement?.dataset.t`), "esconder", "Shift+F6 leva o foco às ferramentas do painel");
+  await js(`document.querySelector("#terminal-painel [data-t=leitor]").click()`);
+  await espera(`!!document.querySelector(".term-tela .xterm-accessibility") && document.querySelector("#terminal-painel [data-t=leitor]").getAttribute("aria-pressed") === "true"`, "Leitor de tela liga a árvore acessível do xterm");
+  await js(`document.querySelector("#terminal-painel [data-t=leitor]").click()`);
+  await js(`document.querySelector("#terminal-painel [role=tab][aria-selected=true]").focus()`);
   await tecla("ArrowRight", "ArrowRight", 39);
   assert.equal(await js(`document.activeElement?.querySelector(".t")?.textContent`), "segunda", "seta troca de aba");
   await tecla("Delete", "Delete", 46);
@@ -122,6 +131,6 @@ try {
   assert.deepEqual(erros, [], "sem erro no console");
 
   const p = (q) => atrasos[Math.min(atrasos.length - 1, Math.floor(q * atrasos.length))].toFixed(1);
-  console.log(`terminal do app (cmd falso no ConPTY): ok (sob demanda, Iniciar > Terminal do app, eco, duas sessões, Ctrl+PageUp, F6, Delete com confirmação, Ctrl+\` esconde e destrói, histórico ao reabrir)`);
+  console.log(`terminal do app (cmd falso no ConPTY): ok (sob demanda, Iniciar > Terminal do app, eco, duas sessões, Ctrl+PageUp, F6 e Shift+F6, leitor de tela, Delete com confirmação, Ctrl+\` esconde e destrói, histórico ao reabrir)`);
   console.log(`medidas: eco p50 ${p(0.5)} ms, p95 ${p(0.95)} ms (n=${atrasos.length}); CPU da página em 5 s de repouso: ${cpuSemTerminal.toFixed(1)} ms sem o terminal, ${cpuRepousoMs.toFixed(1)} ms com o terminal aberto; memória privada do servidor: ${mem1.toFixed(1)} MB com 1 sessão, ${mem2.toFixed(1)} MB com 2`);
 } finally { limpar(); }

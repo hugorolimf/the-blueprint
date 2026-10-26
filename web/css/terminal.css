@@ -20,6 +20,7 @@ body.com-terminal #blueprint-layout{padding-bottom:42vh}
 .term-tela{flex:1;min-width:0;padding:6px 0 0 8px;background:var(--paper)}
 .term-tela:focus-within{box-shadow:inset 0 0 0 1.5px var(--mid)}
 .term-tela .xterm{height:100%}
+.term-tela .xterm-viewport{scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
 .term-vazio{margin:auto;max-width:520px;padding:24px;color:var(--mid);line-height:1.6;text-align:center}
 .term-dica{margin:0;padding:3px 10px;color:var(--mid);font-size:10px;letter-spacing:.06em;border-top:1px solid var(--faint)}
 @media (max-width:720px){.term-painel{height:60vh}body.com-terminal #blueprint-layout{padding-bottom:60vh}.term-corpo.dividido{flex-direction:column}.term-dica{display:none}}
