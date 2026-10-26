@@ -51,6 +51,7 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
                 Ok(_) => {
                     let nova = estado.versao_dados.fetch_add(1, Ordering::SeqCst) + 1;
                     estado.mcp.notificar("dados", Some(json!({"versao": nova})));
+                    estado.sincronia.substituido(nova); // quem acompanha por /api/eventos recarrega; retomar de antes daqui também
                     Resposta::texto(200, "application/json", r#"{"ok":true}"#).com("x-dados-versao", &nova.to_string())
                 }
                 Err(crate::erro::Erro::Formato(m)) => Resposta::texto(400, "text/plain", m),

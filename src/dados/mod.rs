@@ -4,12 +4,15 @@ pub mod arquivo;
 pub mod contagens;
 mod exportar;
 pub mod formato;
+pub mod historico;
 mod importar;
+mod item;
 mod itens;
 mod linha_do_tempo;
 mod linhas;
 pub mod markdown;
 pub mod migracoes;
+pub mod operacoes;
 mod pastas;
 
 #[cfg(test)]
@@ -17,6 +20,8 @@ mod tests;
 
 pub use contagens::Contagens;
 pub use linha_do_tempo::{EventoLinha, LIMITE_POR_ACAO};
+pub use historico::Autor;
+pub use operacoes::{Aplicada, Exige, Falha, Op, Saida};
 
 use crate::contexto::Contexto;
 use crate::erro::Resultado;
@@ -134,5 +139,20 @@ impl Dados {
         let removeu = itens::remover_prototipo(&self.conn, acao_id, prototipo_id)?;
         self.cache = None;
         Ok(removeu)
+    }
+
+    /// Aplica um lote de operações por item numa transação (`POST /api/mudancas`); a permissão de cada operação vem de `exige`.
+    /// Ver `operacoes.rs` e docs/colaboracao.md, seção 6.
+    pub fn aplicar_operacoes(&mut self, autor: &Autor, versao: u64, agora_ms: i64, ops: &[Op], exige: Exige) -> Result<Saida, Falha> {
+        let r = operacoes::aplicar(&mut self.conn, autor, versao, agora_ms, ops, exige);
+        if matches!(&r, Ok(s) if !s.aplicadas.is_empty()) {
+            self.cache = None;
+        }
+        r
+    }
+
+    /// O histórico de campos (`GET /api/historico`), do mais recente ao mais antigo.
+    pub fn historico(&self, _ctx: &Contexto, workspace_id: &str, blueprint_id: Option<&str>, item_id: Option<&str>, limite: i64) -> Resultado<Value> {
+        historico::listar(&self.conn, workspace_id, blueprint_id, item_id, limite)
     }
 }

@@ -5,10 +5,10 @@ use rusqlite::Connection;
 fn cria_o_banco_do_zero_pelas_migracoes() {
     let mut conn = Connection::open_in_memory().unwrap();
     let aplicadas = migracoes::aplicar(&mut conn).unwrap();
-    assert_eq!(aplicadas, vec!["001_inicial", "002_vocabulario", "003_pastas", "004_linha_do_tempo"]);
+    assert_eq!(aplicadas, vec!["001_inicial", "002_vocabulario", "003_pastas", "004_linha_do_tempo", "006_historico"]);
     assert_eq!(
         migracoes::tabelas(&conn).unwrap(),
-        vec!["acoes", "blueprints", "checkpoints", "comentarios", "linha_do_tempo", "migracoes", "pastas", "planos", "prototipos", "workspaces"]
+        vec!["acoes", "blueprints", "checkpoints", "comentarios", "historico_campos", "linha_do_tempo", "migracoes", "pastas", "planos", "prototipos", "workspaces"]
     );
 }
 

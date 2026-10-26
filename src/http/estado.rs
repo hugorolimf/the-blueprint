@@ -15,6 +15,13 @@ pub fn versao_inicial() -> AtomicU64 {
     AtomicU64::new(crate::tempo::agora_ms().max(0) as u64)
 }
 
+/// A versão inicial e a sincronia que começa nela (o buffer de lotes precisa saber de onde a contagem parte).
+pub fn versao_e_sincronia(presenca: bool) -> (AtomicU64, crate::sincronia::Sincronia) {
+    let versao = versao_inicial();
+    let sincronia = crate::sincronia::Sincronia::nova(versao.load(std::sync::atomic::Ordering::SeqCst), presenca);
+    (versao, sincronia)
+}
+
 pub struct Estado {
     /// o que traz a janela à frente: só existe no app com janela (o servidor puro não tem)
     pub ao_mostrar: Mutex<Option<Box<dyn Fn() + Send>>>,
@@ -29,6 +36,8 @@ pub struct Estado {
     /// a versão do data.json: sobe a cada gravação e muda a cada abertura do app; a página a manda em `If-Match` e uma gravação feita sobre
     /// uma versão velha é recusada (409), em vez de apagar o que outra janela gravou
     pub versao_dados: AtomicU64,
+    /// buffer dos últimos lotes, assinantes de /api/eventos e presença (src/sincronia, só memória)
+    pub sincronia: crate::sincronia::Sincronia,
     pub mcp: Mcp,
     /// as sessões do terminal do app (pseudoconsoles com o claude), só na memória: ver src/terminal
     pub terminais: crate::terminal::Terminais,

@@ -13,6 +13,7 @@ pub mod janela;
 pub mod mcp;
 pub mod blueprint;
 pub mod registrar;
+pub mod sincronia;
 pub mod tempo;
 pub mod terminal;
 pub mod watch;

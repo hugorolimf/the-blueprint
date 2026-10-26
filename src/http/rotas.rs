@@ -4,12 +4,14 @@ use super::{api_dados, prototipos, Estado};
 
 const LIMITE_PADRAO: usize = 256 * 1024;
 const LIMITE_DADOS: usize = 10 * 1024 * 1024;
+const LIMITE_MUDANCAS: usize = 2 * 1024 * 1024;
 const LIMITE_PROTOTIPO: usize = crate::mcp::acoes::PROTOTIPO_MAX + 64 * 1024;
 
 /// Quanto corpo cada rota aceita (o Node decide isto ao ler o corpo; aqui se decide antes de ler).
 pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
     match (metodo, caminho) {
         ("PUT", "/api/dados") => LIMITE_DADOS,
+        ("POST", "/api/mudancas") => LIMITE_MUDANCAS,
         (_, "/api/mcp/prototipo") => LIMITE_PROTOTIPO,
         _ => LIMITE_PADRAO,
     }
@@ -48,6 +50,10 @@ fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
     }
     if caminho == "/api/dados" {
         return api_dados::rota(estado, pedido);
+    }
+    // frente SINCRONIA: mudanças por item, eventos, presença e histórico (o Contexto do pedido chega pronto à rota)
+    if let Some(r) = crate::sincronia::rotas::rota(estado, pedido, &crate::contexto::Contexto::local()) {
+        return r;
     }
     Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))
 }

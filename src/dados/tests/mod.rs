@@ -4,6 +4,7 @@ mod ida_e_volta;
 mod itens;
 mod linha_do_tempo;
 mod migracoes;
+mod operacoes;
 mod pastas;
 mod projetos;
 mod queda;

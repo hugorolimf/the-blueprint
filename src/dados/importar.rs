@@ -23,7 +23,7 @@ pub fn importar(conn: &Connection, raiz: &Value) -> Resultado<()> {
 }
 
 /// `forcar_id` só para a raiz, que não tem `id` no JSON. `listas_extra` = listas que o chamador já tirou do objeto.
-fn inserir_no(conn: &Connection, t: &Tabela, forcar_id: Option<&str>, pai: Option<&str>, ordem: i64, valor: Value, listas_extra: &[&str]) -> Resultado<()> {
+pub(super) fn inserir_no(conn: &Connection, t: &Tabela, forcar_id: Option<&str>, pai: Option<&str>, ordem: i64, valor: Value, listas_extra: &[&str]) -> Resultado<()> {
     let Value::Object(mut obj) = valor else {
         return Err(Erro::Formato(format!("{}: cada item precisa ser um objeto", t.nome)));
     };
