@@ -27,4 +27,6 @@ Ferramentas:
 | `anexar_prototipo` | protótipo HTML autocontido de uma ação, visto num visor isolado |
 | `vincular_pasta` | liga a pasta da sessão a um blueprint (o app guarda o vínculo) |
 
+**Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem.
+
 O guia que o agente lê está em [`skills/blueprint-planejamento/`](../../skills/blueprint-planejamento/SKILL.md).

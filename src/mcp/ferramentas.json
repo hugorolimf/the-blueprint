@@ -9,7 +9,7 @@
  },
  {
   "name": "guia_de_planejamento",
-  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos. Call it before planning.",
+  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues). Call it before planning.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -19,7 +19,8 @@
       "planejar",
       "editar",
       "executar",
-      "prototipos"
+      "prototipos",
+      "importar"
      ]
     }
    }

@@ -30,6 +30,8 @@ mod pendentes_tests;
 #[cfg(test)]
 mod projetos_tests;
 #[cfg(test)]
+mod importar_tests;
+#[cfg(test)]
 mod registro_tests;
 #[cfg(test)]
 mod sessoes_entrega_tests;

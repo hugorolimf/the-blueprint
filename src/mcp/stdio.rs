@@ -10,11 +10,12 @@ const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 car
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
 const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
-const TOPICOS: [(&str, &str); 4] = [
+const TOPICOS: [(&str, &str); 5] = [
     ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
     ("editar", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("executar", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
     ("prototipos", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
+    ("importar", include_str!("../../skills/blueprint-planejamento/topicos/importar.md")),
 ];
 const REGRA: &str = "Mantenha este blueprint sempre atualizado: planos e mudanças de plano via propor_blueprint; ao começar um plano, registrar_progresso; ao terminar, marcar_concluido com a evidência; se não deu, marcar_nao_concluido; se travar, reportar_bloqueio.";
 

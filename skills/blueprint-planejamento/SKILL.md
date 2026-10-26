@@ -35,6 +35,7 @@ Workspace
 | Change the deadline, scope or order of something that exists | `editar` |
 | Start working in the folder: link the folder to the blueprint, register and tick | `executar` |
 | Show an idea for an action (a screen, a figure) | `prototipos` |
+| Bring GitHub issues into the blueprint | `importar` |
 | You already did something outside the plan (a one-off adjustment): register it and ask whether to add it | `executar` |
 
 ## How to work (in this order)

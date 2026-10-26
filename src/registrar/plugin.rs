@@ -21,6 +21,7 @@ const ARQUIVOS: &[(&str, &str)] = &[
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/editar.md", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/executar.md", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/prototipos.md", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
+    ("plugins/blueprint/skills/blueprint-planejamento/topicos/importar.md", include_str!("../../skills/blueprint-planejamento/topicos/importar.md")),
     ("plugins/blueprint-terminal/.claude-plugin/plugin.json", include_str!("../../claude-plugin/plugins/blueprint-terminal/.claude-plugin/plugin.json")),
     ("plugins/blueprint-terminal/hooks/hooks.json", include_str!("../../claude-plugin/plugins/blueprint-terminal/hooks/hooks.json")),
     ("plugins/blueprint-terminal/hooks/register.tsx", include_str!("../../claude-plugin/plugins/blueprint-terminal/hooks/register.tsx")),
