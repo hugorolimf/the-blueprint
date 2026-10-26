@@ -28,7 +28,7 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let porta = servidor.server_addr().to_ip().map_or(config.porta, |a| a.port());
     let url = config.url(porta);
     let mcp = Mcp::novo(&config.host, config.rede_mcp, &config.exe.to_string_lossy(), &url, config.prototipos.clone());
-    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados: super::estado::versao_inicial(), mcp, config });
+    let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados: super::estado::versao_inicial(), mcp, terminais: crate::terminal::Terminais::novo(), config });
     // cada mudança do updater (baixando, pronta…) chega à página pelo mesmo SSE da fila
     let fraco = Arc::downgrade(&estado);
     estado.atualizador.ouvir(move |estado_json| {

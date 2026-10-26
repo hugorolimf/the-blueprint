@@ -75,8 +75,9 @@ try {
   await js(`window.confirmou = []; window.confirmar = async (o) => { window.confirmou.push(o.titulo); return false; }`);
   await js(`(() => { const el = document.querySelector(${JSON.stringify(aberta)}); const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: r.left + 4, clientY: r.top + 4 })); [...document.querySelectorAll('#menu-contexto [role="menuitem"]')].find((b) => b.textContent === "Iniciar com o Claude…").click(); })()`);
   await dormir(300);
-  const pedidos = await js(`window.confirmou`);
+  const pedidos = await js(`[...document.querySelectorAll("dialog.escolher-sessao[open]")].map((d) => d.getAttribute("aria-label"))`); // a escolha Terminal do app / Nova sessão (web/js/iniciar-acao.js)
   assert.equal(pedidos.length, 1, "o item abre uma confirmação");
+  await js(`document.querySelector('dialog.escolher-sessao [data-r="0"]').click()`);
   assert(/^Iniciar a ação \d+\.\d+ com o Claude\?$/.test(pedidos[0]), "a confirmação nomeia a ação: " + pedidos[0]);
   // situação e prazo pelo menu: a ação sem itens muda de situação, e o prazo avança e é gravado no servidor
   const idAberta = await js(`${JSON.stringify(aberta)}.match(/"(.+)"/)[1]`);

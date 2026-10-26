@@ -48,5 +48,6 @@ const agentesAtivos = () => agentesLista.filter((a) => a.workspaceId === workspa
 function agentesAtualiza() {
   const trabalhando = agentesLista.filter((a) => a.workspaceId === workspaceAtual?.id && !agenteRepousa(a) && a.estado !== "concluido");
   clearTimeout(agentesExpira); // um relógio só, até o próximo agente ir para o repouso
+  if (typeof terminalAtualizaAbas === "function") terminalAtualizaAbas(); // o estado das abas do terminal do app vem destes avisos
   if (trabalhando.length) agentesExpira = setTimeout(() => { agentesAtualiza(); render(); }, Math.max(1000, Math.min(...trabalhando.map((a) => agenteVenceEm(a) - Date.now())) + 500));
 }

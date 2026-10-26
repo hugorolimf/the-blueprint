@@ -54,10 +54,10 @@ try {
   };
   const escolhe = async (valor) => { await js(`document.querySelector('dialog.escolher-sessao input[value="${valor}"]').click()`); await js(`document.querySelector('dialog.escolher-sessao [data-r="1"]').click()`); };
 
-  // 1. o diálogo oferece Nova sessão (marcada) e as duas sessões; cancelar não faz nada
+  // 1. o diálogo oferece Terminal do app (marcado), Nova sessão e as duas sessões; cancelar não faz nada
   await abreDialogo();
   assert.equal(await js(`!!document.querySelector("dialog.escolher-sessao")`), true, "com sessões abertas o diálogo é o da escolha");
-  assert.deepEqual(await js(`[...document.querySelectorAll('dialog.escolher-sessao input[name=sessao]')].map((r) => r.value + (r.checked ? "*" : ""))`), ["nova*", "0", "1"]);
+  assert.deepEqual(await js(`[...document.querySelectorAll('dialog.escolher-sessao input[name=sessao]')].map((r) => r.value + (r.checked ? "*" : ""))`), ["app*", "nova", "0", "1"], "Terminal do app (marcado), Nova sessão e as duas sessões");
   assert(/recebe o pedido direto/.test(await js(`document.querySelector("dialog.escolher-sessao .cu-opcoes").textContent`)) && /sem canal/.test(await js(`document.querySelector("dialog.escolher-sessao .cu-opcoes").textContent`)));
   await js(`document.querySelector('dialog.escolher-sessao [data-r="0"]').click()`);
   await dormir(400);
