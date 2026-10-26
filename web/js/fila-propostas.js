@@ -84,10 +84,10 @@ function htmlFila(c) {
   const todas = filaTodas(c);
   if (todas.length < 2) return "";
   const botao = (e) => {
-    const n = (e.proposta || []).length, resumo = [n && `${n} ${n === 1 ? "ação" : "ações"}`, (e.remover || []).length && "apagar", (e.mover || []).length && "mover"].filter(Boolean).join(" · ");
+    const n = (e.proposta || []).length, resumo = [n && trn(n, ["{n} ação", "{n} ações"]), (e.remover || []).length && tr("apagar"), (e.mover || []).length && tr("mover")].filter(Boolean).join(" · ");
     return `<button class="btn mini" type="button" data-fila="${e.numero}" aria-pressed="${e.numero === c.numero}" title="${esc(e.mensagem || "")}">Nº ${e.numero ?? "?"}${resumo ? ` · ${esc(resumo)}` : ""}</button>`;
   };
-  return `<div class="cl-prop-fila" role="group" aria-label="Fila de propostas">${todas.map(botao).join("")}<span class="dica">${todas.length} na fila: aplique ou descarte uma de cada vez.</span></div>`;
+  return `<div class="cl-prop-fila" role="group" aria-label="${tr("Fila de propostas")}">${todas.map(botao).join("")}<span class="dica">${tr("{n} na fila: aplique ou descarte uma de cada vez.", { n: todas.length })}</span></div>`;
 }
 $("cl-prop").addEventListener("click", (e) => {
   const b = e.target.closest("[data-fila]"), p = blueprintEd();
