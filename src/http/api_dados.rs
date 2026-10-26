@@ -16,14 +16,13 @@ fn versao_pedida(pedido: &Pedido) -> Option<u64> {
     pedido.cabecalho("if-match")?.trim().trim_matches('"').parse().ok()
 }
 
-pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
-    let ctx = Contexto::local();
+pub fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     match pedido.metodo.as_str() {
         "GET" => {
             let mut guardado = estado.dados_json.lock().unwrap_or_else(|e| e.into_inner());
             if guardado.is_none() {
                 let mut dados = estado.dados.lock().unwrap_or_else(|e| e.into_inner());
-                match dados.ler_tudo(&ctx).map(serde_json::to_vec) {
+                match dados.ler_tudo(ctx).map(serde_json::to_vec) {
                     Ok(Ok(bytes)) => *guardado = Some(bytes),
                     _ => return Resposta::texto(500, "text/plain", "erro"),
                 }
@@ -47,7 +46,7 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
             }
             *guardado = None; // qualquer que seja o resultado, a próxima leitura refaz a cópia
             let mut dados = estado.dados.lock().unwrap_or_else(|e| e.into_inner());
-            match dados.gravar_tudo(&ctx, &valor) {
+            match dados.gravar_tudo(ctx, &valor) {
                 Ok(_) => {
                     let nova = estado.versao_dados.fetch_add(1, Ordering::SeqCst) + 1;
                     estado.mcp.notificar("dados", Some(json!({"versao": nova})));

@@ -1,5 +1,5 @@
 use super::exemplo;
-use crate::contexto::{Contexto, Papel};
+use crate::contexto::Contexto;
 use crate::dados::Dados;
 use crate::erro::Erro;
 use serde_json::json;
@@ -68,7 +68,7 @@ fn remover_prototipo_diz_se_existia() {
 #[test]
 fn quem_nao_edita_nao_grava() {
     let (mut d, _) = com_exemplo();
-    let visitante = Contexto { usuario: "ana".into(), papel: Papel::Visitante };
+    let visitante = Contexto::visitante("c1", "sm", "p1", "folha");
     assert!(matches!(d.marcar_plano(&visitante, "t2", true), Err(Erro::Proibido(_))));
     assert!(matches!(d.gravar_tudo(&visitante, &exemplo()), Err(Erro::Proibido(_))));
     assert!(matches!(d.gravar_prototipo(&visitante, "f1", &json!({"id": "x"})), Err(Erro::Proibido(_))));

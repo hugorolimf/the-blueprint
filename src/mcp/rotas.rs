@@ -14,7 +14,13 @@ fn nao_encontrado() -> Resposta {
     Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))
 }
 
+/// O app local (dono implícito): o que os testes do MCP chamam.
 pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
+    rota_com(mcp, dados, pedido, &Contexto::local())
+}
+
+/// Com o Contexto resolvido no despacho.
+pub fn rota_com(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, _ctx: &Contexto) -> Resposta {
     if !permitido(mcp, pedido) {
         return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
     }

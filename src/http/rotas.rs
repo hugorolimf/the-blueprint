@@ -1,6 +1,7 @@
 //! O roteador: a mesma ordem do servidor Node (página, estáticos, protótipos, /api/mcp, /api/dados, 404).
 use super::pedido::{Pedido, Resposta};
 use super::{api_dados, prototipos, Estado};
+use crate::contexto::Contexto;
 
 const LIMITE_PADRAO: usize = 256 * 1024;
 const LIMITE_DADOS: usize = 10 * 1024 * 1024;
@@ -25,7 +26,13 @@ pub fn despachar(estado: &Estado, pedido: &Pedido) -> Resposta {
     crate::idioma::com(crate::idioma::do_pedido(pedido), || despachar_no_idioma(estado, pedido))
 }
 
+/// O Contexto é resolvido uma vez aqui e entregue às rotas; toda rota nova tem a forma `fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta`.
 fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
+    let ctx = Contexto::local();
+    rotear(estado, pedido, &ctx)
+}
+
+fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let caminho = pedido.caminho.as_str();
     let pagina = if caminho == "/" { "/blueprint.html" } else { caminho };
     if let Some(r) = estado.assets.responder(pagina, pedido) {
@@ -35,7 +42,7 @@ fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
         return r;
     }
     if caminho.starts_with("/api/mcp/") {
-        return crate::mcp::rotas::rota(&estado.mcp, &estado.dados, pedido);
+        return crate::mcp::rotas::rota_com(&estado.mcp, &estado.dados, pedido, ctx);
     }
     if caminho.starts_with("/api/terminal/") {
         return crate::terminal::rotas::rota(estado, pedido);
@@ -47,7 +54,7 @@ fn despachar_no_idioma(estado: &Estado, pedido: &Pedido) -> Resposta {
         return mostrar_janela(estado, pedido);
     }
     if caminho == "/api/dados" {
-        return api_dados::rota(estado, pedido);
+        return api_dados::rota(estado, pedido, ctx);
     }
     Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))
 }
