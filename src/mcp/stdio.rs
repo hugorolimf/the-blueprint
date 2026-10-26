@@ -2,6 +2,7 @@
 //! (`claude mcp add blueprint -- blueprint.exe --mcp`). Porte de mcp-roadmap.mjs: mesmas ferramentas e instruções. Não tem dados próprios: cada ferramenta
 //! chama as rotas /api/mcp do servidor local. Tudo aqui é texto para o AGENTE, então é inglês (o agente responde ao usuário no idioma dele); o
 //! servidor também responde em inglês porque o cliente manda `Accept-Language: en` (ver `crate::idioma`).
+use super::argumentos::{alvo, checkpoint, com, com_atividade, opcional, plano, plano_se_houver, texto};
 use super::cliente::{codificar, requisitar};
 use serde_json::{json, Map, Value};
 use std::io::{BufRead, Write};
@@ -9,7 +10,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 caracteres são autossuficientes: é o que o Codex lê
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
-const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
+pub(super) const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
 const TOPICOS: [(&str, &str); 6] = [
     ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
@@ -28,6 +29,10 @@ fn vinculo(w: &str) -> String {
 
 type R = Result<String, String>;
 
+/// Por onde as ferramentas falam com o servidor: `None` = o servidor local, por socket (o `--mcp` por stdio); `Some` = direto na rota do próprio processo, que é como a rota
+/// `/mcp` por HTTP (src/mcp/http.rs) atende o convidado: recebe (método, rota de /api/mcp, corpo) e devolve (status, corpo).
+pub(super) type Via<'a> = Option<&'a dyn Fn(&str, &str, Option<&str>) -> Result<(u16, String), String>>;
+
 pub(crate) fn base() -> String {
     if super::equipe::ligado() {
         // o plugin do convidado: o endereço do `blueprint conectar` (vazio = não conectado; o cliente explica)
@@ -37,8 +42,11 @@ pub(crate) fn base() -> String {
 }
 
 /// Chama uma rota do servidor; se ele recusar, devolve o motivo como o agente precisa lê-lo.
-fn servidor(rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, String> {
-    let enviado = requisitar(&base(), metodo, rota, corpo.map(Value::to_string).as_deref());
+fn servidor(via: Via, rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, String> {
+    let enviado = match via {
+        Some(direto) => direto(metodo, rota, corpo.map(Value::to_string).as_deref()),
+        None => requisitar(&base(), metodo, rota, corpo.map(Value::to_string).as_deref()),
+    };
     let (status, texto) = match (enviado, corpo) {
         (Ok(resposta), _) => resposta,
         // app fechado: o registro fica em arquivo e entra no app quando ele abrir (pendentes.rs); só as rotas que não precisam dos dados ao vivo
@@ -72,55 +80,8 @@ fn guardar_offline(rota: &str, corpo: &Value) -> Result<Value, String> {
 
 const AVISO_OFFLINE: &str = "\n(The Blueprint is closed: the record was saved and enters the app when it opens, without you repeating it. Validation (ids, format) only happens then; if something is refused, the file stays in pendentes/recusados, next to the database.)";
 
-fn texto(a: &Value, chave: &str) -> Result<String, String> {
-    match a.get(chave).and_then(Value::as_str).map(str::trim) {
-        Some(t) if !t.is_empty() => Ok(t.to_string()),
-        _ => Err(format!("{chave} is required.")),
-    }
-}
-
-fn opcional(a: &Value, chave: &str) -> String {
-    a.get(chave).and_then(Value::as_str).unwrap_or("").to_string()
-}
-
-fn alvo(a: &Value) -> Map<String, Value> {
-    let mut m = Map::new();
-    m.insert("workspaceId".into(), json!(opcional(a, "workspace_id")));
-    m.insert("blueprintId".into(), json!(opcional(a, "blueprint_id")));
-    m
-}
-
-fn com(mut m: Map<String, Value>, extra: &[(&str, Value)]) -> Map<String, Value> {
-    for (k, v) in extra {
-        m.insert((*k).into(), v.clone());
-    }
-    m
-}
-
-fn plano(a: &Value) -> Result<Map<String, Value>, String> {
-    Ok(com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("planoId", json!(texto(a, "plano_id")?))]))
-}
-
-fn checkpoint(a: &Value) -> Result<Map<String, Value>, String> {
-    Ok(com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("checkpointId", json!(texto(a, "checkpoint_id")?))]))
-}
-
-/// Os campos opcionais de atividade (painel de agentes) que a ferramenta recebeu; o servidor valida e recusa o que estiver fora do contrato.
-fn com_atividade(mut m: Map<String, Value>, a: &Value) -> Map<String, Value> {
-    for campo in ["agente", "papel", "estado", "onde", "percentual"] {
-        if let Some(v) = a.get(campo) {
-            m.insert(campo.into(), v.clone());
-        }
-    }
-    m
-}
-
-fn plano_se_houver(a: &Value) -> Result<Map<String, Value>, String> {
-    if a.get("plano_id").is_some_and(|v| crate::blueprint::verdade(Some(v))) { plano(a) } else { Ok(alvo(a)) }
-}
-
-fn evento(tipo: &str, texto: String, extra: Map<String, Value>) -> Result<Value, String> {
-    servidor("evento", "POST", Some(&Value::Object(com(extra, &[("tipo", json!(tipo)), ("texto", json!(texto))]))))
+fn evento(via: Via, tipo: &str, texto: String, extra: Map<String, Value>) -> Result<Value, String> {
+    servidor(via, "evento", "POST", Some(&Value::Object(com(extra, &[("tipo", json!(tipo)), ("texto", json!(texto))]))))
 }
 
 /// tira o bloco `---…---` do começo de um arquivo de guia
@@ -142,10 +103,10 @@ pub(super) fn ids_provisorios(ids: &Value) -> String {
     format!("Provisional ids (valid while the proposal is in the queue):\n{}", linhas.join("\n"))
 }
 
-fn chamar(nome: &str, a: &Value) -> R {
+fn chamar(via: Via, nome: &str, a: &Value) -> R {
     match nome {
         "listar_blueprints" => {
-            let r = servidor("blueprints", "GET", None)?;
+            let r = servidor(via, "blueprints", "GET", None)?;
             let linhas: Vec<String> = r["workspaces"].as_array().map(Vec::as_slice).unwrap_or(&[]).iter().map(|w| {
                 let blueprints = w["blueprints"].as_array().map(Vec::as_slice).unwrap_or(&[]);
                 let corpo = if blueprints.is_empty() { "  (no blueprints)".to_string() } else { blueprints.iter().map(|p| format!("  - {} (blueprint_id: {}) · {} action(s)", p["nome"].as_str().unwrap_or(""), p["id"].as_str().unwrap_or(""), p["acoes"])).collect::<Vec<_>>().join("\n") };
@@ -169,7 +130,7 @@ fn chamar(nome: &str, a: &Value) -> R {
             let acao = if acao.trim().is_empty() { String::new() } else { format!("&acao={}", codificar(acao.trim())) };
             let filtro: String = ["incluir", "projeto"].iter().map(|k| (k, opcional(a, k))).filter(|(_, v)| !v.trim().is_empty()).map(|(k, v)| format!("&{k}={}", codificar(v.trim()))).collect();
             let rota = format!("blueprint?workspace={}&blueprint={}{acao}{filtro}", codificar(&texto(a, "workspace_id")?), codificar(&texto(a, "blueprint_id")?));
-            Ok(servidor(&rota, "GET", None)?.to_string()) // compacto: cada byte vai para o contexto do agente
+            Ok(servidor(via, &rota, "GET", None)?.to_string()) // compacto: cada byte vai para o contexto do agente
         }
         "propor_blueprint" => {
             let mut corpo = alvo(a);
@@ -178,12 +139,12 @@ fn chamar(nome: &str, a: &Value) -> R {
                     corpo.insert(para.into(), v.clone());
                 }
             }
-            if opcional(a, "blueprint_id").is_empty() {
+            if opcional(a, "blueprint_id").is_empty() && via.is_none() { // por HTTP o "diretório atual" seria o do servidor: nunca vai
                 if let Ok(pasta) = std::env::current_dir() {
                     corpo.insert("pasta".into(), json!(pasta.display().to_string()));
                 }
             }
-            let r = servidor("proposta", "POST", Some(&Value::Object(corpo)))?;
+            let r = servidor(via, "proposta", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
                 return Ok("Proposal saved: the app is closed. When it opens, the proposal enters the queue for the user to review and apply (ids and format are validated only then).".into());
             }
@@ -200,7 +161,7 @@ fn chamar(nome: &str, a: &Value) -> R {
                 }
             }
             texto(a, "blueprint_id")?; // um registro é sobre um blueprint que já existe
-            let r = servidor("registro", "POST", Some(&Value::Object(corpo)))?;
+            let r = servidor(via, "registro", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
                 return Ok("Record saved: the app is closed. When it opens, the record enters the queue for the user to decide whether to add it to the blueprint (validation happens only then).".into());
             }
@@ -210,14 +171,21 @@ fn chamar(nome: &str, a: &Value) -> R {
         }
         "vincular_pasta" => {
             // o servidor MCP roda na pasta da sessão do agente: é ela que fica ligada
+            if via.is_some() {
+                return Err("vincular_pasta needs to run on your own machine: over HTTP, ask the user to link the folder with the Connect my Claude command, or write the line `Blueprint: workspace_id …, blueprint_id …` in CLAUDE.local.md of the project folder.".into());
+            }
             let pasta = std::env::current_dir().map_err(|e| format!("Cannot tell which folder this is: {e}"))?;
+            if super::equipe::ligado() {
+                // o servidor da equipe não conhece as pastas desta máquina: a ligação fica na própria pasta (pasta_local.rs)
+                return super::pasta_local::vincular(&pasta, &texto(a, "workspace_id")?, &texto(a, "blueprint_id")?);
+            }
             let corpo = com(alvo(a), &[("cwd", json!(pasta.display().to_string()))]);
-            servidor("pasta/vincular", "POST", Some(&Value::Object(corpo)))?;
+            servidor(via, "pasta/vincular", "POST", Some(&Value::Object(corpo)))?;
             Ok(format!("Folder {} linked to the blueprint. The next sessions in it start with the blueprint and the current action.", pasta.display()))
         }
         "anexar_prototipo" => {
             let corpo = com(alvo(a), &[("acaoId", json!(texto(a, "acao_id")?)), ("titulo", json!(texto(a, "titulo")?)), ("html", json!(texto(a, "html")?)), ("prototipoId", json!(opcional(a, "prototipo_id")))]);
-            let r = servidor("prototipo", "POST", Some(&Value::Object(corpo)))?;
+            let r = servidor(via, "prototipo", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
                 return Ok("Prototype saved: the app is closed. It is attached to the action when the app opens.".into());
             }
@@ -225,30 +193,30 @@ fn chamar(nome: &str, a: &Value) -> R {
             Ok(format!("Prototype \"{}\" {acao} the action (prototipo_id: {}); the user sees it on the blueprint sheet, in the action's prototype icon. To revise it, call again with this prototipo_id.", r["titulo"].as_str().unwrap_or(""), r["prototipoId"].as_str().unwrap_or("")))
         }
         "registrar_progresso" => {
-            evento("progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
+            evento(via, "progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
             Ok("Progress recorded.".into())
         }
         "marcar_concluido" => {
-            evento("concluir", texto(a, "evidencia")?, plano(a)?)?;
+            evento(via, "concluir", texto(a, "evidencia")?, plano(a)?)?;
             Ok("Plan sent to the app as done, with the evidence.".into())
         }
         "marcar_nao_concluido" => {
-            evento("nao-concluida", texto(a, "motivo")?, plano(a)?)?;
+            evento(via, "nao-concluida", texto(a, "motivo")?, plano(a)?)?;
             Ok("Recorded: the plan stays pending.".into())
         }
         "marcar_checkpoint_feito" => {
-            evento("checkpoint-feito", texto(a, "evidencia")?, checkpoint(a)?)?;
+            evento(via, "checkpoint-feito", texto(a, "evidencia")?, checkpoint(a)?)?;
             Ok("Checkpoint sent to the app as reached, with the evidence.".into())
         }
         "marcar_checkpoint_nao_feito" => {
-            evento("checkpoint-nao-feito", texto(a, "motivo")?, checkpoint(a)?)?;
+            evento(via, "checkpoint-nao-feito", texto(a, "motivo")?, checkpoint(a)?)?;
             Ok("Recorded: the checkpoint stays pending.".into())
         }
         "reportar_bloqueio" => {
-            evento("bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
+            evento(via, "bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
             Ok("Block recorded; the user was notified.".into())
         }
-        "responder_conversa" => super::conversa::ferramenta(a, &servidor),
+        "responder_conversa" => super::conversa::ferramenta(a, &|rota, metodo, corpo| servidor(via, rota, metodo, corpo)),
         _ => Err(format!("Unknown tool: {nome}")),
     }
 }
@@ -265,6 +233,11 @@ fn resposta(id: &Value, corpo: Value) -> Value {
 
 /// Responde a uma mensagem JSON-RPC; None para notificações (sem id), que não têm resposta.
 pub fn tratar(msg: &Value) -> Option<Value> {
+    tratar_via(msg, None)
+}
+
+/// `tratar` com a via das ferramentas escolhida (ver `Via`).
+pub(super) fn tratar_via(msg: &Value, via: Via) -> Option<Value> {
     let id = msg.get("id")?;
     let (metodo, params) = (msg["method"].as_str().unwrap_or(""), &msg["params"]);
     let erro = |codigo: i32, mensagem: String| resposta(id, json!({"error": {"code": codigo, "message": mensagem}}));
@@ -287,7 +260,7 @@ pub fn tratar(msg: &Value) -> Option<Value> {
             }
             let argumentos = if params["arguments"].is_object() { params["arguments"].clone() } else { json!({}) };
             GUARDADO_OFFLINE.store(false, Ordering::Relaxed);
-            match chamar(nome, &argumentos) {
+            match chamar(via, nome, &argumentos) {
                 Ok(mut texto) => {
                     if GUARDADO_OFFLINE.swap(false, Ordering::Relaxed) {
                         texto.push_str(AVISO_OFFLINE);

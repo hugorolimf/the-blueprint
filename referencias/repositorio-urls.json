@@ -1,0 +1,70 @@
+{
+ "_nota": "Casos da regra de URL do repositorio (docs/repositorio-github.md). Lidos por src/repositorio/tests.rs e por repositorio.test.mjs: as duas implementacoes tem de concordar.",
+ "aceitas": [
+  {
+   "entrada": "https://github.com/hugorolimf/the-blueprint",
+   "url": "https://github.com/hugorolimf/the-blueprint"
+  },
+  {
+   "entrada": "  https://github.com/hugorolimf/the-blueprint.git  ",
+   "url": "https://github.com/hugorolimf/the-blueprint"
+  },
+  {
+   "entrada": "https://github.com/hugorolimf/the-blueprint/",
+   "url": "https://github.com/hugorolimf/the-blueprint"
+  },
+  {
+   "entrada": "https://github.com/a-b/c.d_e-f.git/",
+   "url": "https://github.com/a-b/c.d_e-f"
+  },
+  {
+   "entrada": "https://github.com/o/.github",
+   "url": "https://github.com/o/.github"
+  },
+  {
+   "entrada": "https://github.com/dono/repo\n",
+   "url": "https://github.com/dono/repo"
+  },
+  {
+   "entrada": "https://github.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+   "url": "https://github.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  }
+ ],
+ "recusadas": [
+  "",
+  "   ",
+  "github.com/dono/repo",
+  "http://github.com/dono/repo",
+  "ssh://git@github.com/dono/repo",
+  "git@github.com:dono/repo.git",
+  "ext::sh -c touch% /tmp/x",
+  "file:///c:/repo",
+  "https://evil.com/dono/repo",
+  "https://github.com.evil.com/dono/repo",
+  "https://user:senha@github.com/dono/repo",
+  "https://github.com/dono/repo?x=1",
+  "https://github.com/dono/repo#frag",
+  "https://github.com/dono",
+  "https://github.com/dono/",
+  "https://github.com//repo",
+  "https://github.com/dono/repo/extra",
+  "https://github.com/dono/repo/.git",
+  "https://github.com/-dono/repo",
+  "https://github.com/dono/-repo",
+  "https://github.com/do no/repo",
+  "https://github.com/dono/re po",
+  "https://github.com/dono/re\npo",
+  "https://github.com/dono/repo;ls",
+  "https://github.com/dono/re\u0000po",
+  "https://github.com/dono/..",
+  "https://github.com/dono/.",
+  "https://github.com/do_no/repo",
+  "https://github.com/dono/repo&x",
+  "https://github.com/dono/repo%20x",
+  "https://github.com/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/r",
+  "https://github.com/d/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "--upload-pack=x",
+  "https://GitHub.com/dono/repo",
+  "https://github.com/dono/repo.git.git/x"
+ ]
+}

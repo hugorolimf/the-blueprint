@@ -5,7 +5,7 @@
 //! Fonte do hash: o `digest` do asset `cloudflared-windows-amd64.exe` da release oficial 2026.10.4 em
 //! api.github.com/repos/cloudflare/cloudflared/releases, conferido em 2026-10-26 baixando o arquivo (sha256sum) e com o `Checksum` que o
 //! próprio cloudflared imprime ao subir. Trocar de versão: os três valores abaixo juntos.
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::sync::mpsc;
@@ -83,52 +83,73 @@ pub struct Tunel {
 }
 
 impl Tunel {
-    /// Roda `programa tunnel --no-autoupdate --url http://127.0.0.1:<porta>` e espera o endereço público (até 60 s). `ao_cair` roda se o
+    /// O quick tunnel: roda `programa tunnel --no-autoupdate --url http://127.0.0.1:<porta>` e espera o endereço público (até 60 s). `ao_cair` roda se o
     /// processo sair depois de dar o endereço (inclusive quando o próprio app o derruba: quem chama confere se ainda é o túnel atual).
     pub fn abrir(programa: &Path, porta: u16, ao_cair: impl FnOnce() + Send + 'static) -> Result<(Tunel, String), String> {
+        let args = ["tunnel", "--no-autoupdate", "--url"].map(String::from).into_iter().chain([format!("http://127.0.0.1:{porta}")]).collect::<Vec<_>>();
+        Tunel::abrir_com(programa, &args, endereco, "cloudflared", ao_cair)
+    }
+
+    /// Qualquer programa que publica a porta e imprime o endereço (cloudflared, tailscale funnel): lê a saída padrão e a de erro, e `extrai` acha o endereço numa linha.
+    /// `nome` é só para as mensagens. As duas saídas são lidas até o fim (cano cheio travaria o programa).
+    pub fn abrir_com(programa: &Path, args: &[String], extrai: fn(&str) -> Option<String>, nome: &str, ao_cair: impl FnOnce() + Send + 'static) -> Result<(Tunel, String), String> {
         let mut c = Command::new(programa);
-        c.args(["tunnel", "--no-autoupdate", "--url", &format!("http://127.0.0.1:{porta}")]).stdin(Stdio::null()).stdout(Stdio::null()).stderr(Stdio::piped());
+        c.args(args).stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
             c.creation_flags(0x0800_0000); // sem janela de console
         }
-        let mut filho = c.spawn().map_err(|e| crate::tr!("could not run cloudflared: {e}", "não consegui rodar o cloudflared: {e}"))?;
-        let saida = filho.stderr.take();
-        // shortcut: o processo entra no job logo depois de nascer (o `Command` não cria suspenso); o cloudflared não abre filhos nesse instante
+        let mut filho = c.spawn().map_err(|e| crate::tr!("could not run {nome}: {e}", "não consegui rodar o {nome}: {e}"))?;
+        let (so, se) = (filho.stdout.take(), filho.stderr.take());
+        // shortcut: o processo entra no job logo depois de nascer (o `Command` não cria suspenso); o programa não abre filhos nesse instante
         #[cfg(windows)]
         let tunel = match job::Job::prender(&filho) {
             Some(j) => Tunel { filho, _job: j },
             None => {
                 let _ = filho.kill();
                 let _ = filho.wait();
-                return Err(crate::tr!("could not put cloudflared in a Job Object", "não consegui pôr o cloudflared num Job Object"));
+                return Err(crate::tr!("could not put {nome} in a Job Object", "não consegui pôr o {nome} num Job Object"));
             }
         };
         #[cfg(not(windows))]
         let tunel = Tunel { filho };
+        let (linhas_tx, linhas_rx) = mpsc::channel::<String>();
+        let fontes: Vec<Box<dyn Read + Send>> = [so.map(|f| Box::new(f) as Box<dyn Read + Send>), se.map(|f| Box::new(f) as Box<dyn Read + Send>)].into_iter().flatten().collect();
+        for fonte in fontes {
+            let tx = linhas_tx.clone();
+            std::thread::spawn(move || {
+                let (mut leitor, mut linha) = (BufReader::new(fonte), Vec::new());
+                while leitor.read_until(10u8, &mut linha).is_ok_and(|n| n > 0) {
+                    let _ = tx.send(String::from_utf8_lossy(&linha).trim().chars().take(300).collect());
+                    linha.clear();
+                }
+            });
+        }
+        drop(linhas_tx);
         let (tx, rx) = mpsc::channel::<Result<String, String>>();
-        let Some(saida) = saida else { return Err("sem saída".into()) };
+        let ultima = std::sync::Arc::new(std::sync::Mutex::new(String::new()));
+        let ultima_do_leitor = ultima.clone();
         std::thread::spawn(move || {
-            let (mut tx, mut ultima, mut linha) = (Some(tx), String::new(), Vec::new());
-            let mut leitor = BufReader::new(saida);
-            while leitor.read_until(b'\n', &mut linha).is_ok_and(|n| n > 0) {
-                let texto = String::from_utf8_lossy(&linha).trim().chars().take(300).collect::<String>();
-                if let Some(url) = tx.as_ref().and(endereco(&texto)) {
+            let mut tx = Some(tx);
+            for texto in linhas_rx {
+                if let Some(url) = tx.as_ref().and(extrai(&texto)) {
                     let _ = tx.take().map(|t| t.send(Ok(url)));
                 }
-                ultima = texto;
-                linha.clear();
+                *ultima_do_leitor.lock().unwrap_or_else(|e| e.into_inner()) = texto;
             }
             match tx {
-                Some(t) => drop(t.send(Err(ultima))),
+                Some(t) => drop(t.send(Err(ultima_do_leitor.lock().unwrap_or_else(|e| e.into_inner()).clone()))),
                 None => ao_cair(),
             }
         });
         match rx.recv_timeout(ESPERA_URL) {
             Ok(Ok(url)) => Ok((tunel, url)),
-            Ok(Err(ultima)) => Err(crate::tr!("cloudflared stopped before giving an address: {ultima}", "o cloudflared parou antes de dar o endereço: {ultima}")),
-            Err(_) => Err(crate::tr!("cloudflared did not give an address in 60 s", "o cloudflared não deu o endereço em 60 s")),
+            Ok(Err(ultima)) => Err(crate::tr!("{nome} stopped before giving an address: {ultima}", "o {nome} parou antes de dar o endereço: {ultima}")),
+            Err(_) => {
+                let ultima = ultima.lock().unwrap_or_else(|e| e.into_inner()).clone();
+                Err(crate::tr!("{nome} did not give an address in 60 s. Its last message: {ultima}", "o {nome} não deu o endereço em 60 s. Última mensagem dele: {ultima}"))
+            }
         }
     }
 }

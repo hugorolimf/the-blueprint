@@ -20,9 +20,11 @@ const acoesDe = (p) =>
     .map((f) => ({ ...f, b: Math.max(f.a, f.b) }));
 const soPendentes = {}; // por blueprint: filtro "Pendentes" ligado
 const soAndamento = {}; // por blueprint: filtro "Em andamento" ligado: só as ações em que há robô trabalhando
+// (soMeus, "Meus planos": responsavel-logica.js)
 // o que a folha desenha: com o filtro ligado, só as ações não concluídas e, nelas, só planos e checkpoints pendentes (o progresso continua calculado sobre tudo)
 const acoesVisiveis = (p) => {
-  const comRobo = soAndamento[p.id] ? new Set(agentesDoBlueprint(p.id).map((a) => a.acaoId)) : null, base = comRobo ? acoesDe(p).filter((f) => comRobo.has(f.id)) : acoesDe(p);
+  const comRobo = soAndamento[p.id] ? new Set(agentesDoBlueprint(p.id).map((a) => a.acaoId)) : null, doRobo = comRobo ? acoesDe(p).filter((f) => comRobo.has(f.id)) : acoesDe(p);
+  const base = soMeus[p.id] ? doRobo.filter((f) => planosFiltrados(f).length).map((f) => ({ ...f, planos: planosFiltrados(f) })) : doRobo; // "Meus planos": só as ações em que há plano meu, e nelas só os meus
   return soPendentes[p.id] ? base.filter((f) => f.status !== "concluido").map((f) => ({ ...f, planos: f.planos.filter((t) => !t.feito), checkpoints: f.checkpoints.filter((m) => !m.feito) })) : base;
 };
 const projConcluido = (p) => p.acoes.length > 0 && p.acoes.every((f) => efetiva(f).status === "concluido");
@@ -74,7 +76,8 @@ async function trocarFiltro(muda) {
 }
 $("periodo-pendentes").onclick = () => trocarFiltro(() => { soPendentes[tela] = !soPendentes[tela]; delete periodos[tela]; }); // liga/desliga: mostra só o que falta fazer
 $("periodo-andamento").onclick = () => trocarFiltro(() => { soAndamento[tela] = !soAndamento[tela]; delete periodos[tela]; }); // liga/desliga: só o que está em andamento, com os robôs
-$("periodo-auto").onclick = () => trocarFiltro(() => { delete periodos[tela]; delete soPendentes[tela]; delete soAndamento[tela]; }); // "Todo o blueprint" também tira os filtros
+$("periodo-meus").onclick = () => trocarFiltro(() => { soMeus[tela] = !soMeus[tela]; delete periodos[tela]; }); // responsavel-logica.js
+$("periodo-auto").onclick = () => trocarFiltro(() => { delete periodos[tela]; delete soPendentes[tela]; delete soAndamento[tela]; delete soMeus[tela]; }); // "Todo o blueprint" também tira os filtros
 $("periodo-hoje").onclick = () => trocarFiltro(() => { const mes = local(new Date()).slice(0, 7); periodos[tela] = { inicio: mes, fim: mes, meses: [mes] }; });
 
 // distribui itens em linhas sem sobreposição (largura de cada um dada por "ate")

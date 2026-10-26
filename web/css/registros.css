@@ -3,7 +3,7 @@
 .cl>.cl-prop{flex:1 1 0}
 #cl-reg{flex:0 1 auto;max-height:46%;overflow:auto;display:flex;flex-direction:column;gap:0}
 #cl-reg[hidden]{display:none}
-#cl-reg .rg{display:flex;flex-direction:column;min-height:0;border-top:1px solid var(--lo)}
+#cl-reg .rg{display:flex;flex-direction:column;flex:none;border-top:1px solid var(--lo)}
 #cl-reg .rg .cl-prop-lista{overflow:visible;flex:none}
 .rg-cab{position:sticky;top:0;background:#0a3270;z-index:1}
 .rg-item{display:grid;gap:4px;padding:6px 0;border-bottom:1px dashed var(--faint)}

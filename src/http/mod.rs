@@ -3,6 +3,7 @@
 mod api_dados;
 pub mod atualizacao;
 pub mod config;
+mod equipes;
 pub mod estaticos;
 mod estado;
 pub mod pedido;

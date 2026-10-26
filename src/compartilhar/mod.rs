@@ -4,7 +4,9 @@
 //! workspace compartilhado. A porta local (3000) continua do usuário local, dono implícito. Desligado, nada roda: sem listener, sem
 //! processo e sem thread.
 pub mod fluxo;
+pub mod provedor;
 pub mod rotas;
+pub mod tailscale;
 pub mod tunel;
 
 use crate::contexto::{Acesso, Contexto, Papel};
@@ -50,6 +52,8 @@ struct Interno {
     tunel: Option<tunel::Tunel>,
     /// sobe a cada ligar e desligar: o que termina em segundo plano só vale se ainda for da mesma vez
     geracao: u64,
+    /// o endereço desta vez: temporário (Cloudflare) ou fixo (Tailscale Funnel); escolhido ao ligar
+    provedor: provedor::Provedor,
 }
 
 /// O estado do compartilhamento (campo `compartilhar` do `Estado`), só memória.
@@ -58,6 +62,10 @@ pub struct Compartilhar {
     estado: OnceLock<Weak<Estado>>,
     /// BLUEPRINT_TUNEL_COMANDO: um programa no lugar do cloudflared (testes e e2e sem rede); recebe os mesmos argumentos e imprime a URL
     comando: Mutex<Option<PathBuf>>,
+    /// BLUEPRINT_TAILSCALE_COMANDO: um programa no lugar do tailscale (testes e e2e)
+    tailscale: Mutex<Option<PathBuf>>,
+    /// onde a escolha do endereço fica guardada (`provedor.rs`); os testes trocam
+    preferencia: Mutex<PathBuf>,
 }
 
 impl Default for Compartilhar {
@@ -69,7 +77,7 @@ impl Default for Compartilhar {
 impl Compartilhar {
     pub fn novo() -> Compartilhar {
         let comando = std::env::var_os("BLUEPRINT_TUNEL_COMANDO").filter(|v| !v.is_empty()).map(PathBuf::from);
-        Compartilhar { interno: Mutex::default(), estado: OnceLock::new(), comando: Mutex::new(comando) }
+        Compartilhar { interno: Mutex::default(), estado: OnceLock::new(), comando: Mutex::new(comando), tailscale: Mutex::new(std::env::var_os(tailscale::VAR_COMANDO).filter(|v| !v.is_empty()).map(PathBuf::from)), preferencia: Mutex::new(provedor::arquivo()) }
     }
 
     /// O servidor entrega o próprio `Estado` (a porta dos convidados precisa dele para atender em outra thread).
@@ -82,6 +90,21 @@ impl Compartilhar {
         *self.comando.lock().unwrap_or_else(|e| e.into_inner()) = programa;
     }
 
+    /// Testes: troca o programa do Tailscale.
+    pub fn trocar_tailscale(&self, programa: Option<PathBuf>) {
+        *self.tailscale.lock().unwrap_or_else(|e| e.into_inner()) = programa;
+    }
+
+    /// Testes: troca o arquivo da escolha do endereço (para não gravar na pasta do app de verdade).
+    pub fn trocar_preferencia(&self, caminho: PathBuf) {
+        *self.preferencia.lock().unwrap_or_else(|e| e.into_inner()) = caminho;
+    }
+
+    /// A escolha guardada do endereço (temporário, se nunca escolheu).
+    pub fn provedor_guardado(&self) -> provedor::Provedor {
+        provedor::ler_de(&self.preferencia.lock().unwrap_or_else(|e| e.into_inner()))
+    }
+
     fn travar(&self) -> MutexGuard<'_, Interno> {
         self.interno.lock().unwrap_or_else(|e| e.into_inner())
     }
@@ -89,7 +112,7 @@ impl Compartilhar {
     /// `GET /api/compartilhar`: `{estado, url?, workspaces?, workspaceId?, erro?, porta?}` (`workspaceId` é o primeiro, para quem só lê um).
     pub fn json(&self) -> Value {
         let i = self.travar();
-        let mut v = json!({"estado": i.fase.texto()});
+        let mut v = json!({"estado": i.fase.texto(), "provedor": if i.fase == Fase::Desligado { self.provedor_guardado() } else { i.provedor }.texto()});
         if i.fase != Fase::Desligado {
             v["workspaces"] = json!(i.workspaces);
             v["workspaceId"] = json!(i.workspaces.first());
@@ -121,6 +144,12 @@ impl Compartilhar {
 
     /// Começa a ligar (o resto acontece em segundo plano e chega por SSE). Com o túnel já ligado (ou ligando), só inclui o workspace.
     pub fn ligar(&self, workspace: &str) -> Result<(), ErroHttp> {
+        self.ligar_com(workspace, None)
+    }
+
+    /// `provedor` escolhido agora (e guardado para as próximas vezes); `None` usa o guardado. Com o túnel já ligado o endereço não muda: só inclui o workspace.
+    pub fn ligar_com(&self, workspace: &str, escolha: Option<provedor::Provedor>) -> Result<(), ErroHttp> {
+        let provedor = escolha.unwrap_or_else(|| self.provedor_guardado());
         let estado = self.estado.get().and_then(Weak::upgrade).ok_or_else(|| falha(503, crate::tr!("the server is not ready", "o servidor não está pronto")))?;
         let geracao = {
             let mut i = self.travar();
@@ -133,14 +162,17 @@ impl Compartilhar {
                 return Ok(());
             }
             let g = i.geracao + 1;
-            *i = Interno { fase: Fase::Ligando, workspaces: vec![workspace.to_string()], geracao: g, ..Interno::default() };
+            *i = Interno { fase: Fase::Ligando, workspaces: vec![workspace.to_string()], geracao: g, provedor, ..Interno::default() };
             g
         };
+        if escolha.is_some() {
+            let _ = provedor::gravar_em(&self.preferencia.lock().unwrap_or_else(|e| e.into_inner()), provedor); // só uma preferência: falhar em gravar não impede de ligar
+        }
         self.avisar();
         let comando = self.comando.lock().unwrap_or_else(|e| e.into_inner()).clone();
         std::thread::spawn(move || {
             let c = &estado.compartilhar;
-            if let Err(motivo) = c.subir(&estado, geracao, comando) {
+            if let Err(motivo) = c.subir(&estado, geracao, comando, provedor) {
                 c.falhou(geracao, motivo);
             }
         });
@@ -163,8 +195,10 @@ impl Compartilhar {
         mudou
     }
 
-    fn subir(&self, estado: &Arc<Estado>, geracao: u64, comando: Option<PathBuf>) -> Result<(), String> {
+    fn subir(&self, estado: &Arc<Estado>, geracao: u64, comando: Option<PathBuf>, provedor: provedor::Provedor) -> Result<(), String> {
+        // o endereço fixo usa o Tailscale que a pessoa já tem: nada para baixar aqui
         let programa = match comando {
+            _ if provedor == provedor::Provedor::Fixo => PathBuf::new(),
             Some(p) => p,
             None if cfg!(windows) => tunel::preparar(&tunel::pasta_bin(), tunel::SHA256, &|| {
                 self.fase_se(geracao, Fase::Baixando);
@@ -189,7 +223,10 @@ impl Compartilhar {
                 e.compartilhar.falhou(geracao, crate::tr!("the tunnel stopped; turn sharing on again", "o túnel caiu; ligue o compartilhamento de novo"));
             }
         };
-        let (t, url) = tunel::Tunel::abrir(&programa, porta, ao_cair)?;
+        let (t, url) = match provedor {
+            provedor::Provedor::Fixo => tailscale::abrir(self.tailscale.lock().unwrap_or_else(|e| e.into_inner()).clone(), porta, ao_cair)?,
+            provedor::Provedor::Temporario => tunel::Tunel::abrir(&programa, porta, ao_cair)?,
+        };
         let h = Hospedagem::de(&url, "127.0.0.1", None, false)?;
         let sobra = {
             let mut i = self.travar();

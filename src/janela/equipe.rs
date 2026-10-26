@@ -34,6 +34,12 @@ pub fn convite_do_link(arg: &str) -> Option<Convite> {
     Some(Convite { url: format!("{origem}/convite#{segredo}"), origem })
 }
 
+/// `Some` se `arg` é o link interno `blueprint://equipe?u=<origem>` que a rota /api/equipes/abrir entrega (equipes.rs): abre a equipe já lembrada, na raiz.
+pub fn equipe_do_link(arg: &str) -> Option<Convite> {
+    let origem = validar_endereco(arg.strip_prefix(crate::equipes::PREFIXO_LINK)?, false).ok()?;
+    Some(Convite { url: format!("{origem}/"), origem })
+}
+
 fn host(origem: &str) -> &str {
     origem.split_once("://").map_or(origem, |(_, h)| h)
 }
@@ -43,13 +49,13 @@ fn largo(texto: &str) -> Vec<u16> {
 }
 
 /// Caixa de diálogo do Windows; bloqueia a thread que chama (nunca chame no laço da janela).
-fn perguntar(texto: &str) -> bool {
+pub(super) fn perguntar(texto: &str) -> bool {
     let (t, c) = (largo(texto), largo("The Blueprint (beta)"));
     // SAFETY: as duas strings terminam em zero e vivem durante a chamada; sem janela dona (ponteiro nulo).
     unsafe { MessageBoxW(std::ptr::null_mut(), t.as_ptr(), c.as_ptr(), MB_YESNO | MB_ICONQUESTION | MB_SETFOREGROUND) == IDYES }
 }
 
-fn avisar(texto: &str) {
+pub(super) fn avisar(texto: &str) {
     let (t, c) = (largo(texto), largo("The Blueprint (beta)"));
     // SAFETY: igual a `perguntar`.
     unsafe { MessageBoxW(std::ptr::null_mut(), t.as_ptr(), c.as_ptr(), MB_OK | MB_SETFOREGROUND) };
@@ -101,6 +107,15 @@ mod tests {
         assert_eq!(c.url, format!("https://abc-def.trycloudflare.com/convite#{S}"));
         // o Windows/navegador pode acrescentar a barra depois do host; a porta vale
         assert!(convite_do_link(&format!("blueprint://convite/?u=https://equipe.exemplo.com:8443&s={S}")).is_some());
+    }
+
+    #[test]
+    fn link_de_equipe_lembrada_abre_na_raiz() {
+        let c = equipe_do_link("blueprint://equipe?u=https://abc-def.trycloudflare.com").unwrap();
+        assert_eq!((c.origem.as_str(), c.url.as_str()), ("https://abc-def.trycloudflare.com", "https://abc-def.trycloudflare.com/"));
+        assert_eq!(equipe_do_link("blueprint://equipe?u=http://abc.com"), None);
+        assert_eq!(equipe_do_link("blueprint://equipe?u=https://abc.com/x"), None);
+        assert_eq!(equipe_do_link(&format!("blueprint://convite?u=https://abc.com&s={S}")), None);
     }
 
     #[test]

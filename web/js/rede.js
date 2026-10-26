@@ -23,12 +23,14 @@ const limpa = (d) => {
     links: (Array.isArray(p.links) ? p.links : []).map((l) => ({ id: l.id || novoId(), rotulo: l.rotulo || "", url: l.url || "" })),
     // projetos (opcionais): só existem os campos quando há projeto, então os dados antigos abrem e voltam iguais
     ...(Array.isArray(p.projetos) && p.projetos.some((x) => x && x.id) ? { projetos: p.projetos.filter((x) => x && x.id).map((x) => ({ id: String(x.id), nome: String(x.nome || "") })) } : {}),
+    // repositório GitHub (opcional, docs/repositorio-github.md): sem esta linha um recarregamento o tiraria da página e o próximo salvamento o apagaria do servidor
+    ...(typeof p.repositorio?.url === "string" && p.repositorio.url ? { repositorio: { url: p.repositorio.url.slice(0, 200) } } : {}),
     // decisões (opcionais), do mesmo jeito
     ...(Array.isArray(p.decisoes) && p.decisoes.some((x) => x && x.id) ? { decisoes: p.decisoes.filter((x) => x && x.id).map((x) => ({ id: String(x.id), titulo: String(x.titulo || ""), escolha: String(x.escolha || ""), motivo: String(x.motivo || ""), estado: x.estado === "aberta" ? "aberta" : "decidida", em: String(x.em || "").slice(0, 40) })) } : {}),
     acoes: (Array.isArray(p.acoes) ? p.acoes : []).map((f) => ({
       id: f.id || novoId(), nome: f.nome || "", inicio: f.inicio || "", fim: f.fim || "", obs: f.obs || "", ...(f.projetoId ? { projetoId: String(f.projetoId) } : {}),
       status: ROTULO[f.status] ? f.status : "planejado", progresso: Number(f.progresso) || 0,
-      planos: (Array.isArray(f.planos) ? f.planos : []).map((t) => ({ id: t.id || novoId(), texto: t.texto || "", ...(typeof t.descricao === "string" ? { descricao: t.descricao } : {}), feito: !!t.feito, ...(Number.isFinite(t.horas) && t.horas > 0 ? { horas: t.horas } : {}), ...(t.agente && typeof t.agente === "object" ? { agente: normalizaAgente(t.agente) } : {}) })),
+      planos: (Array.isArray(f.planos) ? f.planos : []).map((t) => ({ id: t.id || novoId(), texto: t.texto || "", ...(typeof t.descricao === "string" ? { descricao: t.descricao } : {}), feito: !!t.feito, ...(Number.isFinite(t.horas) && t.horas > 0 ? { horas: t.horas } : {}), ...(t.agente && typeof t.agente === "object" ? { agente: normalizaAgente(t.agente) } : {}), ...(typeof t.responsavel?.id === "string" && t.responsavel.id ? { responsavel: { id: t.responsavel.id.slice(0, 64), ...(t.responsavel.agente === true ? { agente: true } : {}) } } : {}) })), // responsavel: só rótulo (docs/colaboracao.md)
       checkpoints: (Array.isArray(f.checkpoints) ? f.checkpoints : []).map((m) => ({ id: m.id || novoId(), nome: m.nome || "", data: m.data || "", feito: !!m.feito, ...(m.feito && typeof m.evidencia === "string" ? { evidencia: m.evidencia.slice(0, 2000), feitoEm: String(m.feitoEm || "") } : {}) })),
       prototipos: (Array.isArray(f.prototipos) ? f.prototipos : []).filter((x) => x && /^[a-f0-9]{16}$/.test(x.id)).map((x) => ({ id: x.id, titulo: String(x.titulo || "Protótipo").slice(0, 120), em: String(x.em || "").slice(0, 40) })),
     })),
@@ -71,6 +73,7 @@ async function carregar() {
     }
     concluidosAntes = concluidosAgora();
     aoVivoAssumir(versaoDados); // a base das operações e o ponto de partida do SSE (ao-vivo.js)
+    equipeLembrar(); // sessao.js: o app instalado lista esta equipe na tela de workspaces
     render();
   } catch {
     $("login-erro").textContent = tr("Não foi possível carregar os dados. Tentando novamente…");

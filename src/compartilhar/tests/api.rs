@@ -4,7 +4,7 @@ use super::*;
 #[test]
 fn api_so_desta_maquina_e_com_json() {
     let e = crate::http::tests::estado(false);
-    assert_eq!(json_de(&pela_porta_local(&e, &local("GET", "/api/compartilhar", None))), json!({"estado": "desligado"}));
+    assert_eq!(json_de(&pela_porta_local(&e, &local("GET", "/api/compartilhar", None)))["estado"], "desligado");
     let mut p = local("GET", "/api/compartilhar", None);
     p.cabecalhos = vec![("Host".into(), "exemplo.com".into())];
     assert_eq!(codigo(&pela_porta_local(&e, &p)), "so-local");
@@ -18,7 +18,7 @@ fn api_so_desta_maquina_e_com_json() {
     for (corpo, cod) in [(json!({}), "falta-workspace"), (json!({"workspaceId": "*"}), "falta-workspace"), (json!({"workspaceId": "nao-existe"}), "workspace-inexistente")] {
         assert_eq!(codigo(&pela_porta_local(&e, &local("POST", "/api/compartilhar/ligar", Some(corpo)))), cod);
     }
-    assert_eq!(json_de(&pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({}))))), json!({"estado": "desligado"}));
+    assert_eq!(json_de(&pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({}))))) ["estado"], "desligado");
 }
 
 #[test]
@@ -44,7 +44,7 @@ fn segundo_workspace_entra_no_mesmo_tunel_e_sai_sozinho() {
     assert_eq!((json_de(&r)["estado"].clone(), json_de(&r)["workspaces"].clone()), (json!("ligado"), json!(["sm"])));
     assert_eq!(e.compartilhar.porta_aberta().unwrap().1, vec!["sm".to_string()], "convidados de w2 perdem o acesso");
     let r = pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({"workspaceId": "sm"}))));
-    assert_eq!(json_de(&r), json!({"estado": "desligado"}));
+    assert_eq!(json_de(&r)["estado"], "desligado");
 }
 
 #[test]

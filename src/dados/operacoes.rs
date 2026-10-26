@@ -7,6 +7,7 @@ use super::historico::{self, Autor, Linha};
 use super::importar::inserir_no;
 use super::item::{self, tabela, tipo_do_pai};
 use super::linhas::Objeto;
+use super::membros;
 use crate::erro::{Erro, Resultado};
 use rusqlite::Connection;
 use serde_json::{json, Value};
@@ -141,11 +142,29 @@ impl Lote<'_> {
         }
     }
 
+    /// `responsavel` do plano (docs/colaboracao.md, "Responsável por plano"): `{id, agente?}` com `id` de uma pessoa do workspace do plano. Só rótulo: não dá nem tira permissão.
+    /// shortcut: confere o plano que a operação cria ou altera, não os planos de uma ação criada com planos dentro; rever se algum cliente passar a mandar assim.
+    fn conferir_responsavel(&self, indice: usize, workspace_id: &str, v: &Value) -> Result<(), Falha> {
+        let invalido = |motivo: &str| Falha::Invalida { indice, motivo: motivo.into() };
+        let Value::Object(o) = v else { return Err(invalido("responsavel precisa ser {id, agente?}")) };
+        if o.keys().any(|k| k != "id" && k != "agente") || o.get("agente").is_some_and(|a| !a.is_boolean()) {
+            return Err(invalido("responsavel só aceita id e agente (verdadeiro ou falso)"));
+        }
+        let Some(id) = o.get("id").and_then(Value::as_str).filter(|i| !i.is_empty() && i.len() <= 64) else { return Err(invalido("falta o id do responsável")) };
+        if !membros::do_workspace(self.tx, workspace_id)?.iter().any(|m| m["id"] == id) {
+            return Err(invalido("o responsável não é uma pessoa deste workspace"));
+        }
+        Ok(())
+    }
+
     fn criar(&mut self, indice: usize, exige: Exige, tipo: &str, id: &str, pai: &Option<String>, posicao: usize, valor: &Objeto) -> Result<(), Falha> {
         let t = tab(indice, tipo)?;
         let Some(onde_pai) = self.pai_existe(indice, tipo, pai)? else { return Ok(()) };
         let onde = match tipo { "workspace" => (id.to_string(), String::new()), "blueprint" => (onde_pai.0.clone(), id.to_string()), _ => onde_pai };
         exigir(exige, indice, tipo == "workspace", &onde)?;
+        if let (true, Some(r)) = (tipo == "plano", valor.get("responsavel").filter(|r| !r.is_null())) {
+            self.conferir_responsavel(indice, &onde.0, r)?;
+        }
         if item::existe(self.tx, t, id)? {
             self.saida.ignoradas.push(json!({"indice": indice, "codigo": "id-existe", "tipo": tipo, "id": id, "quem": null}));
             return Ok(());
@@ -177,6 +196,9 @@ impl Lote<'_> {
             return Ok(self.ignorar(indice, "item-apagado", tipo, id)?);
         };
         exigir(exige, indice, tipo == "workspace" && id == RAIZ_ID, &onde)?;
+        if let (true, Some(r)) = (tipo == "plano", campos.get("responsavel").filter(|r| !r.is_null())) {
+            self.conferir_responsavel(indice, &onde.0, r)?;
+        }
         let mut obj = lido.obj;
         let mut mudou = false;
         for (campo, novo) in campos {

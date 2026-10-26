@@ -41,6 +41,18 @@ pub fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto, url_publica: &str)
             lista.iter_mut().for_each(|m| m["voce"] = json!(m["id"] == ctx.usuario.as_str()));
             Ok(Resposta::json(200, &json!({"membros": lista})))
         }
+        // para atribuir planos (docs/colaboracao.md, "Responsável por plano"): só quem grava, e só ids e nomes de quem também grava. Quem só lê, a atividade e os convites continuam fechados.
+        ("GET", "/api/pessoas/para-atribuir") => {
+            if ws_consulta.is_empty() || ws_consulta == "*" || ctx.visitante || !ctx.pode(Acao::Gravar, &ws_consulta, None) {
+                return Err(proibido());
+            }
+            let lista: Vec<Value> = membros::do_workspace(travar(estado).conexao(), &ws_consulta)?
+                .into_iter()
+                .filter(|m| matches!(m["papel"].as_str(), Some("dono" | "colaborador")))
+                .map(|m| json!({"id": m["id"], "nome": m["nome"], "papel": m["papel"], "voce": m["id"] == ctx.usuario.as_str()}))
+                .collect();
+            Ok(Resposta::json(200, &json!({"membros": lista})))
+        }
         ("GET", "/api/convites") => {
             exige_dono(ctx, &ws_consulta)?;
             Ok(Resposta::json(200, &json!({"convites": dconvites::do_workspace(travar(estado).conexao(), &ws_consulta)?})))

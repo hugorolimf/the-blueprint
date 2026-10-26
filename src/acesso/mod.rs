@@ -63,8 +63,11 @@ impl Acesso {
 pub fn so_local(caminho: &str) -> bool {
     let mcp = caminho.strip_prefix("/api/mcp/").unwrap_or("");
     caminho.starts_with("/api/terminal/")
+        || caminho.starts_with("/api/repositorio/")
         || caminho.starts_with("/api/atualizacao")
         || caminho.starts_with("/api/compartilhar")
+        || caminho == "/api/equipes"
+        || caminho.starts_with("/api/equipes/")
         || caminho == "/api/app/mostrar"
         || matches!(mcp, "iniciar" | "sessoes" | "pastas")
         || mcp.starts_with("conversa")
@@ -84,7 +87,7 @@ pub fn despachar(estado: &Estado, pedido: &Pedido, h: &Hospedagem, proximo: impl
     let caminho = pedido.caminho.as_str();
     let resposta = (|| {
         cabecalhos::conferir(h, pedido)?;
-        let autorizacao = pedido.cabecalho("authorization").filter(|_| caminho.starts_with("/api/mcp/"));
+        let autorizacao = pedido.cabecalho("authorization").filter(|_| caminho.starts_with("/api/mcp/") || caminho == "/mcp");
         if so_local(caminho) && !(hook_de_membro(caminho) && autorizacao.is_some()) {
             return Err(falha(404, crate::tr!("this route only exists in the local app", "esta rota só existe no app local")).codigo("so-local"));
         }
@@ -103,7 +106,7 @@ pub fn despachar(estado: &Estado, pedido: &Pedido, h: &Hospedagem, proximo: impl
                     None => None,
                 };
                 // navegador: todo pedido que muda algo vem da página pública (a chave do agente não é mandada pelo navegador sozinho)
-                if !matches!(pedido.metodo.as_str(), "GET" | "HEAD") && !cabecalhos::origem_ok(h, pedido) {
+                if !matches!(pedido.metodo.as_str(), "GET" | "HEAD") && caminho != "/mcp" && !cabecalhos::origem_ok(h, pedido) { // /mcp não é de navegador: a rota recusa qualquer Origin
                     return Err(falha(403, crate::tr!("invalid origin", "origem inválida")).codigo("origem-invalida"));
                 }
                 ctx.unwrap_or_else(Contexto::anonimo)

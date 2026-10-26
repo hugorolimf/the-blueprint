@@ -32,8 +32,8 @@ export async function ligarServidor(exe, { env, url }) {
 }
 
 /** `blueprint --mcp` por stdio: `chamar(nome, argumentos)` devolve o texto da ferramenta e se deu erro. */
-export function mcpStdio(exe, env, args = ["--mcp"]) {
-  const proc = spawn(exe, args, { env, stdio: ["pipe", "pipe", "inherit"], windowsHide: true });
+export function mcpStdio(exe, env, args = ["--mcp"], cwd) {
+  const proc = spawn(exe, args, { env, cwd, stdio: ["pipe", "pipe", "inherit"], windowsHide: true });
   const respostas = new Map();
   let buf = "", id = 0;
   proc.stdout.on("data", (d) => { buf += d; let i; while ((i = buf.indexOf("\n")) >= 0) { const l = buf.slice(0, i); buf = buf.slice(i + 1); if (l.trim()) { const m = JSON.parse(l); respostas.set(m.id, m); } } });

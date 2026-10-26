@@ -10,7 +10,7 @@ import { createServer, request } from "node:http";
 
 const args = process.argv.slice(2), i = args.indexOf("--url");
 const alvo = new URL(i >= 0 ? args[i + 1] : args.find((a) => /^https?:\/\//.test(a)) || process.env.TUNEL_FALSO_ALVO);
-const publica = `https://teste-${randomBytes(4).toString("hex")}.trycloudflare.com`, hostPublico = new URL(publica).host;
+const publica = process.env.TUNEL_FALSO_PUBLICA || `https://teste-${randomBytes(4).toString("hex")}.trycloudflare.com`, hostPublico = new URL(publica).host;
 
 const srv = createServer((req, res) => {
   let local = "";

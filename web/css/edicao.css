@@ -93,6 +93,7 @@ html.editando{overflow:hidden}
 .item-ed,.checkpoint-ed{display:flex;gap:10px;align-items:center;margin-bottom:9px}
 .item-ed input[data-c="texto"],.checkpoint-ed input[data-c="nome"]{flex:1;min-width:0}
 .item-ed input[data-c="horas"]{width:64px;flex:none}
+.item-ed select[data-c="responsavel"]{width:150px;flex:none}
 .checkpoint-ed input[type=date]{width:170px!important;flex:none}
 .item-ed.feito input[data-c="texto"]{color:var(--mid)}
 .link-ed{display:grid;grid-template-columns:1fr 1.7fr auto;gap:10px;align-items:center;margin-bottom:9px}

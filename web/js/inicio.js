@@ -10,5 +10,6 @@ mcpAssina();
 agentesBusca();
 }
 atualizacaoBusca();
+equipesBusca(); // equipes-locais.js: as equipes a que este app já entrou, na tela de workspaces
 fetch("/api/mcp/info").then((r) => r.json()).then((j) => { mcpInfo = j; if (!hub.hidden) montaMcp(); }).catch(() => {});
 });

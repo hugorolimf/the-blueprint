@@ -14,7 +14,7 @@ const { ESTADOS, normalizar, corpoDoLigar, vistaDoEstado } = await import("./web
 
 // o servidor pode mandar só o estado; estado desconhecido ou resposta vazia vira erro (nunca um botão errado)
 assert.deepEqual(ESTADOS, ["desligado", "baixando", "ligando", "ligado", "erro"]);
-assert.deepEqual(normalizar({ estado: "ligado", url: "https://a.trycloudflare.com", workspaces: ["w1", "w2"], workspaceId: "w1", porta: 4100 }), { estado: "ligado", url: "https://a.trycloudflare.com", workspaces: ["w1", "w2"], erro: "" });
+assert.deepEqual(normalizar({ estado: "ligado", url: "https://a.trycloudflare.com", workspaces: ["w1", "w2"], workspaceId: "w1", porta: 4100 }), { estado: "ligado", url: "https://a.trycloudflare.com", workspaces: ["w1", "w2"], erro: "", provedor: "temporario" });
 assert.deepEqual(normalizar({ estado: "ligado", workspaceId: "w1" }).workspaces, ["w1"], "servidor antigo, com um workspace só");
 assert.equal(normalizar({ estado: "quebrado" }).estado, "erro");
 assert.equal(normalizar(null).estado, "erro");
@@ -23,6 +23,13 @@ assert.equal(normalizar({ estado: "erro", erro: "sem rede" }).erro, "sem rede");
 // corpo de POST /api/compartilhar/ligar: o workspace aberto
 assert.deepEqual(corpoDoLigar("w1"), { workspaceId: "w1" });
 assert.deepEqual(corpoDoLigar(""), { erro: "falta-workspace" });
+// o endereço: só vai no corpo quando a pessoa escolheu; o servidor guarda a escolha e a devolve em `provedor`
+assert.deepEqual(corpoDoLigar("w1", "fixo"), { workspaceId: "w1", provedor: "fixo" });
+assert.deepEqual(corpoDoLigar("w1", "temporario"), { workspaceId: "w1", provedor: "temporario" });
+assert.deepEqual(corpoDoLigar("w1", "zerotier"), { workspaceId: "w1" }, "valor desconhecido não vai");
+assert.equal(normalizar({ estado: "desligado", provedor: "fixo" }).provedor, "fixo");
+assert.equal(normalizar({ estado: "desligado", provedor: "outro" }).provedor, "temporario");
+assert.equal(normalizar({ estado: "desligado" }).provedor, "temporario", "servidor antigo, sem a escolha");
 
 // cada estado: botão, barra de progresso e endereço
 const nomes = { w1: "Produto", w2: "Pessoal" }, nomeDe = (id) => nomes[id] || id;

@@ -88,11 +88,27 @@ reminder at the end of a turn) reach the owner's app: the owner sees the guest's
 - **Third-party binary.** `cloudflared` runs with a fixed version and SHA-256; a file that does not match is deleted and refused. It runs
   with `--no-autoupdate`, without a console window, and dies with the app.
 
-## A fixed address later
+## A fixed address
 
-- **Cloudflare with your own domain:** a named tunnel (free Cloudflare account and a domain on Cloudflare) gives a stable address and
-  streams live updates normally.
-- **Tailscale Funnel:** a stable `*.ts.net` address, if you already use Tailscale.
+In the Share dialog, **Address** has two choices (kept for next time; they can only change while sharing is off):
+
+- **Temporary** (default): Cloudflare quick tunnel, no account. The address changes every time you turn sharing on.
+- **Fixed**: Tailscale Funnel. The address is `https://<your-device>.<your-tailnet>.ts.net` and never changes, so invite links, sessions and the guests' Claude (`blueprint conectar`) keep working after turning sharing off and on. You need Tailscale installed and signed in, MagicDNS and HTTPS certificates on, and the `funnel` attribute allowed for your device in the tailnet policy ([Funnel requirements](https://tailscale.com/kb/1223/funnel)). The app keeps no password or key: it runs your own `tailscale`. It checks `tailscale status --json` (connected, and the `.ts.net` name), picks the first free Funnel port among 443, 8443 and 10000 from `tailscale serve status --json` (it never takes a port you already use), and keeps `tailscale funnel --https=<port> http://127.0.0.1:<guest port>` running in the foreground inside a Job Object, so closing the app closes the Funnel (a `--bg` Funnel would stay pointing at the port after a crash). The address the command prints must be this device's, or sharing stops with an error.
+
+Changing from one type to the other changes the address: people who already joined need one new invite link (and to run `blueprint conectar` again). Browsers do not carry a session cookie to another address, so this cannot be avoided.
+
+Checked on 2026-10-26:
+
+| | Temporary (Cloudflare quick tunnel) | Fixed (Tailscale Funnel) | Named Cloudflare tunnel (not built in) |
+| --- | --- | --- | --- |
+| Account | none | Tailscale account | Cloudflare account and a domain on Cloudflare |
+| Address | changes every time | fixed `*.ts.net` | your own hostname |
+| Ports | any | 443, 8443, 10000 only | any |
+| Limits | "for testing and development", no uptime guarantee, 200 requests in flight (more get 429), no Server-Sent Events (the app works around that, see below) | "non-configurable bandwidth limits", TLS only | Free-plan terms restrict serving large files and video |
+| Source | [Cloudflare quick tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/) | [Tailscale Funnel](https://tailscale.com/kb/1223/funnel), [funnel command](https://tailscale.com/kb/1311/tailscale-funnel) | [Create a remote tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/), [Tunnel FAQ](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/) |
+
+The quick tunnel does not carry Server-Sent Events as a live stream, so on the guest port each live-update connection closes after its first event and the browser reconnects with `Last-Event-ID` (measured: 41 events arrived together after 42 s). The Tailscale Funnel does not have this limit. The named Cloudflare tunnel stays out of the app on purpose: it needs a domain, a dashboard setup and a token, which is more than "turn it on". If you use one, run it yourself pointing at `blueprint serve --hospedar` ([hosting guide](hospedar.md)). Code: `src/compartilhar/tailscale.rs`, `provedor.rs`; tests: `cargo test compartilhar` and `node scripts/endereco-fixo-e2e.mjs`.
+
 - **A team server:** `blueprint serve --hospedar` on a small machine that stays on ([hosting guide](hospedar.md)).
 
 ## For developers
@@ -107,3 +123,31 @@ Every state change also goes to the page as the `compartilhar` event on `/api/mc
 routes of the hosted mode (`/api/convites`, `/api/pessoas`), called by the local page while sharing; links come out with the tunnel address.
 `BLUEPRINT_TUNEL_COMANDO=<program>` replaces `cloudflared` with a fake that prints a `https://<words-with-dashes>.trycloudflare.com` line
 on its error output (tests and end-to-end checks, no network). Code: `src/compartilhar/`.
+
+## Coming back to the team after closing the app (guest)
+
+The guest's session is the team window's cookie (30 days, persistent WebView2 profile), but an invite link is single-use: with no local record there was no way to reopen the team window after closing the app. Now the team page tells the app (IPC `equipe`) the person's name and the workspaces they see, and the app keeps only that in `%APPDATA%\Blueprint\equipes.json` (`src/equipes.rs`; never the invite or the cookie). The workspaces screen shows one "Team" card per remembered team; clicking it calls `POST /api/equipes/abrir`, which only accepts an already-remembered origin and opens the team window, where the session carries on. "Remove from list" forgets the team (`/api/equipes/esquecer`). Local-only routes; test: `node scripts/equipes-locais-e2e.mjs`.
+
+Limit: the quick-tunnel address changes every time the host turns sharing back on, and the cookie only works for the old address. In that case the card opens a "Sign in through an invite link" screen and the guest needs a new invite; a fixed address is the next action.
+
+The guest also works from the installed app: see `docs/app-no-projeto-compartilhado.md` (set the repository folder up and start Claude on an action from the team window, with a native confirmation; the folder link lives in `CLAUDE.local.md`, out of Git).
+
+## Remote MCP over HTTP (no app installed)
+
+A guest can connect Claude Code or Codex **without installing The Blueprint**: the server (hosted mode and the guest port of Sharing) answers `POST /mcp`, the MCP "Streamable HTTP" transport, with the member's key as `Authorization: Bearer bpk_...` and the same tools and instructions as `blueprint --mcp`. The My key screen shows the commands.
+
+Decisions (checked on 2026-10-26 against the sources below):
+
+| Point | Decision | Source |
+| --- | --- | --- |
+| Endpoint | one path, `/mcp`, POST only; GET and DELETE answer 405 (the spec allows a server with no SSE stream and no session termination) | [MCP transports, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports) |
+| Replies | requests get one `application/json` object; notifications get `202` with no body; no batches | same |
+| Session | none (`Mcp-Session-Id` is optional); each request carries the key | same |
+| Version | `MCP-Protocol-Version`, if sent, must be 2025-06-18, 2025-03-26 or 2024-11-05, else 400 | same |
+| Origin | a request with an `Origin` header (a browser) is refused with 403, per the DNS-rebinding warning | same |
+| Auth | `Bearer` key; no OAuth and no `WWW-Authenticate`, so clients use the header. `initialize`, `ping` and `tools/list` answer without a key (the public server description: Claude Code's connection pre-test sends no header and treats 401 as fatal); `tools/call` without a key is 401; an invalid or revoked key is 401 `chave-invalida` | [Claude Code MCP](https://code.claude.com/docs/en/mcp) |
+| Claude Code | `claude mcp add --transport http --scope user blueprint-equipe <url>/mcp --header 'Authorization: Bearer ${BLUEPRINT_CHAVE}'` (single quotes keep `${...}` literal; Claude Code expands it when it connects, so the key is not in the command it prints) | same |
+| Codex | `[mcp_servers.blueprint-equipe]` with `url = "<url>/mcp"` and `bearer_token_env_var = "BLUEPRINT_CHAVE"` in `~/.codex/config.toml` | [Codex MCP](https://developers.openai.com/codex/mcp) |
+| HTTPS | the tunnel and the hosted mode are HTTPS; the key never travels over plain HTTP outside loopback | hosted mode (docs/hospedar.md) |
+
+Differences from `--mcp`: `vincular_pasta` is refused (the server cannot see your folder: write the `Blueprint:` line in `CLAUDE.local.md`, or use `blueprint conectar` with the installed app), `propor_blueprint` never sends the server's own folder, and there is no channel or hooks (progress shows only what the agent reports with `registrar_progresso`). It does not replace the installed plugin. Code: `src/mcp/http.rs`; tests: `cargo test mcp_http` and `node scripts/mcp-http-e2e.mjs`.

@@ -20,11 +20,11 @@ pub fn rota(estado: &Estado, pedido: &Pedido) -> Resposta {
     executar(estado, pedido, recurso).unwrap_or_else(|e| e.resposta())
 }
 
-fn texto<'a>(corpo: &'a Value, chave: &str) -> &'a str {
+pub(crate) fn texto<'a>(corpo: &'a Value, chave: &str) -> &'a str {
     corpo.get(chave).and_then(Value::as_str).unwrap_or("")
 }
 
-fn numero(corpo: &Value, chave: &str, padrao: i16) -> i16 {
+pub(crate) fn numero(corpo: &Value, chave: &str, padrao: i16) -> i16 {
     corpo.get(chave).and_then(Value::as_i64).map_or(padrao, |n| n.clamp(1, 1000) as i16)
 }
 
@@ -64,6 +64,12 @@ fn executar(estado: &Estado, pedido: &Pedido, recurso: &str) -> Result<Resposta,
     })
 }
 
+/// Abre `blueprint claude "<prompt>" --canal` (ou o programa de teste) em `pasta`, num pseudoconsole do app, e devolve a sessão em JSON.
+pub(crate) fn abrir_no_app(estado: &Estado, info: Info, (colunas, linhas): (i16, i16), pasta: &Path, exe: &Path, prompt: &str) -> Result<Value, String> {
+    let linha = std::env::var(VAR_COMANDO).ok().filter(|s| !s.trim().is_empty()).unwrap_or_else(|| format!("{} claude {} --canal", citar(&exe.to_string_lossy()), citar(prompt)));
+    Ok(estado.terminais.abrir(&linha, pasta, info, colunas, linhas)?.json())
+}
+
 /// O mesmo "Iniciar com o Claude" de /api/mcp/iniciar (a pasta do blueprint e o prompt da ação vêm de `mcp::iniciar`), mas o lançador abre
 /// `blueprint claude "<prompt>" --canal` num pseudoconsole do app em vez de um terminal externo.
 fn iniciar(estado: &Estado, corpo: &Value) -> Result<Resposta, ErroHttp> {
@@ -76,9 +82,7 @@ fn iniciar(estado: &Estado, corpo: &Value) -> Result<Resposta, ErroHttp> {
     let (colunas, linhas) = (numero(corpo, "colunas", 100), numero(corpo, "linhas", 30));
     let aberta = RefCell::new(None);
     let lancar = |pasta: &Path, exe: &Path, prompt: &str| -> Result<&'static str, String> {
-        let linha = std::env::var(VAR_COMANDO).ok().filter(|s| !s.trim().is_empty()).unwrap_or_else(|| format!("{} claude {} --canal", citar(&exe.to_string_lossy()), citar(prompt)));
-        let s = estado.terminais.abrir(&linha, pasta, info.clone(), colunas, linhas)?;
-        *aberta.borrow_mut() = Some(s.json());
+        *aberta.borrow_mut() = Some(abrir_no_app(estado, info.clone(), (colunas, linhas), pasta, exe, prompt)?);
         Ok("app")
     };
     let (status, mut resposta) = crate::mcp::iniciar::iniciar(&estado.dados, corpo, &lancar)?;

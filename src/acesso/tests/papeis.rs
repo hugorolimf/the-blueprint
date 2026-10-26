@@ -46,6 +46,8 @@ fn cada_rota_responde_conforme_o_papel() {
         ("POST", "/api/mcp/prototipo/remover", Some(json!({"prototipoId": "0123456789abcdef"})), [200, 403, 403, 403, 403]),
         ("POST", "/api/mcp/fila/ack", Some(json!({"ids": []})), [200, 200, 200, 403, 403]),
         ("GET", "/api/pessoas?workspace=w2", None, [200, 200, 403, 200, 403]),
+        ("GET", "/api/pessoas/para-atribuir?workspace=w2", None, [200, 200, 200, 403, 403]),
+        ("GET", "/api/pessoas/para-atribuir?workspace=sm", None, [200, 403, 403, 403, 403]),
         ("GET", "/api/convites?workspace=w2", None, [200, 200, 403, 403, 403]),
         ("POST", "/api/convites", Some(convite_novo), [201, 201, 403, 403, 403]),
         ("GET", "/api/atividade?workspace=w2", None, [200, 200, 403, 200, 403]),

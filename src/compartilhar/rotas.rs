@@ -29,7 +29,12 @@ fn resultado(estado: &Estado, pedido: &Pedido) -> Result<Resposta, ErroHttp> {
             if !existe {
                 return Err(falha(404, crate::tr!("workspace not found", "workspace não encontrado")).codigo("workspace-inexistente"));
             }
-            c.ligar(ws)?;
+            // `provedor` opcional: "temporario" (Cloudflare) ou "fixo" (Tailscale Funnel); escolhido, fica guardado para as próximas vezes
+            let escolha = match corpo.get("provedor").and_then(Value::as_str) {
+                None => None,
+                Some(t) => Some(super::provedor::Provedor::de_texto(t).ok_or_else(|| falha(400, crate::tr!("provedor must be \"temporario\" or \"fixo\"", "provedor precisa ser \"temporario\" ou \"fixo\"")).codigo("provedor-invalido"))?),
+            };
+            c.ligar_com(ws, escolha)?;
             Ok(Resposta::json(202, &c.json()))
         }
         ("POST", "/api/compartilhar/desligar") => {

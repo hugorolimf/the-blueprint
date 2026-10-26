@@ -36,3 +36,4 @@
 .cp-progresso{display:block;width:100%;height:4px;margin:8px 0;accent-color:var(--ink)}.cp-progresso[hidden]{display:none}
 #equipe :focus-visible{outline:2px solid var(--ink);outline-offset:2px}
 @media(max-width:650px){.eq-corpo{padding:6px 12px 14px}.eq-duas{grid-template-columns:1fr}.eq-lista li{flex-wrap:wrap}.eq-link{grid-template-columns:minmax(0,1fr) auto}.eq-link b{grid-column:1/-1}}
+.cp-endereco-tipo{border:1px solid var(--line, currentColor);border-radius:6px;margin:10px 0;padding:8px 12px}.cp-endereco-tipo legend{padding:0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.cp-endereco-tipo label{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:start;margin:6px 0}.cp-endereco-tipo label small{grid-column:2;opacity:.8}.cp-endereco-tipo input:disabled+span{opacity:.6}

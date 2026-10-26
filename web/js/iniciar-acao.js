@@ -60,7 +60,17 @@ function escolherSessao({ titulo, texto, sessoes }) {
     d.querySelector('[data-r="0"]').focus();
   });
 }
+// Janela da equipe (app instalado, modo hospedado): as rotas de iniciar são só do app local e não existem para esta página. O pedido vai ao app por IPC e ele
+// abre o Claude desta máquina na pasta do repositório depois de uma pergunta nativa (src/janela/projeto_local.rs).
+function iniciarPeloApp(p, f) {
+  const numero = numeroDaAcao(p, f);
+  if (poderesDaSessao(sessao).soLeitura) return iniciarAviso(tr("O seu papel só lê este workspace: não dá para iniciar o Claude daqui."), true);
+  if (!repositorioValido(p.repositorio?.url)) return iniciarAviso(tr("Este blueprint não tem um repositório GitHub ligado, então o app não sabe qual pasta usar. Conecte o repositório em Editar."), true);
+  window.ipc.postMessage(repositorioMensagemIpc("iniciar", p, { acaoId: f.id, numero, acao: f.nome || "" }));
+  iniciarAviso(tr("Confirme na janela do Windows para o Claude começar a ação {numero}.", { numero }));
+}
 async function iniciarComClaude(p, f) {
+  if (repositorioConvidadoNoApp()) return iniciarPeloApp(p, f);
   const numero = numeroDaAcao(p, f), ocupada = agentesDoBlueprint(p.id).some((x) => x.acaoId === f.id && x.estado !== "ocioso");
   const sessoes = await sessoesAbertas(p);
   const base = `${tr("Gasta tokens.")}${ocupada ? " " + tr("Já há um agente trabalhando nesta ação; o novo vai trabalhar junto com ele.") : ""} ${tr("Iniciar a ação {numero} «{nome}»?", { numero, nome: f.nome || tr("sem nome") })}`;

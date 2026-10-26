@@ -1,6 +1,6 @@
 // ---- modo manual -------------------------------------------------------------------------------
 function htmlItem(t) {
-  return `<div class="item-ed${t.feito ? " feito" : ""}" data-t="${esc(t.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Plano feito")}"${t.feito ? " checked" : ""}><input data-c="texto" placeholder="${tr("Descreva o plano")}" aria-label="${tr("Texto do plano")}" value="${esc(t.texto)}"><input data-c="horas" type="number" min="0.5" max="16" step="0.5" placeholder="h" aria-label="${tr("Horas estimadas do plano")}" title="${tr("Estimativa de trabalho do agente, em horas")}" value="${t.horas ?? ""}"><button class="x" data-act="del-plano" type="button" aria-label="${tr("Excluir plano")}">×</button></div>`;
+  return `<div class="item-ed${t.feito ? " feito" : ""}" data-t="${esc(t.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Plano feito")}"${t.feito ? " checked" : ""}><input data-c="texto" placeholder="${tr("Descreva o plano")}" aria-label="${tr("Texto do plano")}" value="${esc(t.texto)}"><input data-c="horas" type="number" min="0.5" max="16" step="0.5" placeholder="h" aria-label="${tr("Horas estimadas do plano")}" title="${tr("Estimativa de trabalho do agente, em horas")}" value="${t.horas ?? ""}">${responsavelSeletor(t)}<button class="x" data-act="del-plano" type="button" aria-label="${tr("Excluir plano")}">×</button></div>`;
 }
 function htmlCheckpoint(m) {
   return `<div class="checkpoint-ed" data-m="${esc(m.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Checkpoint feito")}"${m.feito ? " checked" : ""}><input data-c="nome" placeholder="${tr("Nome do checkpoint")}" aria-label="${tr("Nome do checkpoint")}" value="${esc(m.nome)}"><input type="date" data-c="data" aria-label="${tr("Data do checkpoint")}" value="${esc(m.data)}"><button class="x" data-act="del-checkpoint" type="button" aria-label="${tr("Excluir checkpoint")}">×</button></div>`;
@@ -24,6 +24,7 @@ function htmlDetBlueprint(p, pi) {
   <label class="f grande">${tr("Nome do blueprint")}<input data-c="nome" value="${esc(p.nome)}" placeholder="${tr("Nome do blueprint")}"></label>
   <div class="card"><h3>${tr("Descrição e observações")}</h3><div class="campos"><label class="f">${tr("Descrição curta")}<input data-c="descricao" value="${esc(p.descricao)}" placeholder="${tr("Para que serve este blueprint")}"></label><label class="f">${tr("Observações do blueprint")}<textarea data-c="obs" placeholder="${tr("Anotações gerais, decisões, riscos…")}">${esc(p.obs)}</textarea></label></div></div>
   <div class="card" data-pasta-blueprint><h3>${tr("Pasta do projeto")}</h3><p role="status">${tr("Carregando vínculo…")}</p></div>
+  <div class="card" data-repositorio><h3>${tr("Repositório GitHub")}</h3></div>
   <div class="card"><h3>${tr("Marca da folha")}<small>${p.emblema ? tr("{n} peças", { n: p.emblema.pecas.length }) : tr("sem marca")}</small></h3><div class="marca-previa">${p.emblema ? previaMarca(p.emblema.pecas, 330, 230, progressoDe(p)) : `<p class="vazio">${tr("Este blueprint ainda não tem marca. A IA desenha uma marca para o blueprint.")}</p>`}</div>${p.emblema ? '<label class="f" style="margin-top:8px">' + tr("Prévia do progresso da marca") + '<input type="range" min="0" max="100" step="5" data-prev-marca value="' + Math.round(progressoDe(p) * 100) + '"></label>' : ""}<div class="acoes">${p.emblema ? '<button class="btn mini perigo" data-act="marca-remover" type="button">' + tr("Remover marca") + '</button>' : ""}</div></div>
   ${htmlProjetosEd(p)}
   ${htmlDecisoesEd(p)}
@@ -79,6 +80,7 @@ function montaManual() {
   const pi = D.blueprints.indexOf(p), f = edSel === "blueprint" ? null : acaoEd(p);
   det.innerHTML = f ? htmlDetAcao(p, pi, f, p.acoes.indexOf(f)) : htmlDetBlueprint(p, pi);
   if (!f) import("/web/js/pastas.js").then((m) => m.editorPasta(det.querySelector("[data-pasta-blueprint]"), workspaceAtual?.id, p.id));
+  if (!f) import("/web/js/repositorio.js").then((m) => m.editorRepositorio(det.querySelector("[data-repositorio]"), p)); // repositorio.js: o card do repositório GitHub
   det.dataset.chave = edSel + p.id; // não pode se chamar data-sel: o clique da lista de ações procura esse atributo
   det.scrollTop = mesma ? topo : 0;
   det.querySelectorAll(".link-ed").forEach(validarLink);
@@ -119,6 +121,7 @@ pm.addEventListener("input", (e) => {
   const item = el.closest(".item-ed"), checkpoint = el.closest(".checkpoint-ed");
   if (item) {
     const plano = f.planos.find((x) => x.id === item.dataset.t);
+    if (c === "responsavel") { responsavelAtribui(plano, val); return mudou(); }
     if (c === "horas") { const n = Number(val); if (val === "" || !(n >= 0.5 && n <= 16)) delete plano.horas; else plano.horas = n; return mudou(); }
     plano[c] = val;
     if (c === "feito") { item.classList.toggle("feito", val); refrescaAcao(f); }

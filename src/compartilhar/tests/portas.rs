@@ -18,9 +18,13 @@ const SO_LOCAIS: &[(&str, &str)] = &[
     ("POST", "/api/mcp/hook/sessao"),
     ("POST", "/api/mcp/hook/edicao"),
     ("POST", "/api/mcp/hook/parada"),
+    ("POST", "/api/repositorio/verificar"),
+    ("POST", "/api/repositorio/configurar"),
     ("GET", "/api/compartilhar"),
     ("POST", "/api/compartilhar/ligar"),
     ("POST", "/api/compartilhar/desligar"),
+    ("GET", "/api/equipes"),
+    ("POST", "/api/equipes/abrir"),
     ("PUT", "/api/dados"),
 ];
 

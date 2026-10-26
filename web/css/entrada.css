@@ -61,3 +61,4 @@ body.na-entrada #folha,body.na-entrada #rolagem,body.na-entrada #dica-f11,body.s
 @media(max-width:820px){.ws-grade{grid-template-columns:minmax(0,1fr)}.ws-previa{position:static;order:-1}}
 #workspace-manual .card{margin:auto}#workspace-manual .card>h3{text-align:center}
 #workspace-manual-acoes{justify-content:center}
+.blueprint-cartao[data-equipe-abrir]{cursor:pointer}.blueprint-cartao footer .btn{padding:2px 8px;font-size:11px;line-height:1.4}

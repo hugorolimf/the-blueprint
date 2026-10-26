@@ -21,13 +21,34 @@ fn separa_canal(extras: &[String]) -> (bool, Vec<String>) {
     (canal, resto)
 }
 
+/// `--equipe` (em qualquer posição) também não é do Claude: abre a sessão do convidado, que usa o plugin `blueprint-equipe` já instalado pelo `blueprint conectar`
+/// (docs/app-no-projeto-compartilhado.md). Sem o plugin local nem o canal: eles falam com o app desta máquina, que não é o dono dos dados do workspace compartilhado.
+fn separa_equipe(extras: &[String]) -> (bool, Vec<String>) {
+    (extras.iter().any(|e| e == "--equipe"), extras.iter().filter(|e| *e != "--equipe").cloned().collect())
+}
+
+/// Os argumentos do `claude` do convidado: só o nome da sessão e o que veio na linha (o prompt).
+fn argumentos_da_equipe(extras: &[String]) -> Vec<OsString> {
+    ["--name", "The Blueprint"].into_iter().map(OsString::from).chain(extras.iter().map(OsString::from)).collect()
+}
+
 pub(super) fn executar(extras: &[String]) -> i32 {
-    let (canal, extras) = separa_canal(extras);
+    let (equipe, extras) = separa_equipe(extras);
+    let (canal, extras) = separa_canal(&extras);
     let extras = extras.as_slice();
     let Some(cli) = crate::registrar::procurar("claude") else {
         eprintln!("erro: Claude Code não encontrado no PATH");
         return 1;
     };
+    if equipe {
+        return match Command::new(cli).args(argumentos_da_equipe(extras)).status() {
+            Ok(status) => status.code().unwrap_or(1),
+            Err(e) => {
+                eprintln!("erro: não consegui iniciar Claude Code: {e}");
+                1
+            }
+        };
+    }
     let exe = match std::env::current_exe() {
         Ok(e) => e,
         Err(e) => {
@@ -124,12 +145,12 @@ fn tem_linha_blueprint(cwd: &Path) -> bool {
 /// do convidado também usa: o app remoto não conhece as pastas desta máquina).
 pub(crate) fn blueprint_da_pasta(cwd: &Path) -> Option<(String, String)> {
     cwd.ancestors().find_map(|pasta| {
-        ["CLAUDE.md", "AGENTS.md"].iter().find_map(|nome| fs::read_to_string(pasta.join(nome)).ok()?.lines().find_map(ids_da_linha))
+        ["CLAUDE.local.md", "CLAUDE.md", "AGENTS.md"].iter().find_map(|nome| fs::read_to_string(pasta.join(nome)).ok()?.lines().find_map(ids_da_linha))
     })
 }
 
 /// Aceita os ids com ou sem crase (`Blueprint: workspace_id `a`, blueprint_id `b`` ou `Blueprint: workspace_id a, blueprint_id b`).
-fn ids_da_linha(linha: &str) -> Option<(String, String)> {
+pub(crate) fn ids_da_linha(linha: &str) -> Option<(String, String)> {
     let resto = linha.trim().strip_prefix("Blueprint: workspace_id ")?;
     let (workspace, resto) = resto.split_once(", blueprint_id ")?;
     let limpo = |s: &str| s.trim().trim_matches('`').to_string();
@@ -172,6 +193,18 @@ mod tests {
             .unwrap()
             .as_nanos();
         std::env::temp_dir().join(format!("blueprint-claude-{}-{id}", std::process::id()))
+    }
+
+    #[test]
+    fn a_flag_equipe_abre_o_claude_do_convidado_sem_plugin_local_nem_canal() {
+        let entrada: Vec<String> = ["Execute a ação 1", "--equipe"].map(String::from).to_vec();
+        let (equipe, resto) = separa_equipe(&entrada);
+        assert!(equipe);
+        assert_eq!(resto, vec!["Execute a ação 1".to_string()]);
+        let args: Vec<String> = argumentos_da_equipe(&resto).iter().map(|a| a.to_string_lossy().into_owned()).collect();
+        assert_eq!(args, ["--name", "The Blueprint", "Execute a ação 1"]);
+        assert!(!args.iter().any(|a| a.contains("plugin") || a.contains("channel")), "{args:?}");
+        assert_eq!(separa_equipe(&["x".to_string()]), (false, vec!["x".to_string()]));
     }
 
     #[test]

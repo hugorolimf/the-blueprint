@@ -56,6 +56,7 @@ function itensDoContexto(alvo) {
   if (plano) {
     const feito = plano.getAttribute("aria-checked") === "true";
     add("estado", feito ? "circulo" : "check", feito ? "Marcar como pendente" : "Marcar como feito", () => alternarItem(plano.dataset.p, plano.dataset.f, plano.dataset.tipo, plano.dataset.id));
+    if (plano.dataset.tipo === "t") for (const { icone, rotulo, fn } of itensDeResponsavel(plano.dataset.p, plano.dataset.f, plano.dataset.id)) add("editar", icone, rotulo, fn); // responsavel-logica.js (só no modo hospedado)
     if (plano.dataset.tipo === "t") add("estado", "doc", tr("Enviar comentário ao agente…"), () => enviarComentarioAoAgente(plano.dataset.p, plano.dataset.f, plano.dataset.id)); // comentario-agente.js
     const noPlano = plano.dataset.tipo === "t" && agentesAtivos().find((a) => a.planoId === plano.dataset.id); // o agente que trabalha neste plano, se houver
     if (noPlano) add("abrir", "alvo", tr("Acompanhar este agente"), () => focoAbre(noPlano.agente)); // foco.js

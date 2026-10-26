@@ -2,6 +2,7 @@
 //! (porte de mcp-roadmap.mjs). Aqui nada grava no banco: a página aplica o que chega e só então algo muda.
 pub mod acoes;
 mod ajuste;
+mod argumentos;
 pub mod atividade;
 pub(crate) mod cliente;
 mod cliente_curl;
@@ -12,11 +13,13 @@ pub(crate) mod equipe;
 mod eventos;
 pub(crate) mod fila;
 mod hooks;
+pub(crate) mod http;
 mod hooks_estado;
 pub(crate) mod iniciar;
 mod lembrete;
 mod linha_do_tempo;
 mod membro;
+pub(crate) mod pasta_local;
 mod registro;
 pub mod pendentes;
 pub(crate) mod permissao;

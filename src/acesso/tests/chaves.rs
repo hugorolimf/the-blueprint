@@ -25,6 +25,10 @@ fn o_agente_do_colaborador_grava_com_a_chave_dele() {
     assert_eq!(g["prefixo"].as_str(), Some(&chave[..8]));
     assert!(g["comandos"]["claude"].as_str().unwrap().contains("--env BLUEPRINT_URL=https://equipe.teste --env BLUEPRINT_CHAVE=bpk_"));
     assert!(g["comandos"]["codex"].as_str().unwrap().starts_with("codex mcp add blueprint-equipe"));
+    let http = |k: &str| g["comandos"][k].as_str().unwrap().to_string();
+    assert_eq!(http("claude_http"), "claude mcp add --transport http --scope user blueprint-equipe https://equipe.teste/mcp --header 'Authorization: Bearer ${BLUEPRINT_CHAVE}'");
+    assert!(http("codex_http").contains("url = \"https://equipe.teste/mcp\"") && http("codex_http").contains("bearer_token_env_var = \"BLUEPRINT_CHAVE\""));
+    assert!(http("variavel").contains(&chave) && !http("claude_http").contains(&chave) && !http("codex_http").contains(&chave), "a chave só aparece no comando da variável");
     assert_eq!(g["comandos"]["conectar"].as_str(), Some(format!("blueprint conectar https://equipe.teste {chave}").as_str()));
     let r = despachar(&e, &do_agente("POST", "/api/mcp/evento", &chave, Some(json!({"tipo": "progresso", "workspaceId": "w2", "blueprintId": "p9", "texto": "pelo agente"}))));
     assert_eq!(r.status, 200, "{}", String::from_utf8_lossy(r.bytes()));

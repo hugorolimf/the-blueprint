@@ -11,9 +11,10 @@ export const ESTADOS = ["desligado", "baixando", "ligando", "ligado", "erro"];
 export function normalizar(j) {
   const estado = ESTADOS.includes(j?.estado) ? j.estado : "erro";
   const workspaces = Array.isArray(j?.workspaces) ? j.workspaces.map(String) : j?.workspaceId ? [String(j.workspaceId)] : [];
-  return { estado, url: String(j?.url || ""), workspaces, erro: String(j?.erro || "") };
+  return { estado, url: String(j?.url || ""), workspaces, erro: String(j?.erro || ""), provedor: j?.provedor === "fixo" ? "fixo" : "temporario" };
 }
-export const corpoDoLigar = (workspaceId) => (workspaceId ? { workspaceId } : { erro: "falta-workspace" });
+// `provedor` só vai no corpo quando a pessoa escolheu (o servidor guarda a escolha e a usa nas próximas vezes): "fixo" = Tailscale Funnel, "temporario" = Cloudflare
+export const corpoDoLigar = (workspaceId, provedor) => (workspaceId ? (provedor === "fixo" || provedor === "temporario" ? { workspaceId, provedor } : { workspaceId }) : { erro: "falta-workspace" });
 // o que a tela mostra, sempre sobre o workspace aberto: título, texto (lido pelo leitor de tela), o botão (ligar, desligar, cancelar ou
 // nenhum), a barra de progresso e o endereço. Vários workspaces dividem o mesmo túnel; cada convidado só vê o workspace do convite.
 export function vistaDoEstado(s, wsAberto, nomeDe = (id) => id) {
@@ -31,7 +32,7 @@ export function vistaDoEstado(s, wsAberto, nomeDe = (id) => id) {
 const ROTULO = { ligar: () => tr("Ligar"), desligar: () => tr("Desligar"), cancelar: () => tr("Cancelar") };
 const nomeDoWorkspace = (id) => workspacesDe(arquivo).find((w) => w.id === id)?.nome || id;
 
-let estado = normalizar({ estado: "desligado" }), wsAberto = "", relogio = 0, equipeDe = "";
+let estado = normalizar({ estado: "desligado" }), wsAberto = "", relogio = 0, equipeDe = "", escolhaManual = false;
 export async function abrirCompartilhar() {
   wsAberto = workspaceAtual?.id || "sm";
   equipeDe = "";
@@ -40,10 +41,17 @@ export async function abrirCompartilhar() {
     <div role="status" aria-live="polite" aria-atomic="true"><h4 id="cp-titulo"></h4><p id="cp-texto"></p></div>
     <progress class="cp-progresso" id="cp-progresso" aria-label="${esc(tr("Ligando o compartilhamento"))}" hidden></progress>
     <div class="eq-link" id="cp-endereco" hidden></div>
-    <p class="eq-dica">${tr("O app precisa ficar aberto enquanto as pessoas usam. O endereço muda a cada vez que você liga: depois de religar, mande os links de novo.")}</p>
+    <fieldset class="cp-endereco-tipo" id="cp-tipo"><legend>${tr("Endereço")}</legend>
+      <label><input type="radio" name="cp-tipo" value="temporario"> <span>${tr("Temporário")}</span> <small>${tr("Cloudflare, sem conta. O endereço muda a cada vez que você liga: depois de religar, mande os links de novo.")}</small></label>
+      <label><input type="radio" name="cp-tipo" value="fixo"> <span>${tr("Fixo")}</span> <small>${tr("Tailscale Funnel: o mesmo endereço sempre, então os links e as sessões continuam valendo. Precisa do Tailscale instalado e conectado, com HTTPS e o Funnel ligados na sua tailnet; o app não guarda senha nem chave.")}</small></label>
+    </fieldset>
+    <p class="eq-dica" id="cp-dica">${tr("O app precisa ficar aberto enquanto as pessoas usam.")}</p>
+    <p class="eq-dica" id="cp-troca" role="status" hidden></p>
     <div class="eq-acoes"><button class="btn cheio" type="button" id="cp-botao"></button></div>
   </section><div id="cp-equipe"></div>`;
   $("cp-botao").onclick = alternar;
+  escolhaManual = false;
+  for (const r of document.querySelectorAll('input[name="cp-tipo"]')) r.addEventListener("change", () => { escolhaManual = true; avisoDaTroca(); });
   if (!$("equipe").open) $("equipe").showModal();
   $("equipe").addEventListener("close", () => { clearTimeout(relogio); equipeDe = ""; }, { once: true });
   await atualizar();
@@ -52,6 +60,13 @@ export async function abrirCompartilhar() {
 // o SSE avisou: só redesenha com o diálogo do Compartilhar aberto
 export function compartilharMudou(j) {
   if ($("equipe").open && $("cp-botao")) j && j.estado ? mostrar(normalizar(j)) : atualizar();
+}
+// trocar o tipo de endereço muda o endereço: os links e as sessões do endereço antigo não valem no novo (o navegador não leva o cookie para outro endereço)
+function avisoDaTroca() {
+  const escolhido = document.querySelector('input[name="cp-tipo"]:checked')?.value, el = $("cp-troca");
+  if (!el) return;
+  el.hidden = !(escolhaManual && escolhido && escolhido !== estado.provedor);
+  el.textContent = el.hidden ? "" : tr("Trocar o tipo de endereço muda o endereço: quem já entrou precisa de um link de convite novo uma vez (e o comando blueprint conectar do Claude dessa pessoa, rodado de novo). Depois, no fixo, o endereço não muda mais.");
 }
 async function atualizar() {
   try { mostrar(normalizar(await equipeApi("/api/compartilhar"))); }
@@ -68,6 +83,11 @@ function mostrar(s) {
   b.dataset.acao = v.botao;
   b.textContent = v.botao ? ROTULO[v.botao]() : "";
   b.className = v.botao === "ligar" ? "btn cheio" : "btn perigo";
+  // a escolha do endereço só muda com o compartilhamento desligado (ou em erro): ligado, o endereço é o que está em uso
+  const livre = s.estado === "desligado" || s.estado === "erro";
+  for (const r of document.querySelectorAll('input[name="cp-tipo"]')) { r.disabled = !livre; if (!livre || !escolhaManual) r.checked = r.value === s.provedor; }
+  avisoDaTroca();
+  $("cp-dica").textContent = s.provedor === "fixo" ? tr("O app precisa ficar aberto enquanto as pessoas usam. O endereço é fixo: não precisa mandar os links de novo.") : tr("O app precisa ficar aberto enquanto as pessoas usam. O endereço muda a cada vez que você liga: depois de religar, mande os links de novo.");
   const caixa = $("cp-endereco");
   caixa.hidden = !v.url;
   if (v.url && caixa.dataset.url !== v.url) {
@@ -94,7 +114,8 @@ async function alternar() {
   b.disabled = true;
   try {
     // cancelar (baixando ou ligando) desliga tudo; desligar tira só o workspace aberto
-    const j = acao === "ligar" ? await equipeApi("/api/compartilhar/ligar", corpoDoLigar(wsAberto)) : await equipeApi("/api/compartilhar/desligar", acao === "desligar" ? { workspaceId: wsAberto } : {});
+    const escolhido = document.querySelector('input[name="cp-tipo"]:checked')?.value;
+    const j = acao === "ligar" ? await equipeApi("/api/compartilhar/ligar", corpoDoLigar(wsAberto, escolhaManual ? escolhido : undefined)) : await equipeApi("/api/compartilhar/desligar", acao === "desligar" ? { workspaceId: wsAberto } : {});
     j && j.estado ? mostrar(normalizar(j)) : await atualizar();
   } catch (e) { mostrar({ ...estado, estado: "erro", erro: e.message }); }
   finally { b.disabled = false; }

@@ -112,7 +112,7 @@ fn liga_com_o_tunel_falso_atende_convidados_e_desligar_fecha_a_porta() {
     assert!(texto.contains("transfer-encoding: chunked") && texto.contains("event: mudancas") && texto.ends_with("0\r\n\r\n"), "{texto}");
     // desligar: o túnel cai e a porta fecha
     let r = pela_porta_local(&e, &local("POST", "/api/compartilhar/desligar", Some(json!({}))));
-    assert_eq!(json_de(&r), json!({"estado": "desligado"}));
+    assert_eq!(json_de(&r)["estado"], "desligado");
     assert!(porta_fechada(porta), "a porta dos convidados continuou aberta");
     let _ = std::fs::remove_dir_all(&dir);
 }

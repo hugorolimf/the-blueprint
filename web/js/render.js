@@ -6,6 +6,8 @@ function render() {
   workspaceAtual = workspaceDaRota(arquivo, location.hash);
   D = workspaceAtual?.dados || arquivo;
   mcpWorkspaceMudou();
+  responsavelCarrega(); // responsavel-logica.js: as pessoas do workspace, para atribuir planos
+  repositorioAoAbrir(); // repositorio-logica.js: o aviso Configurar projeto, só quando o blueprint aberto muda
   const criandoWorkspace = location.hash === "#/workspace/novo";
   $("workspace-nova").hidden = !criandoWorkspace;
   document.body.classList.toggle("criando-workspace", criandoWorkspace);
@@ -22,6 +24,8 @@ function render() {
   const acoesTodas = (foco ? [foco] : D.blueprints).flatMap(foco ? acoesVisiveis : acoesDe);
   $("periodo-pendentes").setAttribute("aria-pressed", String(!!(foco && soPendentes[foco.id])));
   $("periodo-andamento").setAttribute("aria-pressed", String(!!(foco && soAndamento[foco.id])));
+  $("periodo-meus").hidden = !responsavelAtivo(); // só no modo hospedado, para quem grava
+  $("periodo-meus").setAttribute("aria-pressed", String(!!(foco && soMeus[foco.id])));
   $("periodo-andamento-n").textContent = foco ? agentesDoBlueprint(foco.id).length : 0; // quantos agentes trabalham neste blueprint ("0" se nenhum)
   const janela = janelaPeriodo(acoesTodas, hoje, foco ? periodos[tela] : null);
   const { t0, t1 } = janela;
@@ -62,7 +66,7 @@ function render() {
     $("entrada-blueprints").innerHTML = workspaces.map((c) => {
       const pecas = pecasWorkspace(c, EMB);
       return `<a class="blueprint-cartao" data-workspace="${esc(c.id)}" draggable="false" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown" title="${esc(tr("Arraste para reordenar · Alt + setas no teclado"))}" href="#/c/${encodeURIComponent(c.id)}"><span class="cartao-tipo">${tr("Workspace")}</span><div class="cartao-arte" aria-hidden="true">${pecas ? previaMarca(pecas, 280, 120) : ""}</div><h2 title="${esc(c.nome)}">${esc(c.nome)}</h2><p title="${esc(c.dados.descricao || tr("Blueprints e planejamento do workspace"))}">${esc(c.dados.descricao || tr("Blueprints e planejamento do workspace"))}</p><footer><span>${trn(c.dados.blueprints.length, ["{n} blueprint", "{n} blueprints"])}</span><span>${tr("Abrir espaço →")}</span></footer></a>`;
-    }).join("") + `<button class="blueprint-cartao cartao-adicionar" type="button" data-adicionar-workspace><span class="mais" aria-hidden="true">+</span><strong>${tr("Criar workspace")}</strong><span>${tr("Um espaço para agrupar blueprints.")}</span></button>`;
+    }).join("") + equipesCartoes() + `<button class="blueprint-cartao cartao-adicionar" type="button" data-adicionar-workspace><span class="mais" aria-hidden="true">+</span><strong>${tr("Criar workspace")}</strong><span>${tr("Um espaço para agrupar blueprints.")}</span></button>`;
     host.innerHTML = "";
     abrirEntrada();
     return;
@@ -95,7 +99,7 @@ function render() {
       return { ...f, rotulo, x0, x1, bw, bx0, lx, lw: w, bx, blockW, alt: ncol ? 100 + 34 + Math.max(nt, nm) * 22 + 44 : RH };
     });
     const medida = (aberto) => ({ aberto, RH, PH, FOLGA, de: aberto ? (f) => Math.min(f.lx, f.bx, f.bx0) : (f) => f.x0, ate: aberto ? (f) => Math.max(f.lx + f.lw, f.bx0 + f.bw + 56, f.bx + f.blockW) + 24 : (f) => f.x1 + 6 });
-    const grupos = gruposDoBlueprint(p, acoes, acoesDe(p)), filtrando = soPendentes[p.id] || soAndamento[p.id], GAP_SECAO = 28, secoes = [];
+    const grupos = gruposDoBlueprint(p, acoes, acoesDe(p)), filtrando = soPendentes[p.id] || soAndamento[p.id] || soMeus[p.id], GAP_SECAO = 28, secoes = [];
     let ys = y0;
     const poe = (sec) => { const disp = disposicaoFolha(sec.acoes, medida(sec.aberto)); secoes.push({ ...sec, ...disp, y: ys }); ys += disp.alto - FOLGA + GAP_SECAO; };
     if (!grupos) poe({ p, pi, numero: pad(pi + 1), nome: p.nome, descricao: p.descricao, total: p.acoes.length, obs: p.obs, links: p.links, aberto: abertos[p.id] === true, toggle: `data-toggle="${esc(p.id)}"`, acoes, ...resumo(acoesDe(p)) });

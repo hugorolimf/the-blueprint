@@ -13,7 +13,7 @@ pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
     match (metodo, caminho) {
         ("PUT", "/api/dados") => LIMITE_DADOS,
         ("POST", "/api/mudancas") => LIMITE_MUDANCAS,
-        (_, "/api/mcp/prototipo") => LIMITE_PROTOTIPO,
+        (_, "/api/mcp/prototipo" | "/mcp") => LIMITE_PROTOTIPO, // /mcp também leva anexar_prototipo
         _ => LIMITE_PADRAO,
     }
 }
@@ -72,14 +72,23 @@ fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     if crate::acesso::rotas::eh_rota(caminho) {
         return crate::acesso::rotas::rota(estado, pedido, ctx);
     }
+    if caminho == "/mcp" {
+        return crate::mcp::http::rota(estado, pedido, ctx); // o MCP por HTTP: só para convidado e modo hospedado
+    }
     if caminho.starts_with("/api/mcp/") {
         return crate::mcp::rotas::rota_com(&estado.mcp, &estado.dados, pedido, ctx);
     }
     if caminho.starts_with("/api/terminal/") {
         return crate::terminal::rotas::rota(estado, pedido);
     }
+    if caminho.starts_with("/api/repositorio/") {
+        return crate::repositorio::rotas::rota(estado, pedido);
+    }
     if caminho.starts_with("/api/atualizacao") {
         return super::atualizacao::rota(estado, pedido);
+    }
+    if caminho == "/api/equipes" || caminho.starts_with("/api/equipes/") {
+        return super::equipes::rota(estado, pedido);
     }
     if caminho == "/api/compartilhar" || caminho.starts_with("/api/compartilhar/") {
         return crate::compartilhar::rotas::rota(estado, pedido);

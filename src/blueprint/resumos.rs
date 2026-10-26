@@ -3,7 +3,7 @@
 use super::datas::ms_do_iso;
 use super::decisoes::{decisoes_do, resumo_das_decisoes};
 use super::projetos::{nome_do_projeto, projetos_do};
-use super::texto::{lista, str_de, verdade};
+use super::texto::{lista, str_de, truncar, verdade};
 use serde_json::{json, Map, Value};
 
 /// copia as chaves que existirem em `de` (o JS deixava de fora as `undefined`)
@@ -35,7 +35,7 @@ fn acao_completa(p: &Value, f: &Value) -> Value {
         o.insert("projeto".into(), Value::String(projeto));
     }
     o.insert("observacao".into(), Value::String(str_de(f, "obs")));
-    o.insert("planos".into(), Value::Array(itens(f, "planos", &["id", "texto", "horas"], true)));
+    o.insert("planos".into(), Value::Array(itens(f, "planos", &["id", "texto", "horas", "responsavel"], true)));
     let checkpoints = lista(f.get("checkpoints")).iter().map(|m| {
         let mut c = pegar(m, &["id", "nome", "data"]);
         c.insert("feito".into(), Value::Bool(marcado(m)));
@@ -75,7 +75,7 @@ pub fn estrutura_blueprint(p: &Value) -> Value {
         if let Some(projeto) = nome_do_projeto(p, f) {
             o.insert("projeto".into(), Value::String(projeto));
         }
-        o.insert("planos".into(), Value::Array(lista(f.get("planos")).iter().map(|t| marca(t, pegar(t, &["id", "texto", "horas"]))).collect()));
+        o.insert("planos".into(), Value::Array(lista(f.get("planos")).iter().map(|t| marca(t, pegar(t, &["id", "texto", "horas", "responsavel"]))).collect()));
         o.insert("checkpoints".into(), Value::Array(lista(f.get("checkpoints")).iter().map(|m| marca(m, pegar(m, &["id", "nome", "data"]))).collect()));
         Value::Object(o)
     });
@@ -88,6 +88,9 @@ pub fn estrutura_blueprint(p: &Value) -> Value {
     }
     if !decisoes_do(p).is_empty() {
         o.insert("decisoes".into(), Value::Array(resumo_das_decisoes(p)));
+    }
+    if let Some(url) = p.pointer("/repositorio/url").and_then(Value::as_str).filter(|u| !u.is_empty()) {
+        o.insert("repositorio".into(), json!({"url": truncar(url, 200)})); // como foi guardada: quem roda algo com ela valida antes (src/repositorio)
     }
     if let Some(real) = tempo_real(p) {
         o.insert("tempoReal".into(), real);

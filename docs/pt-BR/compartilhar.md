@@ -90,12 +90,28 @@ lembrete no fim do turno) chegam ao app do dono: o dono vê o Claude do convidad
 - **Binário de terceiro.** O `cloudflared` roda em versão e SHA-256 fixos; arquivo que não bate é apagado e recusado. Roda com
   `--no-autoupdate`, sem janela de console, e morre junto com o app.
 
-## Endereço fixo no futuro
+## Endereço fixo
 
-- **Cloudflare com domínio próprio:** um túnel nomeado (conta grátis da Cloudflare e um domínio nela) dá um endereço estável e entrega o ao
-  vivo em fluxo normalmente.
-- **Tailscale Funnel:** um endereço `*.ts.net` estável, para quem já usa o Tailscale.
-- **Um servidor de equipe:** `blueprint serve --hospedar` numa máquina pequena que fica ligada ([guia de hospedagem](hospedar.md)).
+No diálogo Compartilhar, **Endereço** tem duas opções (a escolha fica guardada para a próxima vez e só muda com o compartilhamento desligado):
+
+- **Temporário** (padrão): quick tunnel da Cloudflare, sem conta. O endereço muda a cada vez que você liga.
+- **Fixo**: Tailscale Funnel. O endereço é `https://<seu-dispositivo>.<sua-tailnet>.ts.net` e nunca muda, então os links de convite, as sessões e o Claude dos convidados (`blueprint conectar`) continuam valendo depois de desligar e ligar. Precisa do Tailscale instalado e conectado, MagicDNS e certificados HTTPS ligados e o atributo `funnel` liberado para o seu dispositivo na política da tailnet ([requisitos do Funnel](https://tailscale.com/kb/1223/funnel)). O app não guarda senha nem chave: roda o seu próprio `tailscale`. Ele confere `tailscale status --json` (conectado e o nome `.ts.net`), escolhe a primeira porta livre do Funnel entre 443, 8443 e 10000 em `tailscale serve status --json` (nunca toma uma porta que você já usa) e mantém `tailscale funnel --https=<porta> http://127.0.0.1:<porta dos convidados>` rodando em primeiro plano, dentro de um Job Object: fechar o app fecha o Funnel (um Funnel com `--bg` ficaria apontando para a porta depois de uma queda). O endereço que o comando imprime tem de ser o deste dispositivo, senão o compartilhamento para com um erro.
+
+Trocar de um tipo para o outro muda o endereço: quem já entrou precisa de um link de convite novo uma vez (e de rodar `blueprint conectar` de novo). O navegador não leva o cookie de sessão para outro endereço, então isso não tem como evitar.
+
+Conferido em 2026-10-26:
+
+| | Temporário (quick tunnel da Cloudflare) | Fixo (Tailscale Funnel) | Túnel nomeado da Cloudflare (fora do app) |
+| --- | --- | --- | --- |
+| Conta | nenhuma | conta Tailscale | conta Cloudflare e um domínio na Cloudflare |
+| Endereço | muda a cada vez | `*.ts.net` fixo | o seu próprio nome |
+| Portas | qualquer | só 443, 8443 e 10000 | qualquer |
+| Limites | "para testes e desenvolvimento", sem garantia de disponibilidade, 200 pedidos em andamento (os demais levam 429), sem Server-Sent Events (o app contorna, veja abaixo) | "limites de banda não configuráveis", só TLS | os termos do plano Free restringem servir arquivos grandes e vídeo |
+| Fonte | [quick tunnels da Cloudflare](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/do-more-with-tunnels/trycloudflare/) | [Tailscale Funnel](https://tailscale.com/kb/1223/funnel), [comando funnel](https://tailscale.com/kb/1311/tailscale-funnel) | [criar um túnel remoto](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/create-remote-tunnel/), [FAQ do Tunnel](https://developers.cloudflare.com/cloudflare-one/faq/cloudflare-tunnels-faq/) |
+
+O quick tunnel não entrega Server-Sent Events como fluxo ao vivo, então na porta dos convidados cada conexão de atualização ao vivo fecha depois do primeiro evento e o navegador reconecta com `Last-Event-ID` (medido: 41 eventos chegaram juntos depois de 42 s). O Tailscale Funnel não tem esse limite. O túnel nomeado da Cloudflare fica fora do app de propósito: pede um domínio, a configuração no painel e um token, o que é mais que "ligar". Se você usa um, rode-o por conta própria apontando para `blueprint serve --hospedar` ([guia de hospedagem](hospedar.md)). Código: `src/compartilhar/tailscale.rs`, `provedor.rs`; testes: `cargo test compartilhar` e `node scripts/endereco-fixo-e2e.mjs`.
+
+- **Um servidor da equipe:** `blueprint serve --hospedar` numa máquina pequena que fica ligada ([guia de hospedagem](hospedar.md)).
 
 ## Para desenvolvedores
 
@@ -109,3 +125,29 @@ Cada mudança de estado também chega à página como o evento `compartilhar` em
 usam as rotas do modo hospedado (`/api/convites`, `/api/pessoas`), chamadas pela página local enquanto compartilha; os links saem com o
 endereço do túnel. `BLUEPRINT_TUNEL_COMANDO=<programa>` troca o `cloudflared` por um falso que imprime uma linha
 `https://<palavras-com-hífen>.trycloudflare.com` na saída de erro (testes e verificações de ponta a ponta, sem rede). Código: `src/compartilhar/`.
+
+## Voltar à equipe depois de fechar o app (convidado)
+
+A sessão do convidado é o cookie da janela da equipe (30 dias, perfil persistente do WebView2), mas o link de convite é de uso único: sem um registro local, depois de fechar o app não havia como abrir a janela da equipe de novo. Agora a página da equipe informa ao app (IPC `equipe`) o nome da pessoa e os workspaces que ela vê, e o app guarda só isso em `%APPDATA%\Blueprint\equipes.json` (`src/equipes.rs`; nunca o convite nem o cookie). A tela de workspaces mostra um cartão "Equipe" por equipe lembrada; o clique chama `POST /api/equipes/abrir`, que só aceita uma origem já lembrada e abre a janela da equipe, onde a sessão continua. `Tirar da lista` esquece a equipe (`/api/equipes/esquecer`). Rotas só locais; teste: `node scripts/equipes-locais-e2e.mjs`.
+
+Limite: o endereço do quick tunnel muda cada vez que o anfitrião religa o compartilhamento, e o cookie vale só para o endereço antigo. Nesse caso o cartão abre uma tela "Entre pelo link de convite" e o convidado precisa de um convite novo; endereço fixo é a ação seguinte.
+
+## MCP remoto por HTTP (sem instalar o app)
+
+Quem foi convidado liga o Claude Code ou o Codex **sem instalar o The Blueprint**: o servidor (modo hospedado e porta dos convidados do Compartilhar) atende `POST /mcp`, o transporte "Streamable HTTP" do MCP, com a chave do membro em `Authorization: Bearer bpk_...` e as mesmas ferramentas e instruções do `blueprint --mcp`. A tela Minha chave mostra os comandos.
+
+Decisões (conferidas em 2026-10-26 nas fontes abaixo):
+
+| Ponto | Decisão | Fonte |
+| --- | --- | --- |
+| Endereço | um caminho só, `/mcp`, só POST; GET e DELETE dão 405 (a especificação permite servidor sem fluxo SSE e sem encerrar sessão) | [Transportes do MCP, 2025-06-18](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports) |
+| Respostas | pedido recebe um objeto `application/json`; notificação recebe `202` sem corpo; sem lotes | idem |
+| Sessão | nenhuma (`Mcp-Session-Id` é opcional); cada pedido leva a chave | idem |
+| Versão | `MCP-Protocol-Version`, se vier, tem de ser 2025-06-18, 2025-03-26 ou 2024-11-05, senão 400 | idem |
+| Origin | pedido com cabeçalho `Origin` (navegador) leva 403, pelo aviso de DNS rebinding | idem |
+| Autenticação | chave `Bearer`; sem OAuth e sem `WWW-Authenticate`, para o cliente usar o cabeçalho. `initialize`, `ping` e `tools/list` respondem sem chave (a descrição pública do servidor: o pré-teste de conexão do Claude Code não manda o cabeçalho e trata 401 como fatal); `tools/call` sem chave é 401; chave inválida ou revogada é 401 `chave-invalida` | [MCP do Claude Code](https://code.claude.com/docs/en/mcp) |
+| Claude Code | `claude mcp add --transport http --scope user blueprint-equipe <url>/mcp --header 'Authorization: Bearer ${BLUEPRINT_CHAVE}'` (aspas simples deixam `${...}` literal; o Claude Code o expande ao conectar, então a chave não aparece no comando que ele imprime) | idem |
+| Codex | `[mcp_servers.blueprint-equipe]` com `url = "<url>/mcp"` e `bearer_token_env_var = "BLUEPRINT_CHAVE"` em `~/.codex/config.toml` | [MCP do Codex](https://developers.openai.com/codex/mcp) |
+| HTTPS | o túnel e o modo hospedado são HTTPS; a chave nunca viaja em HTTP puro fora do loopback | modo hospedado (docs/hospedar.md) |
+
+Diferenças do `--mcp`: `vincular_pasta` é recusado (o servidor não vê a sua pasta: escreva a linha `Blueprint:` em `CLAUDE.local.md`, ou use `blueprint conectar` com o app instalado), `propor_blueprint` nunca manda a pasta do próprio servidor, e não há canal nem hooks (o progresso mostra só o que o agente registra com `registrar_progresso`). Não substitui o plugin instalado. Código: `src/mcp/http.rs`; testes: `cargo test mcp_http` e `node scripts/mcp-http-e2e.mjs`.

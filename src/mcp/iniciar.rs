@@ -16,8 +16,17 @@ use std::process::Command;
 use std::sync::Mutex;
 
 /// O texto que vai ao prompt vem dos dados (qualquer agente propõe nomes): sem controle, sem `;` (o Windows Terminal o lê como separador de comandos) e curto.
-pub(super) fn limpo(t: &str) -> String {
+pub(crate) fn limpo(t: &str) -> String {
     t.chars().filter(|c| !c.is_control()).map(|c| if c == ';' { ',' } else { c }).take(80).collect()
+}
+
+/// O pedido que o Claude recebe para executar uma ação (o texto segue o idioma de quem clicou; os nomes das ferramentas não mudam). Os nomes vêm dos dados:
+/// quem monta o pedido passa antes por `limpo`.
+pub(crate) fn prompt_da_acao(numero: &str, acao: &str, nome_bp: &str, ws: &str, bp: &str, acao_id: &str) -> String {
+    crate::tr!(
+        "Execute action {numero} «{acao}» of blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): read it with ler_blueprint, report progress with registrar_progresso and complete each plan with marcar_concluido and the evidence.",
+        "Execute a ação {numero} «{acao}» do blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): leia com ler_blueprint, registre o progresso com registrar_progresso e conclua cada plano com marcar_concluido e a evidência."
+    )
 }
 
 fn id_valido(id: &str) -> bool {
@@ -47,10 +56,7 @@ pub(crate) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path
         };
         // o pedido segue o idioma de quem clicou (o agente responde nele); os nomes das ferramentas não mudam
         let (numero, acao, nome_bp) = (&numeros_das_acoes(p, n)[i], limpo(texto(&acoes[i], "nome")), limpo(texto(p, "nome")));
-        let prompt = crate::tr!(
-            "Execute action {numero} «{acao}» of blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): read it with ler_blueprint, report progress with registrar_progresso and complete each plan with marcar_concluido and the evidence.",
-            "Execute a ação {numero} «{acao}» do blueprint «{nome_bp}» (workspace_id {ws}, blueprint_id {bp}, acao_id {acao_id}): leia com ler_blueprint, registre o progresso com registrar_progresso e conclua cada plano com marcar_concluido e a evidência."
-        );
+        let prompt = prompt_da_acao(numero, &acao, &nome_bp, ws, bp, acao_id);
         (pasta, prompt)
     };
     let exe = std::env::current_exe().map_err(|e| falha(500, crate::tr!("cannot tell where this program is: {e}", "não sei onde este programa está: {e}")))?;
@@ -92,18 +98,28 @@ pub(super) fn em_sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Resul
 
 /// O lançador de verdade: Windows Terminal (`wt -d <pasta> <exe> claude <prompt> --canal`; `--canal` liga o canal da sessão, ver `cli/claude.rs`) se existir no PATH; senão um console novo, direto no processo (sem passar pelo
 /// cmd.exe, que leria `&` e `|` dos nomes). Não espera o filho. shortcut: só Windows (o app é só Windows); em outro sistema as flags não existem e abre sem elas.
-pub(super) fn abrir_terminal(pasta: &Path, exe: &Path, prompt: &str) -> Result<&'static str, String> {
+pub(crate) fn abrir_terminal(pasta: &Path, exe: &Path, prompt: &str) -> Result<&'static str, String> {
+    abrir_terminal_com(pasta, exe, prompt, "--canal")
+}
+
+/// Os argumentos do Windows Terminal: `-d <pasta> <exe> claude <prompt> <flag>` (a flag é `--canal` na sessão do dono e `--equipe` na do convidado).
+pub(crate) fn argumentos_do_wt(pasta: &Path, exe: &Path, prompt: &str, flag: &str) -> Vec<std::ffi::OsString> {
+    vec!["-d".into(), pasta.into(), exe.into(), "claude".into(), prompt.into(), flag.into()]
+}
+
+/// `abrir_terminal` com a flag de `blueprint claude` que a sessão pede.
+pub(crate) fn abrir_terminal_com(pasta: &Path, exe: &Path, prompt: &str, flag: &str) -> Result<&'static str, String> {
     let mut falha_wt = String::new();
     if let Some(wt) = crate::registrar::procurar("wt") {
         let mut c = Command::new(&wt);
-        c.arg("-d").arg(pasta).arg(exe).arg("claude").arg(prompt).arg("--canal");
+        c.args(argumentos_do_wt(pasta, exe, prompt, flag));
         match sem_janela(&mut c).spawn() {
             Ok(_) => return Ok("wt"),
             Err(e) => falha_wt = format!("wt ({}): {e}; ", wt.display()),
         }
     }
     let mut c = Command::new(exe);
-    c.arg("claude").arg(prompt).arg("--canal").current_dir(pasta);
+    c.arg("claude").arg(prompt).arg(flag).current_dir(pasta);
     novo_console(&mut c).spawn().map(|_| "cmd").map_err(|e| format!("{falha_wt}console novo ({}) em {}: {e}", exe.display(), pasta.display()))
 }
 

@@ -43,5 +43,12 @@ pub fn comandos(url_publica: &str, chave: &str) -> serde_json::Value {
         "conectar": format!("blueprint conectar {url_publica} {chave}"),
         "claude": format!("claude mcp add blueprint-equipe {env} -- blueprint --mcp"),
         "codex": format!("codex mcp add blueprint-equipe {env} -- blueprint --mcp"),
+        // sem instalar o app: o MCP por HTTP (POST /mcp, src/mcp/http.rs). A chave vai numa variável de ambiente e o cabeçalho a cita entre aspas simples
+        // (${BLUEPRINT_CHAVE} fica literal e o Claude Code a expande ao conectar), então ela não aparece no comando que registra o servidor nem no que ele imprime.
+        "variavel": format!("[Environment]::SetEnvironmentVariable('BLUEPRINT_CHAVE', '{chave}', 'User')"),
+        "claude_http": format!("claude mcp add --transport http --scope user blueprint-equipe {url_publica}/mcp --header 'Authorization: Bearer ${{BLUEPRINT_CHAVE}}'"),
+        "codex_http": format!("[mcp_servers.blueprint-equipe]
+url = \"{url_publica}/mcp\"
+bearer_token_env_var = \"BLUEPRINT_CHAVE\""),
     })
 }

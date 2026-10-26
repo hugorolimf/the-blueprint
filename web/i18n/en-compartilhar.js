@@ -1,5 +1,8 @@
 // Inglês: o botão e o diálogo Compartilhar do app local (compartilhar.js). Chave = texto-fonte em português.
 Object.assign(I18N.catalogos.en, {
+  // equipes-locais.js: as equipes lembradas na tela de workspaces
+  "Você entra como {nome}": "You join as {nome}", "Tirar da lista": "Remove from list",
+  "Abrindo a equipe na janela do app…": "Opening the team in the app window…",
   // HTML (blueprint.html)
   "Compartilhar": "Share", "Compartilhar este workspace com outras pessoas pela internet": "Share this workspace with other people over the internet",
   // compartilhar.js
@@ -19,4 +22,10 @@ Object.assign(I18N.catalogos.en, {
   "Este é o endereço público. Quem não tem link de convite não entra.": "This is the public address. People without an invite link cannot join.",
   "Parar de compartilhar este workspace?": "Stop sharing this workspace?",
   "Quem usa este workspace perde o acesso na hora. Sem nenhum workspace compartilhado, o túnel desliga e o endereço muda ao ligar de novo.": "People using this workspace lose access right away. With no workspace shared, the tunnel turns off and the address changes when you turn it on again.",
+  "Endereço": "Address", "Temporário": "Temporary", "Fixo": "Fixed",
+  "Cloudflare, sem conta. O endereço muda a cada vez que você liga: depois de religar, mande os links de novo.": "Cloudflare, no account. The address changes every time you turn it on: after turning it on again, send the links again.",
+  "Tailscale Funnel: o mesmo endereço sempre, então os links e as sessões continuam valendo. Precisa do Tailscale instalado e conectado, com HTTPS e o Funnel ligados na sua tailnet; o app não guarda senha nem chave.": "Tailscale Funnel: always the same address, so links and sessions keep working. Needs Tailscale installed and connected, with HTTPS and Funnel turned on for your tailnet; the app keeps no password or key.",
+  "O app precisa ficar aberto enquanto as pessoas usam.": "The app has to stay open while people use it.",
+  "O app precisa ficar aberto enquanto as pessoas usam. O endereço é fixo: não precisa mandar os links de novo.": "The app has to stay open while people use it. The address is fixed: you do not need to send the links again.",
+  "Trocar o tipo de endereço muda o endereço: quem já entrou precisa de um link de convite novo uma vez (e o comando blueprint conectar do Claude dessa pessoa, rodado de novo). Depois, no fixo, o endereço não muda mais.": "Changing the address type changes the address: people who already joined need a new invite link once (and to run their Claude's blueprint conectar command again). After that, with the fixed address, it never changes again.",
 });

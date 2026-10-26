@@ -39,4 +39,9 @@ Object.assign(I18N.catalogos.en, {
   "{n} em andamento": ["{n} in progress", "{n} in progress"], "Próximo checkpoint: {nome} ({data})": "Next checkpoint: {nome} ({data})", "Sem checkpoint em aberto": "No open checkpoint",
   "Abrir": "Open", "Nenhum blueprint neste workspace.": "No blueprints in this workspace.", "Atividade recente": "Recent activity",
   "Nenhum workspace para acompanhar.": "No workspace to follow.", "Ninguém ainda.": "Nobody yet.", "Servidor": "Server", "Nada ainda.": "Nothing yet.",
+  "Sem instalar o The Blueprint: o Claude Code e o Codex também conectam por HTTP. Guarde a chave numa variável de ambiente, abra um terminal novo e rode o comando do seu agente.": "Without installing The Blueprint: Claude Code and Codex also connect over HTTP. Save the key in an environment variable, open a new terminal and run your agent's command.",
+    "Sem responsável": "No one assigned", "{nome} (você)": "{nome} (you)", "Claude de {nome}": "{nome}'s Claude", "(pessoa que saiu)": "(person who left)",
+  "Responsável pelo plano": "Plan owner", "Quem faz este plano: uma pessoa ou o Claude dela": "Who does this plan: a person or their Claude",
+  "Atribuir a mim": "Assign to me", "Atribuir ao meu Claude": "Assign to my Claude", "Tirar o responsável": "Remove the owner", "Meus planos": "My plans",
+  "1. Guarde a chave (PowerShell)": "1. Save the key (PowerShell)", "2. Claude Code": "2. Claude Code", "2. Codex: acrescente ao arquivo ~/.codex/config.toml": "2. Codex: add this to ~/.codex/config.toml",
 });

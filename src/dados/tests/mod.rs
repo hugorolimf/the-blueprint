@@ -8,6 +8,8 @@ mod migracoes;
 mod operacoes;
 mod pastas;
 mod projetos;
+mod repositorio;
+mod responsavel;
 mod queda;
 
 use serde_json::Value;

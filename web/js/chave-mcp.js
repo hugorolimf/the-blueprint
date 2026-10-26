@@ -32,6 +32,13 @@ async function estado() {
     $("eq-chave-revogar").hidden = !chave;
   } catch (e) { $("eq-chave-status").textContent = e.message; }
 }
+// "Sem instalar o app" (POST /mcp no servidor, src/mcp/http.rs): a chave vai numa variável de ambiente e o comando do Claude Code a cita entre aspas simples
+function semApp(c) {
+  if (!c.claude_http || !c.codex_http || !c.variavel) return ""; // servidor sem o /mcp: nada a mostrar
+  const bloco = (rotulo, texto) => `<b>${rotulo}</b><code style="white-space:pre-wrap">${esc(texto)}</code><button class="btn mini" type="button" data-copiar="${esc(texto)}">${tr("Copiar")}</button>`;
+  return `<small>${tr("Sem instalar o The Blueprint: o Claude Code e o Codex também conectam por HTTP. Guarde a chave numa variável de ambiente, abra um terminal novo e rode o comando do seu agente.")}</small>
+      ${bloco(tr("1. Guarde a chave (PowerShell)"), c.variavel)}${bloco(tr("2. Claude Code"), c.claude_http)}${bloco(tr("2. Codex: acrescente ao arquivo ~/.codex/config.toml"), c.codex_http)}`;
+}
 async function gerar() {
   if (!$("eq-chave-revogar").hidden && !(await confirmar({ titulo: tr("Trocar a chave?"), texto: tr("A chave atual deixa de valer na hora; o agente que a usa precisa da nova."), rotulo: tr("Trocar chave") }))) return;
   try {
@@ -44,7 +51,7 @@ async function gerar() {
       <b>${tr("Um comando")}</b><code>${esc(c.conectar)}</code><button class="btn mini" type="button" data-copiar="${esc(c.conectar)}">${tr("Copiar")}</button>
       <small>${tr("Liga o seu Claude Code (com o progresso automático na folha) e o Codex. Precisa do The Blueprint instalado neste computador. Se o endereço mudar, rode o comando de novo com o endereço novo.")}</small>
       <b>Claude Code</b><code>${esc(c.claude)}</code><button class="btn mini" type="button" data-copiar="${esc(c.claude)}">${tr("Copiar")}</button>
-      <b>Codex</b><code>${esc(c.codex)}</code><button class="btn mini" type="button" data-copiar="${esc(c.codex)}">${tr("Copiar")}</button>`;
+      <b>Codex</b><code>${esc(c.codex)}</code><button class="btn mini" type="button" data-copiar="${esc(c.codex)}">${tr("Copiar")}</button>${semApp(c)}`;
     if (window.ipc) { // na janela do app instalado (equipe.rs): um clique liga o Claude e o Codex deste computador, sem copiar comando; o app pergunta antes
       n.insertAdjacentHTML("afterbegin", `<button class="btn cheio" type="button" id="eq-chave-conectar">${tr("Conectar meu Claude neste computador")}</button>`);
       $("eq-chave-conectar").onclick = () => { window.ipc.postMessage(`conectar ${j.chave}`); $("eq-chave-status").textContent = tr("Confirme na janela do app."); };

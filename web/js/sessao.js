@@ -106,6 +106,16 @@ function abrirApresentacaoQuandoCarregar(blueprintId, tentativas = 100) {
   if (carregado) { abrirApresentacao(blueprintId || tela); return; }
   if (tentativas > 0) setTimeout(() => abrirApresentacaoQuandoCarregar(blueprintId, tentativas - 1), 100);
 }
+// Na janela da equipe (app instalado): diz ao app quem a pessoa é aqui e que workspaces vê, e ele passa a listar esta equipe na tela de workspaces
+// dele, para reabrir sem o link de convite (src/equipes.rs). Só quando os dados chegaram, e uma vez por conteúdo.
+let equipeLembrada = "";
+function equipeLembrar() {
+  if (!hospedado() || !window.ipc || !sessao.membro) return;
+  const texto = JSON.stringify({ membro: sessao.membro.nome, workspaces: workspacesDe(arquivo).map((w) => ({ id: w.id, nome: w.nome })) });
+  if (texto === equipeLembrada) return;
+  equipeLembrada = texto;
+  window.ipc.postMessage(`equipe ${texto}`);
+}
 async function sairDaSessao() {
   try { await equipeApi("/api/sessao/sair", {}); } catch {}
   location.replace("/");

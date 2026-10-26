@@ -8,6 +8,7 @@ pub mod dev;
 pub mod equipe;
 pub mod icone;
 pub mod instancia;
+pub mod projeto_local;
 
 use crate::erro::{Erro, Resultado};
 use crate::http::config::pasta_do_app;
@@ -72,6 +73,12 @@ fn criar_webview(window: &Window, contexto: &mut WebContext, url: &str, origem: 
                 let _ = proxy.send_event(Evento::TelaCheia);
             } else if let Some(chave) = req.body().strip_prefix("conectar ").filter(|_| origem_ipc.starts_with("https://")) {
                 equipe::pedir_conexao(origem_ipc.trim_end_matches('/').to_string(), chave.trim().to_string());
+            } else if let Some(corpo) = req.body().strip_prefix("projeto ").filter(|_| origem_ipc.starts_with("https://")) {
+                // a janela da equipe pede ao app instalado o que roda nesta máquina (configurar a pasta, abrir o Claude): validado e perguntado em projeto_local.rs
+                projeto_local::pedir(origem_ipc.trim_end_matches('/').to_string(), corpo.to_string());
+            } else if let Some(detalhes) = req.body().strip_prefix("equipe ").filter(|_| origem_ipc.starts_with("https://")).and_then(crate::equipes::detalhes_do_ipc) {
+                // a página da equipe diz quem a pessoa é e que workspaces vê lá: a tela de workspaces do app mostra isso
+                crate::equipes::lembrar(&pasta_do_app(), origem_ipc.trim_end_matches('/'), Some(detalhes));
             }
         })
         .with_navigation_handler(move |destino| destino.starts_with(&origem) || destino.starts_with("about:") || destino.starts_with("data:") || destino.starts_with("blob:"))
@@ -156,10 +163,14 @@ fn preparar(dev: bool, convite: Option<equipe::Convite>) -> Resultado<()> {
     }
     let mostrar = proxy.clone();
     // a segunda execução manda o link do convite junto (rota /api/app/mostrar): confirmado, abre a janela da equipe; sem link, traz a janela
+    // o link `blueprint://equipe` é interno: a rota /api/equipes/abrir só o monta para uma equipe já lembrada, depois do clique do usuário no app
     *servidor.estado.ao_mostrar.lock().unwrap_or_else(|e| e.into_inner()) = Some(Box::new(move |link| match link.as_deref().and_then(equipe::convite_do_link) {
         Some(convite) => equipe::pedir_abertura(mostrar.clone(), convite),
         None => {
-            let _ = mostrar.send_event(Evento::Mostrar);
+            let _ = mostrar.send_event(match link.as_deref().and_then(equipe::equipe_do_link) {
+                Some(equipe) => Evento::Equipe(equipe),
+                None => Evento::Mostrar,
+            });
         }
     }));
     let so_equipe = convite.is_some(); // aberto pelo link: a janela principal fica na bandeja até alguém pedir

@@ -64,7 +64,11 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
             "blueprints" => Resposta::json(200, &com_dados(dados, ctx, |d| Ok(acoes::blueprints(d)))?),
             "blueprint" => {
                 let p = |nome: &str| pedido.parametro(nome).unwrap_or_default();
-                Resposta::json(200, &com_dados(dados, ctx, |d| acoes::blueprint_lido(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref(), &p("incluir"), &p("projeto")))?)
+                let mut lido = com_dados(dados, ctx, |d| acoes::blueprint_lido(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref(), &p("incluir"), &p("projeto")))?;
+                if !ctx.local {
+                    lido["voce"] = json!({"id": ctx.usuario, "nome": ctx.nome}); // o membro da chave: o agente prioriza os planos com `responsavel.id` igual a este id
+                }
+                Resposta::json(200, &lido)
             }
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i)).collect::<Vec<_>>()})),
