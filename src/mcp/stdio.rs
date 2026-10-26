@@ -244,6 +244,7 @@ Avisos:
             evento("bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
             Ok("Bloqueio registrado; o usuário foi avisado.".into())
         }
+        "responder_conversa" => super::conversa::ferramenta(a, &servidor),
         _ => Err(format!("Ferramenta desconhecida: {nome}")),
     }
 }

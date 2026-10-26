@@ -26,6 +26,7 @@ Ferramentas:
 | `marcar_checkpoint_feito`, `marcar_checkpoint_nao_feito` | idem para checkpoints |
 | `anexar_prototipo` | protótipo HTML autocontido de uma ação, visto num visor isolado |
 | `vincular_pasta` | liga a pasta da sessão a um blueprint (o app guarda o vínculo) |
+| `responder_conversa` | responde ao usuário no painel "Conversar com o plano" de uma ação (a mensagem chega pelo canal com o prefixo «The Blueprint · conversa do usuário»); mudanças continuam só por `propor_blueprint`. Só memória, precisa do app aberto |
 
 **Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem.
 

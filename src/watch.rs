@@ -57,6 +57,17 @@ fn alvo(url: &str, pasta: &str) -> Option<(String, String)> {
     Some((r["workspaceId"].as_str()?.into(), r["blueprintId"].as_str()?.into()))
 }
 
+/// Os eventos endereçados a UMA sessão com canal (texto montado pelo app depois do clique do usuário) e o prefixo de cada um. Os dois "pedido do usuário"
+/// são ordens; a "conversa do usuário" não é (as instruções do MCP dizem como responder). Contrato: docs/claude-na-folha.md.
+fn prefixo(nome: &str) -> Option<&'static str> {
+    match nome {
+        "iniciar-acao" => Some("The Blueprint · pedido do usuário (ele clicou em Iniciar no app): "),
+        "comentario-plano" => Some("The Blueprint · pedido do usuário (ele clicou em Enviar ao agente num comentário de plano): "),
+        "conversa-usuario" => Some("The Blueprint · conversa do usuário (responda com responder_conversa; ajustes só por propor_blueprint): "),
+        _ => None,
+    }
+}
+
 struct Limite { inicio: Instant, linhas: usize, canal: Option<String> }
 impl Limite {
     fn novo() -> Self { Self { inicio: Instant::now(), linhas: 0, canal: None } }
@@ -64,15 +75,15 @@ impl Limite {
         let texto = match nome {
             "proposta-aplicada" => "The Blueprint: o usuário aplicou uma proposta no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual.",
             "checkpoint-marcado" => "The Blueprint: o usuário marcou um checkpoint no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual.",
-            "iniciar-acao" => "", // o texto vem do evento (montado pelo app depois do clique), abaixo; só a sessão com canal endereçada o recebe
+            _ if prefixo(nome).is_some() => "", // o texto vem do evento, abaixo; só a sessão com canal endereçada o recebe
             _ => return None,
         };
         let dados: Value = serde_json::from_str(dados).ok()?;
         if dados["workspaceId"] != alvo.0 || dados["blueprintId"] != alvo.1 { return None; }
-        let texto = if nome == "iniciar-acao" {
+        let texto = if let Some(prefixo) = prefixo(nome) {
             if dados["canalId"].as_str()? != self.canal.as_deref()? { return None; }
             let pedido: String = dados["texto"].as_str()?.chars().filter(|c| !c.is_control()).take(1200).collect();
-            format!("The Blueprint · pedido do usuário (ele clicou em Iniciar no app): {pedido}")
+            format!("{prefixo}{pedido}")
         } else { texto.to_string() };
         if self.inicio.elapsed() >= Duration::from_secs(60) { self.inicio = Instant::now(); self.linhas = 0; }
         if self.linhas >= POR_MINUTO { return None; }

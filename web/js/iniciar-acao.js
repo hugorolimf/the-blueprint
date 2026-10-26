@@ -8,7 +8,7 @@ function abreFolhaDaAcao(pid, fid, ancora) {
   abreNota({
     rotulo: f ? tr("Instruções da ação") : tr("Observação do blueprint"), titulo: f ? `${numeroDaAcao(p, f)} · ${f.nome || tr("sem nome")}` : p.nome || tr("Sem nome"), texto: dono.obs || "",
     editar: { dica: f ? tr("O que fazer nesta ação, passo a passo: o roteiro, as decisões, as dependências e os riscos…") : tr("Anotações do blueprint…"), salvar: (v) => { const novo = v.trim() ? v : ""; if (novo === (dono.obs || "")) return; dono.obs = novo; mudou(); } },
-    acoes: f && f.status !== "concluido" ? [{ rotulo: tr("Iniciar com o Claude"), fn: () => iniciarComClaude(p, f) }] : [],
+    acoes: [...(f && f.status !== "concluido" ? [{ rotulo: tr("Iniciar com o Claude"), fn: () => iniciarComClaude(p, f) }] : []), ...(f ? [{ rotulo: tr("Conversar com o plano"), fn: () => abreConversa(p.id, f.id) }] : [])], // conversa.js
   }, ancora);
   if (f) ldtNaFolha(p, f); // o que o agente fez nesta ação (linha-do-tempo.js)
 }

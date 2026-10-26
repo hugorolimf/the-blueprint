@@ -14,6 +14,7 @@ function mcpAssina() {
   es.addEventListener("dados", dadosDeOutraJanela); // outra janela ou script gravou: busca na hora (rede.js)
   es.addEventListener("linha-do-tempo", (e) => { try { ldtAviso(JSON.parse(e.data)); } catch {} }); // a folha da ação aberta busca de novo (linha-do-tempo.js)
   es.addEventListener("agentes", () => agentesBusca()); // a presença dos agentes mudou: o painel atualiza o cartão que mudou
+  es.addEventListener("conversa", (e) => { try { conversaRecebe(JSON.parse(e.data)); } catch {} }); // a IA respondeu na conversa de uma ação (conversa.js)
   es.addEventListener("atualizacao", (e) => { try { atualizacaoRecebe(JSON.parse(e.data)); } catch {} }); // o updater: baixando, pronta (atualizacao.js)
   es.onerror = () => { mcpSse = null; mcpConsulta(); };
 }

@@ -62,6 +62,23 @@ fn o_pedido_de_iniciar_so_chega_a_sessao_enderecada_e_so_com_canal() {
 }
 
 #[test]
+fn comentario_e_conversa_seguem_o_mesmo_enderecamento_com_o_prefixo_de_cada_um() {
+    let alvo = ("ws".into(), "bp".into());
+    let evento = |nome: &str, canal: &str| iniciar_acao(canal, "Comentário no plano").replacen("iniciar-acao", nome, 1);
+    let sse = evento("comentario-plano", "minha") + &evento("conversa-usuario", "minha") + &evento("conversa-usuario", "outra") + &evento("conversa", "minha");
+    let mut limite = Limite::novo();
+    limite.canal = Some("minha".into());
+    let mut saida = Vec::new();
+    acompanhar(&mut Cursor::new(sse), &mut saida, &alvo, &mut limite).unwrap();
+    let saida = String::from_utf8(saida).unwrap();
+    let linhas: Vec<&str> = saida.lines().collect();
+    assert_eq!(linhas, [
+        "The Blueprint · pedido do usuário (ele clicou em Enviar ao agente num comentário de plano): Comentário no plano",
+        "The Blueprint · conversa do usuário (responda com responder_conversa; ajustes só por propor_blueprint): Comentário no plano",
+    ], "a outra sessão e o aviso `conversa` (da página) não chegam");
+}
+
+#[test]
 fn a_pasta_vai_codificada_na_query_do_canal() {
     assert_eq!(codificar("C:\\Meus Projetos\\ação"), "C%3A%5CMeus%20Projetos%5Ca%C3%A7%C3%A3o".to_string());
     assert_eq!(codificar("a/b-c_d.e~"), "a/b-c_d.e~");

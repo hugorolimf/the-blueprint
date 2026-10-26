@@ -41,6 +41,7 @@ function itensDoContexto(alvo) {
   if (acao) {
     const feita = acaoDe(acao.dataset.p, acao.dataset.f), dono = D.blueprints.find((x) => x.id === acao.dataset.p);
     if (feita && efetiva(feita).status !== "concluido") add("estado", "play", tr("Iniciar com o Claude…"), () => iniciarComClaude(dono, feita)); // pede confirmação (gasta tokens, abre terminal)
+    if (feita) add("estado", "doc", tr("Conversar com o plano…"), () => abreConversa(acao.dataset.p, acao.dataset.f)); // conversa.js
     if (feita) for (const { grupo, icone, rotulo, fn, ...extra } of itensDeSituacao(acao.dataset.p, feita)) add(grupo, icone, rotulo, fn, extra);
     add("editar", "lapis", tr("Editar ação"), () => editar(true, { proj: acao.dataset.p, sel: acao.dataset.f }));
     // abre o Editar na ação e aciona o "+ Plano" ou "+ Checkpoint" dela: o campo do item novo já fica em foco
@@ -54,6 +55,7 @@ function itensDoContexto(alvo) {
   if (plano) {
     const feito = plano.getAttribute("aria-checked") === "true";
     add("estado", feito ? "circulo" : "check", feito ? "Marcar como pendente" : "Marcar como feito", () => alternarItem(plano.dataset.p, plano.dataset.f, plano.dataset.tipo, plano.dataset.id));
+    if (plano.dataset.tipo === "t") add("estado", "doc", tr("Enviar comentário ao agente…"), () => enviarComentarioAoAgente(plano.dataset.p, plano.dataset.f, plano.dataset.id)); // comentario-agente.js
   }
   if (nota) add("abrir", "doc", nota.dataset.obs.split("|")[1] ? "Abrir instruções" : "Abrir observações", () => abreNotaObs(nota));
   if (marca) add("abrir", "losango", "Ver marca", () => abreNotaMarca(marca));
