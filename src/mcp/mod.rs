@@ -142,6 +142,11 @@ impl Mcp {
         self.avisar("agentes");
     }
 
+    /// O plano em que o agente `nome` trabalha agora (aviso recente e não concluído), para o subagente novo herdar.
+    pub fn plano_de(&self, nome: &str, blueprint_id: &str) -> Option<(String, String)> {
+        self.atividade.lock().unwrap_or_else(|e| e.into_inner()).plano_de(crate::tempo::agora_ms(), nome, blueprint_id)
+    }
+
     /// Um plano foi marcado como concluído: o agente que trabalhava nele passa a concluído (a página o mantém na folha até o usuário clicar).
     pub fn concluir_plano(&self, blueprint_id: &str, plano_id: &str, mensagem: &Value) {
         if self.atividade.lock().unwrap_or_else(|e| e.into_inner()).concluir_plano(crate::tempo::agora_ms(), blueprint_id, plano_id, mensagem) {

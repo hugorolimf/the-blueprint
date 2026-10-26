@@ -118,7 +118,8 @@ fn identidade(corpo: &Value) -> (String, &'static str, bool) {
 }
 
 /// O evento de progresso de `nome`. Um aviso sem plano limpa o plano do agente, então herda a ação e o plano do último aviso dele neste blueprint (senão a figura
-/// sai do plano a cada edição). Um subagente novo não tem aviso anterior: fica no cabeçalho do blueprint.
+/// sai do plano a cada edição). Um subagente novo não tem aviso anterior: herda o plano do Claude principal se o aviso dele for recente e não concluído
+/// (assim a figura já nasce ao lado do plano); sem isso, fica no cabeçalho do blueprint.
 fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str, estado: &str) -> Value {
     let mut evento = json!({"tipo": "progresso", "texto": texto, "workspaceId": ws, "blueprintId": bp, "agente": nome, "papel": papel, "estado": estado});
     let agentes = mcp.agentes();
@@ -126,6 +127,11 @@ fn evento_de(mcp: &Mcp, nome: &str, papel: &str, ws: &str, bp: &str, texto: &str
     for campo in ["acaoId", "planoId"] {
         if let Some(v) = anterior.map(|a| &a[campo]).filter(|v| v.is_string()) {
             evento[campo] = v.clone();
+        }
+    }
+    if anterior.is_none() && nome != AGENTE {
+        if let Some((acao, plano)) = mcp.plano_de(AGENTE, bp) {
+            (evento["acaoId"], evento["planoId"]) = (json!(acao), json!(plano));
         }
     }
     evento

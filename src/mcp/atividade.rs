@@ -62,6 +62,17 @@ impl Atividade {
         true
     }
 
+    /// A ação e o plano em que `nome` trabalha agora neste blueprint: só vale se o último aviso é recente (`VIDA_MS`) e ele ainda não concluiu.
+    pub fn plano_de(&self, agora_ms: i64, nome: &str, blueprint_id: &str) -> Option<(String, String)> {
+        let r = self.registros.iter().find(|r| r.nome == nome)?;
+        let texto = |c: &str| r.dados.get(c).and_then(Value::as_str).map(String::from);
+        let vivo = agora_ms - r.em_ms <= VIDA_MS && texto("estado").as_deref() != Some("concluido") && texto("blueprintId").as_deref() == Some(blueprint_id);
+        if !vivo {
+            return None;
+        }
+        Some((texto("acaoId")?, texto("planoId")?))
+    }
+
     /// Os agentes conhecidos, do mais recente ao mais antigo, cada um com `agente` e `em` (ISO).
     pub fn lista(&self) -> Vec<Value> {
         let mut todos: Vec<&Registro> = self.registros.iter().collect();

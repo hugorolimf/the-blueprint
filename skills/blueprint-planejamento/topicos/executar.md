@@ -43,6 +43,7 @@ In `registrar_progresso` and `reportar_bloqueio`, optional fields (`texto` alone
 - Report when you start and **every time you change file or state**; with no signal for 10 minutes it rests in the blueprint header.
 - The server refuses values outside these (an invented state or role, an `onde` that is too large, a name with control characters) and says why: fix it and send again.
 - A subagent without access to the MCP: the main agent reports for it, with the subagent's name in `agente`.
+- **Before you launch subagents on a plan, call `registrar_progresso` with that plan's `acao_id` and `plano_id`:** a new subagent starts next to the plan its main agent is on (if that notice is under 10 minutes old and not concluded); without it, the figure waits in the blueprint header.
 - Never put secrets, passwords or personal paths in `onde`: the sheet shows the text as it came.
 
 Monitor/channel notices are informational: check `ler_blueprint`. `BLUEPRINT_CHANNEL=1` swaps the monitor for the channel.

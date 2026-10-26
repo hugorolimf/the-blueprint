@@ -103,12 +103,34 @@ fn a_edicao_de_um_subagente_vira_um_agente_proprio_com_o_papel_do_tipo() {
     edicao(&m, &d, &corpo("general-purpose", "c777")).unwrap();
     let ex = agente_da_lista(&m, "Explore a9cf").expect("o subagente aparece com tipo e 4 caracteres do id");
     assert_eq!(ex["papel"], "explorador");
-    assert!(ex["planoId"].is_null(), "o subagente não herda o plano do Claude principal: fica no cabeçalho");
+    assert_eq!(ex["planoId"], "t2", "o subagente novo nasce no plano do Claude principal");
     assert_eq!(agente_da_lista(&m, "code-reviewer b123").unwrap()["papel"], "revisor");
     assert_eq!(agente_da_lista(&m, "general-purpose c777").unwrap()["papel"], "construtor");
     assert_eq!(agente_da_lista(&m, "Claude").unwrap()["planoId"], "t2", "a edição do subagente não mexe no Claude principal");
     edicao(&m, &d, &corpo("Explore", "a9cff85187b11bee4")).unwrap(); // o mesmo agente de novo: não duplica
     assert_eq!(m.agentes()["agentes"].as_array().unwrap().len(), 4);
+}
+
+#[test]
+fn o_subagente_so_herda_o_plano_de_um_principal_em_andamento() {
+    let (m, d) = (mcp(), dados());
+    ligar(&d, "C:\\Proj");
+    let comeca = |id: &str| json!({"hook_event_name": "SubagentStart", "cwd": "C:\\Proj", "agent_id": id, "agent_type": "Explore"});
+    let aviso = |estado: &str| {
+        let mut a = serde_json::Map::new();
+        for (k, v) in [("blueprintId", "p1"), ("acaoId", "f2"), ("planoId", "t2"), ("estado", estado)] {
+            a.insert(k.into(), json!(v));
+        }
+        a
+    };
+    subagente(&m, &d, &comeca("aaaa1")).unwrap(); // o principal ainda não avisou: cabeçalho
+    assert!(agente_da_lista(&m, "Explore aaaa").unwrap()["planoId"].is_null());
+    m.registrar_atividade("Claude", aviso("escrevendo"));
+    subagente(&m, &d, &comeca("bbbb2")).unwrap(); // o principal está no t2: o subagente nasce nele
+    assert_eq!(agente_da_lista(&m, "Explore bbbb").unwrap()["planoId"], "t2");
+    m.registrar_atividade("Claude", aviso("concluido"));
+    subagente(&m, &d, &comeca("cccc3")).unwrap(); // o principal concluiu: não herda
+    assert!(agente_da_lista(&m, "Explore cccc").unwrap()["planoId"].is_null());
 }
 
 #[test]
