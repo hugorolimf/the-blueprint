@@ -56,6 +56,8 @@ async function entrarPeloConvite(nome) {
     else { conviteSegredo = ""; mostrarEntradaConvite("invalido", { erro: e.message }); }
   } finally { botao.disabled = false; }
 }
+// outro link colado na mesma aba em /convite só muda o fragmento (a página não recarrega): confere o novo
+addEventListener("hashchange", () => { if (location.pathname === "/convite" && segredoDoFragmento(location.hash)) { conviteInfo = null; entradaPeloConvite(); } });
 $("convite-form").onsubmit = (e) => {
   e.preventDefault();
   const nome = $("convite-nome").value.trim(), problema = problemaDoNome(nome);

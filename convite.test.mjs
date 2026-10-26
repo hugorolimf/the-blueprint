@@ -9,8 +9,9 @@ import vm from "node:vm";
 const SEGREDO = "Ab3_dE-fGhIjKlMnOpQrStUvWxYz0123456789abcd"; // 43 caracteres base64url, como o servidor gera
 function contexto({ hash = "", respostas = {}, idioma = "pt-BR" } = {}) {
   const els = {}, el = (id) => (els[id] ||= { id, textContent: "", value: "", hidden: true, firstChild: null, innerHTML: "", disabled: false, focus() {}, querySelector: () => el(id + ":botao"), set onclick(f) {}, set onsubmit(f) { this.submit = f; } });
-  const eventos = [];
+  const eventos = [], ouvintes = {};
   const ctx = vm.createContext({
+    addEventListener: (tipo, f) => { ouvintes[tipo] = f; },
     navigator: { languages: [idioma] }, URLSearchParams, Intl, localStorage: { getItem: () => null, setItem() {}, removeItem() {} },
     location: { search: "", pathname: "/convite", hash, replace: (u) => eventos.push(["replace", u]) },
     history: { replaceState: (_a, _b, u) => { eventos.push(["replaceState", u]); ctx.location.hash = ""; } },
@@ -24,7 +25,7 @@ function contexto({ hash = "", respostas = {}, idioma = "pt-BR" } = {}) {
   if (idioma === "en") ["en-convite.js", "en-base.js"].forEach((c) => carrega("i18n", c));
   carrega("js", "sessao.js"); carrega("js", "convite.js");
   vm.runInContext("this.api = { segredoDoFragmento, destinoSeguro, problemaDoNome, papelNoEscopo, poderesDaSessao, textoDoErro, entradaPeloConvite, entrarPeloConvite, nomeDoPapel };", ctx);
-  return { api: ctx.api, els, eventos };
+  return { api: ctx.api, els, eventos, ouvintes, ctx };
 }
 const espera = () => new Promise((r) => setTimeout(r, 0));
 
@@ -100,5 +101,9 @@ assert.equal(en.nomeDoPapel("supervisor"), "Supervisor");
   await v.api.entradaPeloConvite();
   assert.equal(v.eventos.filter((e) => e[0] === "fetch").length, 0, "sem segredo: nenhum pedido");
   assert.equal(v.els["convite-titulo"].textContent, "Abra o link completo");
+  // outro link colado na mesma aba só muda o fragmento: a página confere o novo (e o tira da barra de novo)
+  v.ctx.location.hash = "#" + SEGREDO;
+  v.ouvintes.hashchange(); await espera();
+  assert.deepEqual(v.eventos.slice(-2), [["replaceState", "/convite"], ["fetch", "/api/convite/conferir", JSON.stringify({ segredo: SEGREDO })]]);
 }
 console.log("convite: ok (segredo fora da URL, replaceState antes do pedido, destino seguro, papel por escopo, botões por papel, erros por código, inglês)");

@@ -437,6 +437,19 @@ visitante com "abre folha ou apresentação"), painel do supervisor e a revisão
   `carregar()`), `web/js/i18n.js` (áreas `"pessoas"` e `"convite"`), `scripts/mutacoes.mjs` (no fim da revisão de segurança).
 - Consome só a API da seção 5 (e `GET /api/sessao` para saber o modo); testa contra `scripts/stub-colaboracao.mjs` até a ACESSO entrar e troca
   para o binário real no rebase. Não chama `/api/mudancas` nem `/api/eventos` (são da SINCRONIA).
+- Desvios registrados pela TELAS (2026-10-26):
+  - `inicio.js`: a guarda precisa da resposta de `GET /api/sessao`, então as chamadas de partida (`carregar()`, `mcpConsulta()`...) passam a
+    rodar dentro de `sessaoGuarda(() => { ... })`; no modo local elas rodam logo depois dessa resposta (um pedido em loopback). Erro ou 404
+    em `/api/sessao` (binário antigo) contam como modo local.
+  - Arquivos a mais: `scripts/colaboracao-navegador.mjs` (o Edge por pessoa dos e2e) e `scripts/seguranca-servidor-e2e.mjs` (a revisão de
+    segurança na rede). Os e2e aceitam `--rust <exe>`: o stub sobe `<exe> serve --hospedar` com `BLUEPRINT_URL_PUBLICA=https://equipe.teste` e
+    faz de proxy (X-Forwarded-Proto, Host e Origin públicos), lendo o link do dono na saída do binário.
+  - Um `<dialog id="equipe">` só para Pessoas, Minha chave e Acompanhar; botões `b-pessoas`, `b-acompanhar`, `b-chave` no perfil da lista de
+    workspaces e `b-pessoas-folha` na barra da folha (o destino da entrada é a folha do workspace).
+  - `mutacoes.mjs`: as regras novas estão no código da ACESSO, que não existe neste branch; a lista de mutações a escrever no rebase está em
+    `docs/seguranca-servidor.md`.
+  - Em aberto para a ACESSO: o código de erro de `POST /api/convites` com `papel: "visitante"` sem `blueprintId` (o stub usa 400
+    `papel-invalido`; a página já recusa antes de mandar).
 
 ### Pontos de integração
 

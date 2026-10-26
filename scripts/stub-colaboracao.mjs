@@ -187,9 +187,10 @@ export async function subirStub({ porta = 0, dados = join(raiz, "data.exemplo.js
   const E = estado(JSON.parse(readFileSync(dados, "utf8")));
   const servidor = createServer((req, res) => {
     const u = new URL(req.url, "http://x");
-    pedidos.push({ metodo: req.method, caminho: req.url, referer: req.headers.referer || "" });
+    const reg = { metodo: req.method, caminho: req.url, referer: req.headers.referer || "", cookie: "" }; // cookie: o Set-Cookie como o servidor o mandou
+    pedidos.push(reg);
     if (u.pathname === "/__stub/pedidos") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(pedidos)); }
-    if (alvo) return proxy(req, res, alvo, url);
+    if (alvo) return proxy(req, res, alvo, url, reg);
     if (!u.pathname.startsWith("/api/")) {
       const f = req.method === "GET" && estatico(u.pathname);
       res.writeHead(f ? 200 : 404, { ...SEGURANCA, "content-type": f ? f.tipo : "text/plain" });
@@ -199,7 +200,7 @@ export async function subirStub({ porta = 0, dados = join(raiz, "data.exemplo.js
     let texto = "";
     req.on("data", (p) => { texto += p; });
     req.on("end", () => {
-      const ctx = contexto(E, req), json = (status, corpo, extra = {}) => { res.writeHead(status, { ...SEGURANCA, "content-type": "application/json", "cache-control": "no-store", ...extra }); res.end(JSON.stringify(corpo)); };
+      const ctx = contexto(E, req), json = (status, corpo, extra = {}) => { reg.cookie = extra["set-cookie"] || ""; res.writeHead(status, { ...SEGURANCA, "content-type": "application/json", "cache-control": "no-store", ...extra }); res.end(JSON.stringify(corpo)); };
       if (req.method !== "GET" && req.headers.origin !== url) return json(403, { erro: "origem-invalida", codigo: "origem-invalida" });
       if (req.method !== "GET" && !/^application\/json/.test(req.headers["content-type"] || "")) return json(415, { erro: "json", codigo: "json" });
       let corpo = {};
@@ -229,15 +230,16 @@ export async function subirStub({ porta = 0, dados = join(raiz, "data.exemplo.js
     linkDono = `${url}/convite#${s}`;
   }
   const fechar = () => { servidor.closeAllConnections?.(); servidor.close(); try { filho?.kill(); } catch {} if (tmp) setTimeout(() => { try { rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); } catch {} }, 800); };
-  return { url, linkDono, pedidos, fechar };
+  return { url, linkDono, pedidos, fechar, banco: tmp }; // banco: a pasta do banco do binário real (só com --rust), para procurar segredos gravados
 }
 // proxy reverso de teste: o binário real só aceita pedidos "vindos" de https://equipe.teste
-function proxy(req, res, alvo, url) {
+function proxy(req, res, alvo, url, reg) {
   const h = { ...req.headers, host: new URL(PUBLICA).host, "x-forwarded-proto": "https", "x-forwarded-for": "127.0.0.1" };
   if (h.origin === url) h.origin = PUBLICA;
   if (h.referer) h.referer = h.referer.replace(url, PUBLICA);
   const p = request(alvo + req.url, { method: req.method, headers: h }, (r) => {
     const cab = { ...r.headers };
+    if (cab["set-cookie"]) reg.cookie = cab["set-cookie"].join("\n");
     if (cab["set-cookie"]) cab["set-cookie"] = cab["set-cookie"].map((c) => c.replace(/;\s*Secure/i, ""));
     res.writeHead(r.statusCode, cab);
     r.pipe(res);
