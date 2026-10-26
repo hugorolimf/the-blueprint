@@ -36,7 +36,7 @@ writeFileSync(pagina, html);
 const livre = () => new Promise((ok) => { const l = createServer(); l.listen(0, "127.0.0.1", () => { const p = l.address().port; l.close(() => ok(p)); }); });
 const depuracao = await livre();
 const edgeExe = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe"].find(existsSync);
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmpdir(), "figura-perfil-" + process.pid)}`, "about:blank"], { stdio: "ignore" });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmpdir(), "figura-perfil-" + process.pid)}`, "about:blank"], { stdio: "ignore" });
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 try {
   let alvo;

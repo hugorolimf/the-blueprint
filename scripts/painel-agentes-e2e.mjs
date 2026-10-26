@@ -22,7 +22,7 @@ const tmp = mkdtempSync(join(tmpdir(), "blueprint-figuras-"));
 copyFileSync(join(raiz, "data.exemplo.json"), join(tmp, "data.json"));
 const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), BLUEPRINT_DB: join(tmp, "blueprint.db"), DADOS_ARQ: join(tmp, "data.json"), PROTOTIPOS_DIR: join(tmp, "prototipos") };
 const servidor = spawn(exe, ["serve"], { env, stdio: "ignore", windowsHide: true });
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "--window-size=1440,1000", "about:blank"], { stdio: "ignore" });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "--window-size=1440,1000", "about:blank"], { stdio: "ignore" });
 const limpar = () => { try { edge.kill(); } catch {} try { servidor.kill(); } catch {} try { rmSync(tmp, { recursive: true, force: true }); } catch {} };
 process.on("exit", limpar);
 try {

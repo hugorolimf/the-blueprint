@@ -95,8 +95,8 @@ const datasCota = (f, cy) => (f.x1 - f.x0 < 104
   : `<text class="mid" x="${f.x0}" y="${cy + 18}" font-size="10">${fmt(f.inicio)}</text><text class="mid" x="${f.x1}" y="${cy + 18}" font-size="10" text-anchor="end">${fmt(f.fim)}</text></g>`);
 // ícone de protótipo (tela com apoio): abre o protótipo que o agente anexou à ação
 const protoSvg = (x, y, info, alvo) =>
-  `<g class="nota" tabindex="0" role="button" data-proto="${esc(alvo)}" data-info="${esc(info)}" aria-label="${esc(info + ". Ver protótipo")}"><rect fill="transparent" x="${x - 4}" y="${y - 4}" width="24" height="26"/><path class="ic" d="M${x - 1} ${y + 1}h16v10h-16z"/><path class="ic2" d="M${x + 3} ${y + 15}h8M${x + 7} ${y + 11}v4M${x + 6} ${y + 4}l4 3l-4 3z"/></g>`;
+  `<g class="nota" tabindex="0" role="button" data-proto="${esc(alvo)}" data-info="${esc(info)}" aria-label="${esc(info + ". " + tr("Ver protótipo"))}"><rect fill="transparent" x="${x - 4}" y="${y - 4}" width="24" height="26"/><path class="ic" d="M${x - 1} ${y + 1}h16v10h-16z"/><path class="ic2" d="M${x + 3} ${y + 15}h8M${x + 7} ${y + 11}v4M${x + 6} ${y + 4}l4 3l-4 3z"/></g>`;
 // ícone de nota (folha com a ponta dobrada) para as observações
 const notaSvg = (x, y, info, alvo) =>
-  `<g class="nota" tabindex="0" role="button" data-obs="${esc(alvo)}" data-info="${esc(info)}" aria-label="${esc(info + `. Abrir ${alvo.split("|")[1] ? "instruções" : "observações"}`)}"><rect fill="transparent" x="${x - 4}" y="${y - 4}" width="24" height="26"/><path class="ic" d="M${x} ${y}h9l5 5v11h-14z"/><path class="ic2" d="M${x + 9} ${y}v5h5M${x + 3} ${y + 9}h8M${x + 3} ${y + 13}h6"/></g>`;
+  `<g class="nota" tabindex="0" role="button" data-obs="${esc(alvo)}" data-info="${esc(info)}" aria-label="${esc(info + ". " + (alvo.split("|")[1] ? tr("Abrir instruções") : tr("Abrir observações")))}"><rect fill="transparent" x="${x - 4}" y="${y - 4}" width="24" height="26"/><path class="ic" d="M${x} ${y}h9l5 5v11h-14z"/><path class="ic2" d="M${x + 9} ${y}v5h5M${x + 3} ${y + 9}h8M${x + 3} ${y + 13}h6"/></g>`;
 

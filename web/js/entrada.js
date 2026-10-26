@@ -15,7 +15,7 @@ $("login-form").onsubmit = async (e) => {
   const botao = e.target.querySelector("button");
   botao.disabled = true;
   salvandoPerfil = true;
-  $("login-erro").textContent = "Salvando seu nome…";
+  $("login-erro").textContent = tr("Salvando seu nome…");
   arquivo.usuario = { ...arquivo.usuario, nome };
   try {
     await gravarDados();
@@ -25,7 +25,7 @@ $("login-form").onsubmit = async (e) => {
     mostrarPerfil(); desenrolarNaProxima = true; render();
   } catch {
     arquivo.usuario = anterior;
-    $("login-erro").textContent = "Não foi possível salvar seu nome. Tente novamente.";
+    $("login-erro").textContent = tr("Não foi possível salvar seu nome. Tente novamente.");
   } finally { salvandoPerfil = false; botao.disabled = false; }
 };
 $("login-nome").oninput = () => $("login-nome").setCustomValidity("");
@@ -55,8 +55,8 @@ $("workspace-tela").onclick = () => alternarTelaCheia();
 $("workspace-nome").oninput = atualizarCriacaoWorkspace;
 async function criarWorkspace(nome, descricao = "", emblema = null, icone = "blueprint") {
   nome = nome.trim().slice(0, 80);
-  if (!nome) throw new Error("Digite o nome do workspace.");
-  if (workspacesDe(arquivo).some((c) => norm(c.nome) === norm(nome))) throw new Error("Já existe um workspace com esse nome.");
+  if (!nome) throw new Error(tr("Digite o nome do workspace."));
+  if (workspacesDe(arquivo).some((c) => norm(c.nome) === norm(nome))) throw new Error(tr("Já existe um workspace com esse nome."));
   const workspace = limpa({ id: novoId(), nome, empresa: nome, descricao, emblema, icone, blueprints: [] });
   arquivo.workspaces.push(workspace);
   try { await gravarDados(); return workspace; }
@@ -66,7 +66,7 @@ $("workspace-form").onsubmit = async (e) => {
   e.preventDefault();
   if (!carregado || salvandoWorkspace) return;
   salvandoWorkspace = true;
-  $("workspace-estado").textContent = "salvando…";
+  $("workspace-estado").textContent = tr("salvando…");
   $("workspace-estado").dataset.e = "";
   const controles = $("workspace-nova").querySelectorAll("button,input,textarea,select");
   controles.forEach((c) => { c.disabled = true; });
@@ -76,8 +76,8 @@ $("workspace-form").onsubmit = async (e) => {
     const novo = await criarWorkspace($("workspace-nome").value, $("workspace-descricao-manual").value.trim(), arte.pecas ? { pecas: arte.pecas } : null, arte.icone);
     location.hash = "/c/" + encodeURIComponent(novo.id);
   } catch (erro) {
-    $("workspace-erro").textContent = erro.message === "Failed to fetch" ? "Não foi possível concluir. Tente novamente." : erro.message;
-    $("workspace-estado").textContent = "erro";
+    $("workspace-erro").textContent = erro.message === "Failed to fetch" ? tr("Não foi possível concluir. Tente novamente.") : erro.message;
+    $("workspace-estado").textContent = tr("erro");
     $("workspace-estado").dataset.e = "erro";
   }
   finally { salvandoWorkspace = false; controles.forEach((c) => { c.disabled = false; }); }
@@ -98,12 +98,12 @@ async function excluirWorkspace(id) {
   const w = (arquivo.workspaces || []).find((c) => c.id === id); // o workspace raiz (sm) é o próprio arquivo: não se remove
   if (!w) return;
   const n = (w.blueprints || []).length;
-  if (!(await confirmar({ titulo: "Excluir workspace?", texto: `O workspace "${w.nome || "Sem nome"}" será apagado${n ? `, junto com ${n} blueprint${n > 1 ? "s" : ""} e todas as ações` : ""}. Não dá para desfazer.`, rotulo: "Excluir workspace" }))) return;
+  if (!(await confirmar({ titulo: tr("Excluir workspace?"), texto: tr(`O workspace "{nome}" será apagado{extra}. Não dá para desfazer.`, { nome: w.nome || tr("Sem nome"), extra: n ? tr(", junto com {blueprints} e todas as ações", { blueprints: trn(n, ["{n} blueprint", "{n} blueprints"]) }) : "" }), rotulo: tr("Excluir workspace") }))) return;
   const antes = { workspaces: arquivo.workspaces, ordem: arquivo.ordemWorkspaces };
   arquivo.workspaces = arquivo.workspaces.filter((c) => c.id !== id);
   if (Array.isArray(arquivo.ordemWorkspaces)) arquivo.ordemWorkspaces = arquivo.ordemWorkspaces.filter((x) => x !== id);
   try { await gravarDados(); }
-  catch { arquivo.workspaces = antes.workspaces; arquivo.ordemWorkspaces = antes.ordem; $("entrada-status").textContent = "Não foi possível excluir o workspace."; return; }
+  catch { arquivo.workspaces = antes.workspaces; arquivo.ordemWorkspaces = antes.ordem; $("entrada-status").textContent = tr("Não foi possível excluir o workspace."); return; }
   render();
 }
 function salvarOrdemWorkspaces(ids, movido) {
@@ -115,12 +115,12 @@ function salvarOrdemWorkspaces(ids, movido) {
   ids.forEach((id) => { if (cartoes.has(id)) fragmento.append(cartoes.get(id)); });
   $("entrada-blueprints").insertBefore(fragmento, $("entrada-blueprints").querySelector("[data-adicionar-workspace]"));
   const nome = workspacesDe(arquivo).find((c) => c.id === movido)?.nome || "Workspace";
-  $("entrada-status").textContent = `${nome} movido para ${ids.indexOf(movido) + 1} de ${ids.length}. Salvando…`;
+  $("entrada-status").textContent = tr("{nome} movido para {pos} de {total}. Salvando…", { nome, pos: ids.indexOf(movido) + 1, total: ids.length });
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const gravacao = timer;
-    try { await gravarDados(); $("entrada-status").textContent = "Ordem dos workspaces salva."; }
-    catch { $("entrada-status").textContent = "A ordem mudou, mas não foi possível salvá-la."; }
+    try { await gravarDados(); $("entrada-status").textContent = tr("Ordem dos workspaces salva."); }
+    catch { $("entrada-status").textContent = tr("A ordem mudou, mas não foi possível salvá-la."); }
     finally { if (timer === gravacao) timer = 0; }
   }, 400);
 }

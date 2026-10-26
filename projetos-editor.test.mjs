@@ -8,11 +8,12 @@ import vm from "node:vm";
 const guardado = new Map();
 let conversa = {};
 const ctx = vm.createContext({
+  navigator: { languages: ["pt-BR"] }, location: { search: "" }, 
   document: { getElementById: () => ({}), hidden: false }, matchMedia: () => ({ matches: false }), CSS: { escape: (s) => s },
   localStorage: { getItem: (k) => guardado.get(k) ?? null, setItem: (k, v) => guardado.set(k, v) },
   host: { addEventListener() {}, querySelector: () => null }, agenteAqui: () => null, roboRolar: false, render() {}, conv: () => conversa,
 });
-["base.js", "dados.js", "projetos.js", "projetos-editor.js"].forEach((a) => vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", a), "utf8"), ctx, { filename: a }));
+["i18n.js", "base.js", "dados.js", "projetos.js", "projetos-editor.js"].forEach((a) => vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", a), "utf8"), ctx, { filename: a }));
 vm.runInContext("this.api = { htmlProjetosEd, htmlProjetoDaAcao, novoProjeto, renomearProjeto, removerProjeto, contaAcoesDoProjeto, projetoDaProposta, htmlProjetoDaProposta, htmlProjetosNovos, criaProjetosNovos, idDoProjetoEscolhido, projetosAbertos, chaveProjeto, guardaProjetosAbertos };", ctx);
 const api = ctx.api;
 const json = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes

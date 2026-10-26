@@ -53,17 +53,17 @@ function render() {
     return;
   }
   if (naEntrada) {
-    $("entrada-marca").textContent = "Workspaces";
-    $("entrada-titulo").textContent = "Seus workspaces";
-    $("entrada-descricao").textContent = "Escolha um workspace para continuar.";
+    $("entrada-marca").textContent = tr("Workspaces");
+    $("entrada-titulo").textContent = tr("Seus workspaces");
+    $("entrada-descricao").textContent = tr("Escolha um workspace para continuar.");
     $("entrada-voltar").hidden = true;
     $("entrada-novo").hidden = true;
     const workspaces = workspacesDe(arquivo);
-    $("entrada-status").textContent = falhou ? "Não foi possível atualizar os workspaces. Tentando novamente…" : `${workspaces.length} workspace${workspaces.length === 1 ? "" : "s"} · arraste para reordenar (Alt + setas)`;
+    $("entrada-status").textContent = falhou ? tr("Não foi possível atualizar os workspaces. Tentando novamente…") : trn(workspaces.length, ["{n} workspace · arraste para reordenar (Alt + setas)", "{n} workspaces · arraste para reordenar (Alt + setas)"]);
     $("entrada-blueprints").innerHTML = workspaces.map((c) => {
       const pecas = pecasWorkspace(c, EMB);
-      return `<a class="blueprint-cartao" data-workspace="${esc(c.id)}" draggable="false" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown" title="Arraste para reordenar · Alt + setas no teclado" href="#/c/${encodeURIComponent(c.id)}"><span class="cartao-tipo">Workspace</span><div class="cartao-arte" aria-hidden="true">${pecas ? previaMarca(pecas, 280, 120) : ""}</div><h2 title="${esc(c.nome)}">${esc(c.nome)}</h2><p title="${esc(c.dados.descricao || "Blueprints e planejamento do workspace")}">${esc(c.dados.descricao || "Blueprints e planejamento do workspace")}</p><footer><span>${c.dados.blueprints.length} blueprint(s)</span><span>Abrir espaço →</span></footer></a>`;
-    }).join("") + `<button class="blueprint-cartao cartao-adicionar" type="button" data-adicionar-workspace><span class="mais" aria-hidden="true">+</span><strong>Criar workspace</strong><span>Um espaço para agrupar blueprints.</span></button>`;
+      return `<a class="blueprint-cartao" data-workspace="${esc(c.id)}" draggable="false" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown" title="${esc(tr("Arraste para reordenar · Alt + setas no teclado"))}" href="#/c/${encodeURIComponent(c.id)}"><span class="cartao-tipo">${tr("Workspace")}</span><div class="cartao-arte" aria-hidden="true">${pecas ? previaMarca(pecas, 280, 120) : ""}</div><h2 title="${esc(c.nome)}">${esc(c.nome)}</h2><p title="${esc(c.dados.descricao || tr("Blueprints e planejamento do workspace"))}">${esc(c.dados.descricao || tr("Blueprints e planejamento do workspace"))}</p><footer><span>${trn(c.dados.blueprints.length, ["{n} blueprint", "{n} blueprints"])}</span><span>${tr("Abrir espaço →")}</span></footer></a>`;
+    }).join("") + `<button class="blueprint-cartao cartao-adicionar" type="button" data-adicionar-workspace><span class="mais" aria-hidden="true">+</span><strong>${tr("Criar workspace")}</strong><span>${tr("Um espaço para agrupar blueprints.")}</span></button>`;
     host.innerHTML = "";
     abrirEntrada();
     return;
@@ -84,7 +84,7 @@ function render() {
   if (atual) {
     const { p, pi, ok } = atual;
     const acoes = acoesVisiveis(p).filter((f) => f.a < t1 && f.b >= t0).map((f) => {
-      const rotulo = `${numeroDaAcao(p, f, pi)} · ${f.nome || "SEM NOME"}`;
+      const rotulo = `${numeroDaAcao(p, f, pi)} · ${f.nome || tr("SEM NOME")}`;
       const w = rotulo.length * (CHAR + 0.35) + 34 + (f.prototipos?.length ? 30 : 0); // +0,35 por letra: o espaçamento de 0,06em do texto SVG
       const x0 = X(Math.max(f.a, t0)), x1 = X(Math.min(f.b + 1, t1));
       const nt = f.planos.length, nm = f.checkpoints.length, ncol = (nt ? 1 : 0) + (nm ? 1 : 0);
@@ -137,7 +137,7 @@ function render() {
     }
     for (let d = t0 + 7; d < t1; d += 7) out.push(`<path class="ln m" d="M${X(d)} ${yRuler - 4}V${yRuler}"/>`);
     if (hojeD >= t0 && hojeD < t1) out.push(`<path class="eixo" d="M${xt} ${yRuler}V${yBand - 20}"/>`);
-    if (hojeD >= t0 && hojeD < t1) out.push(`<g class="hoje-chip"><rect x="${xt - 46}" y="${yRuler + 8}" width="92" height="20" fill="#eaf4ff"/><text x="${xt}" y="${yRuler + 22}" font-size="11" font-weight="700" text-anchor="middle" class="hoje-t" style="fill:#0c3a78">HOJE ${fmt(hoje)}</text></g>`);
+    if (hojeD >= t0 && hojeD < t1) out.push(`<g class="hoje-chip"><rect x="${xt - 46}" y="${yRuler + 8}" width="92" height="20" fill="#eaf4ff"/><text x="${xt}" y="${yRuler + 22}" font-size="11" font-weight="700" text-anchor="middle" class="hoje-t" style="fill:#0c3a78">${tr("HOJE")} ${fmt(hoje)}</text></g>`);
     out.push(`</g>`);
   };
   const rodape = (out, H, folha, desenho) => {
@@ -145,18 +145,18 @@ function render() {
     const cw = 440, ch = 96, cx = R - cw + 16, cy2 = H - IL - ch - 4;
     out.push(`<path class="ln" d="M${L} ${yBand - 8}H${R}"/>`);
     if (!atual) {
-      out.push(`<text class="mid cap" x="${L}" y="${ly + 60}" font-size="8">BARRA = AÇÃO · PREENCHIDO = FEITO · VAZIO = FALTA</text>`);
-      out.push(`<rect class="ln" x="${L + 270}" y="${ly + 60 - 8}" width="22" height="8"/><rect class="hach" x="${L + 271}" y="${ly + 60 - 7}" width="20" height="6"/><text class="mid cap" x="${L + 298}" y="${ly + 60}" font-size="8">CONCLUÍDA</text>`);
-      out.push(`<rect class="ln" style="stroke-width:1.8" x="${L + 360}" y="${ly + 60 - 8}" width="22" height="8"/><rect class="prog" x="${L + 361}" y="${ly + 60 - 7}" width="10" height="6"/><text class="mid cap" x="${L + 388}" y="${ly + 60}" font-size="8">EM ANDAMENTO</text>`);
-      out.push(`<rect class="ln m" style="stroke-dasharray:6 4" x="${L + 470}" y="${ly + 60 - 8}" width="22" height="8"/><text class="mid cap" x="${L + 498}" y="${ly + 60}" font-size="8">A FAZER</text>`);
+      out.push(`<text class="mid cap" x="${L}" y="${ly + 60}" font-size="8">${tr("BARRA = AÇÃO · PREENCHIDO = FEITO · VAZIO = FALTA")}</text>`);
+      out.push(`<rect class="ln" x="${L + 270}" y="${ly + 60 - 8}" width="22" height="8"/><rect class="hach" x="${L + 271}" y="${ly + 60 - 7}" width="20" height="6"/><text class="mid cap" x="${L + 298}" y="${ly + 60}" font-size="8">${tr("CONCLUÍDA")}</text>`);
+      out.push(`<rect class="ln" style="stroke-width:1.8" x="${L + 360}" y="${ly + 60 - 8}" width="22" height="8"/><rect class="prog" x="${L + 361}" y="${ly + 60 - 7}" width="10" height="6"/><text class="mid cap" x="${L + 388}" y="${ly + 60}" font-size="8">${tr("EM ANDAMENTO")}</text>`);
+      out.push(`<rect class="ln m" style="stroke-dasharray:6 4" x="${L + 470}" y="${ly + 60 - 8}" width="22" height="8"/><text class="mid cap" x="${L + 498}" y="${ly + 60}" font-size="8">${tr("A FAZER")}</text>`);
     } // legenda da lista: a barra é a ação; na folha do blueprint o rótulo vai no próprio desenho
-    const selecionado = atual ? "Marque planos e checkpoints clicando neles · passe o mouse sobre uma ação para ver os detalhes." : "Clique num blueprint para abrir o blueprint dele.";
+    const selecionado = atual ? tr("Marque planos e checkpoints clicando neles · passe o mouse sobre uma ação para ver os detalhes.") : tr("Clique num blueprint para abrir o blueprint dele.");
     const maxSel = Math.max(1, Math.floor((cx - L - 18) / 7.7));
     out.push(`<text class="sel mid" data-max="${maxSel}" x="${L}" y="${ly + 100}" font-size="11">${esc(corta(selecionado, maxSel))}</text>`);
     out.push(`<rect class="ln" style="stroke-width:1.6" x="${cx}" y="${cy2}" width="${cw}" height="${ch}"/>`);
     out.push(`<path class="ln m" d="M${cx} ${cy2 + 36}H${cx + cw}M${cx} ${cy2 + 66}H${cx + cw}M${cx + 150} ${cy2 + 66}V${cy2 + ch}M${cx + 250} ${cy2 + 66}V${cy2 + ch}M${cx + 340} ${cy2 + 66}V${cy2 + ch}"/>`);
-    out.push(`<text class="mid cap" x="${cx + 8}" y="${cy2 + 11}" font-size="8">Workspace</text><text x="${cx + 8}" y="${cy2 + 28}" font-size="16" font-weight="700" class="cap">${esc(corta(D.empresa, 28))}</text>`);
-    out.push(`<text class="mid cap" x="${cx + 8}" y="${cy2 + 47}" font-size="8">Tela</text><text x="${cx + 8}" y="${cy2 + 61}" font-size="12" font-weight="700" class="cap">${esc(corta(desenho, 38))}</text>`);
+    out.push(`<text class="mid cap" x="${cx + 8}" y="${cy2 + 11}" font-size="8">${tr("Workspace")}</text><text x="${cx + 8}" y="${cy2 + 28}" font-size="16" font-weight="700" class="cap">${esc(corta(D.empresa, 28))}</text>`);
+    out.push(`<text class="mid cap" x="${cx + 8}" y="${cy2 + 47}" font-size="8">${tr("Tela")}</text><text x="${cx + 8}" y="${cy2 + 61}" font-size="12" font-weight="700" class="cap">${esc(corta(desenho, 38))}</text>`);
     const acoesCarimbo = atual ? acoesDe(atual.p) : D.blueprints.flatMap((p) => acoesDe(p)), feitasCarimbo = acoesCarimbo.filter((x) => x.status === "concluido").length;
     const progCarimbo = atual ? progressoDe(atual.p) : D.blueprints.length ? D.blueprints.reduce((t, x) => t + progressoDe(x), 0) / D.blueprints.length : 0;
     [["Data", hoje.split("-").reverse().join("/"), 0], ["Progresso", `${Math.round(progCarimbo * 100)}%`, 150], ["Folha", `${folha}/${total}`, 250], ["Ações", `${feitasCarimbo}/${acoesCarimbo.length}`, 340]].forEach(([k, v, off]) => {
@@ -170,7 +170,7 @@ function render() {
     const e = EMB.desenhaEmblema(pecas, { largura: larg, altura: lado - 18, progresso, sombra: false });
     if (!e) return "";
     const pct = Math.round(progresso * 100);
-    const info = `MARCA · ${pct}% CONSTRUÍDA (${e.feitas} de ${e.total} peças)`;
+    const info = tr("MARCA · {pct}% CONSTRUÍDA ({feitas} de {total} peças)", { pct, feitas: e.feitas, total: e.total });
     return `<svg class="emblema marca${fundo ? " marca-fundo" : ""}" x="${W / 2 - larg / 2}" y="${centro - lado / 2}" width="${larg}" height="${lado}" viewBox="0 0 ${larg} ${lado}" role="img" aria-label="${esc(info)}" data-info="${esc(info)}" data-pct="${pct}" data-feitas="${e.feitas}" data-total="${e.total}" data-tit="${esc(titulo)}" data-proj="${esc(blueprint)}">${e.svg}<text class="mid legenda-marca" x="${larg / 2}" y="${lado - 3}" text-anchor="middle" font-size="10">${pct}% CONSTRUÍDA</text></svg>`;
   };
   const arteCartao = (pecas, x, y, w, h, progresso = 1) => {
@@ -188,8 +188,8 @@ function render() {
     const geralTodos = comAcoes.length ? comAcoes.reduce((t, x) => t + resumo(acoesDe(x.p)).geral, 0) / comAcoes.length : 0;
     out.push(marcaFolha(pecasWorkspace(workspaceAtual, EMB), { centro: H / 2, maxLado: MINIMA * 0.55, progresso: geralTodos, titulo: D.empresa || "Workspace", fundo: true })); // a marca do workspace acompanha o progresso dos seus blueprints como uma marca d'água de fundo
     out.push(`<text x="${L}" y="${IL + 36}" font-size="18" font-weight="700" class="cap">${esc(D.empresa)} · ${esc(D.titulo)}</text>`);
-    out.push(`<text class="mid cap" x="${L}" y="${IL + 56}" font-size="11">Blueprints · cada um abre o seu próprio blueprint</text>`);
-    out.push(`<text class="mid cap" x="${L}" y="${yMapa + 6}" font-size="10">Clique para abrir o blueprint · segure e arraste para reordenar</text>`);
+    out.push(`<text class="mid cap" x="${L}" y="${IL + 56}" font-size="11">${tr("Blueprints · cada um abre o seu próprio blueprint")}</text>`);
+    out.push(`<text class="mid cap" x="${L}" y="${yMapa + 6}" font-size="10">${tr("Clique para abrir o blueprint · segure e arraste para reordenar")}</text>`);
     mapa.forEach(({ p, pi, ok }, i) => {
       const col = i % cols, row = Math.floor(i / cols);
       const tx = L + col * (tw + GAP), ty = yMapa + 48 + row * (TH + GAP);
@@ -197,10 +197,10 @@ function render() {
       const nv = nova("t:" + p.id);
       const artW = Math.min(116, Math.max(76, Math.round(tw * 0.25))), artX = tx + 12, artY = ty + 26, artH = TH - 52;
       const textoX = artX + artW + 14, textoW = tx + tw - 16 - textoX;
-      const nome = corta(p.nome || "SEM NOME", Math.max(8, Math.floor(textoW / 10.2)));
+      const nome = corta(p.nome || tr("SEM NOME"), Math.max(8, Math.floor(textoW / 10.2)));
       const descricao = corta(p.descricao || "", Math.max(12, Math.floor(textoW / 7.5)));
-      const info = (!p.acoes.length ? "SEM AÇÕES AINDA" : ok ? `✓ CONCLUÍDO · ${p.acoes.length} AÇÕES` : r.futuro ? "PLANEJADO" : `${r.concl}/${p.acoes.length} AÇÕES · ${Math.round(r.geral * 100)}% · FALTAM ${fs.reduce((t, f) => t + f.it[1] - f.it[0], 0)} ITENS`) + (r.horas ? ` · ${r.horas} H` : "");
-      const aria = `Blueprint ${pi + 1}, ${p.nome}: ${info}. Abrir o blueprint. Segure e arraste para reordenar`;
+      const info = (!p.acoes.length ? tr("SEM AÇÕES AINDA") : ok ? tr("✓ CONCLUÍDO · {n} AÇÕES", { n: p.acoes.length }) : r.futuro ? tr("PLANEJADO") : tr("{concl}/{total} AÇÕES · {pct}% · FALTAM {faltam} ITENS", { concl: r.concl, total: p.acoes.length, pct: Math.round(r.geral * 100), faltam: fs.reduce((t, f) => t + f.it[1] - f.it[0], 0) })) + (r.horas ? ` · ${r.horas} H` : "");
+      const aria = tr("Blueprint {n}, {nome}: {info}. Abrir o blueprint. Segure e arraste para reordenar", { n: pi + 1, nome: p.nome, info });
       out.push(`<g data-goto="${esc(p.id)}" class="alvo${ok ? " ok" : ""}" tabindex="0" role="button" aria-label="${esc(aria)}">`);
       out.push(`<rect class="moldura" x="${tx}" y="${ty}" width="${tw}" height="${TH}"/>`);
       out.push(`<g ${anima(nv, "surge")}>`);
@@ -223,7 +223,7 @@ function render() {
           if (i) { cx += vao(i); if (vao(i) > 2) out.push(`<path class="eixo" style="stroke-dasharray:none" d="M${cx - 3.5} ${yb - 3}V${yb + 15}"/>`); }
           const w = util * peso(f) / total, estilo = f.status === "concluido" ? "" : f.status === "andamento" ? ' style="stroke-width:1.8"' : ' style="stroke-dasharray:6 4"';
           const miolo = f.status === "concluido" ? `<rect class="hach" x="${cx + 1}" y="${yb + 1}" width="${Math.max(0, w - 2)}" height="10"/>` : f.pct > 0 ? `<rect class="prog" x="${cx + 1}" y="${yb + 1}" width="${Math.max(0, (w - 2) * f.pct)}" height="10"/>` : "";
-          out.push(`<g><title>${esc(`${numeroDaAcao(p, f, pi)} ${f.nome || "SEM NOME"} · ${f.status === "concluido" ? "concluída" : f.status === "andamento" ? `em andamento, ${Math.round(f.pct * 100)}% feito` : "a fazer"}`)}</title><rect class="ln${f.status === "planejado" ? " m" : ""}"${estilo} x="${cx}" y="${yb}" width="${w}" height="12"/>${miolo}</g>`);
+          out.push(`<g><title>${esc(`${numeroDaAcao(p, f, pi)} ${f.nome || tr("SEM NOME")} · ${f.status === "concluido" ? tr("concluída") : f.status === "andamento" ? tr("em andamento, {pct}% feito", { pct: Math.round(f.pct * 100) }) : tr("a fazer")}`)}</title><rect class="ln${f.status === "planejado" ? " m" : ""}"${estilo} x="${cx}" y="${yb}" width="${w}" height="12"/>${miolo}</g>`);
           cx += w;
         });
         out.push(`<path class="ln l" d="M${x0} ${yc}H${x1}M${x0} ${yc - 4}V${yc + 4}M${x1} ${yc - 4}V${yc + 4}"/>`);
@@ -238,10 +238,10 @@ function render() {
     const nx = L + novaColuna * (tw + GAP), ny = yMapa + 48 + novaLinha * (TH + GAP);
     const artW = Math.min(108, Math.max(76, Math.round(tw * 0.24))), artX = nx + 12, artY = ny + 26, artH = TH - 52;
     const textoX = artX + artW + 14, plusX = nx + tw - 56, textoW = plusX - 12 - textoX;
-    out.push(`<g data-adicionar-blueprint tabindex="0" role="button" aria-label="Criar novo blueprint" class="alvo criar"><rect class="moldura" x="${nx}" y="${ny}" width="${tw}" height="${TH}"/>${arteCartao(EMB?.CONSTRUCAO, artX, artY, artW, artH)}<text class="cap" x="${textoX}" y="${ny + 68}" font-size="12">${esc(corta("NOVO BLUEPRINT", Math.floor(textoW / 7.2)))}</text><text class="mid cap" x="${textoX}" y="${ny + 94}" font-size="10">${esc(corta("ADICIONAR BLUEPRINT", Math.floor(textoW / 6)))}</text><rect class="mais-borda" x="${plusX}" y="${ny + 58}" width="36" height="36"/><path class="mais-novo" d="M${plusX + 10} ${ny + 76}h16M${plusX + 18} ${ny + 68}v16"/></g>`);
-    if (falhou) out.push(`<text class="aviso cap" x="${L}" y="${yMapa + 40}" font-size="12" font-weight="700">Servidor indisponível · abra o The Blueprint (beta) (blueprint.exe) e use http://127.0.0.1:3000</text>`);
-    rodape(out, H, 1, "Lista de blueprints");
-    return folhaSvg(H, out, `Lista de blueprints da ${D.empresa}`);
+    out.push(`<g data-adicionar-blueprint tabindex="0" role="button" aria-label="${esc(tr("Criar novo blueprint"))}" class="alvo criar"><rect class="moldura" x="${nx}" y="${ny}" width="${tw}" height="${TH}"/>${arteCartao(EMB?.CONSTRUCAO, artX, artY, artW, artH)}<text class="cap" x="${textoX}" y="${ny + 68}" font-size="12">${esc(corta(tr("NOVO BLUEPRINT"), Math.floor(textoW / 7.2)))}</text><text class="mid cap" x="${textoX}" y="${ny + 94}" font-size="10">${esc(corta(tr("ADICIONAR BLUEPRINT"), Math.floor(textoW / 6)))}</text><rect class="mais-borda" x="${plusX}" y="${ny + 58}" width="36" height="36"/><path class="mais-novo" d="M${plusX + 10} ${ny + 76}h16M${plusX + 18} ${ny + 68}v16"/></g>`);
+    if (falhou) out.push(`<text class="aviso cap" x="${L}" y="${yMapa + 40}" font-size="12" font-weight="700">${tr("Servidor indisponível · abra o The Blueprint (beta) (blueprint.exe) e use http://127.0.0.1:3000")}</text>`);
+    rodape(out, H, 1, tr("Lista de blueprints"));
+    return folhaSvg(H, out, tr("Lista de blueprints da {empresa}", { empresa: D.empresa }));
   };
 
   // ---- blueprint de um blueprint -----------------------------------------------------------------
@@ -253,24 +253,24 @@ function render() {
     moldura(out, H);
     out.push(marcaFolha(p.emblema?.pecas, { centro: H / 2, progresso: b.geral, titulo: p.nome || "Blueprint", blueprint: p.id })); // a marca deste blueprint, sempre no centro da janela, construída conforme o progresso
     out.push(`<text x="${L}" y="${IL + 36}" font-size="18" font-weight="700" class="cap">${esc(D.empresa)} · ${esc(D.titulo)}</text>`);
-    out.push(`<text class="mid cap" x="${L}" y="${IL + 56}" font-size="11">Folha ${numero} de ${total} · Blueprint ${pad(pi + 1)} · ${esc(corta(p.nome || "Sem nome", 60))}</text>`);
+    out.push(`<text class="mid cap" x="${L}" y="${IL + 56}" font-size="11">${tr("Folha {n} de {total} · Blueprint {bp} · {nome}", { n: numero, total, bp: pad(pi + 1), nome: esc(corta(p.nome || tr("Sem nome"), 60)) })}</text>`);
     regua(out, H);
     const secao = (s) => {
       const yb = s.y;
       cabecalhoSecao(out, s, { L, R });
-      if (!s.total) out.push(`<text class="mid cap" x="${L + 40}" y="${yb + PH + 8}" font-size="11">Sem ações · abra Editar para adicionar</text>`);
-      else if (!s.acoes.length) out.push(`<text class="mid" x="${L}" y="${yb + PH + 30}" font-size="12">${soAndamento[p.id] ? "Nada em andamento neste blueprint." : soPendentes[p.id] ? "Nada pendente neste blueprint." : "Nenhuma ação neste período."}</text>`);
+      if (!s.total) out.push(`<text class="mid cap" x="${L + 40}" y="${yb + PH + 8}" font-size="11">${tr("Sem ações · abra Editar para adicionar")}</text>`);
+      else if (!s.acoes.length) out.push(`<text class="mid" x="${L}" y="${yb + PH + 30}" font-size="12">${soAndamento[p.id] ? tr("Nada em andamento neste blueprint.") : soPendentes[p.id] ? tr("Nada pendente neste blueprint.") : tr("Nenhuma ação neste período.")}</text>`);
       s.acoes.forEach((f) => {
         const nf = nova((s.aberto ? "f:" : "c:") + f.id);
         const dias = Math.round(f.b - f.a) + 1;
         let w = Math.max(f.x1 - f.x0, 6);
-        const extra = (f.tf[1] ? ` · ${f.tf[0]}/${f.tf[1]} PLANOS` : "") + (f.mf[1] ? ` · ${f.mf[0]}/${f.mf[1]} CHECKPOINTS` : "") + (f.obs?.trim() ? " · COM INSTRUÇÕES" : "");
+        const extra = (f.tf[1] ? ` · ${f.tf[0]}/${f.tf[1]} ${tr("PLANOS")}` : "") + (f.mf[1] ? ` · ${f.mf[0]}/${f.mf[1]} ${tr("CHECKPOINTS")}` : "") + (f.obs?.trim() ? ` · ${tr("COM INSTRUÇÕES")}` : "");
         const abrir = s.aberto ? "" : " · CLIQUE PARA ABRIR AQUI"; // com as ações recolhidas, clicar abre e leva até o item
-        const info = `${f.rotulo.toUpperCase()} · ${ROTULO[f.status].toUpperCase()} · ${Math.round(f.pct * 100)}% · ${fmt(f.inicio)} → ${fmt(f.fim)} · ${dias} dias${extra}${abrir}`;
+        const info = `${f.rotulo.toUpperCase()} · ${ROTULO[f.status].toUpperCase()} · ${Math.round(f.pct * 100)}% · ${fmt(f.inicio)} → ${fmt(f.fim)} · ${dias} ${tr("dias")}${extra}${abrir}`;
         const aria = `${f.rotulo}, ${ROTULO[f.status]}, ${Math.round(f.pct * 100)}%, ${fmt(f.inicio)} a ${fmt(f.fim)}${extra.replaceAll("·", ",").toLowerCase()}`;
         const checkpoints = (cy, r, g) => (f.checkpoints || []).filter((m) => dia(m.data) >= t0 && dia(m.data) < t1).map((m) => {
           const mxp = g ? g.x0 + ((dia(m.data) + 0.5 - f.a) / (f.b + 1 - f.a)) * (g.x1 - g.x0) : Math.min(R, Math.max(L, X(dia(m.data) + 0.5)));
-          const mi = `CHECKPOINT: ${(m.nome || "SEM NOME").toUpperCase()} · ${fmt(m.data)} · ${m.feito ? "FEITO" : "PENDENTE"}${abrir}`;
+          const mi = `${tr("CHECKPOINT")}: ${(m.nome || tr("SEM NOME")).toUpperCase()} · ${fmt(m.data)} · ${m.feito ? tr("FEITO") : tr("PENDENTE")}${abrir}`;
           return `<g class="checkpoint" data-m="${esc(m.id)}" data-info="${esc(mi)}"><circle cx="${mxp}" cy="${cy}" r="${r + 5}" fill="transparent"/><path class="dm${m.feito ? " ok" : ""}" d="M${mxp} ${cy - r}l${r} ${r}l${-r} ${r}l${-r} ${-r}z"/></g>`;
         }).join("");
         const dados = `class="acao" tabindex="0" role="group" aria-label="${esc(aria)}" data-st="${f.status}" data-p="${esc(p.id)}" data-f="${esc(f.id)}" data-info="${esc(info)}"`;
@@ -320,7 +320,7 @@ function render() {
           if (f.planos.length) {
             gl.push(cab(cx0, "Planos", f.tf[0], f.tf[1]));
             f.planos.forEach((t, i) => {
-              const yy = base + 30 + i * 22, nome = t.texto || "sem texto";
+              const yy = base + 30 + i * 22, nome = t.texto || tr("sem texto");
               gl.push(`<g ${atr("t", t, `PLANO: ${nome} · ${t.feito ? "FEITO" : "PENDENTE"} · clique para marcar`)}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="cx${t.feito ? " ok" : ""}" x="${cx0}" y="${yy - 11}" width="13" height="13"/>${t.feito ? `<path class="cxm" d="M${cx0 + 3} ${yy - 4}l3 3l5-6"/>` : ""}<text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome, maxc))}</text></g>`);
               const aqui = agsP.filter((x) => x.planoId === t.id);
               if (aqui.length) gl.push(`<rect class="robo-linha${roboClasse(aqui[0])}" data-plano="${esc(t.id)}" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/>`);
@@ -330,21 +330,21 @@ function render() {
           if (f.checkpoints.length) {
             gl.push(cab(cx0, "Checkpoints", f.mf[0], f.mf[1]));
             f.checkpoints.forEach((m, i) => {
-              const yy = base + 30 + i * 22, nome = m.nome || "sem nome", dt = dia(m.data) === dia(m.data) ? " · " + fmt(m.data) : "";
+              const yy = base + 30 + i * 22, nome = m.nome || tr("sem nome"), dt = dia(m.data) === dia(m.data) ? " · " + fmt(m.data) : "";
               gl.push(`<g ${atr("m", m, `CHECKPOINT: ${nome}${dt} · ${m.feito ? "FEITO" : "PENDENTE"} · clique para marcar`)}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><path class="dm${m.feito ? " ok" : ""}" d="M${cx0 + 6.5} ${yy - 12}l6.5 6.5l-6.5 6.5l-6.5 -6.5z"/><text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome + dt, maxc))}</text></g>`);
             });
           }
           out.push(`<g ${anima(nf, "surge")}>${gl.join("")}</g>`);
         }
-        if (f.prototipos?.length) out.push(protoSvg(f.lx + (f.rotulo.length * (CHAR + 0.35)) + 46, fy - 1, `PROTÓTIPO${f.prototipos.length > 1 ? "S" : ""} DA AÇÃO ${f.rotulo.toUpperCase()}: ${f.prototipos.map((x) => x.titulo.toUpperCase()).join(" · ")} · clique para ver`, `${p.id}|${f.id}`));
-        out.push(notaSvg(f.lx + (f.rotulo.length * (CHAR + 0.35)) + 16, fy - 1, `INSTRUÇÕES DA AÇÃO ${f.rotulo.toUpperCase()}: ${f.obs?.trim() ? umaLinha(f.obs, 200) : "ainda sem instruções · clique para escrever"}`, `${p.id}|${f.id}`));
+        if (f.prototipos?.length) out.push(protoSvg(f.lx + (f.rotulo.length * (CHAR + 0.35)) + 46, fy - 1, trn(f.prototipos.length, ["PROTÓTIPO DA AÇÃO {rotulo}: {titulos} · clique para ver", "PROTÓTIPOS DA AÇÃO {rotulo}: {titulos} · clique para ver"], { rotulo: f.rotulo.toUpperCase(), titulos: f.prototipos.map((x) => x.titulo.toUpperCase()).join(" · ") }), `${p.id}|${f.id}`));
+        out.push(notaSvg(f.lx + (f.rotulo.length * (CHAR + 0.35)) + 16, fy - 1, tr("INSTRUÇÕES DA AÇÃO {rotulo}: {texto}", { rotulo: f.rotulo.toUpperCase(), texto: f.obs?.trim() ? umaLinha(f.obs, 200) : tr("ainda sem instruções · clique para escrever") }), `${p.id}|${f.id}`));
         out.push(`</g>`);
         if (nf) n++;
       });
       out.push(`</g>`);
     };
     b.secoes.forEach(secao);
-    rodape(out, H, numero, p.nome || "Sem nome");
+    rodape(out, H, numero, p.nome || tr("Sem nome"));
     return folhaSvg(H, out, `Blueprint ${p.nome}`);
   };
 
@@ -357,7 +357,7 @@ function render() {
   if (roboRolar) { roboRolar = false; requestAnimationFrame(() => (host.querySelector(".robo-linha") || camadaClaude.querySelector("[data-robo-nome]"))?.scrollIntoView({ block: "center", behavior: reduz() ? "auto" : "smooth" })); }
 
   // busca de blueprints sobre a lista
-  $("busca-n").textContent = q ? (mapa.length ? `${mapa.length} resultado${mapa.length > 1 ? "s" : ""}` : "nenhum resultado") : "";
+  $("busca-n").textContent = q ? (mapa.length ? trn(mapa.length, ["{n} resultado", "{n} resultados"]) : tr("nenhum resultado")) : "";
   requestAnimationFrame(atualizaRolagem);
 }
 

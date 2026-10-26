@@ -1,5 +1,5 @@
 // ---- situação e prazo da ação direto pelo menu do botão direito (a mesma regra do Editar: com planos ou checkpoints a situação vem deles) ----
-const SEM_CONCLUIR_COM_ITENS = "Conclui sozinha quando todos os planos e checkpoints estiverem marcados";
+const SEM_CONCLUIR_COM_ITENS = tr("Conclui sozinha quando todos os planos e checkpoints estiverem marcados");
 
 function mudarSituacaoAcao(pid, fid, status) {
   const f = acaoDe(pid, fid);
@@ -24,13 +24,13 @@ function itensDeSituacao(pid, f) {
   if (e.status === "concluido" && e.it[1]) return itens; // concluída por planos e checkpoints: só desmarcá-los muda isso
   if (!e.it[1] || !e.it[0]) { // sem itens, ou com itens e nenhum feito: planejada e em andamento são escolha da pessoa (concluída sem itens também reabre aqui)
     if (e.status !== "planejado") situacao("planejado", "circulo", "Marcar como planejada");
-    if (e.status !== "andamento") situacao("andamento", "relogio", "Marcar como em andamento");
+    if (e.status !== "andamento") situacao("andamento", "relogio", tr("Marcar como em andamento"));
   }
   if (e.status !== "concluido") {
-    if (e.it[1]) itens.push({ grupo: "estado", icone: "check", rotulo: "Marcar como concluída", fn() {}, desabilitado: true, motivo: SEM_CONCLUIR_COM_ITENS });
-    else situacao("concluido", "check", "Marcar como concluída");
-    itens.push({ grupo: "prazo", icone: "calendario", rotulo: "Prorrogar o fim em 1 dia", fn: () => prorrogarAcao(pid, f.id, 1) });
-    itens.push({ grupo: "prazo", icone: "calendario", rotulo: "Prorrogar o fim em 1 semana", fn: () => prorrogarAcao(pid, f.id, 7) });
+    if (e.it[1]) itens.push({ grupo: "estado", icone: "check", rotulo: tr("Marcar como concluída"), fn() {}, desabilitado: true, motivo: SEM_CONCLUIR_COM_ITENS });
+    else situacao("concluido", "check", tr("Marcar como concluída"));
+    itens.push({ grupo: "prazo", icone: "calendario", rotulo: tr("Prorrogar o fim em 1 dia"), fn: () => prorrogarAcao(pid, f.id, 1) });
+    itens.push({ grupo: "prazo", icone: "calendario", rotulo: tr("Prorrogar o fim em 1 semana"), fn: () => prorrogarAcao(pid, f.id, 7) });
   }
   return itens;
 }

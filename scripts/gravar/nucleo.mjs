@@ -19,7 +19,7 @@ const CURSOR = `(() => { if (document.getElementById("cur-gravacao")) return;
   addEventListener("mousemove", (e) => { c.style.left = e.clientX + "px"; c.style.top = e.clientY + "px"; }, true);
   addEventListener("mousedown", () => c.classList.add("p"), true); addEventListener("mouseup", () => c.classList.remove("p"), true); })()`;
 
-export async function abrirAmbiente({ exe, dados = join(raiz, "data.exemplo.json"), largura = 1280, altura = 800, extraEnv = {} }) {
+export async function abrirAmbiente({ exe, dados = join(raiz, "data.exemplo.json"), largura = 1280, altura = 800, extraEnv = {}, idioma = "" }) {
   if (!EDGE) throw new Error("precisa do Microsoft Edge");
   const tmp = mkdtempSync(join(tmpdir(), "gravar-"));
   copyFileSync(dados, join(tmp, "dados.json"));
@@ -27,7 +27,7 @@ export async function abrirAmbiente({ exe, dados = join(raiz, "data.exemplo.json
   const url = `http://127.0.0.1:${porta}`;
   const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), DADOS_ARQ: join(tmp, "dados.json"), BLUEPRINT_DB: join(tmp, "blueprint.db"), PROTOTIPOS_DIR: join(tmp, "p"), BLUEPRINT_ASSETS_DIR: raiz, BLUEPRINT_SEM_ATUALIZACAO: "1", ...extraEnv };
   const servidor = spawn(exe, ["serve"], { env, stdio: "ignore", windowsHide: true });
-  const edge = spawn(EDGE, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, `--window-size=${largura},${altura}`, "about:blank"], { stdio: "ignore" });
+  const edge = spawn(EDGE, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, `--window-size=${largura},${altura}`, ...(idioma ? [`--lang=${idioma}`, `--accept-lang=${idioma}`] : []), "about:blank"], { stdio: "ignore" });
   const fechar = () => { for (const p of [servidor, edge]) try { p.kill(); } catch {} setTimeout(() => { try { rmSync(tmp, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); } catch {} }, 800); };
   for (let i = 0; i < 150; i++) { try { await fetch(url + "/api/dados"); break; } catch { await dormir(100); } }
   let alvo;

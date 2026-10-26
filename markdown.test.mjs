@@ -6,8 +6,8 @@ import { join } from "node:path";
 import vm from "node:vm";
 
 const ler = (f) => readFileSync(join(import.meta.dirname, "web", "js", f), "utf8");
-const ctx = vm.createContext({ URL, document: {}, matchMedia: () => ({ matches: false }) });
-vm.runInContext(ler("base.js") + "\n" + ler("markdown.js") + "\nthis.mdHtml = mdHtml;", ctx);
+const ctx = vm.createContext({ URL, navigator: { languages: ["pt-BR"] }, location: { search: "" }, document: {}, matchMedia: () => ({ matches: false }) });
+vm.runInContext(ler("i18n.js") + "\n" + ler("base.js") + "\n" + ler("markdown.js") + "\nthis.mdHtml = mdHtml;", ctx);
 const md = (t) => ctx.mdHtml(t);
 
 // parágrafos e quebra de linha simples

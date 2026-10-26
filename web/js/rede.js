@@ -67,7 +67,7 @@ async function carregar() {
     concluidosAntes = concluidosAgora();
     render();
   } catch {
-    $("login-erro").textContent = "Não foi possível carregar os dados. Tentando novamente…";
+    $("login-erro").textContent = tr("Não foi possível carregar os dados. Tentando novamente…");
     if (!falhou) { falhou = true; render(); }
   }
 }
@@ -112,14 +112,14 @@ async function gravarDados() {
 }
 let timer = 0;
 function salvar() {
-  dizer("salvando…");
+  dizer(tr("salvando…"));
   clearTimeout(timer);
   timer = setTimeout(async () => {
     const gravacao = timer;
     try {
       await gravarDados();
-      dizer("salvo ✓");
-    } catch { dizer("erro ao salvar", "erro"); }
+      dizer(tr("salvo ✓"));
+    } catch { dizer(tr("erro ao salvar"), "erro"); }
     finally { if (timer === gravacao) timer = 0; }
   }, 400);
 }
@@ -128,8 +128,8 @@ const mudou = () => {
   salvar();
   const agora = concluidosAgora();
   D.blueprints.forEach((p) => {
-    if (agora.has(p.id) && !concluidosAntes.has(p.id)) aviso(`“${p.nome || "Sem nome"}” chegou a 100%: está em Concluídos na lista de blueprints.`);
-    if (!agora.has(p.id) && concluidosAntes.has(p.id)) aviso(`“${p.nome || "Sem nome"}” voltou para Em andamento.`);
+    if (agora.has(p.id) && !concluidosAntes.has(p.id)) aviso(tr("“{nome}” chegou a 100%: está em Concluídos na lista de blueprints.", { nome: p.nome || tr("Sem nome") }));
+    if (!agora.has(p.id) && concluidosAntes.has(p.id)) aviso(tr("“{nome}” voltou para Em andamento.", { nome: p.nome || tr("Sem nome") }));
   });
   concluidosAntes = agora;
 };
@@ -159,6 +159,6 @@ function confirmarConclusaoAgente(plano, porAgente = false) {
   plano.feito = true;
   plano.agente.estado = "concluido";
   plano.agente.atualizadoEm = new Date().toISOString();
-  adicionarComentarioAgente(plano, porAgente ? "Concluído pelo agente, com base no resultado da execução." : "Relatório revisado pelo usuário; plano marcado como concluído.", "comentario", "");
+  adicionarComentarioAgente(plano, porAgente ? tr("Concluído pelo agente, com base no resultado da execução.") : tr("Relatório revisado pelo usuário; plano marcado como concluído."), "comentario", "");
   return true;
 }

@@ -9,8 +9,8 @@ function atualizacaoCria() {
   const el = document.createElement("aside");
   el.id = "atualizacao"; el.hidden = true;
   el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite");
-  el.innerHTML = `<b>Atualização</b><p class="at-t"></p><div class="at-barra" hidden><i></i></div><p class="at-notas" hidden></p><p class="at-motivo" hidden></p>
-<div class="at-acoes" hidden><button class="btn mini at-ok" type="button">Atualizar e reiniciar</button><button class="btn mini at-depois" type="button">Depois</button></div>`;
+  el.innerHTML = `<b>${tr("Atualização")}</b><p class="at-t"></p><div class="at-barra" hidden><i></i></div><p class="at-notas" hidden></p><p class="at-motivo" hidden></p>
+<div class="at-acoes" hidden><button class="btn mini at-ok" type="button">${tr("Atualizar e reiniciar")}</button><button class="btn mini at-depois" type="button">${tr("Depois")}</button></div>`;
   document.body.appendChild(el);
   el.querySelector(".at-ok").onclick = atualizacaoInstala;
   el.querySelector(".at-depois").onclick = () => {
@@ -37,8 +37,8 @@ async function atualizacaoInstala() {
   botao.disabled = true; atualizacaoErro = "";
   try {
     const r = await fetch("/api/atualizacao/instalar", { method: "POST", headers: { "content-type": "application/json" }, body: "{}" });
-    if (!r.ok) { const j = await r.json().catch(() => ({})); atualizacaoErro = j.erro || `Não consegui atualizar (${r.status}).`; }
-  } catch { atualizacaoErro = "Não consegui falar com o app."; }
+    if (!r.ok) { const j = await r.json().catch(() => ({})); atualizacaoErro = j.erro || tr("Não consegui atualizar ({status}).", { status: r.status }); }
+  } catch { atualizacaoErro = tr("Não consegui falar com o app."); }
   botao.disabled = false;
   atualizacaoDesenha();
 }
@@ -49,7 +49,7 @@ function atualizacaoDesenha() {
   if (topo) {
     topo.hidden = !(baixando || e?.fase === "pronta");
     topo.disabled = baixando;
-    topo.textContent = baixando ? `Baixando… ${e.percentual ?? 0}%` : `Atualizar para ${e?.versao || ""}`;
+    topo.textContent = baixando ? tr("Baixando… {pct}%", { pct: e.percentual ?? 0 }) : tr("Atualizar para {versao}", { versao: e?.versao || "" });
     topo.onclick = atualizacaoInstala;
   }
   if (!baixando && !pronta && !instalando && !erro && !atualizacaoErro) { if (atualizacaoEl) atualizacaoEl.hidden = true; return; }
@@ -57,7 +57,7 @@ function atualizacaoDesenha() {
   const q = (s) => atualizacaoEl.querySelector(s), v = e.versao ? ` ${e.versao}` : "";
   atualizacaoEl.hidden = false;
   atualizacaoEl.classList.toggle("erro", !!atualizacaoErro);
-  q(".at-t").textContent = baixando ? `Baixando a versão${v}… ${e.percentual ?? 0}%` : instalando ? "Atualizando: o app fecha e abre de novo sozinho." : `A versão${v} está pronta (você tem a ${e.atual}).`;
+  q(".at-t").textContent = baixando ? tr("Baixando a versão{v}… {pct}%", { v, pct: e.percentual ?? 0 }) : instalando ? tr("Atualizando: o app fecha e abre de novo sozinho.") : tr("A versão{v} está pronta (você tem a {atual}).", { v, atual: e.atual });
   q(".at-barra").hidden = !baixando;
   if (baixando) q(".at-barra i").style.transform = `scaleX(${(e.percentual ?? 0) / 100})`; // transform, não width: a barra não força layout
   const notas = (e.notas || "").trim().split("\n").find((l) => l.trim()) || "";

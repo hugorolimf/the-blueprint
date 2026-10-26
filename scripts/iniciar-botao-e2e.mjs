@@ -15,7 +15,7 @@ const dir = mkdtempSync(join(tmpdir(), "blueprint-botao-"));
 const pasta = join(dir, "projeto");
 mkdirSync(pasta);
 const falso = terminalFalso(dir), depuracao = await portaLivre();
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(dir, "perfil")}`, "--window-size=1440,1000", "about:blank"], { stdio: "ignore" });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(dir, "perfil")}`, "--window-size=1440,1000", "about:blank"], { stdio: "ignore" });
 let servidor;
 const limpar = () => { try { edge.kill(); } catch {} servidor?.parar(); setTimeout(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} }, 500); }; // o Edge pode segurar o perfil um instante: lixo na pasta temporária não é falha
 process.on("exit", limpar);

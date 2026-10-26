@@ -5,20 +5,20 @@ const NOTIF_FILA_MAX = 5; // passou disso, o aviso de menor prioridade mais anti
 const NOTIF_MSG_MAX = 4000;
 // prioridade: 3 = travou ou não deu, 2 = pede revisão ou entrega, 1 = informativo; nivel pinta o cartão
 const NOTIF_REGRAS = {
-  bloqueio: { titulo: "O agente travou", prioridade: 3, nivel: "erro" },
-  "nao-concluida": { titulo: "Tarefa não concluída", prioridade: 3, nivel: "erro" },
-  "checkpoint-nao-feito": { titulo: "Checkpoint não atingido", prioridade: 3, nivel: "erro" },
-  proposta: { titulo: "Nova proposta do agente", prioridade: 2, nivel: "" },
-  concluir: { titulo: "Tarefa concluída", prioridade: 2, nivel: "ok" },
-  "checkpoint-feito": { titulo: "Checkpoint atingido", prioridade: 2, nivel: "ok" },
-  prototipo: { titulo: "Protótipo anexado", prioridade: 1, nivel: "" },
+  bloqueio: { titulo: tr("O agente travou"), prioridade: 3, nivel: "erro" },
+  "nao-concluida": { titulo: tr("Tarefa não concluída"), prioridade: 3, nivel: "erro" },
+  "checkpoint-nao-feito": { titulo: tr("Checkpoint não atingido"), prioridade: 3, nivel: "erro" },
+  proposta: { titulo: tr("Nova proposta do agente"), prioridade: 2, nivel: "" },
+  concluir: { titulo: tr("Tarefa concluída"), prioridade: 2, nivel: "ok" },
+  "checkpoint-feito": { titulo: tr("Checkpoint atingido"), prioridade: 2, nivel: "ok" },
+  prototipo: { titulo: tr("Protótipo anexado"), prioridade: 1, nivel: "" },
 };
 // `item` é o da fila do servidor; `onde` é "blueprint › ação › plano" já montado pela página. Devolve null para o que não avisa.
 function notificacaoDe(item, agora, onde = "") {
   const regra = NOTIF_REGRAS[item?.tipo];
   const quando = Date.parse(item?.em);
   if (!regra || !(agora - quando < NOTIF_IDADE_MAX)) return null;
-  const fala = String(item.tipo === "proposta" ? item.proposta?.mensagem || "Revise a proposta em ✦ Planejar e aplique o que quiser." : item.texto ?? "");
+  const fala = String(item.tipo === "proposta" ? item.proposta?.mensagem || tr("Revise a proposta em ✦ Planejar e aplique o que quiser.") : item.texto ?? "");
   const mensagem = (item.plano && item.tipo !== "proposta" ? `${item.plano}\n\n` : "") + fala;
   return {
     chave: `${item.id}|${item.em}`,

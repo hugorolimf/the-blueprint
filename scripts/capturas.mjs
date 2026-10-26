@@ -31,7 +31,7 @@ copyFileSync(dadosArq, join(tmp, "dados.json"));
 const [porta, depuracao] = [39117, await livre()];
 const url = `http://127.0.0.1:${porta}`;
 const servidor = spawn(exe, ["serve"], { env: { ...process.env, HOST: "127.0.0.1", PORT: String(porta), DADOS_ARQ: join(tmp, "dados.json"), BLUEPRINT_DB: join(tmp, "blueprint.db"), PROTOTIPOS_DIR: join(tmp, "p") }, stdio: "ignore", windowsHide: true });
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "--window-size=1440,900", "about:blank"], { stdio: "ignore" });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "--window-size=1440,900", "about:blank"], { stdio: "ignore" });
 const limpar = () => { for (const p of [servidor, edge]) try { p.kill(); } catch {} setTimeout(() => rmSync(tmp, { recursive: true, force: true }), 800); };
 process.on("exit", limpar);
 

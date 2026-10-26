@@ -16,7 +16,7 @@ const filhos = [servidor];
 
 async function janela(nome) {
   const porta = await portaLivre();
-  const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${porta}`, `--user-data-dir=${join(pasta.dir, "perfil-" + nome)}`, "--window-size=1200,800", pasta.url + "/"], { stdio: "ignore" });
+  const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${porta}`, `--user-data-dir=${join(pasta.dir, "perfil-" + nome)}`, "--window-size=1200,800", pasta.url + "/"], { stdio: "ignore" });
   filhos.push(edge);
   let alvo;
   for (let i = 0; i < 100 && !alvo; i++) { try { alvo = (await (await fetch(`http://127.0.0.1:${porta}/json/list`)).json()).find((t) => t.type === "page" && t.url.startsWith(pasta.url)); } catch {} await dormir(100); }

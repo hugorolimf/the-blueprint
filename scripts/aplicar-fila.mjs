@@ -17,7 +17,7 @@ const fila = async () => (await (await fetch(url + "/api/mcp/fila", { cache: "no
 const antes = await fila();
 if (!antes.length) { console.log("fila vazia: nada a aplicar"); process.exit(0); }
 const depuracao = await livre(), tmp = mkdtempSync(join(tmpdir(), "aplicar-fila-"));
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, `${url}/#/c/${workspace}`], { stdio: "ignore" });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, `${url}/#/c/${workspace}`], { stdio: "ignore" });
 try {
   let restante = antes.length;
   for (let i = 0; i < 60 && restante; i++) { await dormir(500); restante = (await fila()).length; }

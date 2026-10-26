@@ -1,5 +1,5 @@
-const MESES = ["JAN", "FEV", "MAR", "ABR", "MAI", "JUN", "JUL", "AGO", "SET", "OUT", "NOV", "DEZ"];
-const ROTULO = { concluido: "concluído", andamento: "em desenvolvimento", planejado: "planejado" };
+const MESES = tr("JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ").split("|");
+const ROTULO = { concluido: tr("concluído"), andamento: tr("em desenvolvimento"), planejado: tr("planejado") };
 const BARRA_MIN = 220; // largura mínima da barra da ação quando aberta (a escala real da régua deixaria ações curtas com ~100 px)
 const CHAR = 6.9; // largura de um caractere de 11 px no tipo mono
 

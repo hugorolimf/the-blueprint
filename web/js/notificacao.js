@@ -9,7 +9,7 @@ function notifCria() {
   el.id = "notificacao"; el.hidden = true;
   el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite");
   el.innerHTML = `<header><span class="fa-rot"></span><h3></h3></header><div class="fa-msg" tabindex="0"></div>
-<dl class="fa-carimbo"></dl><div class="fa-acoes"><button class="btn mini notif-ir" type="button">Ir até o blueprint</button><button class="btn mini notif-prox" type="button"></button></div>`;
+<dl class="fa-carimbo"></dl><div class="fa-acoes"><button class="btn mini notif-ir" type="button">${tr("Ir até o blueprint")}</button><button class="btn mini notif-prox" type="button"></button></div>`;
   document.body.appendChild(el);
   el.querySelector(".notif-prox").onclick = notifFecha;
   el.querySelector(".notif-ir").onclick = () => { const a = notifAtual; notifFecha(); if (a) notifIr(a); };
@@ -46,7 +46,7 @@ function notifMostra() {
   notifEl ||= notifCria();
   const q = (s) => notifEl.querySelector(s);
   notifEl.className = `folha-aviso${n.nivel ? " " + n.nivel : ""}`;
-  q(".fa-rot").textContent = n.nivel === "erro" ? "Aviso do agente · atenção" : "Aviso do agente";
+  q(".fa-rot").textContent = n.nivel === "erro" ? tr("Aviso do agente · atenção") : tr("Aviso do agente");
   q("h3").textContent = n.titulo;
   q(".fa-msg").textContent = n.mensagem;
   q(".fa-msg").scrollTop = 0;
@@ -54,8 +54,8 @@ function notifMostra() {
   q(".fa-carimbo").replaceChildren(...celulas.flatMap(([k, v]) => { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = k; dd.textContent = v; dd.title = v; return [dt, dd]; }));
   q(".fa-carimbo").hidden = !celulas.length;
   const mais = notifFila.length + notifPerdidas;
-  q(".notif-prox").textContent = mais ? `Próximo (${mais})` : "Fechar";
-  q(".notif-ir").textContent = n.abre === "plano" ? "Abrir o plano" : "Ir até o blueprint";
+  q(".notif-prox").textContent = mais ? tr("Próximo ({mais})", { mais }) : tr("Fechar");
+  q(".notif-ir").textContent = n.abre === "plano" ? tr("Abrir o plano") : tr("Ir até o blueprint");
   q(".notif-ir").hidden = n.abre !== "plano" && !D.blueprints.some((x) => x.id === n.blueprintId);
   q(".notif-ir").classList.toggle("cheio", n.abre === "plano");
   notifPerdidas = 0;
@@ -71,11 +71,11 @@ function notificar(item) {
   const acao = f ? `${numeroDaAcao(p, f)} ${f.nome || ""}`.trim() : "";
   const n = notificacaoDe(item, Date.now(), [p?.nome, acao, t?.texto].filter(Boolean).join(" › "));
   if (!n) return;
-  n.partes = [["Blueprint", p?.nome], ["Ação", acao], ["Plano", t?.texto]];
+  n.partes = [[tr("Blueprint"), p?.nome], [tr("Ação"), acao], [tr("Plano"), t?.texto]];
   notifPerdidas += notificacaoEmpilha(notifFila, n);
   if (!notifAtual) notifMostra();
   else if (notifEl) {
     const mais = notifFila.length + notifPerdidas;
-    notifEl.querySelector(".notif-prox").textContent = `Próximo (${mais})`;
+    notifEl.querySelector(".notif-prox").textContent = tr("Próximo ({mais})", { mais });
   }
 }

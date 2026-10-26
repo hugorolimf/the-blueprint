@@ -18,11 +18,13 @@ const chamadas = [];
 let respostaInstalar = { ok: true, status: 200, json: async () => ({}) };
 const armazem = new Map();
 const ctx = vm.createContext({
+  navigator: { languages: ["pt-BR"] }, location: { search: "" }, 
   document: { getElementById: (id) => (id === "perfil-atualizar" ? topo : null), createElement: () => new El(), body: { appendChild: (el) => { caixa.el = el; } } },
   localStorage: { getItem: (k) => armazem.get(k) ?? null, setItem: (k, v) => armazem.set(k, v) },
   fetch: async (url, opcoes) => { chamadas.push([url, opcoes?.method || "GET", opcoes?.body]); return url.endsWith("/instalar") ? respostaInstalar : { ok: true, json: async () => ctx.estadoServidor }; },
   Date, JSON,
 });
+vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "i18n.js"), "utf8"), ctx, { filename: "i18n.js" });
 vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "atualizacao.js"), "utf8") + "\nthis.api = { atualizacaoRecebe, atualizacaoBusca, atualizacaoInstala };", ctx);
 const { atualizacaoRecebe, atualizacaoBusca, atualizacaoInstala } = ctx.api;
 const q = (s) => caixa.el.querySelector(s);

@@ -28,7 +28,7 @@ const lancou = join(tmpdir(), `blueprint-ui-lancou-${process.pid}.txt`);
 const d = await pastaDeDados("blueprint-ui-atualizacao", { BLUEPRINT_ATUALIZACAO_URL: base, BLUEPRINT_ATUALIZACAO_SEM_EXECUTAR: lancou });
 const depuracao = await portaLivre(), perfil = mkdtempSync(join(tmpdir(), "blueprint-ui-perfil-"));
 const servidor = await ligarServidor(exe, d);
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${perfil}`, "--window-size=1280,800", "about:blank"], { stdio: "ignore" });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${perfil}`, "--window-size=1280,800", "about:blank"], { stdio: "ignore" });
 const limpar = () => { try { edge.kill(); } catch {} try { servidor.kill(); } catch {} try { gh.close(); } catch {} setTimeout(() => { try { rmSync(perfil, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 }); rmSync(lancou, { force: true }); } catch {} }, 500); };
 process.on("exit", limpar);
 try {

@@ -1,3 +1,4 @@
+i18nTraduzDom(); // os textos que já estão no HTML da página, no idioma ativo (i18n.js)
 render();
 if (!nomeUsuario) desenrolar(document.querySelector(".login-folha"), document.querySelector(".login-folha"));
 carregar();

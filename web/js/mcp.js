@@ -56,8 +56,8 @@ async function mcpAplica(itens) {
     if (i.tipo === "registro") { // o que o agente JÁ fez fora do plano (registrar_trabalho): espera aqui e na fila do servidor até o usuário adicionar ou descartar
       if (registroRecebe(i)) {
         notificar(i);
-        mcpFeed.push({ tipo: "registro", texto: `Registro nº ${i.numero} recebido: veja em ✦ Planejar e adicione ao blueprint o que quiser.` });
-        aviso("O seu agente enviou um registro do que fez: abra ✦ Planejar para adicioná-lo ao blueprint.");
+        mcpFeed.push({ tipo: "registro", texto: tr("Registro nº {n} recebido: veja em ✦ Planejar e adicione ao blueprint o que quiser.", { n: i.numero }) });
+        aviso(tr("O seu agente enviou um registro do que fez: abra ✦ Planejar para adicioná-lo ao blueprint."));
         if (!hub.hidden) montaHub();
       }
       continue;
@@ -72,8 +72,8 @@ async function mcpAplica(itens) {
     }
     if (i.tipo === "proposta") {
       if (!mcpProposta(i)) { soltar.add(i.id); continue; }
-      mcpFeed.push({ tipo: "proposta", texto: `Proposta recebida para ${i.blueprintId ? `“${nomeProj}”` : "um blueprint novo"}: revise ao lado e aplique.` });
-      aviso("O seu agente enviou uma proposta: abra ✦ Planejar para revisar.");
+      mcpFeed.push({ tipo: "proposta", texto: tr("Proposta recebida para {alvo}: revise ao lado e aplique.", { alvo: i.blueprintId ? `“${nomeProj}”` : tr("um blueprint novo") }) });
+      aviso(tr("O seu agente enviou uma proposta: abra ✦ Planejar para revisar."));
       muda = true;
     } else if (i.tipo === "prototipo") {
       const f = D.blueprints.find((x) => x.id === i.blueprintId)?.acoes.find((x) => x.id === i.acaoId);
@@ -81,8 +81,8 @@ async function mcpAplica(itens) {
       f.prototipos ||= [];
       const ex = f.prototipos.find((x) => x.id === i.prototipoId);
       if (ex) { ex.titulo = i.titulo; ex.em = i.em; } else f.prototipos.push({ id: i.prototipoId, titulo: i.titulo, em: i.em });
-      mcpFeed.push({ tipo: "prototipo", texto: `Protótipo “${i.titulo}” ${ex ? "atualizado" : "anexado"} na ação “${f.nome}”: veja no ícone de protótipo da ação.` });
-      aviso(`O seu agente ${ex ? "atualizou" : "anexou"} o protótipo “${i.titulo}”.`);
+      mcpFeed.push({ tipo: "prototipo", texto: ex ? tr("Protótipo “{titulo}” atualizado na ação “{acao}”: veja no ícone de protótipo da ação.", { titulo: i.titulo, acao: f.nome }) : tr("Protótipo “{titulo}” anexado na ação “{acao}”: veja no ícone de protótipo da ação.", { titulo: i.titulo, acao: f.nome }) });
+      aviso(ex ? tr("O seu agente atualizou o protótipo “{titulo}”.", { titulo: i.titulo }) : tr("O seu agente anexou o protótipo “{titulo}”.", { titulo: i.titulo }));
       if (protoAlvo?.fid === i.acaoId) mostraProto(); // visor aberto nesta ação: atualiza título, lista e quadro
       muda = true;
     } else if (i.tipo === "checkpoint-feito" || i.tipo === "checkpoint-nao-feito") { // checkpoint da ação: só vira feito com a evidência, que fica no próprio checkpoint
@@ -96,12 +96,12 @@ async function mcpAplica(itens) {
       if (!t || t.feito) continue;
       t.agente ||= normalizaAgente({});
       if (i.tipo === "concluir") { t.agente.estado = "revisao"; adicionarComentarioAgente(t, i.texto, "relatorio", `mcp${i.id}`); confirmarConclusaoAgente(t, true); t.agente.feitoEm = i.em; }
-      else { t.agente.estado = "pendente"; adicionarComentarioAgente(t, `Não concluído: ${i.texto}`, "comentario", `mcp${i.id}`); }
+      else { t.agente.estado = "pendente"; adicionarComentarioAgente(t, tr("Não concluído: {texto}", { texto: i.texto }), "comentario", `mcp${i.id}`); }
       mcpFeed.push({ tipo: i.tipo, texto: `${i.tipo === "concluir" ? "✓" : "✗"} ${i.plano} — ${i.texto}` });
       muda = true;
     } else {
       mcpFeed.push({ tipo: i.tipo, texto: `${i.tipo === "bloqueio" ? "⚠ " : ""}${nomeProj ? `${nomeProj}: ` : ""}${i.texto}` });
-      if (i.tipo === "bloqueio") aviso(`O seu agente travou: ${umaLinha(i.texto, 120)}`);
+      if (i.tipo === "bloqueio") aviso(tr("O seu agente travou: {texto}", { texto: umaLinha(i.texto, 120) }));
     }
   }
   mcpFeed.splice(0, Math.max(0, mcpFeed.length - 50));

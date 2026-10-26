@@ -16,7 +16,7 @@ const url = `http://127.0.0.1:${porta}`;
 const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), BLUEPRINT_URL: url, BLUEPRINT_DB: join(tmp, "b.db"), DADOS_ARQ: join(tmp, "data.json"), PROTOTIPOS_DIR: join(tmp, "p"), USERPROFILE: join(tmp, "home"), HOME: join(tmp, "home"), CLAUDE_CONFIG_DIR: join(tmp, "cfg") };
 writeFileSync(env.DADOS_ARQ, JSON.stringify({ empresa: "Teste", usuario: { nome: "Teste" }, blueprints: [] }));
 const servidor = spawn(exe, ["serve"], { env, stdio: "ignore", windowsHide: true });
-const edge = spawn(edgeExe, ["--headless=new", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "about:blank"], { stdio: "ignore", windowsHide: true });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "about:blank"], { stdio: "ignore", windowsHide: true });
 let ws;
 try {
   for (let i = 0; i < 100; i++) { try { await fetch(url + "/api/dados"); break; } catch {} await dormir(50); }

@@ -44,7 +44,7 @@ function fechaNota(rapido) {
 function notaModo(modo) {
   const ta = notaEl.querySelector("textarea"), ed = notaEl.querySelector(".obs-edicao"), ver = notaEl.querySelector("[data-nver]");
   if (!ta || !ver) return;
-  if (modo === "ver") ver.innerHTML = mdHtml(ta.value) || '<p class="md-vazio">Sem texto ainda.</p>';
+  if (modo === "ver") ver.innerHTML = mdHtml(ta.value) || `<p class="md-vazio">${tr("Sem texto ainda.")}</p>`;
   notaEl.dataset.modo = modo;
   ver.hidden = modo === "editar"; ed.hidden = modo !== "editar";
   notaEl.querySelector(".dica-ed").hidden = modo !== "editar";
@@ -73,7 +73,7 @@ function abreNota({ rotulo, titulo, texto, barra, acoes = [], editar, aoFechar }
   notaEl._sujo = false;
   notaEl.dataset.modo = editar ? "ver" : "";
   if (editar) acoes = [{ rotulo: "Editar", modo: "ver", fn: () => notaModo("editar") }, { rotulo: "Salvar", modo: "editar", fn: () => { editar.salvar(notaEl.querySelector("textarea").value); notaEl._sujo = false; fechaNota(); } }, ...acoes];
-  notaEl.innerHTML = `<h4>${esc(rotulo)}</h4><h3>${esc(titulo)}</h3>${editar ? `<div class="corpo md" data-nver>${mdHtml(texto) || '<p class="md-vazio">Sem texto ainda.</p>'}</div>${mdEdicao(`aria-label="${esc(rotulo)}"`, texto, { rows: 10, placeholder: editar.dica, oculto: true })}<p class="dica-ed" hidden>Você edita aqui mesmo. Ctrl+Enter salva; clicar fora não descarta o que você escreveu.</p>` : `<div class="corpo${texto ? "" : " vazio"}">${esc(texto || "Sem texto ainda.")}</div>`}${barra !== undefined ? `<div class="med" style="margin-top:14px"><i style="width:${barra}%"></i></div>` : ""}<div class="acoes">${acoes.map((a, i) => `<button class="btn mini cheio" type="button" data-nacao="${i}"${a.modo ? ` data-nmodo="${a.modo}"` : ""}>${esc(a.rotulo)}</button>`).join("")}<button class="btn mini" type="button" data-nfecha>Fechar</button></div>`;
+  notaEl.innerHTML = `<h4>${esc(rotulo)}</h4><h3>${esc(titulo)}</h3>${editar ? `<div class="corpo md" data-nver>${mdHtml(texto) || `<p class="md-vazio">${tr("Sem texto ainda.")}</p>`}</div>${mdEdicao(`aria-label="${esc(rotulo)}"`, texto, { rows: 10, placeholder: editar.dica, oculto: true })}<p class="dica-ed" hidden>${tr("Você edita aqui mesmo. Ctrl+Enter salva; clicar fora não descarta o que você escreveu.")}</p>` : `<div class="corpo${texto ? "" : " vazio"}">${esc(texto || tr("Sem texto ainda."))}</div>`}${barra !== undefined ? `<div class="med" style="margin-top:14px"><i style="width:${barra}%"></i></div>` : ""}<div class="acoes">${acoes.map((a, i) => `<button class="btn mini cheio" type="button" data-nacao="${i}"${a.modo ? ` data-nmodo="${a.modo}"` : ""}>${esc(a.rotulo)}</button>`).join("")}<button class="btn mini" type="button" data-nfecha>${tr("Fechar")}</button></div>`;
   notaEl._acoes = acoes;
   notaEl.hidden = false;
   const larg = notaEl.offsetWidth, alt = notaEl.offsetHeight, janela = document.documentElement.clientWidth;
@@ -90,8 +90,8 @@ function abreNotaObs(el) { const [pid, fid] = el.dataset.obs.split("|"); abreFol
 function abreNotaMarca(el) {
   const d = el.dataset, pct = Number(d.pct), p = d.proj ? D.blueprints.find((x) => x.id === d.proj) : null;
   abreNota({
-    rotulo: p ? "Marca do blueprint" : "Marca da empresa", titulo: d.tit, barra: pct,
-    texto: `${d.feitas} de ${d.total} peças construídas (${pct}%).\n\n${p ? "A marca se completa conforme os planos e os checkpoints do blueprint são concluídos: o que ainda falta aparece só no traço." : "A marca da empresa se completa conforme os blueprints avançam (média de todos os blueprints)."}`,
+    rotulo: p ? tr("Marca do blueprint") : tr("Marca da empresa"), titulo: d.tit, barra: pct,
+    texto: `${tr("{feitas} de {total} peças construídas ({pct}%).", { feitas: d.feitas, total: d.total, pct })}\n\n${p ? tr("A marca se completa conforme os planos e os checkpoints do blueprint são concluídos: o que ainda falta aparece só no traço.") : tr("A marca da empresa se completa conforme os blueprints avançam (média de todos os blueprints).")}`,
     acoes: [],
   }, el);
 }

@@ -6,7 +6,8 @@ import { join } from "node:path";
 import vm from "node:vm";
 
 const codigo = readFileSync(join(import.meta.dirname, "web", "js", "notificacao-regras.js"), "utf8");
-const ctx = vm.createContext({});
+const ctx = vm.createContext({ navigator: { languages: ["pt-BR"] }, location: { search: "" }, });
+vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "i18n.js"), "utf8"), ctx, { filename: "i18n.js" });
 vm.runInContext(codigo + "\nthis.api = { notificacaoDe, notificacaoEmpilha, NOTIF_FILA_MAX, NOTIF_IDADE_MAX };", ctx);
 const { notificacaoDe, notificacaoEmpilha, NOTIF_FILA_MAX, NOTIF_IDADE_MAX } = ctx.api;
 
