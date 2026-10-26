@@ -52,8 +52,7 @@ function irBlueprint(id) {
 }
 addEventListener("hashchange", () => {
   fechaTelas();
-  consulta = "";
-  $("busca").value = "";
+  pesquisaAoNavegar(lerHash()); // da lista para um blueprint a consulta vai junto; senão zera (pesquisa-folha.js)
   tela = lerHash();
   desenrolarNaProxima = true;
   if (tela && !(tela in abertos)) abertos[tela] = true;
@@ -162,7 +161,5 @@ host.addEventListener("keydown", (e) => {
   if (chave) host.querySelector(chave)?.focus({ preventScroll: true });
 });
 
-// ---- busca -------------------------------------------------------------------------------
-$("busca").addEventListener("input", (e) => { consulta = e.target.value; render(); });
-$("busca").addEventListener("keydown", (e) => { if (e.key === "Escape" && consulta) { e.stopPropagation(); consulta = ""; e.target.value = ""; render(); } });
+// ---- busca: o campo da barra mora em pesquisa-campo.js e pesquisa-folha.js ---------------------
 

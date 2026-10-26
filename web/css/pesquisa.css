@@ -1,0 +1,21 @@
+/* Pesquisa: o campo na segunda fileira da barra (mesmo tema e mesma altura dos botões) e o que a pesquisa marca na folha (web/js/pesquisa-*.js). */
+.barra{flex-wrap:wrap;justify-content:flex-end;pointer-events:none}
+.barra>*{pointer-events:auto}
+.busca{order:2;flex:1 0 100%;display:flex;justify-content:flex-end;position:relative} /* depois de todos os botões (o Terminal é acrescentado à barra por terminal.js): o campo vai para a última fileira */
+.busca input{width:min(380px,100%);box-sizing:border-box;font:11px/17px var(--mono);letter-spacing:.06em;color:var(--ink);background:#0c3a78cc;border:1px solid var(--mid);padding:8px 112px 8px 12px;border-radius:0;color-scheme:dark}
+.busca input::placeholder{color:var(--lo)}
+.busca input:focus{outline:1px solid var(--ink);border-color:var(--ink)}
+.busca input::-webkit-search-cancel-button{-webkit-appearance:none;display:none} /* o contador ocupa o canto; Esc limpa */
+.busca span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);white-space:nowrap;pointer-events:none}
+/* janela estreita: os botões já quebram em fileiras; o campo divide a última com eles (ou ocupa uma própria) em vez de forçar uma fileira a mais */
+@media (max-width:960px){.busca{flex:1 1 220px;justify-content:stretch}.busca input{width:100%}}
+
+/* pesquisando, a ação esmaece inteira (fill/stroke-opacity: opacity criaria uma camada por item); acendem a que casa (e os itens dela), a que tem um item que casa
+   (só o item que casa) e o trecho achado leva um retângulo atrás do texto */
+.pesquisando .acao{fill-opacity:.16;stroke-opacity:.16}
+.pesquisando .acao.pesq-achou,.pesquisando .acao.pesq-tem{fill-opacity:1;stroke-opacity:1}
+.pesquisando .acao.pesq-tem .chk:not(.pesq-achou){fill-opacity:.16;stroke-opacity:.16}
+.pesq-realce{fill:var(--lo);fill-opacity:.7;pointer-events:none}
+.chk.pesq-achou .tx{fill:#fff}
+.acao.pesq-atual .realce,.chk.pesq-atual .foco2{opacity:1}
+.pesq-onde{fill:#fff}

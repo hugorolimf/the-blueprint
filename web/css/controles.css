@@ -21,12 +21,7 @@
 /* controles sobre a folha */
 .barra{position:absolute;top:44px;right:64px;display:flex;gap:8px;z-index:3}
 body:not(.em-blueprint) .so-blueprint{display:none}
-.em-blueprint .busca{display:none}
-.busca{position:absolute;top:98px;right:86px;width:min(320px,34%);z-index:3;display:flex;align-items:center;gap:10px}
-.busca input{width:100%;font:12px var(--mono);letter-spacing:.06em;color:var(--ink);background:#0c3a78cc;border:1px solid var(--mid);padding:8px 10px;border-radius:0;color-scheme:dark}
-.busca input::placeholder{color:var(--lo)}
-.busca input:focus{outline:1px solid var(--ink);border-color:var(--ink)}
-.busca span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);white-space:nowrap}
+/* o campo de pesquisa (.busca) mora na barra: estilo em pesquisa.css */
 .btn{font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:#0c3a78cc;border:1px solid var(--mid);padding:8px 14px;cursor:pointer}
 .btn:hover,.btn:focus-visible{background:var(--ink);color:var(--paper);outline:none}
 .btn.mini{padding:5px 9px;font-size:10px}

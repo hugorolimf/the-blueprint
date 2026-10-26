@@ -72,7 +72,7 @@ svg.desenho .lk text{stroke:none}
 .nota-folha .acoes{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 @media (max-width:1000px){.nv{grid-template-columns:1fr}}
 @media print{:is(#editor,#workspace-nova,#agente-tela){display:none!important}}
-@media (max-width:640px){.barra{right:20px}.busca{right:30px}}
+@media (max-width:640px){.barra{right:20px}}
 @media print{.barra,.busca,.gaveta,#rolagem{display:none!important}.folha{background:none;padding:0;margin:0!important}svg.desenho{box-shadow:none;break-after:page}}
 
 .periodo{position:absolute;top:116px;left:70px;right:70px;z-index:3;display:flex;flex-direction:column;gap:12px;padding:8px 0}

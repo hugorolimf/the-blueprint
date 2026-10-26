@@ -16,7 +16,6 @@ function render() {
   larg = host.clientWidth;
   const FM = 10, IL = 36;
   const L = IL + 34, R = W - IL - 50;
-  const q = norm(consulta.trim());
   hoje = hojeSimulado || local(new Date());
   const hojeD = dia(hoje);
   const foco = tela ? D.blueprints.find((p) => p.id === tela) : null;
@@ -40,7 +39,7 @@ function render() {
   if (tela && carregado && !D.blueprints.some((p) => p.id === tela)) { tela = null; history.replaceState(null, "", location.pathname + location.search); }
   const todos = D.blueprints.map((p, pi) => ({ p, pi, ok: projConcluido(p) }));
   const atual = tela ? todos.find((x) => x.p.id === tela) : null;
-  const mapa = q ? todos.filter((x) => casa(x.p, q)) : todos;
+  const { mapa, onde: ondeAchou } = pesqLista(todos, consulta); // pesquisa-folha.js: os cartões que casam e onde cada um casou
   const total = 1 + D.blueprints.length;
   document.body.classList.toggle("em-blueprint", !!atual);
   if (criandoWorkspace) {
@@ -207,7 +206,8 @@ function render() {
       out.push(arteCartao(p.emblema?.pecas?.length ? p.emblema.pecas : EMB?.CONSTRUCAO, artX, artY, artW, artH, r.geral));
       out.push(`<text x="${textoX}" y="${ty + 44}" font-size="15" font-weight="700" class="cap">${esc(nome)}</text>`);
       out.push(`<text class="mid cap" x="${textoX}" y="${ty + 70}" font-size="11">${esc(descricao)}</text>`);
-      out.push(`<text class="mid" x="${textoX}" y="${ty + 95}" font-size="10">${esc(corta(info, Math.floor(textoW / 7)))}</text>`);
+      const achou = ondeAchou.get(p.id); // pesquisando: no lugar do andamento, onde a consulta casou
+      out.push(`<text class="mid${achou ? " pesq-onde" : ""}" x="${textoX}" y="${ty + 95}" font-size="10">${esc(corta(achou || info, Math.floor(textoW / 7)))}</text>`);
       if (fs.length) {
         // como numa folha de projeto: a barra é o blueprint inteiro (hachurado = feito, vazio = falta) e, embaixo, a linha de cota
         // com as datas de início e fim, o "hoje" e os checkpoints em losango (cheio = feito)
@@ -356,8 +356,7 @@ function render() {
   montaRobo();
   if (roboRolar) { roboRolar = false; requestAnimationFrame(() => (host.querySelector(".robo-linha") || camadaClaude.querySelector("[data-robo-nome]"))?.scrollIntoView({ block: "center", behavior: reduz() ? "auto" : "smooth" })); }
 
-  // busca de blueprints sobre a lista
-  $("busca-n").textContent = q ? (mapa.length ? trn(mapa.length, ["{n} resultado", "{n} resultados"]) : tr("nenhum resultado")) : "";
+  pesquisaAposRender(mapa); // pesquisa-folha.js: contador, destaque e (no blueprint) o filtro dos itens
   requestAnimationFrame(atualizaRolagem);
 }
 

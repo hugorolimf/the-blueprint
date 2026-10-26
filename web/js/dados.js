@@ -26,7 +26,6 @@ const acoesVisiveis = (p) => {
   return soPendentes[p.id] ? base.filter((f) => f.status !== "concluido").map((f) => ({ ...f, planos: f.planos.filter((t) => !t.feito), checkpoints: f.checkpoints.filter((m) => !m.feito) })) : base;
 };
 const projConcluido = (p) => p.acoes.length > 0 && p.acoes.every((f) => efetiva(f).status === "concluido");
-const casa = (p, q) => norm(p.nome).includes(q) || norm(p.descricao).includes(q) || p.acoes.some((f) => norm(f.nome).includes(q));
 const resumo = (fs) => {
   const dur = fs.reduce((t, f) => t + (f.b - f.a + 1), 0);
   const todas = fs.length > 0 && fs.every((f) => f.status === "concluido");
