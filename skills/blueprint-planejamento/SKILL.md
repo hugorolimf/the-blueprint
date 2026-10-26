@@ -36,6 +36,7 @@ Workspace
 | Start working in the folder: link the folder to the blueprint, register and tick | `executar` |
 | Show an idea for an action (a screen, a figure) | `prototipos` |
 | Bring GitHub issues into the blueprint | `importar` |
+| Prepare a blueprint to present or print (summary, progress, full plan) | `apresentar` |
 | You already did something outside the plan (a one-off adjustment): register it and ask whether to add it | `executar` |
 
 ## How to work (in this order)

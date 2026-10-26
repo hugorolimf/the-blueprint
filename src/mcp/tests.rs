@@ -185,7 +185,7 @@ fn o_guia_vem_por_partes_sem_o_cabecalho() {
     assert!(texto.starts_with("# Plan a blueprint") && !texto.contains("description:"), "{}", &texto[..60.min(texto.len())]);
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
     assert!(editar["result"]["content"][0]["text"].as_str().unwrap().contains("Move"));
-    for topico in ["planejar", "editar", "executar", "prototipos", "importar"] {
+    for topico in ["planejar", "editar", "executar", "prototipos", "importar", "apresentar"] {
         let r = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": topico}}));
         assert!(r["result"]["content"][0]["text"].as_str().unwrap().chars().count() < 4500, "o tópico {topico} cabe em menos de 4.500 caracteres"); // o guia em inglês é ~5% mais longo que o português (era 4.000)
     }
