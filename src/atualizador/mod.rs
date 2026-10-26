@@ -7,7 +7,7 @@ mod estado;
 mod hash;
 mod instalar;
 mod preferencias;
-mod rede;
+pub(crate) mod rede;
 mod release;
 mod versao;
 
