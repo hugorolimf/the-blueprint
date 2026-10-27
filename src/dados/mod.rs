@@ -8,6 +8,7 @@ pub mod convites;
 pub mod membros;
 pub mod sessoes;
 mod exportar;
+pub mod fila_mcp;
 pub mod formato;
 pub mod historico;
 mod importar;

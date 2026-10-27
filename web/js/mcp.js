@@ -54,7 +54,7 @@ async function mcpAplica(itens) {
   const meus = itens.filter((i) => i.workspaceId === ws);
   let muda = false, viu = false, atualizarHub = false;
   const soltar = new Set(); // propostas que não servem (blueprint que não existe mais): confirmadas já; as outras ficam na fila do servidor até o usuário aplicar ou descartar (filaConclui)
-  const chave = (x) => `${x.id}|${x.em}`; // a fila é da memória do servidor: ao reiniciar, os números voltam a 1, e só o id faria a página ignorar eventos novos
+  const chave = (x) => `${x.id}|${x.em}`; // id e hora juntos: um banco restaurado de uma cópia pode trazer ids já vistos, e só o id faria a página ignorar eventos novos
   for (const i of meus.filter((x) => !mcpVistos.has(chave(x)))) {
     mcpVistos.add(chave(i));
     if (autoJaAplicado(i)) { autoAck(i); continue; } // esta página já aplicou sozinha (auto-aplicar.js) e o ack se perdeu: só confirma de novo, nunca aplica duas vezes

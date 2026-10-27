@@ -10,7 +10,7 @@ The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interfac
 | --- | --- |
 | `src/dados/` | única camada que fala com o SQLite (migrações em `src/dados/migracoes/NNN_*.sql`; `formato.rs` mapeia o JSON para tabelas) |
 | `src/blueprint/` | validação das propostas do agente (`validar_proposta`), prazos, resumos para `ler_blueprint` |
-| `src/mcp/` | fila em memória, ações do MCP, atividade dos agentes, SSE, `ferramentas.json` e `instrucoes.txt` (a fonte da verdade do MCP) |
+| `src/mcp/` | fila (lida da memória, guardada no banco), ações do MCP, atividade dos agentes, SSE, `ferramentas.json` e `instrucoes.txt` (a fonte da verdade do MCP) |
 | `src/http/` | servidor HTTP síncrono (`tiny_http`), rotas puras, estáticos com ETag e gzip |
 | `src/janela/` | janela WebView2, bandeja e instância única (só Windows) |
 | `web/`, `blueprint.html` | interface: CSS em `web/css`, scripts clássicos em `web/js` na ordem listada em `blueprint.html` |

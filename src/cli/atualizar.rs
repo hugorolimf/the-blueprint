@@ -1,6 +1,6 @@
 //! `blueprint atualizar [--verificar | --instalar]`: o updater pela linha de comando.
 //! Sem argumento: procura e baixa (e confere) a versão nova, sem instalar. `--verificar`: só consulta. `--instalar`: instala a que já está baixada; digitar o
-//! comando é o mesmo clique em Atualizar da interface. Com o app aberto, quem instala é ele (confere a fila do MCP, copia o banco e sai); sem o app, instala daqui.
+//! comando é o mesmo clique em Atualizar da interface. Com o app aberto, quem instala é ele (confere o terminal e o compartilhamento, copia o banco e sai); sem o app, instala daqui.
 use crate::atualizador::{copiar_banco, lancar_instalador, Atualizador, Fase};
 use crate::dados::Dados;
 use crate::http::Config;
@@ -52,7 +52,7 @@ fn instalar(a: &Atualizador, banco: &std::path::Path) -> i32 {
     if a.versao_pronta().is_none() {
         return erro("não há atualização baixada; rode `blueprint atualizar` primeiro");
     }
-    // o app aberto decide (ele sabe da fila do MCP e do banco aberto); se não responde, instala daqui
+    // o app aberto decide (ele sabe do terminal, do compartilhamento e do banco aberto); se não responde, instala daqui
     if let Ok((status, corpo)) = requisitar_em(&crate::mcp::stdio::base(), "POST", "/api/atualizacao/instalar", Some("{}")) {
         if (200..300).contains(&status) {
             println!("Atualizando: o app fecha e abre de novo sozinho.");

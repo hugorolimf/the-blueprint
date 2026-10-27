@@ -27,7 +27,7 @@ pub struct Info {
     pub arquivo: Option<PathBuf>,
     /// o SHA-256 que o arquivo precisa ter
     pub sha256: Option<String>,
-    /// por que o último clique em Atualizar foi recusado (fila do MCP cheia, agente trabalhando…); some na próxima mudança de fase
+    /// por que o último clique em Atualizar foi recusado (sessão viva no terminal do app, compartilhamento ligado…); some na próxima mudança de fase
     pub motivo: Option<String>,
 }
 

@@ -1,5 +1,5 @@
-//! O MCP do The Blueprint: a fila em memória que o agente do usuário alimenta, as rotas /api/mcp (porte de mcp.mjs) e o modo `--mcp` por stdio
-//! (porte de mcp-roadmap.mjs). Aqui nada grava no banco: a página aplica o que chega e só então algo muda.
+//! O MCP do The Blueprint: a fila que o agente do usuário alimenta (lida da memória, com cópia durável no banco), as rotas /api/mcp (porte de mcp.mjs)
+//! e o modo `--mcp` por stdio (porte de mcp-roadmap.mjs). Aqui nada grava nos dados do blueprint: a página aplica o que chega e só então algo muda.
 pub mod acoes;
 mod ajuste;
 mod apresentacao;
@@ -38,6 +38,8 @@ mod subagentes_status;
 mod ajuste_tests;
 #[cfg(test)]
 mod conversa_tests;
+#[cfg(test)]
+mod fila_tests;
 #[cfg(test)]
 mod hooks_estado_tests;
 #[cfg(test)]
@@ -124,6 +126,13 @@ const MAX_SESSOES: usize = 64;
 impl Mcp {
     pub fn novo(host: &str, rede: bool, arquivo: &str, url: &str, prototipos: PathBuf) -> Mcp {
         Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()), conversas: Default::default() }
+    }
+
+    /// Liga a fila ao banco: relê o que ficou de antes (propostas, registros e marcações não aplicados) e passa a gravar cada mudança.
+    pub fn persistir_fila(&self, banco: &std::path::Path) -> crate::erro::Resultado<()> {
+        let carregada = Fila::carregar(crate::dados::fila_mcp::FilaBanco::abrir(banco)?)?;
+        *self.fila.lock().unwrap_or_else(|e| e.into_inner()) = carregada;
+        Ok(())
     }
 
     /// Onde ficam as apresentações geradas: `apresentacoes/` ao lado da pasta dos protótipos (a pasta de dados do app); numa pasta de protótipos com outro nome

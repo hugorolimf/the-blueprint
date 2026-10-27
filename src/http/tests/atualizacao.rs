@@ -48,6 +48,15 @@ fn sessao_viva_no_terminal_do_app_impede_atualizar() {
 }
 
 #[test]
+fn item_na_fila_do_mcp_nao_impede_atualizar() {
+    // a fila fica no banco e volta ao reabrir (src/mcp/fila.rs): atualizar com proposta pendente não perde nada
+    let e = estado(false);
+    e.mcp.empurra(json!({"tipo": "progresso", "workspaceId": "sm", "blueprintId": "p1"}).as_object().unwrap().clone());
+    assert_eq!(e.mcp.itens().len(), 1);
+    assert_eq!(crate::http::atualizacao::bloqueio(&e), None);
+}
+
+#[test]
 fn a_preferencia_automatica_exige_um_booleano() {
     let e = estado(false);
     for ruim in [json!({}), json!({"ligada": "sim"}), json!({"ligada": 1})] {

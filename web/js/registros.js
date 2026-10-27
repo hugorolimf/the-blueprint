@@ -1,5 +1,5 @@
 // ---- registros do agente: o que ele JÁ fez fora do plano (registrar_trabalho). NÃO é proposta: nada muda nos dados antes de o usuário clicar em "Adicionar ao blueprint". ----
-// Cada registro espera aqui (e na fila do servidor, só em memória, até a confirmação por número e criadaEm) com os planos e checkpoints já marcados como feitos;
+// Cada registro espera aqui (e na fila do servidor, guardada no banco, até a confirmação por número e criadaEm) com os planos e checkpoints já marcados como feitos;
 // o usuário pode desmarcar o que não aceita. Quem desenha é registros-vista.js; aqui ficam o estado e a aplicação aos dados.
 const registrosFila = []; // { blueprintId, numero, criadaEm, em, mensagem, acoes: [{ id, nome, inicio, fim, status, observacao, projeto, inc, planos, checkpoints }] }
 

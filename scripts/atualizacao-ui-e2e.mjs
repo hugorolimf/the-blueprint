@@ -1,5 +1,5 @@
-// A interface da atualização no navegador de verdade (Edge sem janela) contra o app Rust e um "GitHub" falso: o aviso "pronta" aparece, "Depois" some, o clique em Atualizar com a fila
-// do MCP cheia mostra o motivo e NÃO instala, e com a fila vazia o clique roda o instalador (anotado, não executado). Opcional: `--captura <arquivo.png>` salva uma imagem do aviso.
+// A interface da atualização no navegador de verdade (Edge sem janela) contra o app Rust e um "GitHub" falso: o aviso "pronta" aparece, "Depois" some, o clique em Atualizar com item
+// na fila do MCP roda o instalador (anotado, não executado): a fila fica no banco e não impede mais. Opcional: `--captura <arquivo.png>` salva uma imagem do aviso.
 // Uso: node scripts/atualizacao-ui-e2e.mjs [blueprint.exe] [--captura arquivo.png]   (precisa do Microsoft Edge; ~10 s, sem gastar tokens)
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -65,18 +65,9 @@ try {
   for (let i = 0; i < 60 && !(await caixa())?.visivel; i++) await dormir(150);
   assert((await caixa()).visivel);
 
-  // fila do MCP com item: o clique mostra o motivo e não instala
+  // item na fila do MCP não impede (a fila fica no banco e volta ao reabrir): o clique roda o instalador (anotado) e o aviso vira "Atualizando".
+  // O motivo de uma recusa na tela (terminal com sessão viva, compartilhamento) é conferido em atualizacao.test.mjs.
   assert.equal((await postJson(d.url + "/api/mcp/evento", { tipo: "progresso", texto: "trabalhando", workspaceId: "sm", blueprintId: "p1" })).status, 200);
-  await js(`document.querySelector("#atualizacao .at-ok").click()`);
-  for (let i = 0; i < 40 && !(await caixa()).motivo; i++) await dormir(100);
-  c = await caixa();
-  assert.match(c.motivo, /aviso\(s\) do agente/);
-  assert.equal(existsSync(lancou), false, "recusado: nada foi executado");
-  assert.equal(c.acoes, true, "continua pronta para tentar de novo");
-
-  // fila vazia: o clique roda o instalador (anotado) e o aviso vira "Atualizando"
-  const fila = (await (await fetch(d.url + "/api/mcp/fila")).json()).itens;
-  await postJson(d.url + "/api/mcp/fila/ack", { ids: fila.map((i) => i.id) });
   await js(`document.querySelector("#atualizacao .at-ok").click()`);
   for (let i = 0; i < 40 && !existsSync(lancou); i++) await dormir(100);
   assert(existsSync(lancou), "o clique rodou o instalador");
@@ -84,7 +75,7 @@ try {
   for (let i = 0; i < 40 && !/Atualizando/.test((await caixa()).titulo); i++) await dormir(100);
   assert.match((await caixa()).titulo, /Atualizando: o app fecha e abre de novo sozinho/);
   assert.deepEqual(erros, [], "sem erros de JavaScript na página");
-  console.log("ok: aviso pronta, Depois (e continua adiado), clique recusado com a fila cheia, clique que instala com a fila vazia");
+  console.log("ok: aviso pronta, Depois (e continua adiado), clique que instala com item na fila");
 } finally {
   limpar();
 }

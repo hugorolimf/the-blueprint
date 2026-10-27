@@ -29,7 +29,7 @@ pub fn argumentos(exe_instalado: &Path) -> Vec<String> {
 }
 
 impl Atualizador {
-    /// Instala a versão que está pronta. `bloqueio` é o motivo para não fechar o app agora (quem chama o calcula: fila do MCP, agente trabalhando); `backup(versao)`
+    /// Instala a versão que está pronta. `bloqueio` é o motivo para não fechar o app agora (quem chama o calcula: terminal do app, compartilhamento); `backup(versao)`
     /// copia o banco; `lancar(instalador, argumentos)` roda o instalador e diz se o app deve sair em seguida. Devolve esse "deve sair".
     pub fn instalar(&self, bloqueio: Option<String>, backup: &dyn Fn(&str) -> Result<(), String>, lancar: &dyn Fn(&Path, &[String]) -> Result<bool, String>) -> Result<bool, Recusa> {
         let (versao, arquivo, esperado) = {
