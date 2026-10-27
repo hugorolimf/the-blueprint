@@ -2,7 +2,7 @@
 
 # Como contribuir
 
-Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos.
+Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos. O que está planejado e o que está sendo feito fica no [ROADMAP](../../ROADMAP.pt-BR.md).
 
 ## Vocabulário (importante)
 
@@ -16,6 +16,9 @@ O modelo é **Workspace → Blueprint → Projeto (opcional) → Ação → Plan
 - **O kit isométrico** (`kit/`, `emblemas.mjs`) roda no navegador e não vai para Rust; mudou o desenho? Rode `node emblemas.test.mjs` e `node agentes-figura.test.mjs` e só regrave as referências de propósito.
 - **Protótipos** nunca ganham `allow-same-origin`. As rotas `/api/mcp/*` continuam só em loopback.
 - `blueprint.html` usa fim de linha CRLF; edite com cuidado, sem converter o arquivo inteiro.
+- **Sem emojis** em nenhum lugar do projeto. Precisa de uma figura? Desenhe com o Anatomy. Tudo o que é visual usa o tema do próprio app (`web/css/tokens.css`).
+- **Todo texto que o usuário lê passa por `tr()`** e precisa de uma entrada em inglês em `web/i18n/` (veja [Desenvolver e testar](development.md#idiomas)); `node scripts/i18n-completude.mjs` reprova o que faltar.
+- **A documentação é escrita primeiro em inglês**; a versão em português fica em `docs/pt-BR/` com o mesmo nome de arquivo (regra e glossário em [Idiomas da documentação](development.md#idiomas-da-documentação)).
 
 ## Desenvolver
 
@@ -27,11 +30,14 @@ O modelo é **Workspace → Blueprint → Projeto (opcional) → Ação → Plan
 cargo test
 node emblemas.test.mjs
 node agentes-figura.test.mjs
+node i18n.test.mjs
+node scripts/i18n-completude.mjs
 node scripts/migrar-vocabulario.test.mjs
 cargo build --release
 node scripts/contrato-http.mjs       # as respostas da API contra referencias/api-snapshots.json
 node scripts/fumaca-rust.mjs
-node scripts/ui-e2e.mjs              # precisa do Microsoft Edge
+node scripts/idioma-e2e.mjs          # precisa do Microsoft Edge
+node scripts/roadmap-e2e.mjs         # precisa do Microsoft Edge
 node scripts/capturas.mjs --comparar # as 7 telas, pixel a pixel (hash)
 ```
 

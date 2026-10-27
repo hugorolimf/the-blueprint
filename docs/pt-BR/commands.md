@@ -1,6 +1,6 @@
 # Servidor e comandos
 
-[Voltar ao README](../../README.pt-BR.md) · [English](../model.md)
+[Voltar ao README](../../README.pt-BR.md) · [English](../commands.md)
 
 ```
 cargo build --release
