@@ -55,6 +55,9 @@ Object.assign(I18N.catalogos.en, {
   "Marcar como em andamento": "Mark as in progress", "Marcar como concluída": "Mark as completed",
   "{n} ação concluída": ["{n} action completed", "{n} actions completed"], "{n} ação em andamento ({pct}% feito)": ["{n} action in progress ({pct}% done)", "{n} actions in progress ({pct}% done)"],
   "Terminou a tarefa": "Finished the task", "Última tarefa": "Last task", "Subagente terminou uma tarefa": "Subagent finished a task",
+  "Agente trabalhando": "Agent working", "Agente concluiu": "Agent finished", "Agente não concluiu": "Agent did not finish", "Agente atingiu um checkpoint": "Agent reached a checkpoint",
+  "Agente não atingiu um checkpoint": "Agent missed a checkpoint", "Agente travou": "Agent is blocked", "Agente enviou uma proposta": "Agent sent a proposal", "Agente anexou um protótipo": "Agent attached a prototype",
+  "neste workspace": "in this workspace", "Clique para ir até ele.": "Click to go to it.", "Mensagem de conclusão": "Completion message", "(sem notícia nova)": "(no news since)",
   "{n} ação a fazer": ["{n} action to do", "{n} actions to do"], "{feitos} de {n} checkpoints feitos": "{feitos} of {n} checkpoints done",
   "Prorrogar o fim em 1 dia": "Extend the end by 1 day", "Prorrogar o fim em 1 semana": "Extend the end by 1 week",
 });

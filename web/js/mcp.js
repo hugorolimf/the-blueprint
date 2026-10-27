@@ -73,7 +73,7 @@ async function mcpAplica(itens) {
     if (i.tipo !== "progresso" && i.tipo !== "bloqueio") atualizarHub = true;
     const auto = i.tipo === "proposta" && autoElegivel(i); // entra sozinha (interruptor ligado, sem apagar nem mover): não pede revisão
     if (!auto) notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
-    agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? (auto ? tr("Proposta aplicada.") : "Proposta enviada: revise em ✦ Planejar.") : i.texto, em: Date.now() };
+    agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? (auto ? tr("Proposta aplicada.") : tr("Proposta enviada: revise em ✦ Planejar.")) : i.texto, em: Date.now() };
     const nomeProj = D.blueprints.find((x) => x.id === i.blueprintId)?.nome;
     if (i.tipo === "progresso" && i.planoId) { // o primeiro aviso de progresso com o plano marca o início do tempo real
       const t0 = mcpPlano(i);
