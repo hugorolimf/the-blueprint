@@ -2,6 +2,7 @@
 mod atualizar;
 pub(crate) mod claude;
 mod completar;
+mod restaurar;
 use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
 use crate::http::{self, Config};
 use std::path::Path;
@@ -23,6 +24,8 @@ pub(crate) const USO: &str = concat!(
     "  blueprint hook sessao|edicao|subagente|parada|fim --equipe  os hooks do plugin do convidado (blueprint conectar)\n",
     "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
     "  blueprint atualizar [--verificar|--instalar]  procura e baixa a versão nova (--verificar só consulta; --instalar instala a baixada: é o seu clique em Atualizar)\n",
+    "  blueprint restaurar [<número>|<arquivo>]  lista as cópias do banco (uma automática por dia, as 7 últimas) ou volta a uma; feche o app antes
+",
     "  blueprint completions <powershell|bash>    imprime o script que completa os comandos no terminal\n",
     "  blueprint --version                       mostra a versão\n",
     "  blueprint registrar [--remover]           instala (ou remove) o plugin no Claude Code (skill, agente e MCP) e o MCP no Codex; o instalador faz isto\n",
@@ -61,6 +64,7 @@ pub fn executar(args: Vec<String>) -> i32 {
         #[cfg(windows)]
         ["atualizando", ..] => return crate::janela::atualizando::executar(&args[1..]), // interno: a janela de progresso que o app abre ao atualizar
         ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),
+        ["restaurar"] | ["restaurar", _] => return restaurar::executar(a.get(1).copied()),
         ["--version"] | ["-V"] => {
             println!("blueprint {}", crate::atualizador::VERSAO);
             return 0;

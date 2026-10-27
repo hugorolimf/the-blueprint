@@ -161,6 +161,14 @@ fn preparar(dev: bool, convite: Option<equipe::Convite>) -> Resultado<()> {
     if !dev {
         servidor.estado.atualizador.ao_abrir(); // recupera o instalador já baixado e verifica em segundo plano (no máximo uma vez por dia)
     }
+    let banco = servidor.estado.config.banco.clone();
+    std::thread::spawn(move || {
+        // no máximo uma cópia por dia; falhar aqui nunca impede o app de abrir
+        let pasta = crate::dados::backups::pasta_backups(&banco).join("automaticos");
+        if let Err(e) = crate::dados::backups::backup_diario(&banco, &pasta, crate::tempo::agora_ms()) {
+            eprintln!("aviso: backup automático do banco: {e}");
+        }
+    });
     let mostrar = proxy.clone();
     // a segunda execução manda o link do convite junto (rota /api/app/mostrar): confirmado, abre a janela da equipe; sem link, traz a janela
     // o link `blueprint://equipe` é interno: a rota /api/equipes/abrir só o monta para uma equipe já lembrada, depois do clique do usuário no app

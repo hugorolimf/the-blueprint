@@ -9,6 +9,8 @@
 
 Your data lives in `%APPDATA%\Blueprint\` (the SQLite database `blueprint.db` and `prototipos\`). To start with sample data: `blueprint importar data.exemplo.en.json %APPDATA%\Blueprint\blueprint.db` (or `data.exemplo.json` for the Portuguese sample).
 
+Backups: when the app opens it copies the database at most once a day to `%APPDATA%\Blueprint\backups\automaticos` and keeps the last 7 (the copies made before an update stay in `backups\`). `blueprint restaurar` lists them and `blueprint restaurar <number>` goes back to one; close the app first (it refuses while the app is open) and the current database is kept in `backups\` before it is replaced.
+
 The installer does not put `blueprint` on the PATH: the Claude Code plugin is already installed for your user and your usual `claude` works. To use `blueprint claude` from any folder, call it by its full path (`%LOCALAPPDATA%\Programs\Blueprint\blueprint.exe claude`) or add that folder to the PATH.
 
 ## Performance (measured)
