@@ -1,5 +1,6 @@
 //! Testes das apresentações geradas pela IA: validação (limites, ids, avisos), armazenamento e montagem da página.
 mod armazenar;
+mod editar;
 mod montar;
 mod validar;
 

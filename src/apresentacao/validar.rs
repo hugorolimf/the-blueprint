@@ -13,6 +13,8 @@ const TITULO_MAX: usize = 120;
 const PUBLICOS: [&str; 2] = ["cliente", "interno"];
 /// `epico` vale, mas só quem pediu pelo nome o manda: nenhum padrão do app o escolhe.
 const NIVEIS: [&str; 4] = ["rapido", "padrao", "completo", "epico"];
+/// Os ids de seção da página (a figura que leva `secao` entra no painel dela); `acoes` só existe na página `interno`.
+const SECOES: [&str; 8] = ["visao", "recebe", "etapas", "linha", "precisamos", "decisoes", "riscos", "acoes"];
 /// Quantos achados de termo técnico o aviso lista.
 const ACHADOS_MAX: usize = 10;
 
@@ -69,6 +71,7 @@ pub fn validar(conteudo: &Value, figuras: &Value) -> Result<Validada, ErroHttp> 
     let mut avisos = Vec::new();
     let mut ids = HashSet::new();
     let mut total = tamanho_conteudo;
+    let mut por_secao: std::collections::BTreeMap<&str, Vec<&str>> = Default::default();
     for (i, f) in lista.iter().enumerate() {
         let id = texto(f, "id");
         if !f.is_object() || !id_de_figura_valido(id) {
@@ -87,6 +90,14 @@ pub fn validar(conteudo: &Value, figuras: &Value) -> Result<Validada, ErroHttp> 
             Some(Value::String(_)) => {}
             Some(_) => return Err(falha(400, crate::tr!("the codigo of figure \"{id}\" must be a string (a JavaScript function expression)", "o codigo da figura \"{id}\" deve ser texto (uma expressão de função JavaScript)")).codigo("codigo-invalido").params(serde_json::json!({"id": id}))),
         }
+        if let Some(s) = f.get("secao").filter(|v| !v.is_null()) {
+            let nome = s.as_str().unwrap_or("");
+            if SECOES.contains(&nome) && !(nome == "acoes" && publico == "cliente") {
+                por_secao.entry(nome).or_default().push(id);
+            } else {
+                avisos.push(format!("secao-desconhecida: Figure \"{id}\" has secao {s}, which is not a section of this page (use {}{}).", SECOES[..7].join(", "), if publico == "interno" { ", acoes" } else { "; acoes exists only in the interno page" }));
+            }
+        }
         if f.get("impressao").and_then(Value::as_str).is_none_or(str::is_empty) {
             avisos.push(format!("Figure \"{id}\" has no impressao: it cannot be kept when the presentation is regenerated and will be redrawn."));
         }
@@ -95,6 +106,9 @@ pub fn validar(conteudo: &Value, figuras: &Value) -> Result<Validada, ErroHttp> 
     if total > TOTAL_MAX {
         let mb = TOTAL_MAX / 1024 / 1024;
         return Err(falha(413, crate::tr!("the presentation is over {mb} MB (content plus figures)", "a apresentação passa de {mb} MB (conteúdo mais figuras)")).codigo("apresentacao-grande").params(serde_json::json!({"mb": mb})));
+    }
+    for (secao, ids) in por_secao.iter().filter(|(_, ids)| ids.len() > 1) {
+        avisos.push(format!("secao-duplicada: Section \"{secao}\" has {} figures ({}); the page shows one per section, give the others another section or a stage.", ids.len(), ids.join(", ")));
     }
     for etapa in conteudo.get("etapas").and_then(Value::as_array).into_iter().flatten() {
         let fig = texto(etapa, "figura");

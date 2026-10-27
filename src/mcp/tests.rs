@@ -145,7 +145,7 @@ fn as_ferramentas_do_mcp() {
     let nomes: Vec<&str> = r["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
     assert_eq!(
         nomes,
-        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "registrar_trabalho", "anexar_prototipo", "anexar_apresentacao", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta", "responder_conversa"]
+        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "registrar_trabalho", "anexar_prototipo", "anexar_apresentacao", "ler_apresentacao", "editar_apresentacao", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta", "responder_conversa"]
     );
     let propor = r["result"]["tools"].as_array().unwrap().iter().find(|t| t["name"] == "propor_blueprint").unwrap();
     assert!(propor["inputSchema"]["properties"].get("remover").is_some(), "a ferramenta já conhece mover e apagar");
@@ -185,7 +185,7 @@ fn o_guia_vem_por_partes_sem_o_cabecalho() {
     assert!(texto.starts_with("# Plan a blueprint") && !texto.contains("description:"), "{}", &texto[..60.min(texto.len())]);
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
     assert!(editar["result"]["content"][0]["text"].as_str().unwrap().contains("Move"));
-    for topico in ["planejar", "editar", "executar", "prototipos", "importar", "apresentar", "apresentacao_ia", "apresentacao_conteudo", "apresentacao_figuras"] {
+    for topico in ["planejar", "editar", "executar", "prototipos", "importar", "apresentar", "apresentacao_ia", "apresentacao_conteudo", "apresentacao_figuras", "apresentacao_ajustar"] {
         let r = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": topico}}));
         assert!(r["result"]["content"][0]["text"].as_str().unwrap().chars().count() < 4500, "o tópico {topico} cabe em menos de 4.500 caracteres"); // o guia em inglês é ~5% mais longo que o português (era 4.000)
     }

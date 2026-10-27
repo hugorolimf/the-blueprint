@@ -85,7 +85,15 @@ fn iniciar(estado: &Estado, corpo: &Value) -> Result<Resposta, ErroHttp> {
         *aberta.borrow_mut() = Some(abrir_no_app(estado, info.clone(), (colunas, linhas), pasta, exe, prompt)?);
         Ok("app")
     };
-    let (status, mut resposta) = crate::mcp::iniciar::iniciar(&estado.dados, corpo, &lancar)?;
+    // a apresentação com IA abre no mesmo terminal: gerar (`apresentar`) ou ajustar uma que já existe (`apresentacaoId` e `ajuste`); a ação é o caso de sempre
+    let (status, mut resposta) = if let Some(a) = corpo.get("apresentar").filter(|a| a.is_object()) {
+        let pedido = json!({"workspaceId": texto(corpo, "workspaceId"), "blueprintId": texto(corpo, "blueprintId"), "publico": texto(a, "publico"), "nivel": texto(a, "nivel")});
+        crate::mcp::pedido_apresentacao::apresentar(&estado.dados, &pedido, &lancar)?
+    } else if !texto(corpo, "apresentacaoId").is_empty() {
+        crate::mcp::pedido_apresentacao::ajustar_com(&estado.mcp.pasta_apresentacoes(), &estado.dados, corpo, &lancar)?
+    } else {
+        crate::mcp::iniciar::iniciar(&estado.dados, corpo, &lancar)?
+    };
     if let Some(s) = aberta.take() {
         resposta["sessao"] = s;
     }

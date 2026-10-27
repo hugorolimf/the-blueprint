@@ -41,10 +41,16 @@ pub fn alvo(registro: &Value) -> (&str, &str) {
     (t("workspaceId"), t("blueprintId"))
 }
 
-/// O que o agente e a página leem sem abrir o conteúdo: `{id, titulo, publico, nivel, em, figuras: [{id, impressao}]}`.
+/// O que o agente e a página leem sem abrir o conteúdo: `{id, titulo, publico, nivel, em, editadoEm?, editadoPor?, figuras: [{id, impressao}]}`.
 pub fn meta(registro: &Value) -> Value {
     let figuras: Vec<Value> = registro.get("figuras").and_then(Value::as_array).into_iter().flatten().map(|f| json!({"id": f.get("id"), "impressao": f.get("impressao").cloned().unwrap_or(Value::Null)})).collect();
-    json!({"id": registro["id"], "titulo": registro["titulo"], "publico": registro["publico"], "nivel": registro["nivel"], "em": registro["em"], "figuras": figuras})
+    let mut m = json!({"id": registro["id"], "titulo": registro["titulo"], "publico": registro["publico"], "nivel": registro["nivel"], "em": registro["em"], "figuras": figuras});
+    for k in ["editadoEm", "editadoPor"] {
+        if let Some(v) = registro.get(k) {
+            m[k] = v.clone(); // só existe depois de uma edição à mão ou do agente
+        }
+    }
+    m
 }
 
 /// Os metadados das apresentações de um blueprint, da mais nova para a mais antiga.

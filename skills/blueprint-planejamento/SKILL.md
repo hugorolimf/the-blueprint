@@ -38,7 +38,7 @@ Workspace
 | Show an idea for an action (a screen, a figure) | `prototipos` |
 | Bring GitHub issues into the blueprint | `importar` |
 | Prepare a blueprint to present or print (summary, progress, full plan) | `apresentar` |
-| Make an AI presentation with live figures for a client or the owner (audience and level), then its content and its figures | `apresentacao_ia`, `apresentacao_conteudo`, `apresentacao_figuras` |
+| Make an AI presentation with live figures for a client or the owner (audience and level), then its content and its figures | `apresentacao_ia`, `apresentacao_conteudo`, `apresentacao_figuras`; to change one that exists, `apresentacao_ajustar` |
 | You already did something outside the plan (a one-off adjustment): register it and ask whether to add it | `executar` |
 
 ## How to work (in this order)

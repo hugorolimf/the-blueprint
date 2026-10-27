@@ -25,7 +25,7 @@ function apHtmlTela() {
   return `<header class="ed-topo ap-topo"><button class="btn" data-ap="voltar" type="button">${tr("← Voltar ao blueprint")}</button><div class="tit"><span>${tr("Apresentação")}</span><b class="ap-nome-bp"></b></div>
 <div class="ap-acoes"><button class="btn cheio" data-ap="apresentar" type="button">${tr("Apresentar")}</button><button class="btn" data-ap="imprimir" type="button"${tem("imprimirApresentacao")}>${tr("Imprimir")}</button><button class="btn" data-ap="html" type="button"${tem("exportarApresentacao")}>${tr("Exportar HTML")}</button><button class="btn" data-ap="pdf" type="button"${tem("exportarApresentacao")}>${tr("Exportar PDF")}</button></div></header>
 <p class="ed-aviso ap-msg" role="status"></p>
-<div class="ed-corpo ap-corpo"><nav class="ed-lateral ap-tipos" aria-label="${esc(tr("Tipo de apresentação"))}"><p class="rot">${tr("Tipo de apresentação")}</p>${tipos}<p class="ap-dica">${tr("Apresentar: setas ou espaço passam as páginas, Esc sai.")}</p></nav><main class="ap-previa" tabindex="0" aria-label="${esc(tr("Pré-visualização"))}"></main></div>`;
+<div class="ed-corpo ap-corpo"><nav class="ed-lateral ap-tipos" aria-label="${esc(tr("Tipo de apresentação"))}"><details class="ap-interna" open><summary>${tr("Visão interna")}</summary><p class="ap-dica">${tr("As páginas que o app monta sozinho a partir dos dados do blueprint. Têm o lado técnico: use para você, não para o cliente.")}</p><p class="rot">${tr("Tipo de apresentação")}</p>${tipos}<p class="ap-dica">${tr("Apresentar: setas ou espaço passam as páginas, Esc sai.")}</p></details></nav><main class="ap-previa" tabindex="0" aria-label="${esc(tr("Pré-visualização"))}"></main></div>`;
 }
 
 function apDesenha() {
@@ -79,6 +79,7 @@ function apClique(e) {
 function apTecla(e) {
   if (!apRaiz || apRaiz.hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   const palco = apPalco && !apPalco.hidden;
+  if (!palco && e.target.closest?.(".ap-ia-lado")) return; // o painel de editar e conversar usa o teclado (Esc, setas, Enter) para o que está digitando
   if (e.key === "Escape") { e.preventDefault(); palco ? apSair() : apFechar(); return; }
   if (!palco) return;
   const passo = { ArrowRight: 1, ArrowDown: 1, PageDown: 1, " ": 1, Enter: 1, ArrowLeft: -1, ArrowUp: -1, PageUp: -1, Backspace: -1 }[e.key];
@@ -108,8 +109,12 @@ function abrirApresentacao(blueprintId, quemAbriu) {
   document.body.append(apRaiz);
   apRaiz.hidden = false;
   document.body.classList.add("ap-aberto");
-  apDesenha();
-  if (typeof apIaAbrir === "function") apIaAbrir(apRaiz, apBlueprint); // o grupo "Gerar com IA" e a lista das já geradas (apresentacao-ia.js)
+  apRaiz.querySelector(".ap-nome-bp").textContent = apBlueprint.nome || tr("Sem nome");
+  if (typeof apIaAbrir === "function") { // o grupo "Gerar com IA" e a lista das já geradas (apresentacao-ia.js): com apresentações geradas a tela abre na mais nova, senão nas páginas do app
+    const previa = apRaiz.querySelector(".ap-previa");
+    previa.setAttribute("aria-busy", "true");
+    apIaAbrir(apRaiz, apBlueprint).then((abriu) => { previa.removeAttribute("aria-busy"); if (!abriu) apDesenha(); });
+  } else apDesenha();
   apRaiz.onclick = (e) => {
     const t = e.target.closest(".ap-tipo");
     if (t) { apTipo = t.dataset.tipo; try { localStorage.setItem(CHAVE_AP_TIPO, apTipo); } catch {} apMensagem(""); apDesenha(); return; }

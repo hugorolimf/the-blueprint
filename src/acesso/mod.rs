@@ -69,7 +69,7 @@ pub fn so_local(caminho: &str) -> bool {
         || caminho == "/api/equipes"
         || caminho.starts_with("/api/equipes/")
         || caminho == "/api/app/mostrar"
-        || matches!(mcp, "iniciar" | "apresentar" | "sessoes" | "pastas")
+        || matches!(mcp, "iniciar" | "apresentar" | "apresentacao/pedido" | "sessoes" | "pastas")
         || mcp.starts_with("conversa")
         || mcp.starts_with("hook/")
         || mcp.starts_with("pasta/")

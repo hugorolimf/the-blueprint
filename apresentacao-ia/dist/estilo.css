@@ -265,6 +265,15 @@ html,body{margin:0;background:#061d42}
   .ap-sec-corpo{padding:16px 12px 18px}.ap-sec-cab{padding:10px 12px}
 }
 
+/* figura da seção ao lado do texto (abaixo em tela estreita); duas figuras na mesma seção ficam uma após a outra */
+.ap-etapa{scroll-margin-top:calc(var(--topo) + 14px)}
+.ap-com-fig{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;align-items:start}
+.ap-com-fig-col,.ap-fig-col{display:grid;gap:14px;min-width:0}
+.ap-com-fig-col{position:sticky;top:calc(var(--topo) + 14px)}
+.ap-fig-col{margin-top:14px}
+.ap-com-fig-col .iso-figure,.ap-fig-col .iso-figure{margin:0}
+@media (max-width:900px){.ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}}
+
 /* ---- estilo/impressao.css ---- */
 /* Impressão em A4: o papel vira branco e a tinta, o azul do blueprint. Navegação, botões e barras somem; cada painel evita quebrar no meio. */
 @media print{
@@ -285,5 +294,6 @@ html,body{margin:0;background:#061d42}
   .ap-etapa,.ap-cartao,.ap-item,.ap-kpi,.iso-figure{break-inside:avoid;background:#fff}
   .ap-tag[data-st=andamento]{color:#fff}
   .ap-ia .iso-plate{box-shadow:0 0 0 1px var(--lo)}
+  .ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}
   .ap-ia .iso-solid[data-lit]{filter:none}
 }

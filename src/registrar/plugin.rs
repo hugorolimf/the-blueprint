@@ -29,6 +29,7 @@ const ARQUIVOS: &[(&str, &str)] = &[
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_ia.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ia.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_conteudo.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_conteudo.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_figuras.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_figuras.md")),
+    ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_ajustar.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ajustar.md")),
     ("plugins/blueprint-terminal/.claude-plugin/plugin.json", include_str!("../../claude-plugin/plugins/blueprint-terminal/.claude-plugin/plugin.json")),
     ("plugins/blueprint-terminal/hooks/hooks.json", include_str!("../../claude-plugin/plugins/blueprint-terminal/hooks/hooks.json")),
     ("plugins/blueprint-terminal/hooks/register.tsx", include_str!("../../claude-plugin/plugins/blueprint-terminal/hooks/register.tsx")),
@@ -67,7 +68,8 @@ pub fn gravar(pasta: &Path, exe: &Path) -> io::Result<()> {
     let monitor = json!([{ "name": "blueprint", "command": format!("\"{}\" watch", exe.replace('\\', "/")), "description": "Avisos do blueprint desta pasta", "when": "always" }]);
     gravar_se_mudou(&pasta.join("plugins/blueprint/monitors/monitors.json"), &(serde_json::to_string_pretty(&monitor).expect("json") + "\n"))?;
     gravar_se_mudou(&pasta.join("plugins/blueprint/skills/status/SKILL.md"), &skill_status(&exe))?;
-    gravar_se_mudou(&pasta.join("plugins/blueprint/skills/apresentar/SKILL.md"), SKILL_APRESENTAR)
+    gravar_se_mudou(&pasta.join("plugins/blueprint/skills/apresentar/SKILL.md"), SKILL_APRESENTAR)?;
+    gravar_se_mudou(&pasta.join("plugins/blueprint/skills/ajustar-apresentacao/SKILL.md"), SKILL_AJUSTAR)
 }
 
 /// `/blueprint:status`: o comando do usuário. O estado vem pronto do app por `!`comando`` (o Claude Code roda o comando antes de o modelo ler),
@@ -81,6 +83,23 @@ fn skill_status(exe: &str) -> String {
 
 /// `/blueprint:apresentar`: o comando do usuário que abre a conversa de apresentação (contrato em docs/interno/apresentacao-ia.md). O roteiro em si vive no tópico
 /// `apresentar` do guia (um só lugar para o agente e para este comando); aqui só se manda segui-lo. Texto para o AGENTE, então em inglês; ele responde no idioma do usuário.
+/// `/blueprint:ajustar-apresentacao`: o usuário pede uma mudança numa apresentação que já existe; o agente a lê e muda SÓ isso (nunca regera). O protocolo está no tópico
+/// `apresentacao_ajustar` do guia. Texto para o AGENTE, então em inglês.
+const SKILL_AJUSTAR: &str = "---
+name: ajustar-apresentacao
+description: Muda pontos da apresentação já gerada do blueprint desta pasta, sem regerá-la. Só o usuário chama, com /blueprint:ajustar-apresentacao.
+disable-model-invocation: true
+---
+
+Change a presentation that already exists, talking with the user in their language.
+
+1. Call guia_de_planejamento with topico \"apresentacao_ajustar\" and follow it.
+2. Call ler_blueprint (workspace_id and blueprint_id come from the session context or the \"Blueprint:\" line of CLAUDE.md or AGENTS.md; without them, listar_blueprints) and look at `apresentacoes`. If there is more than one, ask which one in ONE message.
+3. The change the user wants (it may be empty, then ask what to change): $ARGUMENTS
+4. Read it with ler_apresentacao and change ONLY what was asked with editar_apresentacao, in small operations. Never regenerate it and never call anexar_apresentacao over it unless the user asks to regenerate.
+5. Say in one sentence what changed.
+";
+
 const SKILL_APRESENTAR: &str = "---\nname: apresentar\ndescription: Conduz a conversa que gera a apresentação do blueprint desta pasta (público e nível, com figuras vivas do anatomy). Só o usuário chama, com /blueprint:apresentar.\ndisable-model-invocation: true\n---\n\nPresent the blueprint of this folder, talking with the user in their language.\n\n1. Call guia_de_planejamento with topico \"apresentacao_ia\" and follow its flow; read \"apresentacao_conteudo\" and \"apresentacao_figuras\" when you write the content and the figures.\n2. Call ler_blueprint (workspace_id and blueprint_id come from the session context or the \"Blueprint:\" line of CLAUDE.md or AGENTS.md; without them, listar_blueprints) to read the structure and the `apresentacoes` that already exist.\n3. Arguments typed by the user after the command (they may be empty, and are the audience and the level): $ARGUMENTS\n4. Ask in ONE message only what is still missing: the audience (client, a project plan without the technical development, or internal), the level (quick, standard or complete; epic only if the user asks for it by name) and, for the client audience, what the client must provide or decide. Say the time estimate of the level before starting.\n5. Generate the content and the figures and attach them with anexar_apresentacao. Tell the user where to open it: the Present screen of the blueprint in the app.\n\nNever export or print for the user: that is their click in the app.\n";
 
 /// Os hooks do plugin. Sessão: hook de comando (o SessionStart roda antes de o MCP conectar, então `mcp_tool` não serve), em forma de execução

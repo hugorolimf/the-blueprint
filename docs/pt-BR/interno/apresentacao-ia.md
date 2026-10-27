@@ -95,3 +95,52 @@ No diálogo Apresentar que já existe (`web/js/apresentacao.js`): um segundo gru
 ## Regras que valem em todo lugar
 
 Sem emoji. As figuras usam os tons do próprio app. A página gerada e os dados guardados nunca são commitados. O público `cliente` nunca leva termos técnicos, horas por plano, instruções internas nem promessas inventadas. Decisões em aberto aparecem como "a definir". Dados de exemplo nos testes do repositório; o conteúdo real do cliente fica fora do repositório.
+
+## Notas de implementação (adotadas, 2026-10-26)
+
+O código diverge do texto acima nestes pontos; o código é a verdade.
+
+- **Metadados e lista.** Não há `blueprint.apresentacoes` nos dados do blueprint nem migração: os metadados ficam em cada `<id>.json` e a lista é lida da pasta (`%APPDATA%\Blueprint\apresentacoes\`, ou dentro da pasta de protótipos quando ela é movida). A web lê `GET /api/mcp/apresentacoes?workspace=&blueprint=` (da mais nova) e o evento SSE `apresentacao` `{workspaceId, blueprintId, apresentacaoId}`; `ler_blueprint` também devolve `apresentacoes`. No modo equipe elas não sincronizam entre máquinas.
+- **Pedido.** `POST /api/mcp/apresentar` recebe `{workspaceId, blueprintId, publico, nivel, sessaoId?, semCanal?}` (como `/iniciar`; não `sessao`) e responde `{ok, pasta, terminal: wt|cmd|canal|copiar, prompt?}`. Só no app local: a rota não existe no modo hospedado nem para convidados, e `MCP_REDE=1` não a abre. `remover` recebe `{apresentacaoId}` e é idempotente.
+- **Chamada da figura.** `codigo(L, c)`: a biblioteca também recebe `conteudo` (`L.idiomaDe(c.idioma)`). `impressao` só precisa ser um texto não vazio; a ferramenta avisa quando falta.
+- **Auditoria.** Os termos proibidos casam por palavra inteira (não por prefixo: `cli` acusaria "cliente"); os campos de identificador (`publico`, `nivel`, `id`, `figura`, datas, `estado`) são pulados; horas como "3 h" ou "1,5 horas" também avisam. `interno` dentro de uma apresentação `cliente` é erro (`interno-no-cliente`), não aviso.
+- **Página.** Um `<meta>` de CSP sem rede vem depois de `<head>` para o arquivo exportado, onde o cabeçalho HTTP não vale. A ferramenta não guarda nada com o app fechado (ao contrário de `anexar_prototipo`).
+- **Tópicos do guia.** O guia é dividido para manter cada tópico abaixo de 4.500 caracteres: `apresentar` (os três tipos do próprio app), `apresentacao_ia` (conversa, público, nível), `apresentacao_conteudo` (o objeto `conteudo` e o envio) e `apresentacao_figuras` (os programas das figuras). `/blueprint:apresentar` aponta para `apresentacao_ia`.
+
+## Edição manual e a tela (2026-10-26)
+
+A apresentação é totalmente editável à mão. O visor é isolado (origem opaca, sem acesso ao app), então o editor fica no app, ao lado do visor, e edita os dados guardados.
+
+- **Os dados guardados continuam os mesmos** (`conteudo` mais `figuras`); uma edição os reescreve. Os metadados ganham `editadoEm` (hora ISO da última edição manual; ausente quando a IA escreveu a versão atual).
+- `GET /api/mcp/apresentacao?id=<id>` devolve `{id, titulo, publico, nivel, em, editadoEm?, conteudo, figuras}` (figuras com `codigo`). App local e membros da equipe que podem editar; 404 `apresentacao-nao-encontrada`.
+- `POST /api/mcp/apresentacao/editar` com `{apresentacaoId, conteudo?, figuras?}` (mande só o que mudou; cada parte enviada substitui aquela parte inteira). Mesma validação e mesmos códigos de erro do `anexar`; `publico` e `nivel` vêm de `conteudo`; o `titulo` dos metadados segue `conteudo.titulo`; grava `editadoEm`; responde `{ok, apresentacaoId, editadoEm, avisos[]}` (os `avisos` são os mesmos do `anexar`: termos proibidos em `cliente`, `figura` desconhecida, `codigo` vazio); emite o evento SSE `apresentacao`. Loopback e papéis como as outras rotas.
+- A rota da lista (`GET /api/mcp/apresentacoes`) e `ler_blueprint` levam `editadoEm`.
+- **O que dá para editar**: título, subtítulo, cliente, data, público, nível, idioma; cada item de `resumo`, `entregas`, `etapas` (com `marcos`, `figura`, `situacao`), `precisamosDeVoce`, `decisoes`, `riscos` e, para `interno`, `interno.acoes`; de cada figura, `titulo`, `dica`, `leitura`, `chaves`, `legenda`, `rotulo` e `codigo` (avançado). Toda lista: adicionar, remover, subir e descer. Figuras: duplicar e remover.
+- **O editor** (web): seções que espelham a página, salvamento automático depois de uma pausa com estado visível (salvando, salvo, erro), os avisos do servidor ao lado do campo, conferência de sintaxe do `codigo` só na página do app (nunca executa), Desfazer da última mudança e o visor recarregado depois de cada salvamento mantendo a seção (fragmento `#`, que a página restaura).
+- **A IA não pode sobrescrever uma edição manual de surpresa**: gerar de novo (botão ou agente) quando há `editadoEm` pergunta antes ("isto substitui as suas edições"); o guia diz o mesmo ao agente.
+
+Tela: quando o blueprint tem apresentações geradas, a tela abre na mais nova (visor mais barra: Editar, Apresentar, Imprimir, Exportar HTML, Gerar de novo, Remover). O trilho lista as apresentações geradas e o grupo "Gerar com IA"; os tipos do próprio app (Andamento por projeto, Plano completo) passam para um grupo recolhido "Visão interna". Sem nenhuma gerada, a tela abre como antes, com "Gerar com IA" primeiro.
+
+## Gerar no terminal do app e conversar com o agente (2026-10-26)
+
+- **Gerar roda no terminal do próprio app** (o painel ConPTY embutido, `src/terminal/`): "Gerar com IA" abre uma aba rodando `blueprint claude "<prompt>" --canal` na pasta do blueprint, onde o usuário acompanha e responde o agente. O diálogo oferece "Terminal do app" (padrão), um terminal externo novo ou uma sessão aberta, como "Iniciar com o Claude". `POST /api/terminal/iniciar` aceita `{workspaceId, blueprintId, apresentar: {publico, nivel}, titulo?}` (o prompt é o mesmo que `POST /api/mcp/apresentar` monta) e, para ajustar, `{workspaceId, blueprintId, apresentacaoId, ajuste: "<texto>", titulo?}`.
+- **O agente edita o próprio arquivo, em passos pequenos, e nunca o reescreve.** Duas ferramentas MCP: `ler_apresentacao(workspace_id, blueprint_id, apresentacao_id, figuras_codigo?: [ids])` devolve `conteudo` e as figuras (sem `codigo`, a menos que o id da figura esteja em `figuras_codigo`, para poupar contexto), e `editar_apresentacao(workspace_id, blueprint_id, apresentacao_id, operacoes[])`.
+- **Operações** (aplicadas em ordem, todas ou nenhuma; o resultado é validado como no `anexar`; cada resposta traz os avisos e o novo `editadoEm`):
+  - `{op: "definir", caminho: "etapas.2.titulo", valor: <json>}`: define um campo (o caminho é pontuado, itens de lista por índice a partir de 0; uma última chave que falta é criada);
+  - `{op: "inserir", caminho: "etapas", indice: 3, valor: <json>}`: insere numa lista (sem `indice` = no fim);
+  - `{op: "remover", caminho: "etapas.2"}`;
+  - `{op: "mover", caminho: "etapas.2", para: 0}`: move dentro da própria lista;
+  - `{op: "figura_trecho", figura: "capa", de: "<texto exato>", para: "<texto>"}`: troca um trecho exato do `codigo` de uma figura; o trecho precisa ocorrer exatamente uma vez, senão a chamada inteira falha com o número de ocorrências (sem adivinhar em silêncio);
+  - `{op: "figura_definir", figura: "capa", campo: "legenda", valor: "..."}`: define um campo da figura que não seja `codigo`; `{op: "figura_remover", figura: "capa"}`.
+  A troca de parte inteira (`conteudo`/`figuras` em `POST /api/mcp/apresentacao/editar`) continua para o "restaurar" do editor manual e para colagens grandes; o editor manual também manda operações, então uma edição do usuário e uma do agente em campos diferentes nunca se sobrescrevem.
+- `POST /api/mcp/apresentacao/editar` aceita portanto também `{apresentacaoId, operacoes: [...], autor: "usuario" | "agente"}`; os metadados guardam `editadoEm` e `editadoPor`.
+- **A conversa.** Na tela Apresentar, ao lado do visor: uma caixa "Conversar com o agente" (texto, Enviar). `POST /api/mcp/apresentacao/pedido` `{workspaceId, blueprintId, apresentacaoId, texto, sessaoId?}` entrega a mensagem à sessão escolhida pelo canal dela com o prefixo «The Blueprint · pedido do usuário» (é uma ordem do clique do usuário, como Iniciar com o Claude); sem sessão, abre uma aba do terminal do app com `ajuste`. O prompt diz ao agente: leia com `ler_apresentacao`, mude SÓ o que foi pedido com `editar_apresentacao` (operações pequenas, nunca `anexar_apresentacao` sobre uma apresentação existente a menos que o usuário peça para gerar de novo), confirme numa frase o que mudou. O usuário também pode digitar o pedido direto no terminal onde o agente está rodando.
+- **Tópico do guia** `apresentacao_ajustar` (o protocolo acima, abaixo de 4.500 caracteres) se junta a `apresentacao_ia`, `apresentacao_conteudo` e `apresentacao_figuras`.
+- A guarda do `editadoEm` continua: gerar de novo sobre uma apresentação editada à mão pergunta antes.
+
+## Uma figura por sessão (2026-10-26)
+
+- **A figura da visão geral não muda.** A figura que a IA já fez para a capa (`capa`, agora `secao: "visao"`) fica exatamente como foi gerada. A figura das torres do próprio app NÃO volta, e o servidor não injeta nenhuma estrutura (um rascunho anterior desta seção propôs `estrutura` e `L.figuraBlueprint`; o usuário rejeitou: só se acrescentam mais figuras).
+- **Figuras por sessão.** Uma figura pode levar `secao`, uma entre `visao`, `recebe`, `etapas`, `linha`, `precisamos`, `decisoes`, `riscos`, `acoes` (os ids das seções da página). A página põe essa figura no painel da sessão, ao lado do texto (embaixo dele em tela estreita). A figura própria de uma etapa (`etapas[].figura`) continua valendo e fica dentro da etapa. Uma figura sem nenhuma das duas aparece no fim de Etapas, como hoje.
+- **Níveis, corrigidos:** `rapido` = uma figura da IA (`visao`); `padrao` = uma figura diferente da IA por sessão (`visao`, `recebe`, `etapas`, `linha`, `precisamos`, `decisoes`, `riscos`; `acoes` só para `interno`); `completo` = `padrao` mais uma máquina densa do sistema inteiro em `visao` e uma figura por etapa (`etapas[].figura`). Cada objeto é diferente dos outros e ajuda a entender a sua sessão (cartões em trilho para o que o cliente recebe, uma esteira de etapas, um tambor de calendário para a linha do tempo, uma bandeja de pedidos para o que precisamos do cliente, uma balança para as decisões, um painel de mostradores para os riscos).
+- `validar` aceita e confere `secao` (um id conhecido, senão o aviso `secao-desconhecida`); acrescenta um aviso quando duas figuras reivindicam a mesma sessão.

@@ -16,7 +16,7 @@ pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
         ("PUT", "/api/dados") => LIMITE_DADOS,
         ("POST", "/api/mudancas") => LIMITE_MUDANCAS,
         (_, "/api/mcp/prototipo") => LIMITE_PROTOTIPO,
-        (_, "/api/mcp/apresentacao" | "/mcp") => LIMITE_APRESENTACAO, // /mcp também leva anexar_prototipo e anexar_apresentacao (o maior dos dois)
+        (_, "/api/mcp/apresentacao" | "/api/mcp/apresentacao/editar" | "/mcp") => LIMITE_APRESENTACAO, // /mcp também leva anexar_prototipo e anexar_apresentacao (o maior dos dois)
         _ => LIMITE_PADRAO,
     }
 }

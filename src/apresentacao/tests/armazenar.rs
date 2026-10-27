@@ -30,3 +30,13 @@ fn grava_le_lista_e_remove_so_com_id_de_formato_valido() {
     assert!(listar(&p.join("nao-existe"), "sm", "p1").is_empty());
     let _ = std::fs::remove_dir_all(&p);
 }
+
+#[test]
+fn os_metadados_trazem_editado_em_so_depois_de_uma_edicao() {
+    let mut r = registro("0123456789abcdef", "sm", "p1", "2026-10-26T10:00:00.000Z");
+    assert!(meta(&r).get("editadoEm").is_none() && meta(&r).get("editadoPor").is_none());
+    r["editadoEm"] = json!("2026-10-27T01:00:00Z");
+    r["editadoPor"] = json!("agente");
+    assert_eq!((meta(&r)["editadoEm"].clone(), meta(&r)["editadoPor"].clone()), (json!("2026-10-27T01:00:00Z"), json!("agente")));
+    assert!(meta(&r).get("conteudo").is_none());
+}

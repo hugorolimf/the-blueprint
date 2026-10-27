@@ -3,6 +3,7 @@
 pub mod acoes;
 mod ajuste;
 mod apresentacao;
+mod ferr_apresentacao;
 mod argumentos;
 pub mod atividade;
 pub(crate) mod cliente;
@@ -22,7 +23,7 @@ mod linha_do_tempo;
 mod membro;
 pub(crate) mod pasta_local;
 mod registro;
-mod pedido_apresentacao;
+pub(crate) mod pedido_apresentacao;
 pub mod pendentes;
 pub(crate) mod permissao;
 pub mod rotas;
@@ -64,6 +65,8 @@ mod projetos_tests;
 mod importar_tests;
 #[cfg(test)]
 mod apresentar_tests;
+#[cfg(test)]
+mod ajuste_apresentacao_tests;
 #[cfg(test)]
 mod registro_tests;
 #[cfg(test)]

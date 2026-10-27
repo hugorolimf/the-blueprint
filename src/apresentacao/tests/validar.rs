@@ -96,3 +96,26 @@ fn a_lista_de_termos_aceita_as_formas_do_arquivo() {
     assert_eq!(termos_de(r#"{"linguagens": ["rust"], "infra": ["docker"], "nota": "x"}"#), ["docker", "rust"], "o objeto sem `termos` vale por todas as listas, na ordem das chaves");
     assert!(termos_de("não é json").is_empty());
 }
+
+#[test]
+fn a_secao_da_figura_e_conferida_e_so_avisa() {
+    let com_secao = |id: &str, secao: Value| {
+        let mut f = figura(id);
+        f["secao"] = secao;
+        f
+    };
+    let avisos = |c: &Value, f: Value| validar(c, &f).unwrap().avisos.join("
+");
+    assert!(!avisos(&conteudo(), json!([com_secao("a", json!("visao")), com_secao("b", json!("riscos")), figura("c")])).contains("secao"), "ids conhecidos e figura sem seção não avisam");
+    let desconhecida = avisos(&conteudo(), json!([com_secao("a", json!("nada")), com_secao("b", json!(7))]));
+    assert_eq!(desconhecida.matches("secao-desconhecida").count(), 2, "{desconhecida}");
+    assert!(desconhecida.contains("Figure \"a\" has secao \"nada\"") && desconhecida.contains("use visao, recebe, etapas, linha, precisamos, decisoes, riscos"));
+    let duplicada = avisos(&conteudo(), json!([com_secao("a", json!("visao")), com_secao("b", json!("visao")), com_secao("c", json!("riscos"))]));
+    assert!(duplicada.contains("secao-duplicada: Section \"visao\" has 2 figures (a, b)") && !duplicada.contains("\"riscos\" has"), "{duplicada}");
+    // `acoes` só existe na página interno
+    assert!(avisos(&conteudo(), json!([com_secao("a", json!("acoes"))])).contains("secao-desconhecida"));
+    let mut interno = conteudo();
+    interno["publico"] = json!("interno");
+    assert!(!avisos(&interno, json!([com_secao("a", json!("acoes"))])).contains("secao"));
+    assert!(validar(&conteudo(), &json!([com_secao("a", json!("nada"))])).is_ok(), "aviso, não erro");
+}

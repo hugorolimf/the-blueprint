@@ -46,7 +46,7 @@ pub fn rota_com(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, ctx: &Contexto
         if !permitido(mcp, pedido) {
             return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
         }
-        if (matches!(recurso, "iniciar" | "apresentar") || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
+        if (matches!(recurso, "iniciar" | "apresentar" | "apresentacao/pedido") || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
             return Resposta::texto(403, "text/plain", crate::tr!("starting an action only works on this machine (not even MCP_REDE=1 opens it)", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)"));
         }
     } else if let Err(e) = exige_hospedado(dados, pedido, recurso, ctx) {
@@ -97,6 +97,7 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
                 }
                 Resposta::json(200, &lido)
             }
+            "apresentacao" => Resposta::json(200, &apresentacao::ler(mcp, &pedido.parametro("id").unwrap_or_default(), ctx)?),
             "apresentacoes" => Resposta::json(200, &apresentacao::listar(mcp, &pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default(), ctx)),
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i)).collect::<Vec<_>>()})),
@@ -166,6 +167,12 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
         "prototipo" => Resposta::json(200, &com_dados(dados, ctx, |d| acoes::prototipo(mcp, d, &corpo))?),
         "apresentacao" => Resposta::json(200, &com_dados(dados, ctx, |d| apresentacao::anexar(mcp, d, &corpo))?), // contrato em docs/interno/apresentacao-ia.md
         "apresentacao/remover" => Resposta::json(200, &apresentacao::remover(mcp, &corpo, ctx)?),
+        "apresentacao/editar" => Resposta::json(200, &apresentacao::editar(mcp, &corpo, ctx)?),
+        // o campo de conversa da tela Apresentar: um ajuste pedido ao agente (ver pedido_apresentacao.rs)
+        "apresentacao/pedido" => {
+            let (status, resposta) = super::pedido_apresentacao::ajustar(mcp, dados, &corpo)?;
+            Resposta::json(status, &resposta)
+        }
         // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
         "hook/sessao" => Resposta::json(200, &hooks::sessao_de(mcp, dados, &corpo, ctx)?),
         // o SessionEnd tira a sessão da lista (de membro nunca entra nela: Iniciar é só local)

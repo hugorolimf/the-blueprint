@@ -12,7 +12,7 @@ const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 car
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
 pub(super) const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
-const TOPICOS: [(&str, &str); 9] = [
+const TOPICOS: [(&str, &str); 10] = [
     ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
     ("editar", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("executar", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
@@ -22,6 +22,7 @@ const TOPICOS: [(&str, &str); 9] = [
     ("apresentacao_ia", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ia.md")),
     ("apresentacao_conteudo", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_conteudo.md")),
     ("apresentacao_figuras", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_figuras.md")),
+    ("apresentacao_ajustar", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ajustar.md")),
 ];
 const REGRA: &str = "Keep this blueprint always up to date: plans and plan changes via propor_blueprint; when you start a plan, registrar_progresso; when you finish, marcar_concluido with the evidence; if it did not work, marcar_nao_concluido; if you get stuck, reportar_bloqueio.";
 
@@ -45,7 +46,7 @@ pub(crate) fn base() -> String {
 }
 
 /// Chama uma rota do servidor; se ele recusar, devolve o motivo como o agente precisa lê-lo.
-fn servidor(via: Via, rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, String> {
+pub(super) fn servidor(via: Via, rota: &str, metodo: &str, corpo: Option<&Value>) -> Result<Value, String> {
     let enviado = match via {
         Some(direto) => direto(metodo, rota, corpo.map(Value::to_string).as_deref()),
         None => requisitar(&base(), metodo, rota, corpo.map(Value::to_string).as_deref()),
@@ -203,6 +204,8 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
             let acao = if r["atualizado"] == true { "updated" } else { "saved" };
             Ok(format!("Presentation \"{}\" {acao} (apresentacao_id: {}). The user opens it on the Present screen of the blueprint, at {}. To revise it or regenerate only some figures, call again with this apresentacao_id.{aviso}", r["titulo"].as_str().unwrap_or(""), r["apresentacaoId"].as_str().unwrap_or(""), r["caminho"].as_str().unwrap_or("")))
         }
+        "ler_apresentacao" => super::ferr_apresentacao::ler(via, a),
+        "editar_apresentacao" => super::ferr_apresentacao::editar(via, a),
         "registrar_progresso" => {
             evento(via, "progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
             Ok("Progress recorded.".into())

@@ -17,5 +17,6 @@
   .ap-etapa,.ap-cartao,.ap-item,.ap-kpi,.iso-figure{break-inside:avoid;background:#fff}
   .ap-tag[data-st=andamento]{color:#fff}
   .ap-ia .iso-plate{box-shadow:0 0 0 1px var(--lo)}
+  .ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}
   .ap-ia .iso-solid[data-lit]{filter:none}
 }

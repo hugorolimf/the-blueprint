@@ -1,4 +1,4 @@
-// Gera exemplo/figuras.json: os metadados de cada figura (texto para o cartão) mais o código-fonte de exemplo/figuras/*.js como `codigo`.
+// Gera exemplo/figuras.json (uma figura para a Visão geral e o fichário para "o que você recebe"): os metadados de cada figura (texto para o cartão) mais o código-fonte de exemplo/figuras/*.js como `codigo`.
 // A impressão de cada figura é a do conteúdo que ela explica (aqui, o conteúdo inteiro), calculada pela mesma L.impressao da página.
 // Uso: node apresentacao-ia/exemplo/gerar.mjs   (rode antes node apresentacao-ia/empacotar.mjs)
 import { readFileSync, writeFileSync } from "node:fs";
@@ -14,7 +14,20 @@ vm.runInContext(readFileSync(join(AQUI, "..", "dist", "biblioteca.js"), "utf8") 
 
 const figuras = [
   {
-    id: "capa",
+    id: "visao",
+    secao: "visao",
+    titulo: "Carrinho no trilho",
+    dica: "Passe o mouse para mover o carrinho",
+    leitura: "posição 0",
+    chaves: [{ marca: "lit", rotulo: "O carrinho que se move" }],
+    legenda: "Figura mínima da Visão geral: um carrinho num trilho. Dados de exemplo.",
+    rotulo: "Um carrinho num trilho, sobre uma mesa",
+    impressao: contexto.__L.impressao({ titulo: conteudo.titulo, resumo: conteudo.resumo }),
+    codigo: codigo("visao"),
+  },
+  {
+    id: "fichario",
+    secao: "recebe",
     titulo: "Fichário de cadastro",
     dica: "Passe o mouse para escolher uma ficha",
     leitura: "ficha 01 · pendente · 1 em aberto",

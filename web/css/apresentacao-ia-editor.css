@@ -1,0 +1,34 @@
+/* O editor manual e a conversa com o agente (web/js/apresentacao-ia-editor*.js, apresentacao-ia-conversa.js): o painel ao lado do visor. Tokens do app; nada anima. */
+.ap-ed-topo{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.ap-ed-topo b{text-transform:uppercase;letter-spacing:.08em;font-size:12px}
+.ap-ed-estado{flex:1;min-width:0;font-size:11px;color:var(--mid)}
+.ap-ed-estado[data-estado=erro]{color:var(--erro,#ffb4a8)}
+.ap-ed-avisos:not(:empty){margin:8px 0;padding:8px 10px;border:1px solid var(--lo);background:#0c3a7899;font-size:11px;line-height:1.4}
+.ap-ed-avisos ul{margin:4px 0 0;padding-left:16px}.ap-ed-avisos .erro{color:var(--erro,#ffb4a8)}
+.ap-ed-sub{margin:10px 0 4px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.ap-ed-sec{border:1px solid var(--lo);background:#0c3a7866;margin-bottom:8px}
+.ap-ed-sec>summary{cursor:pointer;padding:9px 12px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px}
+.ap-ed-sec>summary:hover,.ap-ed-sec>summary:focus-visible{background:#17539f66;outline:none}
+.ap-ed-n{color:var(--mid)}
+.ap-ed-corpo{padding:8px 12px 12px;display:grid;gap:8px}
+.ap-ed-c{display:grid;gap:3px;font-size:11px;color:var(--mid)}
+.ap-ed-c span{letter-spacing:.06em}
+.ap-ed-sec input,.ap-ed-sec select,.ap-ed-sec textarea,.ap-cv textarea{width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--lo);background:#082b5e;color:var(--ink);font:12px var(--mono)}
+.ap-ed-sec textarea,.ap-cv textarea{resize:vertical;line-height:1.4}
+.ap-ed-sec input:focus-visible,.ap-ed-sec select:focus-visible,.ap-ed-sec textarea:focus-visible,.ap-cv textarea:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.ap-ed-sec [aria-invalid=true]{border-color:var(--erro,#ffb4a8)}
+.ap-ed-item{margin:0;padding:8px 10px 10px;border:1px solid var(--faint,#2f66aa);display:grid;gap:8px;min-width:0}
+.ap-ed-item legend{padding:0 6px;font-size:11px;color:var(--ink)}
+.ap-ed-linha{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center}
+.ap-ed-chave{grid-template-columns:auto minmax(0,1fr) auto}
+.ap-ed-botoes{display:flex;flex-wrap:wrap;gap:6px}
+.ap-ed-lista{display:grid;gap:8px}
+.ap-ed-avancado>summary{cursor:pointer;font-size:11px;color:var(--mid)}
+.ap-ed-avancado textarea{min-height:160px;font-size:11px}
+.ap-ed-sintaxe{margin:4px 0 0;font-size:11px;color:var(--mid)}.ap-ed-sintaxe.erro{color:var(--erro,#ffb4a8)}
+.ap-cv{display:grid;gap:8px}
+.ap-cv-hist{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:34vh;overflow:auto}
+.ap-cv-hist li{padding:7px 9px;border:1px solid var(--faint,#2f66aa);font-size:11px;line-height:1.4;overflow-wrap:anywhere}
+.ap-cv-hist li[data-estado=erro]{border-color:var(--erro,#ffb4a8)}
+.ap-cv-hist b{text-transform:uppercase;letter-spacing:.08em;margin-right:6px;color:var(--mid)}
+.ap-cv-hist small{display:block;color:var(--mid);margin-top:2px}

@@ -31,8 +31,20 @@
 .ap-ia-nome b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ap-ia-nome span{color:var(--mid);font-size:11px}
 .ap-ia-barra a.btn{text-decoration:none;display:inline-flex;align-items:center}
-.ap-ia-quadro{flex:1;min-height:0;width:100%;border:0;background:#0c3a78}
-@media (max-width:760px){.ap-ia-barra{padding:8px 12px}.ap-ia-quadro{min-height:70vh}.ap-previa:has(.ap-ia-visor){overflow:auto}}
+.ap-ia-corpo{flex:1;min-height:0;display:flex}
+.ap-ia-quadro{flex:1;min-height:0;min-width:0;width:100%;border:0;background:#0c3a78}
+.ap-ia-lado{flex:0 0 min(440px,42%);min-width:0;border-left:1px solid var(--lo);background:#082b5ecc;overflow:auto}
+.ap-ia-lado[hidden],.ap-ia-painel[hidden]{display:none}
+.ap-ia-painel{padding:12px 14px 28px}
+.ap-ia-barra [aria-pressed=true]{border-color:var(--ink);background:#17539f;color:var(--ink)}
+.ap .ap-acoes[hidden]{display:none} /* .ap-acoes é flex: sem isto o atributo hidden não esconde os botões do topo quando o visor está aberto */
+@media (max-width:760px){.ap-ia-barra{padding:8px 12px}.ap-ia-quadro{min-height:70vh}.ap-previa:has(.ap-ia-visor){overflow:auto}
+  .ap-ia-corpo{flex-direction:column}.ap-ia-corpo:not([data-lado=""]) .ap-ia-quadro{display:none}.ap-ia-lado{flex:1 1 auto;border-left:0}}
 
-/* com apresentações geradas, a lista vem antes do formulário: quem volta quer abri-las, e o formulário fica logo abaixo */
-.ap-ia-lista:has(ul){order:-1}
+/* a Visão interna: as páginas do app, recolhidas quando há apresentação gerada */
+.ap-interna{margin-top:14px;border-top:1px solid var(--lo);padding-top:10px}
+.ap-interna>summary{cursor:pointer;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);padding:4px 0}
+.ap-interna>summary:hover,.ap-interna>summary:focus-visible{color:var(--ink);outline:none}
+.ap-interna[open]>summary{margin-bottom:8px}
+.ap-interna .ap-tipo{margin-bottom:6px}
+.ap-ia-lista:not(:empty){margin-bottom:6px}

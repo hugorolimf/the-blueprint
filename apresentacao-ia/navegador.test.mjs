@@ -30,7 +30,7 @@ const bruto = r.stdout, inicio = bruto.indexOf('id="apresentacao"');
 // só a página montada: depois dela vêm os <script>, que também guardam o texto das funções da biblioteca
 const dom = bruto.slice(inicio, bruto.indexOf("<script", inicio));
 assert.equal((dom.match(/<section class="ap-sec" id="s-[a-z]+"/g) || []).length, 6, "a página montou as seis seções");
-assert.ok(dom.includes('data-figura="capa"') && /data-figura="capa"[\s\S]{0,400}<svg/.test(dom), "a figura boa foi desenhada");
+assert.ok(dom.includes('data-figura="visao"') && /data-figura="visao"[\s\S]{0,400}<svg/.test(dom) && /data-figura="fichario"[\s\S]{0,400}<svg/.test(dom), "as figuras boas foram desenhadas (a da Visão geral e o fichário de Entregas)");
 assert.ok(/data-readout[^>]*>ficha 01/.test(dom), "a figura boa ganhou vida (a leitura foi escrita por `vivo`)");
 assert.ok(dom.includes("O código desta figura não carregou."), "a figura quebrada mostra o cartão de erro");
 assert.ok(dom.includes("ap-fig-erro") && dom.indexOf("ap-fig-erro") > dom.indexOf('id="e-e2"'), "o cartão de erro está na etapa que cita a figura");

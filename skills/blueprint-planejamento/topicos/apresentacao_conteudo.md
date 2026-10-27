@@ -18,7 +18,7 @@ A JSON object, at most 128 KB. Everything is plain text, no HTML, no emoji. Writ
 - `interno` only when `publico` is `interno`; with `cliente` the tool refuses it (`interno-no-cliente`), because it would leak.
 - `idioma` is the language the user speaks to you; every text follows it.
 - Group the blueprint's actions into 3 to 7 stages (a stage can span several actions). Every date comes from the blueprint; nothing is invented.
-- `figura` points to the `id` of one of your figures (see `apresentacao_figuras`); a stage without a figure is fine.
+- `figura` points to the `id` of one of your figures (see `apresentacao_figuras`); a stage without a figure is fine. The figure of a section is not referenced here: it carries its own `secao`.
 - `decisoes`: open ones are `"estado": "aberta"` and show as "to be decided".
 
 ## Sending it

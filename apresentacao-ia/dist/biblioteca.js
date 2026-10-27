@@ -2380,6 +2380,8 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 
   const secao = (id, n, titulo, corpo, extra = "") =>
     `<section class="ap-sec" id="s-${id}" aria-labelledby="h-${id}" data-sec="${id}"${extra}><header class="ap-sec-cab"><span class="ap-sec-n" aria-hidden="true">${num(n)}</span><h2 id="h-${id}">${esc(titulo)}</h2><span class="ap-sec-regua" aria-hidden="true"></span></header><div class="ap-sec-corpo">${corpo}</div></section>`;
+  // a figura da seção ao lado do texto (abaixo em tela estreita); duas figuras na mesma seção ficam uma após a outra
+  const lado = (corpo, fig) => (fig ? `<div class="ap-com-fig"><div class="ap-com-texto">${corpo}</div><div class="ap-com-fig-col">${fig}</div></div>` : corpo);
   const vazio = (idioma) => `<p class="ap-vazio">${esc(L.t("nada", idioma))}</p>`;
   const datas = (a, b, idioma) => (a && b ? `${esc(L.dataCurta(a, idioma))} &rarr; ${esc(L.dataCurta(b, idioma))}` : "");
 
@@ -2396,24 +2398,24 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     return secao("visao", n, t("visao"), `<div class="ap-visao"><div class="ap-visao-texto"><h3 class="ap-titulo">${esc(c.titulo)}</h3>${c.subtitulo ? `<p class="ap-sub">${esc(c.subtitulo)}</p>` : ""}${c.cliente ? `<p class="ap-cliente">${esc(c.cliente)}</p>` : ""}<ul class="ap-resumo">${resumo}</ul></div><div class="ap-visao-fig">${cartoes.capa || ""}</div></div><div class="ap-kpis">${kpis}</div>${barra}`);
   };
 
-  const entregas = (c, n) => {
+  const entregas = (c, n, fig) => {
     const l = lista(c.entregas);
-    return secao("entregas", n, L.t("entregas", c.idioma), l.length ? `<div class="ap-grade">${l.map((e, i) => `<article class="ap-cartao"><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></article>`).join("")}</div>` : vazio(c.idioma));
+    return secao("entregas", n, L.t("entregas", c.idioma), lado(l.length ? `<div class="ap-grade">${l.map((e, i) => `<article class="ap-cartao"><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></article>`).join("")}</div>` : vazio(c.idioma), fig));
   };
 
-  const etapas = (c, cartoes, n, extras = "") => {
+  const etapas = (c, cartoes, n, extras = "", fig = "") => {
     const idioma = c.idioma, l = lista(c.etapas);
     const corpo = l.map((e, i) => {
       const st = situacao(e, c), marcos = lista(e.marcos);
       const m = marcos.length ? `<ul class="ap-marcos" aria-label="${esc(L.t("marcos", idioma))}">${marcos.map((k) => `<li><i aria-hidden="true"></i><b>${esc(L.dataCurta(k.data, idioma))}</b><span>${esc(k.nome)}</span></li>`).join("")}</ul>` : "";
       return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-datas">${datas(e.inicio, e.fim, idioma)}</span><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
     }).join("");
-    return secao("etapas", n, L.t("etapas", idioma), (l.length ? corpo : vazio(idioma)) + (extras ? `<div class="ap-etapa-fig ap-extras">${extras}</div>` : ""));
+    return secao("etapas", n, L.t("etapas", idioma), lado((l.length ? corpo : vazio(idioma)) + (extras ? `<div class="ap-etapa-fig ap-extras">${extras}</div>` : ""), fig));
   };
 
-  const linha = (c, n) => {
+  const linha = (c, n, fig = "") => {
     const p = periodo(c), idioma = c.idioma;
-    if (!p) return secao("linha", n, L.t("linha", idioma), vazio(idioma));
+    if (!p) return secao("linha", n, L.t("linha", idioma), lado(vazio(idioma), fig));
     const pos = (d) => (((d - p.ini) / p.total) * 100).toFixed(2);
     const eixo = [];
     const passo = Math.max(1, Math.ceil(p.total / 6));
@@ -2425,34 +2427,144 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
       return `<li class="ap-g-linha"><span class="ap-g-nome"><i>${num(i + 1)}</i>${esc(e.titulo)}</span><div class="ap-g-faixa"><i class="ap-g-barra" data-st="${situacao(e, c)}" style="left:${pos(a)}%;width:${(((b - a + 1) / p.total) * 100).toFixed(2)}%"></i>${marcos}</div></li>`;
     }).join("");
     const hoje = p.hoje !== null && p.hoje >= p.ini && p.hoje <= p.fim ? `<i class="ap-g-hoje" style="--p:${((p.hoje + 0.5 - p.ini) / p.total).toFixed(4)}" title="${esc(L.t("hoje", idioma))}"></i>` : "";
-    return secao("linha", n, L.t("linha", idioma), `<div class="ap-gantt" style="--passo:${((passo / p.total) * 100).toFixed(3)}%"><div class="ap-g-eixo" aria-hidden="true"><span></span><div>${eixo.join("")}</div></div><ol class="ap-g-lista">${linhas}</ol>${hoje}</div>`);
+    return secao("linha", n, L.t("linha", idioma), lado(`<div class="ap-gantt" style="--passo:${((passo / p.total) * 100).toFixed(3)}%"><div class="ap-g-eixo" aria-hidden="true"><span></span><div>${eixo.join("")}</div></div><ol class="ap-g-lista">${linhas}</ol>${hoje}</div>`, fig));
   };
 
-  const voce = (c, n) => {
+  const voce = (c, n, fig = "") => {
     const l = lista(c.precisamosDeVoce), idioma = c.idioma;
-    return secao("voce", n, L.t("voce", idioma), l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma));
+    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma), fig));
   };
 
-  const decisoes = (c, n) => {
+  const decisoes = (c, n, figD = "", figR = "") => {
     const idioma = c.idioma, d = lista(c.decisoes), r = lista(c.riscos);
     const colD = d.length ? d.map((x) => `<article class="ap-item" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p><span class="ap-tag" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}">${esc(L.t(x.estado === "decidida" ? "decidida" : "aberta", idioma))}</span></article>`).join("") : vazio(idioma);
     const colR = r.length ? r.map((x) => `<article class="ap-item"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p></article>`).join("") : vazio(idioma);
-    return secao("decisoes", n, L.t("decisoes", idioma), `<div class="ap-duas"><div><h3 class="ap-sub-t">${esc(L.t("decisoes_t", idioma))}</h3>${colD}</div><div><h3 class="ap-sub-t">${esc(L.t("riscos", idioma))}</h3>${colR}</div></div>`);
+    return secao("decisoes", n, L.t("decisoes", idioma), `<div class="ap-duas"><div><h3 class="ap-sub-t">${esc(L.t("decisoes_t", idioma))}</h3>${colD}${figD ? `<div class="ap-fig-col">${figD}</div>` : ""}</div><div><h3 class="ap-sub-t">${esc(L.t("riscos", idioma))}</h3>${colR}${figR ? `<div class="ap-fig-col">${figR}</div>` : ""}</div></div>`);
   };
 
   // só no público interno
-  const acoes = (c, n) => {
+  const acoes = (c, n, fig = "") => {
     const l = lista(c.interno && c.interno.acoes);
-    return secao("acoes", n, L.t("acoes", c.idioma), l.length ? l.map((a) => `<article class="ap-item"><h4><span class="ap-num">${esc(a.numero)}</span> ${esc(a.nome)}</h4><ul class="ap-planos">${lista(a.planos).map((p) => `<li>${esc(p)}</li>`).join("")}</ul></article>`).join("") : vazio(c.idioma));
+    return secao("acoes", n, L.t("acoes", c.idioma), lado(l.length ? l.map((a) => `<article class="ap-item"><h4><span class="ap-num">${esc(a.numero)}</span> ${esc(a.nome)}</h4><ul class="ap-planos">${lista(a.planos).map((p) => `<li>${esc(p)}</li>`).join("")}</ul></article>`).join("") : vazio(c.idioma), fig));
   };
 
   L.secoes = { esc, dia, periodo, situacao, visao, entregas, etapas, linha, voce, decisoes, acoes };
 })(L);
 
+// ---- biblioteca/fragmento.js ----
+// A seção ativa e a URL: o editor do app recarrega o visor depois de cada alteração salva e quer voltar à mesma seção.
+// Fragmentos aceitos (o primeiro é o que a página escreve): #visao  #entregas  #etapas  #etapas-3 (a 3ª etapa)  #linha  #voce  #decisoes  #acoes,
+// também #s-<seção> (o id real das seções), #e-<id da etapa> e os nomes do conteúdo: #recebe (entregas), #precisamos (voce), #riscos (decisoes).
+// Seção ou etapa que deixou de existir cai na mais próxima, sem erro; fragmento que não é nosso não faz nada.
+// Do app para a página: window.postMessage({ tipo: "ap-ir", secao: "etapas" [, etapa: 3] }, "*") rola até lá. Da página para o app (quando há um pai):
+// postMessage({ tipo: "ap-estado", secao, etapa (1 a n ou null), fragmento, via }) quando a seção visível muda; `via` diz como o fragmento foi gravado
+// ("replaceState", "replace" ou "nenhum"; em iframe sandbox sem allow-same-origin o primeiro pode falhar e a página cai no segundo sem quebrar).
+(function (L) {
+  const ORDEM = ["visao", "entregas", "etapas", "linha", "voce", "decisoes", "acoes"];
+  const ALIAS = { recebe: "entregas", precisamos: "voce", riscos: "decisoes" };
+  const preso = (n, a, b) => Math.min(b, Math.max(a, n));
+  const maisProxima = (nome, secoes) => {
+    const i = ORDEM.indexOf(nome);
+    return { secao: secoes.reduce((m, s) => (Math.abs(ORDEM.indexOf(s) - i) < Math.abs(ORDEM.indexOf(m) - i) ? s : m), secoes[0]) };
+  };
+
+  // fragmento -> { secao, etapa? } (etapa é índice a partir de 0) ou null
+  const resolver = (fragmento, secoes, idsEtapas = []) => {
+    const f = String(fragmento == null ? "" : fragmento).replace(/^#/, "").trim();
+    if (!f || !secoes.length) return null;
+    const porId = /^e-(.+)$/.exec(f);
+    if (porId) {
+      const i = idsEtapas.indexOf(porId[1]);
+      return i >= 0 ? { secao: "etapas", etapa: i } : maisProxima("etapas", secoes);
+    }
+    const m = /^(?:s-)?([a-z]+)(?:-(\d+))?$/.exec(f.toLowerCase());
+    const nome = m && (ALIAS[m[1]] || m[1]);
+    if (!nome || !ORDEM.includes(nome)) return null;
+    const alvo = secoes.includes(nome) ? { secao: nome } : maisProxima(nome, secoes);
+    if (alvo.secao === "etapas" && m[2] && idsEtapas.length) alvo.etapa = preso(+m[2], 1, idsEtapas.length) - 1;
+    return alvo;
+  };
+  const texto = (r) => (r.etapa != null ? `etapas-${r.etapa + 1}` : r.secao);
+
+  const ligar = (raiz) => {
+    const secoes = [...raiz.querySelectorAll(".ap-sec[data-sec]")], etapas = [...raiz.querySelectorAll(".ap-etapa")];
+    const ids = secoes.map((s) => s.dataset.sec), idsEtapas = etapas.map((e) => String(e.id).replace(/^e-/, ""));
+    const elDe = (r) => (r.etapa != null && etapas[r.etapa]) || secoes[ids.indexOf(r.secao)];
+    let escrito = null, gravado = null, livre = false, mexeu = false, adiar = 0, atual = null, manual = null;
+    // `manual`: o alvo pedido (fragmento, ap-ir, menu) vale até o usuário mexer; a última seção, por exemplo, nunca chega ao topo e o observador diria a anterior
+    const ir = (r, instantaneo) => {
+      const el = r && elDe(r);
+      if (!el) return;
+      manual = r;
+      clearTimeout(adiar);
+      adiar = setTimeout(() => publica(r), 200);
+      el.scrollIntoView({ block: "start", behavior: instantaneo ? "instant" : "auto" });
+    };
+
+    const escreve = (f) => {
+      escrito = f;
+      try { history.replaceState(null, "", "#" + f); return "replaceState"; } catch (e) { /* sandbox: tenta o outro */ }
+      try { location.replace("#" + f); return "replace"; } catch (e) { return "nenhum"; }
+    };
+    const publica = (r) => {
+      const f = texto(r);
+      if (!livre || f === gravado) return;
+      gravado = f;
+      const via = escreve(f);
+      try { if (window.parent && window.parent !== window) window.parent.postMessage({ tipo: "ap-estado", secao: r.secao, etapa: r.etapa == null ? null : r.etapa + 1, fragmento: f, via }, "*"); } catch (e) { /* sem pai */ }
+    };
+
+    // a seção (e a etapa) à vista: a primeira de cada lista, no mesmo recorte do menu
+    if (typeof IntersectionObserver === "function") {
+      const sS = new Set(), sE = new Set();
+      const io = new IntersectionObserver((es) => {
+        for (const e of es) (e.target.classList.contains("ap-sec") ? sS : sE)[e.isIntersecting ? "add" : "delete"](e.target);
+        const sec = secoes.find((s) => sS.has(s));
+        if (!sec) return;
+        atual = { secao: sec.dataset.sec };
+        const i = etapas.findIndex((x) => sE.has(x));
+        if (atual.secao === "etapas" && i >= 0) atual.etapa = i;
+        if (manual) return;
+        clearTimeout(adiar);
+        adiar = setTimeout(() => publica(atual), 150); // a rolagem suave passa por várias seções: só a que ficou conta
+      }, { rootMargin: "-20% 0px -65% 0px" });
+      [...secoes, ...etapas].forEach((x) => io.observe(x));
+    }
+
+    // abrir já na seção do fragmento (sem rolagem suave) e conferir de novo quando as figuras acabarem de mudar o layout
+    const inicial = resolver(location.hash, ids, idsEtapas);
+    const solta = () => { livre = true; if (manual || atual) publica(manual || atual); };
+    ["wheel", "touchstart", "keydown", "pointerdown"].forEach((ev) => addEventListener(ev, () => { mexeu = true; manual = null; }, { passive: true }));
+    if (inicial) {
+      ir(inicial, true);
+      requestAnimationFrame(() => ir(inicial, true));
+      setTimeout(() => { if (!mexeu) ir(inicial, true); solta(); }, 350);
+    } else setTimeout(solta, 350);
+
+    addEventListener("hashchange", () => { if (location.hash.slice(1) !== escrito) ir(resolver(location.hash, ids, idsEtapas), false); });
+    addEventListener("message", (e) => {
+      const d = e.data;
+      if (!d || typeof d !== "object" || d.tipo !== "ap-ir" || typeof d.secao !== "string") return;
+      if (e.source !== window.parent && e.source !== window) return;
+      ir(resolver(d.secao + (Number.isInteger(d.etapa) && !/-\d+$/.test(d.secao) ? "-" + d.etapa : ""), ids, idsEtapas), false);
+    });
+    // os links do menu não empilham histórico no iframe do app: rolam e gravam o fragmento no lugar
+    raiz.addEventListener("click", (e) => {
+      const a = e.target.closest("[data-nav]");
+      if (!a) return;
+      e.preventDefault();
+      ir({ secao: a.dataset.nav }, false);
+    });
+  };
+
+  L.fragmento = { ORDEM, ALIAS, resolver, texto, ligar };
+})(L);
+
 // ---- biblioteca/casca.js ----
 // A casca da apresentação: monta a interface (barra superior, navegação por seções, painéis) a partir de `conteudo` e roda as figuras.
 // L.casca.html(conteudo, figuras) devolve { html, vivos } sem tocar no DOM (serve aos testes e à prévia); L.casca.montar(raiz, ...) a põe na página.
-// Uma figura que lança erro vira um cartão de erro com a mensagem; o resto da página segue.
+// Cada figura vai para o painel da sua seção (`figura.secao`: visao, recebe, etapas, linha, precisamos, decisoes, riscos, acoes), ao lado do texto; a que uma etapa
+// cita (`etapas[].figura`) fica dentro da etapa; a sem seção e sem etapa vai ao fim de Etapas. Uma figura que lança erro vira um cartão de erro; o resto da página segue.
 (function (L) {
   const { esc } = L.secoes, S = L.secoes;
 
@@ -2479,10 +2591,15 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     return { cartoes, vivos };
   };
 
-  // a figura da capa: a de id "capa", senão a primeira que nenhuma etapa usa, senão a primeira
+  // o nome da figura no conteúdo -> o id da seção da página (riscos mora na seção Decisões e riscos); desconhecido = sem seção
+  const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", linha: "linha", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
+  const secaoDaFigura = (f) => SECAO_DA_FIGURA[f && f.secao];
+  const usadasPorEtapas = (c) => new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
+
+  // a figura da capa (Visão geral): a de secao "visao", senão a de id "capa", senão a primeira sem seção; uma que uma etapa cita fica na etapa
   const capaDe = (c, figuras) => {
-    const usadas = new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
-    return (figuras.find((f) => f.id === "capa") || figuras.find((f) => !usadas.has(f.id)) || figuras[0] || {}).id;
+    const livres = figuras.filter((f) => !usadasPorEtapas(c).has(f.id));
+    return (livres.find((f) => secaoDaFigura(f) === "visao") || livres.find((f) => f.id === "capa") || livres.find((f) => !f.secao) || {}).id;
   };
 
   const secoesDe = (c) => ["visao", c.entregas && c.entregas.length ? "entregas" : null, "etapas", "linha", c.precisamosDeVoce && c.precisamosDeVoce.length ? "voce" : null, "decisoes", c.publico === "interno" ? "acoes" : null].filter(Boolean);
@@ -2491,14 +2608,17 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     c = { ...c, idioma: L.idiomaDe(c.idioma) };
     const idioma = c.idioma, t = (k, p) => L.t(k, idioma, p);
     const { cartoes, vivos } = rodar(c, figuras);
-    const capa = capaDe(c, figuras);
-    const ids = secoesDe(c);
-    const dasEtapas = { ...cartoes }; // a figura da capa fica só na capa: um cartão não aparece duas vezes
-    delete dasEtapas[capa];
-    // figura que nem é a capa nem de uma etapa não some: vai ao fim da seção Etapas
-    const usadas = new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
-    const extras = figuras.filter((f) => f.id !== capa && !usadas.has(f.id)).map((f) => cartoes[f.id]).join("");
-    const montar = { visao: (n) => S.visao(c, { capa: cartoes[capa] }, n), entregas: (n) => S.entregas(c, n), etapas: (n) => S.etapas(c, dasEtapas, n, extras), linha: (n) => S.linha(c, n), voce: (n) => S.voce(c, n), decisoes: (n) => S.decisoes(c, n), acoes: (n) => S.acoes(c, n) };
+    const ids = secoesDe(c), capa = capaDe(c, figuras), usadas = usadasPorEtapas(c);
+    // onde cada figura cai: a da etapa, dentro dela; a da capa e as de seção, no painel da seção; o resto (e o que cairia numa seção que não existe), no fim de Etapas
+    const porSecao = {}, soltas = [];
+    for (const f of figuras) {
+      if (usadas.has(f.id)) continue;
+      const sec = f.id === capa ? "visao" : secaoDaFigura(f), existe = sec && ids.includes(sec === "riscos" ? "decisoes" : sec);
+      if (!existe) soltas.push(cartoes[f.id]);
+      else (porSecao[sec] = porSecao[sec] || [])[f.id === capa ? "unshift" : "push"](cartoes[f.id]);
+    }
+    const j = (k) => (porSecao[k] || []).join(""), extras = soltas.join("");
+    const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), linha: (n) => S.linha(c, n, j("linha")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
     const corpo = ids.map((id, i) => montar[id](i + 1)).join("");
     const nav = ids.map((id, i) => `<li><a href="#s-${id}" data-nav="${id}"><i>${String(i + 1).padStart(2, "0")}</i>${esc(t(id))}</a></li>`).join("");
     const nivel = c.nivel ? `<span class="ap-etiqueta">${esc(t("nivel"))}: ${esc(t("nivel_" + c.nivel))}</span>` : "";
@@ -2543,7 +2663,8 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
       else if (e.key === "Home") { e.preventDefault(); ir(0); } else if (e.key === "End") { e.preventDefault(); ir(secoes.length - 1); }
     });
     raiz.addEventListener("click", (e) => { if (e.target.closest("[data-acao=imprimir]")) print(); });
+    L.fragmento.ligar(raiz); // abre na seção do fragmento da URL e o mantém em dia (biblioteca/fragmento.js)
   };
 
-  L.casca = { html, montar, capaDe, secoesDe };
+  L.casca = { html, montar, capaDe, secoesDe, secaoDaFigura };
 })(L);

@@ -9,7 +9,7 @@
  },
  {
   "name": "guia_de_planejamento",
-  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs). Call it before planning.",
+  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs), apresentacao_ajustar (small changes to a presentation that exists). Call it before planning.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -24,7 +24,8 @@
       "apresentar",
       "apresentacao_ia",
       "apresentacao_conteudo",
-      "apresentacao_figuras"
+      "apresentacao_figuras",
+      "apresentacao_ajustar"
      ]
     }
    }
@@ -479,6 +480,73 @@
     "workspace_id",
     "blueprint_id",
     "conteudo"
+   ]
+  }
+ },
+ {
+  "name": "ler_apresentacao",
+  "description": "Reads a presentation that already exists (its conteudo and the list of its figures) so you can change it in small steps. The codigo of a figure is shown only for the ids you list in figuras_codigo (it can be large). Use it before editar_apresentacao; see guia_de_planejamento apresentacao_ajustar.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint (from listar_blueprints)."
+    },
+    "apresentacao_id": {
+     "type": "string",
+     "description": "id of the presentation (from ler_blueprint, under apresentacoes)."
+    },
+    "figuras_codigo": {
+     "type": "array",
+     "items": {
+      "type": "string"
+     },
+     "description": "ids of the figures whose codigo you want to read."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "apresentacao_id"
+   ]
+  }
+ },
+ {
+  "name": "editar_apresentacao",
+  "description": "Edits an existing presentation in small steps; never rewrite it. operacoes is a list applied in order, all or none, then validated like anexar_apresentacao: {op: \"definir\", caminho: \"etapas.2.titulo\", valor}, {op: \"inserir\", caminho: \"etapas\", indice?, valor}, {op: \"remover\", caminho}, {op: \"mover\", caminho, para}, {op: \"figura_trecho\", figura, de: exact piece of the codigo (must occur exactly once), para: new text}, {op: \"figura_definir\", figura, campo, valor} (any field but codigo), {op: \"figura_remover\", figura}. caminho is dotted, list items by 0-based index. See guia_de_planejamento apresentacao_ajustar.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint (from listar_blueprints)."
+    },
+    "apresentacao_id": {
+     "type": "string",
+     "description": "id of the presentation (from ler_blueprint, under apresentacoes)."
+    },
+    "operacoes": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     },
+     "description": "The operations, in order."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "apresentacao_id",
+    "operacoes"
    ]
   }
  },

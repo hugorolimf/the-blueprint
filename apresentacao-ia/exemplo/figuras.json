@@ -1,6 +1,24 @@
 [
   {
-    "id": "capa",
+    "id": "visao",
+    "secao": "visao",
+    "titulo": "Carrinho no trilho",
+    "dica": "Passe o mouse para mover o carrinho",
+    "leitura": "posição 0",
+    "chaves": [
+      {
+        "marca": "lit",
+        "rotulo": "O carrinho que se move"
+      }
+    ],
+    "legenda": "Figura mínima da Visão geral: um carrinho num trilho. Dados de exemplo.",
+    "rotulo": "Um carrinho num trilho, sobre uma mesa",
+    "impressao": "92a64caf4787f4516e8ae90825d36cd4e2d9339fed1e018d5ca9b6c0d313440a",
+    "codigo": "function (L, c) {\n  // Figura mínima da Visão geral: um carrinho num trilho que vai e volta e a leitura da posição. Serve de ponto de partida: troque o objeto por um que explique o plano.\n  const pt = L.idiomaDe(c && c.idioma) === \"pt-BR\";\n  const W = 600, H = 380, plano = { x: -100, y: -50, w: 200, d: 100, r: 8 };\n  const P = L.fitProjection([...L.boxCorners(plano, -17, 0), [0, 0, 40]], W, H, { pad: 30, azimuth: 42 });\n  const corpo = L.pecas.base(P, plano, { regua: false }) + L.pecas.trilhos(P, { de: -90, ate: 90, ys: [-20, 15] })\n    + `<g data-peca=\"carro\">${L.solidSvg(L.slabOf({ x: -20, y: -18, w: 40, d: 36, r: 3 }, 3, 8, P, 5, 0.6), { tone: \"hi\", lit: true })}</g>`;\n  const svg = L.figureSvg({ width: W, height: H, label: pt ? \"Um carrinho num trilho, sobre uma mesa\" : \"A sled on a rail, on a surface plate\", body: corpo });\n  return { svg, vivo(palco, dizer) {\n    const g = palco.querySelector('[data-peca=\"carro\"]'), s = { x: 0, v: 0 };\n    let t = 0;\n    L.laco(palco, (dt, calmo) => {\n      t += dt;\n      L.mola(s, Math.sin(t * 0.8) * 60, dt, 120, 14, calmo);\n      g.setAttribute(\"transform\", L.translateAlong(P, [s.x, 0, 0]));\n      dizer((pt ? \"posição \" : \"position \") + s.x.toFixed(0));\n      return true;\n    });\n  } };\n}"
+  },
+  {
+    "id": "fichario",
+    "secao": "recebe",
     "titulo": "Fichário de cadastro",
     "dica": "Passe o mouse para escolher uma ficha",
     "leitura": "ficha 01 · pendente · 1 em aberto",

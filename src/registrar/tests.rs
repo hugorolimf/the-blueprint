@@ -61,6 +61,11 @@ fn grava_o_plugin_completo_com_o_exe_no_mcp_e_sem_agente_padrao() {
     for trecho in ["guia_de_planejamento", "topico \"apresentacao_ia\"", "ler_blueprint", "anexar_apresentacao", "$ARGUMENTS", "epic only if the user asks for it by name"] {
         assert!(apresentar.contains(trecho), "falta no comando: {trecho}");
     }
+    let ajustar = fs::read_to_string(raiz.join("skills/ajustar-apresentacao/SKILL.md")).unwrap();
+    assert!(ajustar.contains("name: ajustar-apresentacao") && ajustar.contains("disable-model-invocation: true"), "só o usuário chama /blueprint:ajustar-apresentacao");
+    for trecho in ["topico \"apresentacao_ajustar\"", "ler_apresentacao", "editar_apresentacao", "$ARGUMENTS", "Never regenerate it"] {
+        assert!(ajustar.contains(trecho), "falta no comando de ajuste: {trecho}");
+    }
     let manifesto: serde_json::Value = serde_json::from_str(&fs::read_to_string(raiz.join(".claude-plugin/plugin.json")).unwrap()).unwrap();
     assert!(manifesto.get("settings").is_none(), "settings.agent faria toda sessão do Claude usar o agente");
     // idempotente: gravar de novo não reescreve o que não mudou

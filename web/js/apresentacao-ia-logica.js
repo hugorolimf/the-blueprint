@@ -11,9 +11,9 @@ const apIaDescPublico = () => ({
   interno: tr("Visão técnica completa, para quem constrói."),
 });
 const apIaDescNivel = () => ({
-  rapido: tr("Uma figura viva na capa e as páginas do plano."),
-  padrao: tr("Uma figura por etapa, cada uma um objeto diferente."),
-  completo: tr("O Padrão e mais uma máquina densa do sistema inteiro."),
+  rapido: tr("Uma figura da IA na visão geral e as páginas do plano."),
+  padrao: tr("Uma figura diferente por sessão da página."),
+  completo: tr("O Padrão, mais uma máquina densa do sistema e uma figura por etapa."),
 });
 
 // a estimativa que o contrato anuncia antes de começar ("até 1 h", "1 a 3 h")
@@ -52,7 +52,37 @@ function apIaLista(apresentacoes, ocultas = new Set()) {
       publico: AP_IA_PUBLICOS.includes(a.publico) ? a.publico : "",
       nivel: AP_IA_NIVEIS.some((n) => n.id === a.nivel) ? a.nivel : "", // um "epico" gravado pelo agente aparece sem rótulo de nível, não some
       em: typeof a.em === "string" ? a.em.slice(0, 10) : "",
+      editadoEm: typeof a.editadoEm === "string" ? a.editadoEm : "", // preenchido quando alguém editou à mão: gerar de novo pede confirmação
     }))
     .sort((x, y) => (y.em > x.em ? 1 : y.em < x.em ? -1 : 0));
 }
 const apIaUrl = (id, baixar = false) => (typeof id === "string" && AP_IA_ID.test(id) ? `/apresentacao/${id}${baixar ? "?baixar=1" : ""}` : "");
+
+// ---- o terminal do app e o ajuste por conversa (contrato: "Generating in the app terminal and talking to the agent") ----
+// POST /api/terminal/iniciar para GERAR: { workspaceId, blueprintId, apresentar: {publico, nivel}, titulo }
+function apIaCorpoTerminal({ workspaceId, blueprintId, publico, nivel, titulo } = {}) {
+  if (!workspaceId || !blueprintId || !AP_IA_PUBLICOS.includes(publico) || !AP_IA_NIVEIS.some((n) => n.id === nivel)) return null;
+  return { workspaceId, blueprintId, apresentar: { publico, nivel }, titulo: String(titulo || "").slice(0, 80) };
+}
+// o texto de um pedido de ajuste: sem espaços nas pontas e sem passar de 2.000 caracteres (o servidor e o terminal recebem o mesmo texto)
+const apIaTextoAjuste = (t) => String(t ?? "").replace(/\s+/g, " ").trim().slice(0, 2000);
+// POST /api/terminal/iniciar para AJUSTAR (abre uma aba do app com o pedido): { workspaceId, blueprintId, apresentacaoId, ajuste, titulo }
+function apIaCorpoTerminalAjuste({ workspaceId, blueprintId, apresentacaoId, texto, titulo } = {}) {
+  const ajuste = apIaTextoAjuste(texto);
+  if (!workspaceId || !blueprintId || !AP_IA_ID.test(apresentacaoId || "") || !ajuste) return null;
+  return { workspaceId, blueprintId, apresentacaoId, ajuste, titulo: String(titulo || "").slice(0, 80) };
+}
+// POST /api/mcp/apresentacao/pedido: { workspaceId, blueprintId, apresentacaoId, texto, sessaoId?, semCanal? } (as mesmas chaves de /iniciar para a sessão)
+function apIaCorpoPedidoAjuste({ workspaceId, blueprintId, apresentacaoId, texto, sessao } = {}) {
+  const t = apIaTextoAjuste(texto);
+  if (!workspaceId || !blueprintId || !AP_IA_ID.test(apresentacaoId || "") || !t) return null;
+  const corpo = { workspaceId, blueprintId, apresentacaoId, texto: t };
+  if (sessao) Object.assign(corpo, { sessaoId: sessao.id, ...(sessao.canal ? {} : { semCanal: true }) });
+  return corpo;
+}
+// a resposta de um pedido de ajuste (ou de abrir o terminal do app) vira uma frase
+function apIaMensagemAjuste(status, j, como) { // como: "sessao" | "app" | "externo"
+  if (status === 200 || j?.ok) return { sessao: tr("Pedido enviado à sessão. O agente vai mudar só o que você pediu."), app: tr("Terminal do app aberto: o agente vai mudar só o que você pediu."), externo: tr("Terminal aberto: o agente vai mudar só o que você pediu.") }[como];
+  if (j?.codigo === "apresentacao-nao-encontrada" || status === 404) return tr("Esta apresentação não existe mais. Volte à lista.");
+  return apIaMensagem(status, j, como === "sessao");
+}

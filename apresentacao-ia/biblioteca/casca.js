@@ -1,6 +1,7 @@
 // A casca da apresentação: monta a interface (barra superior, navegação por seções, painéis) a partir de `conteudo` e roda as figuras.
 // L.casca.html(conteudo, figuras) devolve { html, vivos } sem tocar no DOM (serve aos testes e à prévia); L.casca.montar(raiz, ...) a põe na página.
-// Uma figura que lança erro vira um cartão de erro com a mensagem; o resto da página segue.
+// Cada figura vai para o painel da sua seção (`figura.secao`: visao, recebe, etapas, linha, precisamos, decisoes, riscos, acoes), ao lado do texto; a que uma etapa
+// cita (`etapas[].figura`) fica dentro da etapa; a sem seção e sem etapa vai ao fim de Etapas. Uma figura que lança erro vira um cartão de erro; o resto da página segue.
 (function (L) {
   const { esc } = L.secoes, S = L.secoes;
 
@@ -27,10 +28,15 @@
     return { cartoes, vivos };
   };
 
-  // a figura da capa: a de id "capa", senão a primeira que nenhuma etapa usa, senão a primeira
+  // o nome da figura no conteúdo -> o id da seção da página (riscos mora na seção Decisões e riscos); desconhecido = sem seção
+  const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", linha: "linha", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
+  const secaoDaFigura = (f) => SECAO_DA_FIGURA[f && f.secao];
+  const usadasPorEtapas = (c) => new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
+
+  // a figura da capa (Visão geral): a de secao "visao", senão a de id "capa", senão a primeira sem seção; uma que uma etapa cita fica na etapa
   const capaDe = (c, figuras) => {
-    const usadas = new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
-    return (figuras.find((f) => f.id === "capa") || figuras.find((f) => !usadas.has(f.id)) || figuras[0] || {}).id;
+    const livres = figuras.filter((f) => !usadasPorEtapas(c).has(f.id));
+    return (livres.find((f) => secaoDaFigura(f) === "visao") || livres.find((f) => f.id === "capa") || livres.find((f) => !f.secao) || {}).id;
   };
 
   const secoesDe = (c) => ["visao", c.entregas && c.entregas.length ? "entregas" : null, "etapas", "linha", c.precisamosDeVoce && c.precisamosDeVoce.length ? "voce" : null, "decisoes", c.publico === "interno" ? "acoes" : null].filter(Boolean);
@@ -39,14 +45,17 @@
     c = { ...c, idioma: L.idiomaDe(c.idioma) };
     const idioma = c.idioma, t = (k, p) => L.t(k, idioma, p);
     const { cartoes, vivos } = rodar(c, figuras);
-    const capa = capaDe(c, figuras);
-    const ids = secoesDe(c);
-    const dasEtapas = { ...cartoes }; // a figura da capa fica só na capa: um cartão não aparece duas vezes
-    delete dasEtapas[capa];
-    // figura que nem é a capa nem de uma etapa não some: vai ao fim da seção Etapas
-    const usadas = new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
-    const extras = figuras.filter((f) => f.id !== capa && !usadas.has(f.id)).map((f) => cartoes[f.id]).join("");
-    const montar = { visao: (n) => S.visao(c, { capa: cartoes[capa] }, n), entregas: (n) => S.entregas(c, n), etapas: (n) => S.etapas(c, dasEtapas, n, extras), linha: (n) => S.linha(c, n), voce: (n) => S.voce(c, n), decisoes: (n) => S.decisoes(c, n), acoes: (n) => S.acoes(c, n) };
+    const ids = secoesDe(c), capa = capaDe(c, figuras), usadas = usadasPorEtapas(c);
+    // onde cada figura cai: a da etapa, dentro dela; a da capa e as de seção, no painel da seção; o resto (e o que cairia numa seção que não existe), no fim de Etapas
+    const porSecao = {}, soltas = [];
+    for (const f of figuras) {
+      if (usadas.has(f.id)) continue;
+      const sec = f.id === capa ? "visao" : secaoDaFigura(f), existe = sec && ids.includes(sec === "riscos" ? "decisoes" : sec);
+      if (!existe) soltas.push(cartoes[f.id]);
+      else (porSecao[sec] = porSecao[sec] || [])[f.id === capa ? "unshift" : "push"](cartoes[f.id]);
+    }
+    const j = (k) => (porSecao[k] || []).join(""), extras = soltas.join("");
+    const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), linha: (n) => S.linha(c, n, j("linha")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
     const corpo = ids.map((id, i) => montar[id](i + 1)).join("");
     const nav = ids.map((id, i) => `<li><a href="#s-${id}" data-nav="${id}"><i>${String(i + 1).padStart(2, "0")}</i>${esc(t(id))}</a></li>`).join("");
     const nivel = c.nivel ? `<span class="ap-etiqueta">${esc(t("nivel"))}: ${esc(t("nivel_" + c.nivel))}</span>` : "";
@@ -91,7 +100,8 @@
       else if (e.key === "Home") { e.preventDefault(); ir(0); } else if (e.key === "End") { e.preventDefault(); ir(secoes.length - 1); }
     });
     raiz.addEventListener("click", (e) => { if (e.target.closest("[data-acao=imprimir]")) print(); });
+    L.fragmento.ligar(raiz); // abre na seção do fragmento da URL e o mantém em dia (biblioteca/fragmento.js)
   };
 
-  L.casca = { html, montar, capaDe, secoesDe };
+  L.casca = { html, montar, capaDe, secoesDe, secaoDaFigura };
 })(L);

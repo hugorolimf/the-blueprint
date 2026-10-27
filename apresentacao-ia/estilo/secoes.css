@@ -85,3 +85,12 @@
   .ap-g-linha{grid-template-columns:minmax(0,1fr);gap:6px}.ap-g-hoje{display:none}
   .ap-sec-corpo{padding:16px 12px 18px}.ap-sec-cab{padding:10px 12px}
 }
+
+/* figura da seção ao lado do texto (abaixo em tela estreita); duas figuras na mesma seção ficam uma após a outra */
+.ap-etapa{scroll-margin-top:calc(var(--topo) + 14px)}
+.ap-com-fig{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:22px;align-items:start}
+.ap-com-fig-col,.ap-fig-col{display:grid;gap:14px;min-width:0}
+.ap-com-fig-col{position:sticky;top:calc(var(--topo) + 14px)}
+.ap-fig-col{margin-top:14px}
+.ap-com-fig-col .iso-figure,.ap-fig-col .iso-figure{margin:0}
+@media (max-width:900px){.ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}}

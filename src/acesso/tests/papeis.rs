@@ -143,6 +143,14 @@ fn apresentacao_so_para_quem_le_e_grava_o_blueprint() {
     for (quem, esperado) in [(Some(p.todos.as_str()), true), (Some(p.dono.as_str()), true), (Some(p.colab.as_str()), true), (Some(p.sup.as_str()), true), (Some(p.visit.as_str()), false), (None, false)] {
         assert_eq!(ler(quem) != 404, esperado, "quem lê o blueprint p9 abre a página (200, ou 503 sem a biblioteca na compilação): {quem:?}");
     }
+    let ler_json = |quem: Option<&str>| despachar(&e, &pedido("GET", &format!("/api/mcp/apresentacao?id={id}"), quem, None)).status;
+    for (quem, esperado) in [(Some(p.todos.as_str()), 200), (Some(p.dono.as_str()), 200), (Some(p.colab.as_str()), 200), (Some(p.sup.as_str()), 200), (Some(p.visit.as_str()), 403), (None, 401)] {
+        assert_eq!(ler_json(quem), esperado, "quem lê o blueprint lê o conteúdo para editar: {quem:?}");
+    }
+    let editar = |quem: &str| despachar(&e, &pedido("POST", "/api/mcp/apresentacao/editar", Some(quem), Some(json!({"apresentacaoId": id, "operacoes": [{"op": "definir", "caminho": "titulo", "valor": "Editado"}]})))).status;
+    assert_eq!((editar(&p.sup), editar(&p.visit)), (403, 403), "quem só lê não edita");
+    assert_eq!(editar(&p.colab), 200, "quem grava edita");
+    assert_eq!(despachar(&e, &pedido("POST", "/api/mcp/apresentacao/pedido", Some(&p.colab), Some(json!({"workspaceId": "w2", "blueprintId": "p9", "apresentacaoId": id, "texto": "mude"})))).status, 404, "o pedido de abrir terminal não existe no modo hospedado");
     let remover = |quem: &str| despachar(&e, &pedido("POST", "/api/mcp/apresentacao/remover", Some(quem), Some(json!({"apresentacaoId": id})))).status;
     assert_eq!((remover(&p.sup), remover(&p.visit)), (403, 403), "quem só lê não remove");
     assert!(e.mcp.pasta_apresentacoes().join(format!("{id}.json")).is_file());

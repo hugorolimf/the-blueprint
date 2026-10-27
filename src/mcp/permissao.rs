@@ -65,7 +65,7 @@ pub fn exige_hospedado(ctx: &Contexto, recurso: &str, pedido: &Pedido, corpo: &V
             None => ctx.pode_editar(),
         },
         // o blueprint dono dela está no arquivo da apresentação, não nos dados: `apresentacao::remover` confere se o papel grava nele (sem arquivo, não há o que revelar)
-        ("POST", "apresentacao/remover") => true,
+        ("POST", "apresentacao/remover" | "apresentacao/editar") => true,
         // os hooks do Claude do membro (só com a chave: `acesso::hook_de_membro`): o blueprint vem no corpo e precisa ser um em que ele grava
         ("POST", "hook/sessao" | "hook/edicao" | "hook/subagente") => {
             let (ws, bp) = (texto("workspaceId"), texto("blueprintId"));

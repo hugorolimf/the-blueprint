@@ -19,8 +19,8 @@ assert.ok(html.includes("<title>Plano do aplicativo de entregas</title>") && htm
 const b = blocos(html);
 assert.equal(b.length, 3 + figuras.length, "kit, biblioteca, uma por figura e a página");
 assert.equal(b[0], "", "o kit já vai dentro da biblioteca");
-assert.ok(b[2].startsWith('(window.AP_CODIGOS=window.AP_CODIGOS||{})["capa"]=(function'));
-assert.ok(b[3].includes("const CONTEUDO") && b[3].includes("AP_CODIGOS"));
+figuras.forEach((f, i) => assert.ok(b[2 + i].startsWith(`(window.AP_CODIGOS=window.AP_CODIGOS||{})["${f.id}"]=(function`), "o bloco de " + f.id));
+assert.ok(b[2 + figuras.length].includes("const CONTEUDO") && b[2 + figuras.length].includes("AP_CODIGOS"));
 for (const bloco of b) new vm.Script(bloco);
 
 // o modelo tem todos os marcadores do contrato, na ordem: biblioteca, códigos, página
@@ -31,7 +31,7 @@ assert.ok(modelo.indexOf("{{biblioteca}}") < modelo.indexOf("{{codigos}}") && mo
 // {{figuras}} é JSON puro, só com metadados; {{codigos}} tem o formato exato do contrato
 const meta = JSON.parse(figurasJson(figuras));
 assert.equal(meta.length, figuras.length);
-assert.ok(meta.every((f) => !("codigo" in f)) && meta[0].id === "capa" && meta[0].titulo === figuras[0].titulo);
+assert.ok(meta.every((f) => !("codigo" in f)) && meta[0].id === "visao" && meta[0].titulo === figuras[0].titulo);
 assert.equal(codigosHtml([{ id: "x", codigo: "function () { return '</script>'; }" }]), '<script>(window.AP_CODIGOS=window.AP_CODIGOS||{})["x"]=(function () { return \'<\\/script>\'; });</script>');
 assert.equal(codigosHtml([{ id: "a", codigo: "1" }, { id: "b", codigo: "2" }]).split("\n").length, 2, "um bloco por linha");
 assert.equal(escScript("</SCRIPT x <!--"), "<\\/SCRIPT x <\\!--");

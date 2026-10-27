@@ -39,15 +39,15 @@ async function sessoesAbertas(p) {
   } catch { return []; }
 }
 // o diálogo com a escolha: "Terminal do app" (padrão, web/js/terminal.js), "Nova sessão" (terminal externo) ou uma sessão aberta. Devolve null (cancelou), {app: true}, {nova: true} ou {sessao}
-function escolherSessao({ titulo, texto, sessoes, semApp = false }) { // semApp: sem a opção "Terminal do app" (a apresentação com IA só abre terminal externo ou usa uma sessão)
+function escolherSessao({ titulo, texto, sessoes, padrao = "app", rotulo = tr("Iniciar") }) { // padrao: "app", "nova" ou o índice da sessão que já vem marcada; rotulo: o botão de confirmar
   return new Promise((resolve) => {
     const d = document.createElement("dialog");
     d.className = "confirmar escolher-sessao";
     d.setAttribute("role", "alertdialog");
     d.setAttribute("aria-label", titulo);
     const nome = (s) => (s.pasta || "").replace(/[\\/]+$/, "").split(/[\\/]/).pop() || s.pasta;
-    const linhas = sessoes.map((s, i) => `<label><input type="radio" name="sessao" value="${i}"> <span>${tr("Sessão em {nome}", { nome: esc(nome(s)) })}</span> <small>${s.canal ? tr("recebe o pedido direto") : tr("sem canal: só copia o pedido")}</small></label>`).join("");
-    d.innerHTML = `<div class="cu-topo"><h3>${esc(titulo)}</h3></div><p class="cu-corpo">${esc(texto)}</p><div class="cu-opcoes">${semApp ? "" : `<label><input type="radio" name="sessao" value="app" checked> <span>${tr("Terminal do app")}</span> <small>${tr("abre o Claude aqui dentro, numa aba do painel")}</small></label>`}<label><input type="radio" name="sessao" value="nova"${semApp ? " checked" : ""}> <span>${tr("Nova sessão")}</span> <small>${tr("abre um terminal novo")}</small></label>${linhas}</div><div class="confirmar-acoes"><button class="btn" type="button" data-r="0">${tr("Cancelar")}</button><button class="btn perigo" type="button" data-r="1">${tr("Iniciar")}</button></div>`;
+    const linhas = sessoes.map((s, i) => `<label><input type="radio" name="sessao" value="${i}"${padrao === i ? " checked" : ""}> <span>${tr("Sessão em {nome}", { nome: esc(nome(s)) })}</span> <small>${s.canal ? tr("recebe o pedido direto") : tr("sem canal: só copia o pedido")}</small></label>`).join("");
+    d.innerHTML = `<div class="cu-topo"><h3>${esc(titulo)}</h3></div><p class="cu-corpo">${esc(texto)}</p><div class="cu-opcoes"><label><input type="radio" name="sessao" value="app"${padrao === "app" ? " checked" : ""}> <span>${tr("Terminal do app")}</span> <small>${tr("abre o Claude aqui dentro, numa aba do painel")}</small></label><label><input type="radio" name="sessao" value="nova"${padrao === "nova" ? " checked" : ""}> <span>${tr("Nova sessão")}</span> <small>${tr("abre um terminal novo")}</small></label>${linhas}</div><div class="confirmar-acoes"><button class="btn" type="button" data-r="0">${tr("Cancelar")}</button><button class="btn perigo" type="button" data-r="1">${esc(rotulo)}</button></div>`;
     d.addEventListener("click", (e) => { if (e.target === d) d.close("0"); });
     d.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => d.close(b.dataset.r)));
     d.addEventListener("close", () => {
