@@ -2,7 +2,7 @@
 
 # Como contribuir
 
-Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos.
+Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos. Quem participa segue o [Código de Conduta](../../CODE_OF_CONDUCT.md) (em inglês).
 
 ## Vocabulário (importante)
 

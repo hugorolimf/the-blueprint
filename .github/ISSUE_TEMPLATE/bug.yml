@@ -20,4 +20,4 @@ body:
     id: ambiente
     attributes:
       label: Ambiente
-      description: Versão do app (a da release ou o commit), Windows ou outro sistema, navegador/WebView.
+      description: Saída de `blueprint --version` (ou o commit), Windows ou outro sistema, navegador/WebView. Antes, veja docs/troubleshooting.md.
