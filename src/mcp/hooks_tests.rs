@@ -69,6 +69,21 @@ fn a_edicao_vira_progresso_com_o_arquivo_relativo_e_sem_pasta_ligada_nao_faz_nad
     assert_eq!(m.agentes()["agentes"][0]["agente"], "Claude");
 }
 
+/// O PostToolUse do `apply_patch` do Codex, com os campos obrigatórios de `post-tool-use.command.input.schema.json` (openai/codex, rust-v0.164.0).
+#[test]
+fn o_apply_patch_do_codex_vira_progresso_e_patch_sem_arquivo_nao_faz_nada() {
+    let (m, d) = (mcp(), dados());
+    ligar(&d, "C:\\Proj");
+    let corpo = |patch: &str| json!({"session_id": "c1", "transcript_path": null, "cwd": "C:\\Proj", "hook_event_name": "PostToolUse", "model": "gpt-5",
+        "permission_mode": "default", "turn_id": "t1", "tool_name": "apply_patch", "tool_use_id": "call_1", "tool_input": {"command": patch}, "tool_response": "Done"});
+    edicao(&m, &d, &corpo("*** Begin Patch\n*** Delete File: x\n")).unwrap(); // o primeiro arquivo do patch vale
+    edicao(&m, &d, &corpo("*** Begin Patch\n*** Update File: src/lib.rs\n@@\n-a\n+b\n*** End Patch")).unwrap();
+    assert_eq!(m.itens().iter().map(|i| i["onde"][0].clone()).collect::<Vec<_>>(), [json!("x"), json!("src/lib.rs")]);
+    assert_eq!(edicao(&m, &d, &corpo("sem cabeçalho de arquivo")).unwrap(), json!({}));
+    assert_eq!(edicao(&m, &d, &json!({"cwd": "C:\\Proj", "tool_input": {"command": 42}})).unwrap(), json!({}));
+    assert_eq!(m.itens().len(), 2);
+}
+
 #[test]
 fn a_edicao_nao_tira_o_agente_do_plano_em_que_ele_avisou() {
     let (m, d) = (mcp(), dados());

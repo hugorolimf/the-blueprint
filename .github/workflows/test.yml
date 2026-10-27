@@ -48,3 +48,39 @@ jobs:
           node i18n.test.mjs
           node scripts/i18n-completude.mjs
           node scripts/gerar-roadmap.mjs --conferir
+
+  # Experimental (viabilidade de Linux e macOS, docs/linux-macos.md): compila a janela fora do Windows e só registra os erros.
+  # Nunca reprova a execução; o log sobe como artefato.
+  janela-fora-do-windows:
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: WebKitGTK, GTK e a biblioteca da bandeja (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev libxdo-dev
+      - name: tira o cfg(windows) da janela, só neste job
+        shell: bash
+        run: |
+          printf '\n[target."cfg(not(windows))".dependencies]\ntao = "0.37.1"\ntray-icon = "0.26.1"\nwry = "0.57.0"\n' >> Cargo.toml
+          perl -0pi -e 's/#\[cfg\(windows\)\]\npub mod janela;/pub mod janela;/' src/lib.rs
+          grep -n 'pub mod janela' src/lib.rs
+      - name: cargo check com a janela
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo check --bin blueprint --message-format short 2>&1 | tee janela-${{ runner.os }}.log
+      - name: erros por arquivo
+        if: always()
+        shell: bash
+        run: grep -oE '^src/[^:]+' janela-${{ runner.os }}.log | sort | uniq -c | sort -rn || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: janela-${{ runner.os }}
+          path: janela-${{ runner.os }}.log

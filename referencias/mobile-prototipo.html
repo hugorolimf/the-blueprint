@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blueprint no celular</title>
+<!-- Protótipo da ação «App mobile iOS e Android: viabilidade» (docs/mobile.md): 3 telas em largura de celular, com os tokens de web/css/tokens.css.
+     Só desenho: dados fictícios, nada de rede. -->
+<style>
+:root{--paper:#0c3a78;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--fundo:#061d42;--mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--fundo);color:var(--ink);font:13px/1.45 var(--mono)}
+body{min-height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;overflow-x:hidden}
+header{padding:14px 16px 10px;border-bottom:1px solid var(--faint);display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+header b{letter-spacing:.08em;text-transform:uppercase;font-size:12px}
+header span{color:var(--mid);font-size:11px}
+main{flex:1;padding:12px 16px 84px;background:linear-gradient(#ffffff12 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,#ffffff12 1px,transparent 1px) 0 0/24px 24px,var(--paper)}
+section[hidden]{display:none}
+h2{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);margin:6px 0 10px;font-weight:600}
+.cartao{border:1.2px solid var(--ink);background:var(--paper);padding:10px 12px;margin-bottom:10px}
+.cartao.planejado{border-style:dashed;border-color:var(--mid)}
+.linha{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.num{color:var(--mid);margin-right:6px}
+.data{color:var(--mid);font-size:11px;white-space:nowrap}
+.barra{height:4px;background:var(--faint);margin-top:8px}
+.barra i{display:block;height:100%;background:var(--ink)}
+.agente{margin-top:8px;font-size:11px;color:var(--mid);border-left:2px solid var(--lo);padding-left:8px}
+.check{display:flex;gap:10px;align-items:center;margin-top:8px;min-height:44px}
+.check input{width:22px;height:22px;accent-color:var(--ink)}
+.aviso{border:1.2px solid var(--ink);padding:10px 12px;margin-bottom:12px;background:#0f4590}
+.aviso small{color:var(--mid);display:block;margin-bottom:4px}
+ul{margin:6px 0 0;padding-left:18px}
+li{margin:3px 0}
+li.novo::marker{content:"+ "}
+li.muda::marker{content:"~ "}
+.botoes{display:flex;gap:10px;margin-top:12px}
+button{font:inherit;color:var(--ink);background:transparent;border:1.2px solid var(--ink);padding:0 14px;min-height:44px;flex:1;cursor:pointer}
+button.primario{background:var(--ink);color:var(--paper);font-weight:700}
+button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.slide{border:1.2px solid var(--ink);aspect-ratio:9/12;padding:18px;display:flex;flex-direction:column;justify-content:space-between;background:radial-gradient(ellipse at 50% 40%,#1250a0 0,#0c3a78 62%,#082b5e 100%)}
+.slide h3{font-size:18px;margin:0 0 10px;letter-spacing:.04em}
+.slide p{color:var(--mid);margin:0 0 8px}
+.passos{display:flex;justify-content:space-between;align-items:center;margin-top:12px;color:var(--mid)}
+.passos button{flex:0 0 auto;min-width:88px}
+nav{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;display:flex;border-top:1px solid var(--faint);background:var(--fundo)}
+nav button{border:0;border-top:2px solid transparent;min-height:56px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mid)}
+nav button[aria-current="page"]{border-top-color:var(--ink);color:var(--ink)}
+</style>
+</head>
+<body>
+<header><b>The Blueprint</b><span>App · conectado ao desktop</span></header>
+<main>
+  <section id="folha" aria-label="Folha">
+    <h2>Folha · em andamento</h2>
+    <article class="cartao">
+      <div class="linha"><span><span class="num">02.4</span>Sincronia entre janelas</span><span class="data">26-28/10</span></div>
+      <div class="barra" aria-label="3 de 5 planos"><i style="width:60%"></i></div>
+      <div class="agente">Claude: escrevendo src/sincronia/merge.rs</div>
+    </article>
+    <article class="cartao">
+      <div class="linha"><span><span class="num">02.5</span>Compartilhar pelo app</span><span class="data">29/10</span></div>
+      <div class="barra" aria-label="1 de 4 planos"><i style="width:25%"></i></div>
+      <label class="check"><input type="checkbox"> Usuário testou o convite no celular</label>
+    </article>
+    <article class="cartao planejado">
+      <div class="linha"><span><span class="num">03.1</span>App mobile: viabilidade</span><span class="data">08-10/01</span></div>
+      <div class="barra" aria-label="0 de 5 planos"><i style="width:0"></i></div>
+    </article>
+  </section>
+
+  <section id="aviso" aria-label="Avisos" hidden>
+    <h2>Avisos do agente</h2>
+    <div class="aviso"><small>agora · Claude</small>Tarefa concluída: «Rotas de hook para o Codex» (evidência: cargo test, 12 passaram)</div>
+    <div class="aviso"><small>há 4 min · Claude</small>Bloqueio em 02.4: falta a decisão sobre apagar vence editar</div>
+    <h2>Proposta nº 3</h2>
+    <article class="cartao">
+      <div class="linha"><span>Integração nativa com o Codex</span><span class="data">2 ações</span></div>
+      <ul>
+        <li class="novo">Ação nova: Hooks do Codex (3 planos, 12 h)</li>
+        <li class="muda">Ação 04.2: prazo de 29/12 para 05/01</li>
+      </ul>
+      <div class="botoes"><button type="button">Descartar</button><button type="button" class="primario">Aplicar</button></div>
+    </article>
+  </section>
+
+  <section id="apresentar" aria-label="Apresentação" hidden>
+    <h2>Apresentação · 2 de 6</h2>
+    <div class="slide">
+      <div><h3>Onde estamos</h3><p>3 de 7 ações concluídas.</p><p>Próximo marco: convite testado no celular, 29/10.</p></div>
+      <p>The Blueprint · App</p>
+    </div>
+    <div class="passos"><button type="button">Anterior</button><span>2 / 6</span><button type="button">Próximo</button></div>
+  </section>
+</main>
+<nav aria-label="Telas">
+  <button type="button" data-tela="folha" aria-current="page">Folha</button>
+  <button type="button" data-tela="aviso">Avisos · 2</button>
+  <button type="button" data-tela="apresentar">Apresentar</button>
+</nav>
+<script>
+for (const b of document.querySelectorAll("nav button")) b.addEventListener("click", () => {
+  for (const s of document.querySelectorAll("main section")) s.hidden = s.id !== b.dataset.tela;
+  for (const o of document.querySelectorAll("nav button")) o.toggleAttribute("aria-current", o === b);
+  b.setAttribute("aria-current", "page");
+});
+</script>
+</body>
+</html>
