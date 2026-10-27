@@ -43,7 +43,7 @@ try {
   assert.equal(hooks.PostToolUseFailure, undefined, "falha de ferramenta é rotina: sem hook");
   if (temCodex) assert.match(codexMcp(), /blueprint/, "o MCP blueprint deve estar registrado no Codex");
   assert.match(rodar("claude", ["plugin", "validate", pasta]), /Validation passed/);
-  assert.match(rodar("claude", ["plugin", "details", "blueprint@blueprint-local"]), /Skills \(2\)[\s\S]*Agents \(4\)[\s\S]*MCP servers \(1\)/);
+  assert.match(rodar("claude", ["plugin", "details", "blueprint@blueprint-local"]), /Skills \(4\)[\s\S]*Agents \(4\)[\s\S]*MCP servers \(1\)/);
   for (let vez = 1; vez <= 2; vez++) {
     rodar(exe, ["registrar", "--remover"]);
     assert.match(rodar("claude", ["plugin", "list"]), /No plugins installed/, `remover #${vez}`);

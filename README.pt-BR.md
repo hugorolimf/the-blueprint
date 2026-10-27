@@ -57,6 +57,7 @@ O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos c
 | [Instalação e desempenho](docs/pt-BR/install.md) | detalhes do instalador, pasta de dados, números medidos |
 | [Plugin do Claude Code](docs/pt-BR/claude-code.md) | skill, agente, hooks, status line, `/blueprint:status`, o painel no terminal |
 | [MCP e outros agentes](docs/pt-BR/mcp.md) | ferramentas, Codex, fila com o app fechado |
+| [Codex e outros agentes](docs/pt-BR/codex.md) | conectar, vincular a pasta, o que o Codex vê sem o plugin |
 | [Atualizações](docs/pt-BR/updates.md) | download em segundo plano, conferência do SHA-256, instala só no seu clique |
 | [Servidor e comandos](docs/pt-BR/commands.md) | `blueprint serve`, variáveis de ambiente, todos os subcomandos |
 | [Desenvolvimento](docs/pt-BR/development.md) | `cargo dev`, testes, verificações de ponta a ponta |
