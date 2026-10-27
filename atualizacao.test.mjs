@@ -50,12 +50,12 @@ assert.equal(q(".at-barra").hidden, true);
 assert.equal(topo.hidden, false); assert.equal(topo.disabled, false); assert.equal(topo.textContent, "Atualizar para 0.2.0");
 assert(!html.some((h) => h.includes("onerror")), "o texto do GitHub não entra por innerHTML");
 
-// o clique em Atualizar chama o POST de instalar (e só ele); com a fila cheia o servidor recusa e o motivo aparece, continuando pronta
+// o clique em Atualizar chama o POST de instalar (e só ele); quando o servidor recusa (terminal com sessão viva, compartilhamento ligado), o motivo aparece, continuando pronta
 await atualizacaoInstala();
 assert.deepEqual(chamadas.at(-1), ["/api/atualizacao/instalar", "POST", "{}"]);
-respostaInstalar = { ok: false, status: 409, json: async () => ({ erro: "Há 2 aviso(s) do agente que a tela ainda não aplicou.", codigo: "agora-nao" }) };
+respostaInstalar = { ok: false, status: 409, json: async () => ({ erro: "Há 1 sessão(ões) rodando no terminal do app.", codigo: "agora-nao" }) };
 await atualizacaoInstala();
-assert.equal(q(".at-motivo").textContent, "Há 2 aviso(s) do agente que a tela ainda não aplicou.");
+assert.equal(q(".at-motivo").textContent, "Há 1 sessão(ões) rodando no terminal do app.");
 assert.equal(q(".at-motivo").hidden, false);
 assert.equal(caixa.el.classes.has("erro"), true);
 assert.equal(q(".at-ok").disabled, false, "o botão volta para tentar de novo");

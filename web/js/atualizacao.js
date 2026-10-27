@@ -30,7 +30,7 @@ function atualizacaoRecebe(e) {
   atualizacao = e;
   atualizacaoDesenha();
 }
-// o clique do usuário é a autorização: só aqui o servidor roda o instalador (e antes confere a fila do MCP, o hash e copia o banco)
+// o clique do usuário é a autorização: só aqui o servidor roda o instalador (e antes confere o que impede sair, o hash e copia o banco)
 async function atualizacaoInstala() {
   atualizacaoEl ||= atualizacaoCria();
   const botao = atualizacaoEl.querySelector(".at-ok");

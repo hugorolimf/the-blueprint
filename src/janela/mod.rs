@@ -225,7 +225,7 @@ fn preparar(dev: bool, convite: Option<equipe::Convite>) -> Resultado<()> {
                 }
             }
             Event::UserEvent(Evento::Atualizar) => {
-                // o clique na bandeja é a autorização; se for recusado (fila do MCP cheia), a janela abre e mostra o motivo
+                // o clique na bandeja é a autorização; se for recusado (terminal do app com sessão viva, compartilhamento), a janela abre e mostra o motivo
                 if crate::http::atualizacao::instalar_agora(&servidor.estado).is_err() {
                     let _ = proxy.send_event(Evento::Mostrar);
                 }

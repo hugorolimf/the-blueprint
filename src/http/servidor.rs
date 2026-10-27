@@ -28,6 +28,8 @@ pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let porta = servidor.server_addr().to_ip().map_or(config.porta, |a| a.port());
     let url = config.url(porta);
     let mcp = Mcp::novo(&config.host, config.rede_mcp, &config.exe.to_string_lossy(), &url, config.prototipos.clone());
+    // a fila que a página ainda não aplicou volta do banco antes do primeiro pedido (e antes dos pendentes, que entram depois dela)
+    mcp.persistir_fila(&config.banco)?;
     let (versao_dados, sincronia) = super::estado::versao_e_sincronia(config.hospedagem.is_some()); // presença só no modo hospedado
     let estado = Arc::new(Estado { ao_mostrar: Mutex::new(None), ao_sair: Mutex::new(None), atualizador: Atualizador::do_ambiente(&config.banco), assets: Assets::novo(config.assets_dir.clone()), dados: Mutex::new(dados), dados_json: Mutex::new(None), versao_dados, sincronia, mcp, terminais: crate::terminal::Terminais::novo(), acesso: crate::acesso::Acesso::novo(), compartilhar: crate::compartilhar::Compartilhar::novo(), config });
     estado.compartilhar.definir_estado(Arc::downgrade(&estado));

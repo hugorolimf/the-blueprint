@@ -1,5 +1,5 @@
 // O updater de ponta a ponta com o binário de verdade e um "GitHub" falso: a versão nova é achada e baixada em segundo plano, fica pronta SEM instalar,
-// e só o clique (POST /api/atualizacao/instalar) roda o instalador, depois de conferir a fila do MCP. Nenhum instalador real roda: o app anota o que rodaria.
+// e só o clique (POST /api/atualizacao/instalar) roda o instalador; item na fila do MCP não impede e volta quando o app reabre. Nenhum instalador real roda: o app anota o que rodaria.
 // Uso: node scripts/atualizador-e2e.mjs [caminho do blueprint.exe]   (padrão: target/debug/blueprint.exe; ~10 s, sem gastar tokens)
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -42,7 +42,7 @@ async function rodada(nome, opcoes, roteiro) {
   d.env.BLUEPRINT_ATUALIZACAO_SEM_EXECUTAR = join(d.dir, "lancou.txt");
   if (opcoes.semServidor) d.env.BLUEPRINT_URL = `http://127.0.0.1:${await portaLivre()}`; // o app está fechado: o CLI instala sozinho
   const servidor = opcoes.semServidor ? null : await ligarServidor(exe, d);
-  try { await roteiro({ ...d, gh, lancou: d.env.BLUEPRINT_ATUALIZACAO_SEM_EXECUTAR, atualizacao: join(d.dir, "atualizacao") }); console.log(`ok: ${nome}`); }
+  try { await roteiro({ ...d, gh, servidor, lancou: d.env.BLUEPRINT_ATUALIZACAO_SEM_EXECUTAR, atualizacao: join(d.dir, "atualizacao") }); console.log(`ok: ${nome}`); }
   finally { servidor?.kill(); gh.parar(); await rm(d.dir, { recursive: true, force: true }).catch(() => {}); }
 }
 
@@ -58,15 +58,8 @@ await rodada("baixa em segundo plano, fica pronta sem instalar e só o clique in
   assert.match(pronta.notas, /Notas da 0\.9\.0/);
   assert.deepEqual((await readdir(atualizacao)).filter((n) => n.endsWith(".exe")), ["Blueprint-0.9.0-instalador.exe"]);
   assert.equal(await existe(lancou), false, "baixar e conferir NÃO executam o instalador");
-  // a fila do MCP tem trabalho do agente que a tela não aplicou: recusa e continua pronta
+  // a fila do MCP tem trabalho do agente que a tela não aplicou: NÃO impede mais (a fila fica no banco e volta ao reabrir; conferido abaixo)
   assert.equal((await postJson(url + "/api/mcp/evento", { tipo: "progresso", texto: "trabalhando", workspaceId: "sm", blueprintId: "p1" })).status, 200);
-  const recusa = await postJson(url + "/api/atualizacao/instalar");
-  assert.equal(recusa.status, 409);
-  assert.equal(recusa.json.codigo, "agora-nao");
-  assert.equal(await existe(lancou), false);
-  assert.equal((await http(url + "/api/atualizacao")).json.fase, "pronta");
-  const fila = (await (await fetch(url + "/api/mcp/fila")).json()).itens;
-  await postJson(url + "/api/mcp/fila/ack", { ids: fila.map((i) => i.id) });
   // o clique
   const ok = await postJson(url + "/api/atualizacao/instalar");
   assert.equal(ok.status, 200, ok.texto);
@@ -76,6 +69,21 @@ await rodada("baixa em segundo plano, fica pronta sem instalar e só o clique in
   assert.equal((await http(url + "/api/atualizacao")).json.fase, "instalando");
   assert((await readdir(join(dir, "backups"))).some((n) => n.startsWith("blueprint-antes-de-0.9.0") && n.endsWith(".db")), "backup do banco antes de instalar");
   assert(gh.pedidos.length >= 3);
+});
+
+await rodada("item na fila atravessa a atualização: o app reabre com ele", {}, async ({ url, env, lancou, servidor }) => {
+  await postJson(url + "/api/atualizacao/verificar");
+  await esperarFase(url, "pronta");
+  assert.equal((await postJson(url + "/api/mcp/evento", { tipo: "progresso", texto: "trabalhando", workspaceId: "sm", blueprintId: "p1" })).status, 200);
+  assert.equal((await postJson(url + "/api/atualizacao/instalar")).status, 200, "a fila não impede");
+  assert.match(await readFile(lancou, "utf8"), /\/ATUALIZACAO=1/);
+  servidor.kill(); // o instalador fecha o app e o reabre
+  await new Promise((ok) => servidor.once("exit", ok));
+  const reaberto = await ligarServidor(exe, { env, url });
+  try {
+    const fila = (await (await fetch(url + "/api/mcp/fila")).json()).itens;
+    assert.deepEqual(fila.map((i) => [i.tipo, i.texto]), [["progresso", "trabalhando"]], "o item que a tela não aplicou voltou");
+  } finally { reaberto.kill(); }
 });
 
 await rodada("SHA-256 que não confere: nada fica no disco e nada roda", { hashErrado: true }, async ({ url, lancou, atualizacao }) => {
