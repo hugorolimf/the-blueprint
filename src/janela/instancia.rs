@@ -17,11 +17,29 @@ fn arquivo_da_porta() -> PathBuf {
     pasta_do_app().join("porta")
 }
 
-/// Tenta ser a primeira instância. O mutex fica aberto até o processo acabar (de propósito: é isso que mantém a trava).
-pub fn garantir() -> Instancia {
+fn nome_da_trava() -> Vec<u16> {
     // `BLUEPRINT_INSTANCIA_PARA_TESTE` (só testes): outra trava, para um app de teste abrir ao lado do app do usuário (o instalador de teste usa a mesma no AppMutex)
     let nome = std::env::var("BLUEPRINT_INSTANCIA_PARA_TESTE").map_or_else(|_| "Local\\Blueprint.InstanciaUnica".to_string(), |s| format!("Local\\Blueprint.Teste.{s}"));
-    let nome: Vec<u16> = nome.encode_utf16().chain(std::iter::once(0)).collect();
+    nome.encode_utf16().chain(std::iter::once(0)).collect()
+}
+
+/// Só olha se o app está aberto, sem pegar a trava (o `blueprint doctor` não pode impedir o app de abrir).
+pub fn aberta() -> bool {
+    let nome = nome_da_trava();
+    // SAFETY: `nome` termina em zero e vive durante a chamada; o handle, se veio, é fechado logo em seguida.
+    unsafe {
+        let h = windows_sys::Win32::System::Threading::OpenMutexW(windows_sys::Win32::System::Threading::SYNCHRONIZATION_SYNCHRONIZE, 0, nome.as_ptr());
+        if h.is_null() {
+            return false;
+        }
+        windows_sys::Win32::Foundation::CloseHandle(h);
+        true
+    }
+}
+
+/// Tenta ser a primeira instância. O mutex fica aberto até o processo acabar (de propósito: é isso que mantém a trava).
+pub fn garantir() -> Instancia {
+    let nome = nome_da_trava();
     // SAFETY: `nome` termina em zero e vive durante a chamada; sem atributos de segurança (ponteiro nulo é o padrão).
     let (_, ja) = unsafe {
         let h = CreateMutexW(std::ptr::null(), 0, nome.as_ptr());

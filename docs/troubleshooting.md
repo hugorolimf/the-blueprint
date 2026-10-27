@@ -2,7 +2,13 @@
 
 [Back to the README](../README.md) · [Português](pt-BR/troubleshooting.md)
 
-Each problem below has a cause and a check you can run yourself. A `blueprint doctor` command that runs these checks for you is on the [roadmap](../ROADMAP.md); until then, use the commands here.
+Start with `blueprint doctor`. It checks, in one go, whether the app answers where agents look (port 3000, or `BLUEPRINT_URL`) and runs as a single instance, the version, the database, the Claude Code plugin, the Codex MCP and whether the current folder is linked to a blueprint. Each line says OK or what to do:
+
+```
+blueprint doctor
+```
+
+It only reads: it never writes, fixes or installs anything, and it shows your user folder as `%USERPROFILE%`, so you can paste the output into an issue. It exits with 1 when an item failed. Each problem below has the cause and the check behind that line.
 
 ## The window shows old data, or the agent's proposal never appears
 
@@ -61,4 +67,4 @@ How updates work: [Updates](updates.md).
 
 ## Still stuck?
 
-Open an issue with `blueprint --version`, what you did and what you saw: [Issues](https://github.com/hugorolimf/the-blueprint/issues). Security problems go through [SECURITY.md](../SECURITY.md), not a public issue.
+Open an issue with the output of `blueprint doctor`, what you did and what you saw: [Issues](https://github.com/hugorolimf/the-blueprint/issues). Security problems go through [SECURITY.md](../SECURITY.md), not a public issue.

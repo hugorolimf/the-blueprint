@@ -2,7 +2,13 @@
 
 [Voltar ao README](../../README.pt-BR.md) · [English](../troubleshooting.md)
 
-Cada problema abaixo tem a causa e uma conferência que você mesmo roda. Um comando `blueprint doctor` que faça essas conferências está no [roadmap](../../ROADMAP.pt-BR.md); até lá, use os comandos daqui.
+Comece pelo `blueprint doctor`. Ele confere de uma vez se o app responde onde os agentes procuram (porta 3000, ou `BLUEPRINT_URL`) e roda em instância única, a versão, o banco, o plugin do Claude Code, o MCP do Codex e se a pasta atual está ligada a um blueprint. Cada linha diz OK ou o que fazer:
+
+```
+blueprint doctor
+```
+
+Ele só lê: nunca grava, conserta nem instala nada, e mostra a sua pasta de usuário como `%USERPROFILE%`, para você colar a saída numa issue. Sai com 1 quando algum item falhou. Cada problema abaixo tem a causa e a conferência por trás daquela linha.
 
 ## A janela mostra dados velhos, ou a proposta do agente não aparece
 
@@ -61,4 +67,4 @@ Como funciona a atualização: [Atualizações](updates.md).
 
 ## Ainda travado?
 
-Abra uma issue com o `blueprint --version`, o que você fez e o que viu: [Issues](https://github.com/hugorolimf/the-blueprint/issues). Problemas de segurança vão pelo [SECURITY.md](SECURITY.md), não por issue pública.
+Abra uma issue com a saída do `blueprint doctor`, o que você fez e o que viu: [Issues](https://github.com/hugorolimf/the-blueprint/issues). Problemas de segurança vão pelo [SECURITY.md](SECURITY.md), não por issue pública.

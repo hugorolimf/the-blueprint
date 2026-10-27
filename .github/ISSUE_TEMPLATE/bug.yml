@@ -20,4 +20,4 @@ body:
     id: ambiente
     attributes:
       label: Ambiente
-      description: Saída de `blueprint --version` (ou o commit), Windows ou outro sistema, navegador/WebView. Antes, veja docs/troubleshooting.md.
+      description: Saída de `blueprint doctor` (ou `blueprint --version`, ou o commit), Windows ou outro sistema, navegador/WebView. Antes, veja docs/troubleshooting.md.

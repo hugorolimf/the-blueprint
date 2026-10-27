@@ -18,7 +18,7 @@ mod linhas;
 pub mod markdown;
 pub mod migracoes;
 pub mod operacoes;
-mod pastas;
+pub(crate) mod pastas;
 
 #[cfg(test)]
 mod tests;

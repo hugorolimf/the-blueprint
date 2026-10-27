@@ -2,6 +2,7 @@
 mod atualizar;
 pub(crate) mod claude;
 mod completar;
+mod doctor;
 mod restaurar;
 use crate::dados::arquivo::{exportar_arquivo, importar_arquivo};
 use crate::http::{self, Config};
@@ -25,6 +26,8 @@ pub(crate) const USO: &str = concat!(
     "  blueprint hook statusline-config           imprime o trecho de settings.json que liga a status line (opt-in)\n",
     "  blueprint atualizar [--verificar|--instalar]  procura e baixa a versão nova (--verificar só consulta; --instalar instala a baixada: é o seu clique em Atualizar)\n",
     "  blueprint restaurar [<número>|<arquivo>]  lista as cópias do banco (uma automática por dia, as 7 últimas) ou volta a uma; feche o app antes
+",
+    "  blueprint doctor                          confere o app, a porta, o banco, o plugin do Claude Code, o MCP do Codex e a pasta, e diz o que fazer (só lê)
 ",
     "  blueprint completions <powershell|bash>    imprime o script que completa os comandos no terminal\n",
     "  blueprint --version                       mostra a versão\n",
@@ -60,6 +63,7 @@ pub fn executar(args: Vec<String>) -> i32 {
             return codigo;
         }
         ["watch"] => return crate::watch::executar(),
+        ["doctor"] => return doctor::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
         #[cfg(windows)]
         ["atualizando", ..] => return crate::janela::atualizando::executar(&args[1..]), // interno: a janela de progresso que o app abre ao atualizar

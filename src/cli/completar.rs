@@ -2,7 +2,7 @@
 
 /// Os subcomandos e opções de nível 1; o teste confere que todos estão em `USO`.
 pub const SUBCOMANDOS: &[&str] = &[
-    "dev", "serve", "--mcp", "watch", "claude", "importar", "exportar", "hook", "atualizar", "restaurar", "registrar", "conectar", "completions", "--version",
+    "dev", "serve", "--mcp", "watch", "claude", "importar", "exportar", "hook", "atualizar", "restaurar", "registrar", "conectar", "doctor", "completions", "--version",
 ];
 
 /// Script do shell pedido, ou `None` se o nome não for conhecido.
