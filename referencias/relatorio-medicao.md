@@ -24,11 +24,27 @@ O job `desempenho` de `.github/workflows/test.yml` compila em release no `window
 | Meta (CLAUDE.md) | Limite no CI | Opção para trocar |
 | --- | --- | --- |
 | Binário < 5 MB | 5 MB (sem folga: o tamanho não oscila) | `--binario-mb=N` |
-| `/api/*` < 5 ms | p95 de `GET /api/dados`, `GET /`, `GET /api/mcp/fila` e `POST /api/mcp/fila/ack` < 15 ms (http persistente, 200 pedidos) | `--p95-ms=N` |
+| `/api/*` < 5 ms | p95 de `GET /api/dados`, `GET /`, `GET /api/mcp/fila` e `POST /api/mcp/fila/ack` < 15 ms (http persistente, 200 pedidos, a melhor de 3 rodadas por rota) | `--p95-ms=N` |
 | Backend em repouso < 20 MB | memória depois de 10 s de repouso com SSE aberto < 40 MB | `--rss-mb=N` |
 | 0% de CPU em repouso | < 1% de um núcleo nos mesmos 10 s | `--cpu-pct=N` |
 
 Mudar um limite é mudar o padrão em `scripts/medir-rust.mjs` e esta tabela no mesmo PR, com a medição que justifica; quem decide é quem mantém o projeto (veja `CONTRIBUTING.md`). Sem histórico de tendência: só limite fixo.
+
+### Prova local de que cada guarda reprova (2026-10-27)
+
+Exe release (`cargo build --release`, Windows 11, máquina com outras compilações rodando). A regressão proposital foi um patch temporário num build de teste, desfeito antes do commit: nada dela existe no binário publicado.
+
+| Caso | Medido | Saída | Tempo |
+| --- | --- | --- | --- |
+| Exe limpo (2 execuções) | binário 4,6 MB; p95 0,6 a 0,9 ms nas 4 rotas; 10,9 MB e 0% de CPU em repouso | 0 | ~25 s |
+| Exe de teste sem regressão ligada | dentro dos limites | 0 | 32 s |
+| Sleep de 50 ms em `/api/mcp/fila*` | p95 `GET /api/mcp/fila` 86,4 ms, `POST /api/mcp/fila/ack` 88,3 ms | 1 | 121 s |
+| Fio em repouso: 2 ms de trabalho a cada 20 ms | CPU 7,9% | 1 | 18 s |
+| 64 MB presos ao subir | memória 74,9 MB | 1 | 17 s |
+
+- A latência usa a melhor de 3 rodadas porque, com a máquina ocupada, uma rodada isolada do exe limpo variou de 0,9 a 23,3 ms no p95 de `GET /api/dados` (vermelho falso); uma rota lenta de verdade estoura as 3.
+- Limite conhecido: polling leve passa. O mesmo fio a cada 100 ms deu 1,7% (reprova), a cada 1 s deu 0,3% (passa). A guarda pega laço apertado, não um timer lento; esse continua sendo pego só na revisão.
+- O binário está em 4,6 MB, perto do limite de 5 MB: uma crate média já reprova.
 
 ## Leitura
 
