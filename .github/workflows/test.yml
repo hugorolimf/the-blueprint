@@ -33,6 +33,9 @@ jobs:
         run: cargo build --release --locked
       - name: limites de desempenho
         run: node scripts/medir-rust.mjs target/release/blueprint.exe --limites
+      # o caminho do iniciante (banco vazio, exemplo, MCP, proposta aplicada) no Edge do runner; ~10 s
+      - name: primeiro uso de ponta a ponta
+        run: node scripts/primeiro-uso-e2e.mjs target/release/blueprint.exe
 
   node:
     strategy:
@@ -61,6 +64,7 @@ jobs:
           node scripts/conferir-readmes.mjs
           node scripts/conferir-links.mjs
           node i18n.test.mjs
+          node primeiro-uso.test.mjs
           node scripts/i18n-completude.mjs
           node scripts/gerar-roadmap.mjs --conferir
 
