@@ -2,6 +2,7 @@
 use super::cliente::codificar;
 use super::stdio::tratar;
 use super::{FluxoSse, Mcp};
+use crate::idioma::{com, Idioma};
 use serde_json::{json, Map, Value};
 use std::collections::HashSet;
 use std::io::Read;
@@ -183,6 +184,36 @@ fn propor_blueprint_conhece_a_fila_e_o_agente_aprende_a_ajustar() {
     let ids = json!([{"id": "+a1", "nome": "Nova", "planos": [{"id": "+a1.p1", "texto": "Criar a tela"}], "checkpoints": []}, {"id": "f1", "nome": "Base", "planos": [], "checkpoints": [{"id": "+f1.c1", "nome": "Pronto"}]}]);
     let texto = super::stdio::ids_provisorios(&ids);
     assert!(texto.contains("- action +a1 \"Nova\"; plans: +a1.p1 \"Criar a tela\"") && texto.contains("- action f1 \"Base\"; checkpoints: +f1.c1 \"Pronto\""), "{texto}");
+}
+
+#[test]
+fn com_o_app_fechado_a_leitura_diz_em_uma_linha_o_que_fazer() {
+    let porta = std::net::TcpListener::bind("127.0.0.1:0").unwrap().local_addr().unwrap().port(); // solta ao sair: ninguém escuta
+    let base = format!("http://127.0.0.1:{porta}");
+    for (idioma, trechos) in [(Idioma::En, ["app is closed", "open it (Start menu or tray icon)", "are kept and enter when it opens"]), (Idioma::Pt, ["está fechado", "abra o app (menu Iniciar ou ícone da bandeja)", "ficam guardados"])] {
+        let erro = com(idioma, || super::cliente::requisitar(&base, "GET", "blueprints", None)).unwrap_err();
+        assert!(!erro.contains('\n') && trechos.iter().all(|t| erro.contains(t)), "{erro}");
+    }
+}
+
+#[test]
+fn a_resposta_de_propor_e_registrar_diz_que_a_aplicacao_e_automatica() {
+    // a página decide (o interruptor fica nela): a resposta diz que entra sozinho se ligado e manda conferir antes de dizer que entrou
+    let via = |_: &str, _: &str, _: Option<&str>| Ok((200u16, r#"{"numero": 3, "ids": []}"#.to_string()));
+    let chamar = |nome: &str, args: Value| {
+        let r = super::stdio::tratar_via(&json!({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": nome, "arguments": args}}), Some(&via)).unwrap();
+        r["result"]["content"][0]["text"].as_str().unwrap().to_string()
+    };
+    let alvo = json!({"workspace_id": "sm", "blueprint_id": "p1", "acoes": []});
+    for (nome, trechos) in [
+        ("propor_blueprint", ["Proposal no. 3", "applies it by itself when automatic application is on", "removals, moved actions and new blueprints still wait for the user's click", "ler_blueprint"]),
+        ("registrar_trabalho", ["Record no. 3", "adds it by itself when automatic application is on", "decides on the Plan screen", "ler_blueprint"]),
+    ] {
+        let texto = chamar(nome, alvo.clone());
+        for t in trechos {
+            assert!(texto.contains(t), "{nome}: falta {t:?}\n{texto}");
+        }
+    }
 }
 
 #[test]

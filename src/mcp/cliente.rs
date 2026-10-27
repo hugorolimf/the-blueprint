@@ -46,7 +46,13 @@ pub fn requisitar_em(base: &str, metodo: &str, caminho: &str, corpo: Option<&str
     if super::equipe::ligado() && equipe.is_none() {
         return Err(crate::tr!("Not connected to a shared workspace: run blueprint conectar <address> <key> (the command is in the My key screen).", "Sem conexão com um workspace compartilhado: rode blueprint conectar <endereço> <chave> (o comando está na tela Minha chave)."));
     }
-    let sem_resposta = || crate::tr!("Could not reach The Blueprint at {base}. Is it running (blueprint serve)? If it uses another port, set BLUEPRINT_URL.", "Não consegui falar com o The Blueprint em {base}. Ele está rodando (blueprint serve)? Se usa outra porta, defina BLUEPRINT_URL.");
+    let remoto = super::equipe::remoto();
+    // uma linha que o agente repassa ao usuário: o que fazer, e (no app local) que as escritas não se perdem (pendentes.rs)
+    let sem_resposta = || if remoto {
+        crate::tr!("The Blueprint server at {base} did not answer: check that it is up and that the address is right, then try again.", "O servidor do The Blueprint em {base} não respondeu: confira se ele está no ar e se o endereço está certo, e tente de novo.")
+    } else {
+        crate::tr!("The Blueprint app is closed (nothing answered at {base}): open it (Start menu or tray icon) and try again. Proposals, records and marks you send meanwhile are kept and enter when it opens. If it uses another port, set BLUEPRINT_URL.", "O app The Blueprint está fechado (nada respondeu em {base}): abra o app (menu Iniciar ou ícone da bandeja) e tente de novo. Propostas, registros e marcações enviados enquanto isso ficam guardados e entram quando ele abrir. Se usa outra porta, defina BLUEPRINT_URL.")
+    };
     let chave = equipe.map(|c| c.chave).or_else(|| std::env::var("BLUEPRINT_CHAVE").ok()).filter(|c| !c.trim().is_empty());
     // BLUEPRINT_MCP_CURL=1 força o curl também em http:// (é como os testes cobrem o caminho do https sem certificado)
     if base.starts_with("https://") || std::env::var("BLUEPRINT_MCP_CURL").as_deref() == Ok("1") {
