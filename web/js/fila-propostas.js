@@ -1,7 +1,7 @@
 // ---- fila de propostas do agente: cada blueprint (e o blueprint novo) pode ter várias propostas numeradas esperando, e o usuário revisa uma de cada vez ----
 // A proposta ABERTA fica nos campos de sempre do chat (c.proposta, c.remover, c.mover, c.dadosBlueprint, c.pasta, c.mensagem) e traz c.numero, c.criadaEm
 // e c.em (do servidor); as outras ficam em c.fila, com os mesmos campos. A proposta só sai da fila do servidor quando o usuário a aplica ou descarta
-// (ack pelo número e pela criadaEm); o servidor guarda a fila só em memória, então ela some quando o app reinicia.
+// (ack pelo número e pela criadaEm); o servidor guarda a fila no banco, então ela volta quando o app reinicia.
 const FILA_CAMPOS = ["proposta", "remover", "mover", "projetosNovos", "decisoesNovas", "dadosBlueprint", "pasta", "mensagem"];
 const FILA_IDENT = ["numero", "criadaEm", "em"];
 

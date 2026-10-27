@@ -10,7 +10,7 @@ The Blueprint (beta), a local-first roadmap in Rust (`blueprint.exe`) with a web
 | --- | --- |
 | `src/dados/` | the only layer that talks to SQLite (migrations in `src/dados/migracoes/NNN_*.sql`; `formato.rs` maps the JSON to tables) |
 | `src/blueprint/` | validation of the agent's proposals (`validar_proposta`), deadlines, summaries for `ler_blueprint` |
-| `src/mcp/` | the in-memory queue, MCP actions, agent activity, SSE, `ferramentas.json` and `instrucoes.txt` (the source of truth of the MCP, written in English) |
+| `src/mcp/` | the queue (read from memory, saved in the database), MCP actions, agent activity, SSE, `ferramentas.json` and `instrucoes.txt` (the source of truth of the MCP, written in English) |
 | `src/http/` | the synchronous HTTP server (`tiny_http`), pure routes, static files with ETag and gzip, the versioned `/api/dados` |
 | `src/janela/` | the WebView2 window, tray and single instance (Windows only) |
 | `web/`, `blueprint.html` | the interface: CSS in `web/css`, classic scripts in `web/js` in the order listed in `blueprint.html`, language catalogs in `web/i18n` |
