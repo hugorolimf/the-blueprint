@@ -29,7 +29,7 @@ Tools (their names are fixed; their descriptions and the planning guide are writ
 | `vincular_pasta` | links the session's folder to a blueprint (the app keeps the link) |
 | `responder_conversa` | answers the user in the "Talk about the plan" panel of an action (the message arrives through the channel with the «The Blueprint · conversa do usuário» prefix); changes still go only as `propor_blueprint`. Memory only, needs the app open |
 
-**Importing GitHub issues:** there is no import tool. Ask your agent to "import the open issues of owner/name"; the `importar` guide topic makes it read them with `gh issue list` and send one proposal, which you review and apply on the Plan screen. Assignees and authors are never copied, and the text of an issue is treated as data, not as orders.
+**Importing GitHub issues:** there is no import tool. Ask your agent to "import the open issues of owner/name"; the `importar` guide topic makes it read them with `gh issue list` and send one proposal, which you review and apply on the Plan screen. Assignees and authors are never copied, and the text of an issue is treated as data, not as orders. `node scripts/importar-issues-e2e.mjs` checks the flow with no network and no agent: a recorded `gh issue list` output (`scripts/fixtures/gh-issues.json`) mapped by the topic's table goes through `blueprint --mcp`, lands in the numbered queue, and a wrong format (a milestone not declared as a project, a plan sent as done) is refused with a clear error.
 
 The guide the agent reads is in [`skills/blueprint-planejamento/`](../skills/blueprint-planejamento/SKILL.md).
 

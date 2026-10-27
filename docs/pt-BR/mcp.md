@@ -28,7 +28,7 @@ Ferramentas:
 | `vincular_pasta` | liga a pasta da sessão a um blueprint (o app guarda o vínculo) |
 | `responder_conversa` | responde ao usuário no painel "Conversar com o plano" de uma ação (a mensagem chega pelo canal com o prefixo «The Blueprint · conversa do usuário»); mudanças continuam só por `propor_blueprint`. Só memória, precisa do app aberto |
 
-**Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem.
+**Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem. `node scripts/importar-issues-e2e.mjs` confere o fluxo sem rede e sem agente: uma saída gravada do `gh issue list` (`scripts/fixtures/gh-issues.json`), mapeada pela tabela do tópico, passa pelo `blueprint --mcp`, entra na fila numerada, e o formato errado (marco não declarado como projeto, plano enviado como feito) é recusado com erro claro.
 
 O guia que o agente lê está em [`skills/blueprint-planejamento/`](../../skills/blueprint-planejamento/SKILL.md).
 
