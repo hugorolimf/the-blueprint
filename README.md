@@ -63,6 +63,7 @@ The guides are English first; each has a Portuguese version in [`docs/pt-BR/`](d
 | [Server and commands](docs/commands.md) | `blueprint serve`, environment variables, every subcommand |
 | [Development](docs/development.md) | `cargo dev`, tests, end-to-end checks |
 | [How it compares](docs/comparison.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
+| [Troubleshooting](docs/troubleshooting.md) | two processes, app closed, plugin missing, SmartScreen, update refused |
 
 ## FAQ
 

@@ -61,6 +61,7 @@ O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos c
 | [Servidor e comandos](docs/pt-BR/commands.md) | `blueprint serve`, variáveis de ambiente, todos os subcomandos |
 | [Desenvolvimento](docs/pt-BR/development.md) | `cargo dev`, testes, verificações de ponta a ponta |
 | [Comparação](docs/pt-BR/comparison.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
+| [Solução de problemas](docs/pt-BR/troubleshooting.md) | dois processos, app fechado, plugin ausente, SmartScreen, atualização recusada |
 
 ## Perguntas frequentes
 
