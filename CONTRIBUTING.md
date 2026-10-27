@@ -18,7 +18,7 @@ The model is **Workspace → Blueprint → Project (optional) → Action → Pla
 - `blueprint.html` uses CRLF line endings; edit it with care, without converting the whole file.
 - **No emojis** anywhere in the project. If you need a figure, draw it with Anatomy. Everything visual uses the app's own theme (`web/css/tokens.css`).
 - **Every text the user reads goes through `tr()`** and needs an English entry in `web/i18n/` (see [Develop and test](docs/development.md#languages)); `node scripts/i18n-completude.mjs` fails otherwise.
-- **Documentation is written in English first**; the Portuguese version lives in `docs/pt-BR/` with the same file name.
+- **Documentation is written in English first**; the Portuguese version lives in `docs/pt-BR/` with the same file name (rule and glossary in [Documentation languages](docs/development.md#documentation-languages)).
 
 ## Develop
 

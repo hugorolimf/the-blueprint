@@ -1,5 +1,7 @@
 # AI presentations: contract (internal)
 
+[Português](../pt-BR/interno/apresentacao-ia.md)
+
 Status: design contract, 2026-10-26. Blueprint App, project "Apresentacao", actions "Niveis e publicos das apresentacoes", "Gerar as apresentacoes do Atendimento" and "Gerar com IA na tela e no terminal". This file is the single source the three work streams (library, Rust, web) follow. Change it first, then the code.
 
 ## What it is

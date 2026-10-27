@@ -1,6 +1,6 @@
 # Instalar
 
-[Voltar ao README](../../README.pt-BR.md) · [English](../model.md)
+[Voltar ao README](../../README.pt-BR.md) · [English](../install.md)
 
 ## Windows 10/11 (janela, bandeja e instalador)
 
