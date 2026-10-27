@@ -9,6 +9,8 @@ import { abrirAmbiente, dormir, raiz } from "./gravar/nucleo.mjs";
 const exe = resolve(process.argv[2] || join(raiz, "target/debug/blueprint.exe"));
 const R = JSON.parse(readFileSync(join(raiz, "roadmap.json"), "utf8"));
 const visiveis = (A) => A.js(`[...document.querySelectorAll("#roadmap-tela .rm-card:not([hidden])")].filter((c) => !c.closest("[hidden]")).map((c) => c.dataset.id)`);
+// sob carga a reordenação (FLIP) pode passar dos 300 ms: espera até 3 s o conjunto esperado antes de comparar
+const visiveisQuando = async (A, esperado) => { let v = []; for (let i = 0; i < 30; i++) { v = (await visiveis(A)).sort(); if (v.join() === esperado.join()) break; await dormir(100); } return v; };
 const tecla = async (A, key, extra = {}) => {
   const base = { key, code: key.length === 1 ? "Key" + key.toUpperCase() : key, windowsVirtualKeyCode: { Escape: 27, Enter: 13, ArrowDown: 40, ArrowUp: 38 }[key] || key.toUpperCase().charCodeAt(0), ...extra };
   await A.cdp("Input.dispatchKeyEvent", { type: "keyDown", ...(key.length === 1 ? { text: key } : {}), ...base });
@@ -37,17 +39,17 @@ try {
 
   // filtro por estado (botão) e por tema
   await A.clicarEm('#roadmap-tela .rm-filtros [data-estado="proximo"]'); await dormir(300);
-  assert.deepEqual((await visiveis(A)).sort(), R.itens.filter((i) => i.estado === "proximo").map((i) => i.id).sort(), "filtra 'Next'");
+  { const e = R.itens.filter((i) => i.estado === "proximo").map((i) => i.id).sort(); assert.deepEqual(await visiveisQuando(A, e), e, "filtra 'Next'"); }
   await A.clicarEm('#roadmap-tela .rm-filtros [data-estado=""]');
   await A.clicarEm(`#roadmap-tela .rm-filtros [data-tema="agentes"]`); await dormir(300);
-  assert.deepEqual((await visiveis(A)).sort(), R.itens.filter((i) => i.tema === "agentes").map((i) => i.id).sort(), "filtra o tema Agent integration");
+  { const e = R.itens.filter((i) => i.tema === "agentes").map((i) => i.id).sort(); assert.deepEqual(await visiveisQuando(A, e), e, "filtra o tema Agent integration"); }
   await A.clicarEm('#roadmap-tela .rm-filtros [data-tema=""]');
 
   // busca pelo teclado: "/" foca, digita, o que não casa some, Esc limpa
   await tecla(A, "/");
   assert.equal(await A.js(`document.activeElement.type`), "search", "'/' foca a busca");
-  await A.cdp("Input.insertText", { text: "codex" }); await dormir(400);
-  assert.deepEqual(await visiveis(A), ["codex"], "a busca por 'codex' deixa só o item do Codex");
+  await A.cdp("Input.insertText", { text: "winget" }); await dormir(400); // termo de um item só (vários itens citam o Codex)
+  assert.deepEqual(await visiveisQuando(A, ["pacotes"]), ["pacotes"], "a busca por 'winget' deixa só o item do winget");
   await tecla(A, "Escape");
   assert.equal((await visiveis(A)).length, R.itens.length, "Esc limpa a busca");
   assert.equal(await A.js(`!document.getElementById("roadmap-tela").hidden`), true, "e não fecha a tela");
@@ -63,7 +65,7 @@ try {
   // atalhos de estado: 1 filtra entregues, 0 limpa; setas movem o foco; Enter abre
   await A.js(`document.activeElement.blur()`);
   await tecla(A, "1");
-  assert.deepEqual((await visiveis(A)).sort(), R.itens.filter((i) => i.estado === "entregue").map((i) => i.id).sort(), "'1' filtra o que foi entregue");
+  { const e = R.itens.filter((i) => i.estado === "entregue").map((i) => i.id).sort(); assert.deepEqual(await visiveisQuando(A, e), e, "'1' filtra o que foi entregue"); }
   await tecla(A, "0");
   await tecla(A, "ArrowDown"); await tecla(A, "ArrowDown");
   assert.equal(await A.js(`document.activeElement.classList.contains("rm-card")`), true, "as setas movem o foco entre os cartões");

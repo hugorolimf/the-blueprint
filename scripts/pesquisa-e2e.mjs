@@ -54,7 +54,13 @@ try {
   const foco = () => js(`document.activeElement?.id || document.activeElement?.tagName`);
   await cdp("Runtime.enable");
   await cdp("Page.enable");
-  const abrir = async (hash, busca = "") => { await cdp("Page.navigate", { url: `${url}/${busca}#${hash}` }); await dormir(3000); };
+  // espera a página carregar os dados (o exe debug em partida fria passa de 3 s), não um tempo fixo
+  const abrir = async (hash, busca = "") => {
+    await cdp("Page.navigate", { url: `${url}/${busca}#${hash}` });
+    await dormir(300);
+    for (let i = 0; i < 150 && !(await js(`typeof carregado !== "undefined" && carregado === true`).catch(() => false)); i++) await dormir(100);
+    await dormir(500);
+  };
   const sobreposicao = (periodo = true) => js(`(() => {
     const c = document.getElementById("busca").getBoundingClientRect();
     const cruza = (a, b) => a.left < b.right - 0.5 && a.right > b.left + 0.5 && a.top < b.bottom - 0.5 && a.bottom > b.top + 0.5;
