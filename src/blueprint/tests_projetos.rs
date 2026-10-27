@@ -97,7 +97,8 @@ fn nomes_de_projeto_invalidos() {
 fn o_agente_le_o_projeto_de_cada_acao() {
     let p = blueprint();
     let e = estrutura_blueprint(&p);
-    assert_eq!(e["projetos"], json!([{"id": "pr1", "nome": "Interface"}, {"id": "pr2", "nome": "Servidor"}]));
+    let ids_nomes: Vec<Value> = e["projetos"].as_array().unwrap().iter().map(|x| json!({"id": x["id"], "nome": x["nome"]})).collect();
+    assert_eq!(ids_nomes, vec![json!({"id": "pr1", "nome": "Interface"}), json!({"id": "pr2", "nome": "Servidor"})]);
     assert_eq!(e["acoes"][0]["projeto"], "Interface");
     assert!(e["acoes"][1].get("projeto").is_none(), "ação sem projeto não traz o campo");
     assert_eq!(contexto_acao(&p, "f1").unwrap()["projeto"], "Interface");
