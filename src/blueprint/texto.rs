@@ -29,10 +29,6 @@ pub fn truncar(s: &str, n: usize) -> String {
     s.chars().take(n).collect()
 }
 
-pub fn tamanho(s: &str) -> usize {
-    s.chars().count()
-}
-
 /// o valor como lista (vazia se não for lista)
 pub fn lista(v: Option<&Value>) -> &[Value] {
     match v {

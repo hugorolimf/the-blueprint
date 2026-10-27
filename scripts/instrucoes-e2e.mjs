@@ -1,4 +1,4 @@
-// Confere no Edge de verdade: Planejar abre só com a proposta, e as instruções da ação nascem lidas (markdown) e inteiras, com Editar/Visualizar; a folha da instrução também.
+// Confere no Edge: a proposta abre em leitura, instruções em detalhes e edição com prévia; a folha da ação também permite ler e editar.
 // Uso: node scripts/instrucoes-e2e.mjs [blueprint.exe]   (precisa do Microsoft Edge; interface lida da pasta)
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
@@ -53,13 +53,17 @@ try {
   assert.equal(await js(`document.getElementById("notificacao").hidden`), true, "e o aviso se fecha");
   // Planejar abre direto na proposta, sem a lista de blueprints, "pronto" nem "Tela cheia"
   assert.equal(await js(`[...document.querySelectorAll("#agente-tela .ed-lateral, #ag-estado, #ag-tela, #cu-abrir")].every((e) => getComputedStyle(e).display === "none")`), true, "Planejar só mostra a proposta: o resto do topo e a lateral somem");
-  // a instrução nasce lida (markdown) e inteira
+  // a revisão começa em leitura; as instruções ficam num bloco expansível
+  assert.equal(await js(`document.querySelector(".pf .pv-obs").open`), false, "as instruções começam recolhidas");
+  await js(`document.querySelector(".pf .pv-obs > summary").click()`);
   assert.equal(await js(`!!document.querySelector(".pf .obs-ver strong.md-rot")`), true, "o rótulo vira negrito");
   assert.equal(await js(`document.querySelectorAll(".pf .obs-ver ul li").length`), 2, "a lista vira lista");
   assert.equal(await js(`document.querySelector(".pf .obs-ver pre code").textContent`), "cargo test", "o bloco de código");
   assert.equal(await js(`document.querySelector(".pf .obs-ver").innerHTML.includes("<b>")`), false, "HTML do agente não vira tag");
-  assert.equal(await js(`(() => { const v = document.querySelector(".pf .obs-ver"); return v.scrollHeight <= v.clientHeight + 1 && !v.hidden && v.textContent.includes("Linha comprida"); })()`), true, "já expandida: o texto inteiro, sem rolagem interna");
-  assert.equal(await js(`document.querySelector(".pf .obs-edicao").hidden`), true, "o campo só aparece ao editar");
+  assert.equal(await js(`(() => { const v = document.querySelector(".pf .obs-ver"); return v.textContent.includes("Linha comprida") && v.getBoundingClientRect().height > 0; })()`), true, "o texto completo aparece ao expandir");
+  assert.equal(await js(`!!document.querySelector(".pf .obs-edicao")`), false, "o campo só aparece ao editar a ação");
+  await js(`document.querySelector('.pf [data-pact="editar-acao"]').click()`);
+  assert.equal(await js(`document.querySelector(".pf .obs-edicao").hidden`), true, "o campo fica escondido até editar as instruções");
   // Editar: o campo cresce até o texto; Visualizar: volta ao texto lido com o que foi digitado
   await js(`document.querySelector(".pf [data-obs=editar]").click()`);
   await dormir(200);
@@ -83,5 +87,5 @@ try {
   await dormir(200);
   assert.equal(await js(`(() => { const n = document.getElementById("nota-folha"); return n.dataset.modo === "editar" && !n.querySelector(".obs-edicao").hidden && !!n.querySelector(".obs-previa strong") && getComputedStyle(n.querySelector("[data-nmodo=editar]")).display !== "none"; })()`), true, "Editar mostra o campo e o Salvar");
   assert.deepEqual(erros, [], "sem erro no console");
-  console.log("instruções da ação: ok (Planejar enxuto, markdown legível e já expandido, Editar/Visualizar, folha da instrução). Captura em target/instrucoes-planejar.png");
+  console.log("instruções da ação: ok (revisão, markdown, Editar/Visualizar, folha da instrução). Captura em target/instrucoes-planejar.png");
 } finally { limpar(); }

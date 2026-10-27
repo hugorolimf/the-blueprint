@@ -29,7 +29,7 @@
  },
  {
   "name": "ler_blueprint",
-  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids, dates and what is done), today's date and the other blueprints in the workspace. In a large blueprint the structure is SUMMARIZED: actions in progress and the next planned ones stay complete; finished and distant planned actions shrink to one line (id, name, dates, project; no plans). `resumidas` says how many; pass incluir: \"tudo\" for everything, projeto to read one project, or acao_id for one action. With acao_id: that whole action (instructions, plan descriptions, prototypes). Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
+  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids, dates and what is done), today's date and the other blueprints in the workspace. In a large blueprint the structure is SUMMARIZED: actions in progress and the next planned ones stay complete; finished and distant planned actions shrink to one line (id, name, dates, project; no plans). `resumidas` says how many; pass incluir: \"tudo\" for everything, projeto to read one project, or acao_id for one action. With acao_id: that whole action (instructions, plan descriptions, prototypes and measured start/end when available). The blueprint may include tempoReal, an elapsed-time average including pauses. Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -189,7 +189,7 @@
           },
           "texto": {
            "type": "string",
-           "description": "Title: a verb in the infinitive form, up to 45 characters."
+           "description": "Title: a verb in the infinitive form."
           },
           "descricao": {
            "type": "string",
@@ -197,9 +197,8 @@
           },
           "horas": {
            "type": "number",
-           "minimum": 0.5,
-           "maximum": 16,
-           "description": "The agent's work estimate in hours (0.5 to 16; ideally 0.5 to 4; above 8, split the plan)."
+           "exclusiveMinimum": 0,
+           "description": "The agent's estimated work in hours, as a positive number."
           }
          }
         }
@@ -344,7 +343,7 @@
           },
           "texto": {
            "type": "string",
-           "description": "Title: a verb in the infinitive form, up to 45 characters."
+           "description": "Title: a verb in the infinitive form."
           },
           "descricao": {
            "type": "string",
@@ -352,9 +351,8 @@
           },
           "horas": {
            "type": "number",
-           "minimum": 0.5,
-           "maximum": 16,
-           "description": "Hours of work."
+           "exclusiveMinimum": 0,
+           "description": "Estimated hours of work, as a positive number."
           },
           "feito": {
            "type": "boolean",

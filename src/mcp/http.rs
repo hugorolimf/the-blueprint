@@ -38,7 +38,7 @@ pub fn rota(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let direto = |metodo: &str, rota: &str, corpo: Option<&str>| -> Result<(u16, String), String> {
         let cabecalhos = if corpo.is_some() { vec![("content-type".to_string(), "application/json".to_string())] } else { vec![] };
         let interno = Pedido::novo(metodo, &format!("/api/mcp/{rota}"), cabecalhos, corpo.map(|c| c.as_bytes().to_vec()).unwrap_or_default());
-        let r = super::rotas::rota_com(&estado.mcp, &estado.dados, &interno, ctx);
+        let r = super::rotas::rota_estado(estado, &interno, ctx);
         Ok((r.status, String::from_utf8_lossy(r.bytes()).into_owned()))
     };
     match crate::idioma::com(crate::idioma::Idioma::En, || tratar_via(&msg, Some(&direto))) {

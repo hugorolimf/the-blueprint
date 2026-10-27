@@ -51,7 +51,7 @@ async function mcpAplica(itens) {
   const ws = workspaceAtual?.id;
   if (!ws || !carregado) return; // sem workspace aberto, a fila espera: nada é aplicado a outro workspace
   const meus = itens.filter((i) => i.workspaceId === ws);
-  let muda = false, viu = false;
+  let muda = false, viu = false, atualizarHub = false;
   const soltar = new Set(); // propostas que não servem (blueprint que não existe mais): confirmadas já; as outras ficam na fila do servidor até o usuário aplicar ou descartar (filaConclui)
   const chave = (x) => `${x.id}|${x.em}`; // a fila é da memória do servidor: ao reiniciar, os números voltam a 1, e só o id faria a página ignorar eventos novos
   for (const i of meus.filter((x) => !mcpVistos.has(chave(x)))) {
@@ -62,11 +62,12 @@ async function mcpAplica(itens) {
         notificar(i);
         mcpFeed.push({ tipo: "registro", texto: tr("Registro nº {n} recebido: veja em ✦ Planejar e adicione ao blueprint o que quiser.", { n: i.numero }) });
         aviso(tr("O seu agente enviou um registro do que fez: abra ✦ Planejar para adicioná-lo ao blueprint."));
-        if (!hub.hidden) montaHub();
+        atualizarHub = true;
       }
       continue;
     }
     viu = true;
+    if (i.tipo !== "progresso" && i.tipo !== "bloqueio") atualizarHub = true;
     notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
     agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? "Proposta enviada: revise em ✦ Planejar." : i.texto, em: Date.now() };
     const nomeProj = D.blueprints.find((x) => x.id === i.blueprintId)?.nome;
@@ -112,7 +113,7 @@ async function mcpAplica(itens) {
   if (!meus.length) return;
   if (muda) mudarComSaida(tela);
   else if (viu) render(); // o robô mudou de lugar ou de fala
-  if (!hub.hidden && (viu || muda)) montaHub();
+  if (!hub.hidden && atualizarHub) montaHub();
   const ids = meus.filter((x) => x.tipo !== "registro" && !(x.tipo === "proposta" && x.numero != null && !soltar.has(x.id))).map((x) => x.id);
   if (ids.length) try { await fetch("/api/mcp/fila/ack", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids }) }); } catch {}
 }

@@ -1,0 +1,9 @@
+#escala-dia-label[hidden]{display:none}
+#escala-dia-label{display:inline-flex;align-items:center;gap:6px;color:var(--mid)}
+#escala-dia{color:var(--ink);background:var(--paper);border:1px solid var(--mid);padding:4px;font:inherit}
+.acao.horas-on > :is(.caixa,.hach,.prog,.checkpoint,.realce,.cota,.selo,[data-horas-dias]){display:none}
+.horas-previsto{fill:var(--lo);stroke:var(--ink);stroke-width:.8}
+.horas-real{fill:var(--ink);stroke:var(--ink);stroke-width:.5}
+.horas-previsto:focus-visible,.horas-real:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.horas-desvio{fill:var(--paper);pointer-events:none;font-weight:700}
+@media print{.horas-regua,.horas-acao{display:none!important}.acao.horas-on > :is(.caixa,.hach,.prog,.checkpoint,.realce,.cota,.selo,[data-horas-dias]),svg.desenho .regua{display:inline!important}#escala-dia-label{display:none!important}}

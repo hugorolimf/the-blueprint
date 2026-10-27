@@ -4,6 +4,27 @@
 // (ações sem projeto ou com um projeto que não existe mais) vem por último. As ações são numeradas POR PROJETO (02.3 = projeto 2, ação 3); blueprint sem
 // `projetos` é desenhado e numerado como sempre foi (1.5 = blueprint 1, ação 5). O que o usuário abre fica só neste navegador; não há timer nem animação.
 const CHAVE_PROJETOS = "blueprint.projetosAbertos";
+// Quebra títulos sem cortar palavras longas nem limitar a quantidade de linhas.
+function linhasDoPlano(texto, largura) {
+  const linhas = [], limite = Math.max(1, largura | 0);
+  for (const paragrafo of String(texto).split("\n")) {
+    let linha = "";
+    for (const palavra of paragrafo.trim().split(/\s+/u).filter(Boolean)) {
+      const letras = Array.from(palavra);
+      let inicio = 0;
+      while (letras.length - inicio > limite) {
+        if (linha) { linhas.push(linha); linha = ""; }
+        linhas.push(letras.slice(inicio, inicio + limite).join(""));
+        inicio += limite;
+      }
+      const resto = letras.slice(inicio).join("");
+      if (linha && Array.from(linha).length + 1 + letras.length - inicio > limite) { linhas.push(linha); linha = ""; }
+      linha += (linha ? " " : "") + resto;
+    }
+    linhas.push(linha);
+  }
+  return linhas;
+}
 const projetosAbertos = (() => {
   try {
     const v = JSON.parse(localStorage.getItem(CHAVE_PROJETOS) || "[]");

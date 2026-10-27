@@ -75,20 +75,3 @@ function claudePosicao(tipo, ancora, indice, larguras) {
   const k = resto > 0 ? Math.min(1, (CLAUDE_LINHA_MAX - larguras[0]) / resto) : 1; // fração do passo que sobra para as figuras caberem
   return { x: Math.round(apoio.dir - larguras[0] - k * passos(indice)), base: Math.round(apoio.base) };
 }
-
-// ---- o Claude esperando (só da interface, não é agente): na PRÓXIMA ação de cada blueprint, pronto para começar; contrato em docs/claude-na-folha.md ----
-// próxima = a primeira ação não concluída (por data de início; empate: a ordem do blueprint) com plano pendente e nenhum agente trabalhando nela.
-// `p`: { acoes: [{ id, status, inicio, planos: [{ feito }] }] }; `ags`: os agentes do blueprint (agentesDoBlueprint: acaoId e estado). Devolve a ação ou null.
-function claudeProximaAcao(p, ags = []) {
-  const ocupada = (f) => ags.some((a) => a.acaoId === f.id && a.estado !== "ocioso"); // o concluído ainda não visto também ocupa a ação
-  const candidatas = (p?.acoes || []).map((f, i) => ({ f, i })).filter(({ f }) => f.status !== "concluido" && (f.planos || []).some((t) => !t.feito) && !ocupada(f));
-  candidatas.sort((a, b) => String(a.f.inicio || "").localeCompare(String(b.f.inicio || "")) || a.i - b.i);
-  return candidatas[0]?.f || null;
-}
-// o "agente" de espera: só leva o que a figura usa (pose esperando = estado aguardando, o texto da dica e a ação que o clique abre)
-const claudeAgenteEspera = (p, f, numero) => ({ agente: "~espera", estado: "aguardando", blueprintId: p.id, acaoId: f.id, planoId: "", em: 0, espera: true, texto: tr("Esperando para começar a ação {numero} · {nome}", { numero, nome: f.nome || tr("sem nome") }) });
-// o item da figura de espera: ao lado da barra da ação (`acao:<id>`) se ela está à vista e aberta; senão no cabeçalho do blueprint, depois dos que já estão lá (`itens`)
-function claudeItemEspera(p, f, numero, acaoVisivel, itens, secaoDe = () => null) {
-  const secao = secaoDe(f.id), lugar = acaoVisivel(f.id) ? `acao:${f.id}` : secao ? `secao:${secao}` : `cab:${p.id}`;
-  return { lugar, indice: itens.filter((it) => it.lugar === lugar).length, a: claudeAgenteEspera(p, f, numero), papel: null, principal: false, espera: true };
-}

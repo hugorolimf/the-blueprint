@@ -43,6 +43,47 @@ fn evento_sem_acao_ou_recusado_nao_entra() {
 }
 
 #[test]
+fn os_horarios_sobrevivem_ao_reinicio_sem_confirmar_o_plano() {
+    use crate::{contexto::Contexto, dados::Dados};
+    use std::sync::Mutex;
+    let path = std::env::temp_dir().join(format!("blueprint-tempos-{}.db", std::process::id()));
+    let mut db = Dados::abrir(&path).unwrap();
+    let original = dados().lock().unwrap().ler_tudo(&Contexto::local()).unwrap().clone();
+    db.gravar_tudo(&Contexto::local(), &original).unwrap();
+    let db = Mutex::new(db);
+    let m = mcp();
+    let evento = |tipo| json!({"tipo": tipo, "texto": "verificado", "workspaceId": "sm", "blueprintId": "p1", "acaoId": "f2", "planoId": "t2"});
+    let inicio = reenviar(&m, &db, "evento", &evento("progresso")).1["em"].clone();
+    let fim = reenviar(&m, &db, "evento", &evento("concluir")).1["em"].clone();
+    reenviar(&m, &db, "evento", &evento("progresso"));
+    drop(db);
+    let mut reaberto = Dados::abrir(&path).unwrap();
+    let tudo = reaberto.ler_tudo(&Contexto::local()).unwrap();
+    let plano = &tudo["blueprints"][0]["acoes"][1]["planos"][0];
+    assert_eq!(plano["agente"]["inicioEm"], inicio);
+    assert_eq!(plano["agente"]["feitoEm"], fim);
+    assert_eq!(plano["feito"], false);
+    reaberto.gravar_tudo(&Contexto::local(), &original).unwrap();
+    let restaurado = reaberto.ler_tudo(&Contexto::local()).unwrap();
+    assert!(restaurado["blueprints"][0]["acoes"][1]["planos"][0].get("agente").is_none(), "restaurar backup anterior não herda os horários posteriores");
+    drop(reaberto);
+    for sufixo in ["", "-wal", "-shm"] { let _ = std::fs::remove_file(format!("{}{sufixo}", path.display())); }
+}
+
+#[test]
+fn conclusao_sem_inicio_nao_inventa_inicio_nem_e_sobrescrita() {
+    let d = dados();
+    let mut db = d.lock().unwrap();
+    db.registrar_tempo_plano("t2", "concluir", "2026-10-26T10:00:00.000Z").unwrap();
+    db.registrar_tempo_plano("t2", "progresso", "2026-10-26T11:00:00.000Z").unwrap();
+    db.registrar_tempo_plano("t2", "concluir", "2026-10-26T12:00:00.000Z").unwrap();
+    let tudo = db.ler_tudo(&crate::contexto::Contexto::local()).unwrap();
+    let agente = &tudo["blueprints"][0]["acoes"][1]["planos"][0]["agente"];
+    assert_eq!(agente["feitoEm"], "2026-10-26T10:00:00.000Z");
+    assert!(agente.get("inicioEm").is_none());
+}
+
+#[test]
 fn o_filtro_corta_o_texto_e_usa_o_checkpoint_como_alvo() {
     let item = json!({"tipo": "bloqueio", "texto": "x".repeat(500), "acaoId": "a", "planoId": "p", "onde": ["a.rs", "b.rs"]});
     let e = da_fila(&item).unwrap();

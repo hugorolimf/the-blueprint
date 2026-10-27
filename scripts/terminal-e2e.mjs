@@ -39,7 +39,7 @@ try {
   await cdp("Runtime.enable");
   await cdp("Performance.enable");
   await cdp("Page.navigate", { url: `${servidor.url}/#/p/bp1a2b3` });
-  await espera(`!!document.querySelector("#claude-camada [data-espera]")`, "a folha do blueprint abriu");
+  await espera(`!!document.querySelector('[data-obs="bp1a2b3|ac1a002"]')`, "a folha do blueprint abriu");
 
   // 1. nada do xterm na página até o terminal abrir
   assert.equal(await js(`typeof globalThis.Terminal`), "undefined", "o xterm não carrega com a página");
@@ -51,7 +51,7 @@ try {
   const cpuSemTerminal = await cpuEm5s(); // a base: a mesma página, sem o terminal
 
   // 2. Iniciar com o Claude > Terminal do app (o padrão do diálogo)
-  await js(`document.querySelector("#claude-camada [data-espera]").click()`);
+  await js(`document.querySelector('[data-obs="bp1a2b3|ac1a002"]').dispatchEvent(new MouseEvent("click", { bubbles: true }))`);
   await dormir(600);
   await js(`[...document.querySelectorAll("#nota-folha [data-nacao]")].find((b) => b.textContent === "Iniciar com o Claude").click()`);
   await espera(`!!document.querySelector("dialog.escolher-sessao[open]")`, "o diálogo de iniciar abre");

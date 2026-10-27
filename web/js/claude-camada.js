@@ -30,7 +30,6 @@ function claudeAncoras(svg) {
   const q = (s) => host.querySelector(s);
   return {
     plano: (id) => caixa(q(`.robo-linha[data-plano="${CSS.escape(id)}"]`)),
-    acao: (id) => (q(`.acao[data-f="${CSS.escape(id)}"] .cota`) ? caixa(q(`.acao[data-f="${CSS.escape(id)}"] .caixa`)) : null), // a barra da ação, só com ela aberta (as compactas não têm espaço para a figura)
     barra: (id) => caixa(q(`.acao[data-f="${CSS.escape(id)}"] .caixa`)), // a barra da ação, aberta ou compacta (o agente fica ao lado dela quando a linha do plano não está desenhada)
     // a chave da seção (o projeto) da ação: a da seção em que a ação está desenhada ou, se ela não está à vista (filtro, período), a do projeto dela nos dados
     secao: (id) => {
@@ -44,21 +43,15 @@ function claudeAncoras(svg) {
     lugar: (id) => (tela ? { tipo: "cab", ...caixa(q(`[data-proj="${CSS.escape(id)}"] .cab`)) } : { tipo: "cartao", ...caixa(q(`[data-goto="${CSS.escape(id)}"] .moldura`)) }),
   };
 }
-// o Claude esperando (só da interface): a próxima ação do blueprint aberto, ou null (na lista de blueprints não há espera)
-function claudeEsperaDe(id, ags) {
-  const p = tela === id ? D.blueprints.find((x) => x.id === id) : null, f = p && claudeProximaAcao(p, ags);
-  return f ? { p, f } : null;
-}
 function claudeItensDaTela(ancoras) { // todos os itens da tela: o blueprint aberto ou, na lista, um grupo por cartão
   const ids = tela ? [tela] : D.blueprints.map((p) => p.id), todos = [];
   for (const id of ids) {
-    const ags = agentesDoBlueprint(id), esp = claudeEsperaDe(id, ags);
-    if (!ags.length && !esp) continue;
+    const ags = agentesDoBlueprint(id);
+    if (!ags.length) continue;
     const base = ancoras.lugar(id), onde = { barra: (fid) => !!ancoras.barra(fid), secao: (fid) => (ancoras.caixaSecao(ancoras.secao(fid) || "")?.w ? ancoras.secao(fid) : null) };
     const itens = ags.length ? claudeItens(ags, (pid) => !!ancoras.plano(pid), onde) : [];
-    if (esp) itens.push(claudeItemEspera(esp.p, esp.f, numeroDaAcao(esp.p, esp.f), (fid) => !!ancoras.acao(fid), itens, onde.secao)); // fora do limite de figuras: não é agente
     for (const it of itens) {
-      const [tipoLugar, idLugar] = it.lugar.split(/:(.*)/s), caixa = tipoLugar === "plano" ? ancoras.plano(idLugar) : tipoLugar === "acao" ? ancoras.acao(idLugar) : tipoLugar === "barra" ? ancoras.barra(idLugar) : tipoLugar === "secao" ? ancoras.caixaSecao(idLugar) : base;
+      const [tipoLugar, idLugar] = it.lugar.split(/:(.*)/s), caixa = tipoLugar === "plano" ? ancoras.plano(idLugar) : tipoLugar === "barra" ? ancoras.barra(idLugar) : tipoLugar === "secao" ? ancoras.caixaSecao(idLugar) : base;
       if (caixa?.w) todos.push({ ...it, caixa, tipo: tipoLugar === "cab" || tipoLugar === "secao" ? base.tipo : "plano", bp: id }); // cabeçalho (do blueprint ou da seção) tem o seu jeito de apoiar; o resto fica ao lado da linha/barra
     }
   }
@@ -67,7 +60,7 @@ function claudeItensDaTela(ancoras) { // todos os itens da tela: o blueprint abe
 
 // ---- reconcilia a camada com a folha: cria, move, troca de pose e remove ----
 function claudeCamadaAtualiza() {
-  const svg = host.querySelector("svg.desenho"), ativos = svg && workspaceAtual && carregado ? agentesAtivos().length || agenteAqui() || (tela && claudeEsperaDe(tela, agentesDoBlueprint(tela))) : null;
+  const svg = host.querySelector("svg.desenho"), ativos = svg && workspaceAtual && carregado ? agentesAtivos().length || agenteAqui() : null;
   if (ativos) claudeCarrega();
   if (!ativos || !claudeMod || !EMB) { claudeLimpa(new Set()); return; }
   const itens = claudeItensDaTela(claudeAncoras(svg)), vistos = new Set();
@@ -79,7 +72,7 @@ function claudeCamadaAtualiza() {
   for (const it of itens) {
     const pos = claudePosicao(it.tipo, it.caixa, it.indice, grupo.get(it.bp + it.lugar)), nome = it.a.agente || "~evento";
     vistos.add(nome);
-    claudePoe(nome, it, pos, it.espera ? it.a : principais.get(it.bp)); // a espera é do Claude principal (sem papel)
+    claudePoe(nome, it, pos, principais.get(it.bp));
   }
   claudeLimpa(vistos);
 }
@@ -115,7 +108,6 @@ function claudePoe(nome, it, pos, principal) {
     el.style.transform = `translate(${pos.x}px,${y}px)`;
     claudeEntra(el);
   }
-  if (a.espera) { r.el.dataset.espera = a.acaoId; r.el.dataset.bp = a.blueprintId; } // o clique abre a folha desta ação (abreFolhaDaAcao)
   const f = claudeFigura(a, principal, false, claudeMod.poseDoEstado);
   r.dados = { a, f, extras: it.extras || 0 };
   r.el.style.zIndex = 20 - it.indice; // juntas, a mais perto do lugar (o principal) fica por cima
@@ -135,8 +127,8 @@ function claudeFixa(r, x, y) {
 }
 function claudeRotula(r) { // aria, dica e SVG da pose; durante o deslocamento o SVG só troca no fim
   const { a, f, extras } = r.dados;
-  r.el.setAttribute("aria-label", a.espera ? tr("Claude esperando: abrir a ação para iniciar") : tr("Ver o que {agente} está fazendo", { agente: a.agente || tr("o agente") }));
-  r.el.title = a.espera ? tr("{texto}. Clique para abrir a ação e iniciar com o Claude.", { texto: a.texto }) : `${a.agente || tr("Agente")}${a.texto ? ": " + umaLinha(a.texto, 140) : ""}${extras ? " " + trn(extras, ["(mais {n} agente junto aqui)", "(mais {n} agentes juntos aqui)"]) : ""}`;
+  r.el.setAttribute("aria-label", tr("Ver o que {agente} está fazendo", { agente: a.agente || tr("o agente") }));
+  r.el.title = `${a.agente || tr("Agente")}${a.texto ? ": " + umaLinha(a.texto, 140) : ""}${extras ? " " + trn(extras, ["(mais {n} agente junto aqui)", "(mais {n} agentes juntos aqui)"]) : ""}`;
   r.el.classList.toggle("erro", f.pose === "bloqueado");
   if (r.chave !== f.chave && !r.anim) { r.el.innerHTML = claudeHtmlPose(f.papel, f.pose); r.chave = f.chave; claudeVidaLiga(r); }
 }
@@ -174,6 +166,6 @@ addEventListener("resize", () => { cancelAnimationFrame(claudeAjuste); claudeAju
 
 // clicar na figura abre a folhinha do que o agente faz agora (só leitura; abreNotaRobo está em robo.js)
 const claudeDe = (e) => e.target.closest?.("[data-robo-nome]");
-const claudeAbre = (f) => (f.dataset.espera ? abreFolhaDaAcao(f.dataset.bp, f.dataset.espera, f) : abreNotaRobo(f)); // a espera abre a folha da ação; o agente, o que ele faz
+const claudeAbre = (f) => abreNotaRobo(f);
 camadaClaude.addEventListener("click", (e) => { const f = claudeDe(e); if (f) claudeAbre(f); });
 camadaClaude.addEventListener("keydown", (e) => { const f = (e.key === "Enter" || e.key === " ") && claudeDe(e); if (f) { e.preventDefault(); claudeAbre(f); } });

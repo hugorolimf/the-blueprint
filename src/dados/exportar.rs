@@ -58,6 +58,18 @@ fn agrupar(linhas: Vec<Linha>, filhas: &mut [(&str, &mut Grupos)]) -> Grupos {
 pub fn exportar(conn: &Connection) -> Resultado<Value> {
     let mut comentarios = agrupar(carregar(conn, &COMENTARIOS)?, &mut []);
     let mut planos = carregar(conn, &PLANOS)?;
+    let mut consulta_tempos = conn.prepare("SELECT plano_id, inicio_em, fim_em FROM tempos_planos")?;
+    let tempos: HashMap<String, (Option<String>, Option<String>)> = consulta_tempos.query_map([], |l| Ok((l.get(0)?, (l.get(1)?, l.get(2)?))))?.collect::<Result<_, _>>()?;
+    for p in &mut planos {
+        if let Some((inicio, fim)) = p.id.as_ref().and_then(|id| tempos.get(id)) {
+            let agente = p.obj.entry("agente".to_string()).or_insert_with(|| serde_json::json!({}));
+            if let Some(a) = agente.as_object_mut() {
+                for (chave, valor) in [("inicioEm", inicio), ("feitoEm", fim)] {
+                    if let Some(valor) = valor { a.entry(chave.to_string()).or_insert_with(|| Value::String(valor.clone())); }
+                }
+            }
+        }
+    }
     for p in planos.iter_mut().filter(|p| p.listas.iter().any(|x| x == LISTA_COMENTARIOS)) {
         let itens = p.id.as_ref().and_then(|id| comentarios.remove(id)).unwrap_or_default();
         if let Some(Value::Object(agente)) = p.obj.get_mut("agente") {

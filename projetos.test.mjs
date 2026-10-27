@@ -15,7 +15,7 @@ const ctx = vm.createContext({
 });
 const carrega = (arquivo) => vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", arquivo), "utf8"), ctx, { filename: arquivo });
 ["i18n.js", "base.js", "dados.js", "projetos.js", "expandir.js"].forEach(carrega); // expandir.js: alternarProjeto passa por animarAbrirFechar (sem folha na tela, só muda e desenha)
-vm.runInContext("this.api = { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe };", ctx);
+vm.runInContext("this.api = { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe, linhasDoPlano };", ctx);
 const { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe } = ctx.api;
 
 const acao = (id, inicio, fim, extra = {}) => ({ id, nome: id.toUpperCase(), inicio, fim, status: "planejado", progresso: 0, obs: "", planos: [], checkpoints: [], ...extra });
@@ -27,6 +27,9 @@ const comProjetos = () => blueprint({ projetos: [{ id: "pr1", nome: "Interface" 
 // a geometria que o render.js põe em cada ação (aqui só o que o layout lê)
 const geometria = (lista) => lista.map((f) => ({ ...f, x0: 100 + (f.a - 20000) * 4, x1: 120 + (f.a - 20000) * 4, alt: 200 }));
 const json = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
+assert.deepEqual(json(ctx.api.linhasDoPlano("Mostrar um plano com título comprido", 12)), ["Mostrar um", "plano com", "título", "comprido"]);
+assert.deepEqual(json(ctx.api.linhasDoPlano("abcdefghijk", 4)), ["abcd", "efgh", "ijk"]);
+assert.deepEqual(json(ctx.api.linhasDoPlano("primeira\nsegunda", 20)), ["primeira", "segunda"]);
 const op = (aberto) => ({ aberto, RH: 124, PH: 96, FOLGA: 76, de: (f) => f.x0, ate: (f) => f.x1 + 6 });
 
 // sem projetos nada muda: sem grupos, a numeração é <blueprint>.<posição>, uma linha por ação que não cabe ao lado e a altura de sempre

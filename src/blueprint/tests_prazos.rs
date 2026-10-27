@@ -37,9 +37,12 @@ fn horas_validas_viram_numero_e_aceitam_virgula() {
 }
 
 #[test]
-fn horas_fora_da_faixa_sao_erro_e_acima_de_8_so_avisa() {
-    let r = novo(vec![acao("2026-10-22", "2026-10-23", "", vec![plano(1, json!({"horas": 0.1})), plano(2, json!({"horas": 20})), plano(3, json!({"horas": "muito"}))])]);
-    assert_eq!(r.erros.iter().filter(|e| e.contains("`horas` deve ser um número de 0,5 a 16")).count(), 3, "{:?}", r.erros);
+fn horas_positivas_nao_tem_limite_e_valores_invalidos_sao_erro() {
+    let r = novo(vec![acao("2026-10-22", "2026-10-23", "", vec![plano(1, json!({"horas": 0.1})), plano(2, json!({"horas": 20})), plano(3, json!({"horas": 1.25}))])]);
+    assert!(r.erros.is_empty(), "{:?}", r.erros);
+    assert_eq!(r.proposta.unwrap()["acoes"][0]["planos"][2]["horas"], 1.25);
+    let r = novo(vec![acao("2026-10-22", "2026-10-23", "", vec![plano(1, json!({"horas": 0})), plano(2, json!({"horas": -1})), plano(3, json!({"horas": "muito"}))])]);
+    assert_eq!(r.erros.iter().filter(|e| e.contains("`horas` deve ser um número positivo")).count(), 3, "{:?}", r.erros);
     let r = novo(vec![acao("2026-10-22", "2026-10-24", "", vec![plano(1, json!({"horas": 10})), plano(2, json!({"horas": 2})), plano(3, json!({"horas": 2}))])]);
     assert!(r.erros.is_empty() && tem(&r.avisos, "10 h é muito para um plano"), "{:?} {:?}", r.erros, r.avisos);
 }
@@ -112,4 +115,14 @@ fn a_estrutura_mostra_as_horas_e_a_media_real_so_com_3_planos_medidos() {
     assert_eq!(dois["acoes"][0]["planos"][0]["horas"], 2);
     let tres = estrutura_blueprint(&com_planos(vec![a, b, c]));
     assert_eq!(tres["tempoReal"], json!({"planosMedidos": 3, "horasPorPlano": 2.0}), "(2 + 1 + 3) / 3");
+    let curtos = (1..=3).map(|i| medido(&format!("t{i}"), "2026-10-22T10:00:00.000Z", "2026-10-22T10:01:00.000Z")).collect();
+    assert_eq!(estrutura_blueprint(&com_planos(curtos))["tempoReal"]["horasPorPlano"], 0.017, "medições curtas não arredondam para zero");
+}
+
+#[test]
+fn a_acao_completa_mostra_os_instantes_medidos_sem_expor_o_resto_do_agente() {
+    let p = com_planos(vec![medido("t1", "2026-10-22T08:00:00.000Z", "2026-10-22T10:00:00.000Z")]);
+    let acao = super::contexto_acao(&p, "a1").unwrap();
+    assert_eq!(acao["planos"][0]["tempoReal"], json!({"inicioEm": "2026-10-22T08:00:00.000Z", "feitoEm": "2026-10-22T10:00:00.000Z"}));
+    assert!(acao["planos"][0].get("agente").is_none());
 }

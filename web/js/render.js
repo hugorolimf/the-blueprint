@@ -96,7 +96,9 @@ function render() {
       // título, planos e checkpoints formam um bloco alinhado à esquerda, ao centro ou à direita da folha, conforme o terço do tempo em que a barra está (só 3 alinhamentos: acompanha o tempo e continua em colunas)
       const bloco3 = Math.min(Math.max(w, blockW), R - L - 8), terco = (bx0 + bw / 2 - L) / (R - L);
       const lx = terco < 1 / 3 ? L + 4 : terco > 2 / 3 ? R - bloco3 : (L + R - bloco3) / 2, bx = lx;
-      return { ...f, rotulo, x0, x1, bw, bx0, lx, lw: w, bx, blockW, alt: ncol ? 100 + 34 + Math.max(nt, nm) * 22 + 44 : RH };
+      const linhasPlanos = f.planos.map((t) => linhasDoPlano(t.texto || tr("sem texto"), Math.floor((COLW - 28) / 7.3)));
+      const alturaPlanos = linhasPlanos.reduce((s, linhas) => s + Math.max(22, linhas.length * 14 + 8), 0);
+      return { ...f, linhasPlanos, rotulo, x0, x1, bw, bx0, lx, lw: w, bx, blockW, alt: ncol ? 100 + 34 + Math.max(alturaPlanos, nm * 22) + 44 : RH };
     });
     const medida = (aberto) => ({ aberto, RH, PH, FOLGA, de: aberto ? (f) => Math.min(f.lx, f.bx, f.bx0) : (f) => f.x0, ate: aberto ? (f) => Math.max(f.lx + f.lw, f.bx0 + f.bw + 56, f.bx + f.blockW) + 24 : (f) => f.x1 + 6 });
     const grupos = gruposDoBlueprint(p, acoes, acoesDe(p)), filtrando = soPendentes[p.id] || soAndamento[p.id] || soMeus[p.id], GAP_SECAO = 28, secoes = [];
@@ -305,8 +307,8 @@ function render() {
           out.push(`<rect ${anima(nf, "surge", "prog")} x="${g.x0 + 1}" y="${by + 1}" width="${Math.max(0, (w - 2) * f.pct)}" height="${bh - 2}"/>`);
         }
         // porcentagem da ação: vem dos planos e checkpoints marcados (ou do valor digitado, se a ação não tiver nenhum)
-        out.push(`<text ${anima(nf, "surge")} x="${Math.min(g.x1 + 20, R + 4)}" y="${by + 17}" font-size="12" font-weight="700">${Math.round(f.pct * 100)}%</text>`);
-        if (f.it[1]) out.push(`<text class="mid" ${anima(nf, "surge")} x="${Math.min(g.x1 + 20, R + 4)}" y="${by + 31}" font-size="9">${f.it[0]}/${f.it[1]}</text>`);
+        out.push(`<text data-horas-dias ${anima(nf, "surge")} x="${Math.min(g.x1 + 20, R + 4)}" y="${by + 17}" font-size="12" font-weight="700">${Math.round(f.pct * 100)}%</text>`);
+        if (f.it[1]) out.push(`<text class="mid" data-horas-dias ${anima(nf, "surge")} x="${Math.min(g.x1 + 20, R + 4)}" y="${by + 31}" font-size="9">${f.it[0]}/${f.it[1]}</text>`);
         out.push(checkpoints(by + bh / 2, 7, g));
         out.push(`<rect class="realce" x="${g.x0 - 4}" y="${by - 4}" width="${w + 8}" height="${bh + 8}"/>`);
         // cota: duração entre as duas datas, com traços oblíquos nas pontas
@@ -323,11 +325,16 @@ function render() {
           let cx0 = f.bx;
           if (f.planos.length) {
             gl.push(cab(cx0, tr("Planos"), f.tf[0], f.tf[1]));
+            let deslocamento = 0;
             f.planos.forEach((t, i) => {
-              const yy = base + 30 + i * 22, nome = t.texto || tr("sem texto");
-              gl.push(`<g ${atr("t", t, tr("PLANO: {nome} · {estado} · clique para marcar", { nome, estado: t.feito ? tr("FEITO") : tr("PENDENTE") }))}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/><rect class="cx${t.feito ? " ok" : ""}" x="${cx0}" y="${yy - 11}" width="13" height="13"/>${t.feito ? `<path class="cxm" d="M${cx0 + 3} ${yy - 4}l3 3l5-6"/>` : ""}<text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${esc(corta(nome, maxc))}</text></g>`);
+              const yy = base + 30 + deslocamento, nome = t.texto || tr("sem texto"), linhas = f.linhasPlanos[i], altura = Math.max(22, linhas.length * 14 + 8);
+              deslocamento += altura;
+              const nomeNormalizado = nome.replace(/\s+/gu, " ").trim();
+              let posicao = 0;
+              const textoLinhas = linhas.map((linha, n) => { posicao += linha.length; const espaco = nomeNormalizado[posicao] === " " ? (posicao++, " ") : ""; return `<tspan x="${cx0 + 22}" dy="${n ? 14 : 0}">${esc(linha + espaco)}</tspan>`; }).join("");
+              gl.push(`<g ${atr("t", t, tr("PLANO: {nome} · {estado} · clique para marcar", { nome, estado: t.feito ? tr("FEITO") : tr("PENDENTE") }))}><rect fill="transparent" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="${altura}"/><rect class="foco2" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="${altura}"/><rect class="cx${t.feito ? " ok" : ""}" x="${cx0}" y="${yy - 11}" width="13" height="13"/>${t.feito ? `<path class="cxm" d="M${cx0 + 3} ${yy - 4}l3 3l5-6"/>` : ""}<text class="tx" x="${cx0 + 22}" y="${yy}" font-size="11">${linhas.length === 1 ? esc(linhas[0]) : textoLinhas}</text></g>`);
               const aqui = agsP.filter((x) => x.planoId === t.id);
-              if (aqui.length) gl.push(`<rect class="robo-linha${roboClasse(aqui[0])}" data-plano="${esc(t.id)}" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="22"/>`);
+              if (aqui.length) gl.push(`<rect class="robo-linha${roboClasse(aqui[0])}" data-plano="${esc(t.id)}" x="${cx0 - 4}" y="${yy - 15}" width="${COLW - 12}" height="${altura}"/>`);
             });
             cx0 += COLW + 30;
           }
@@ -353,6 +360,7 @@ function render() {
   };
 
   host.innerHTML = bloco ? folhaBlueprint(bloco) : capa();
+  horasAtualiza();
   posicionaMarca();
   const alvo = [...host.querySelectorAll(".acao")].find((g) => g.getAttribute("aria-label") === selecionada);
   if (alvo) marcar(alvo);

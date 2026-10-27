@@ -33,8 +33,14 @@ function pesqMede(textos, termos) {
     const n = el.getNumberOfChars(), rects = [];
     for (const [i, j] of pesqTrechos(el.textContent, termos)) {
       if (j > n) continue;
-      const a = el.getExtentOfChar(i), b = el.getExtentOfChar(j - 1);
-      rects.push([a.x - 1.5, a.y, b.x + b.width - a.x + 3, a.height]);
+      let inicio = i;
+      for (let k = i + 1; k <= j; k++) {
+        const a = el.getExtentOfChar(inicio), b = el.getExtentOfChar(k - 1);
+        if (k === j || el.getExtentOfChar(k).y !== a.y) {
+          rects.push([a.x - 1.5, a.y, b.x + b.width - a.x + 3, a.height]);
+          inicio = k;
+        }
+      }
     }
     if (rects.length) feitos.push([el, rects]);
   }

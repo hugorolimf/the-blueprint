@@ -1,6 +1,6 @@
 // Confere os agentes na folha no navegador de verdade (Edge sem janela): liga o servidor Rust com uma cópia dos dados, simula três agentes pelo
 // /api/mcp e confere uma figura do Claude por agente, cada uma no plano dele (variante por papel), o deslocamento quando o agente muda de plano
-// (some a animação ao parar; sem animar com prefers-reduced-motion), o agrupamento das figuras (sem contador "+N"), a folhinha ao clicar o repouso, o Claude esperando na próxima ação, o botão Iniciar com o Claude e o concluído que sai ao fechar a mensagem.
+// (some a animação ao parar; sem animar com prefers-reduced-motion), o agrupamento das figuras (sem contador "+N"), a folhinha ao clicar o repouso, o botão Iniciar com o Claude e o concluído que sai ao fechar a mensagem.
 // (O painel "Agentes trabalhando agora" saiu: as figuras estão na própria folha.) Grava a captura em target/painel-agentes.png.
 // Uso: node scripts/painel-agentes-e2e.mjs [blueprint.exe]   (precisa do Microsoft Edge)
 import assert from "node:assert/strict";
@@ -41,11 +41,8 @@ try {
   await cdp("Runtime.enable");
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(2500);
-  const figuras = () => js(`[...document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])")].map((e) => ({ nome: e.dataset.roboNome, rotulo: e.querySelector("svg")?.getAttribute("aria-label") || "", t: e.style.transform }))`);
-  const parado = () => js(`({ animacoes: document.getAnimations().filter((a) => { const t = a.effect?.target?.closest?.("#claude-camada .claude-fig:not([data-espera])"); return !!t; }).length })`);
-  const espera = () => js(`(() => { const e = document.querySelector("#claude-camada [data-espera]"); return e && { acao: e.dataset.espera, bp: e.dataset.bp, rotulo: e.querySelector("svg")?.getAttribute("aria-label") || "", titulo: e.title }; })()`);
-  // a próxima ação (o que o app deve escolher): a primeira não concluída, por data de início, com plano pendente
-  const proxima = (ocupadas = []) => blueprint.acoes.map((f, i) => ({ f, i })).filter(({ f }) => f.status !== "concluido" && f.planos?.some((t) => !t.feito) && !ocupadas.includes(f.id)).sort((a, b) => String(a.f.inicio).localeCompare(String(b.f.inicio)) || a.i - b.i)[0]?.f;
+  const figuras = () => js(`[...document.querySelectorAll("#claude-camada .claude-fig")].map((e) => ({ nome: e.dataset.roboNome, rotulo: e.querySelector("svg")?.getAttribute("aria-label") || "", t: e.style.transform }))`);
+  const parado = () => js(`({ animacoes: document.getAnimations().filter((a) => { const t = a.effect?.target?.closest?.("#claude-camada .claude-fig"); return !!t; }).length })`);
   assert.deepEqual(await figuras(), [], "sem agentes, nenhuma figura de agente");
   assert.equal(await js(`!document.getElementById("b-agentes") && !document.getElementById("agentes-painel")`), true, "o painel e o botão antigos não existem mais");
 
@@ -54,12 +51,7 @@ try {
   const acaoB = blueprint.acoes.find((f) => f !== acao && f.planos?.length) || acao, planoB = acaoB === acao ? acao.planos[acao.planos.length - 1] : acaoB.planos[0];
   await js(`abertos[${JSON.stringify(blueprint.id)}] = true; render()`);
   await dormir(600);
-  const antesDeTodos = await espera();
-  assert(antesDeTodos, "sem agentes, o Claude espera na próxima ação do blueprint aberto");
-  assert.equal(antesDeTodos.acao, proxima().id, "e a próxima ação é a primeira não concluída com plano pendente");
-  assert(/aguardando/.test(antesDeTodos.rotulo) && antesDeTodos.titulo.includes("Esperando para começar"), "na pose de espera (aguardando), com a dica da ação");
-  assert.equal(await js(`document.querySelectorAll(".robo-linha").length`), 0, "a espera não realça plano nenhum");
-  assert.equal(await js(`document.getElementById("periodo-andamento-n").textContent`), "0", "a espera não conta no filtro Em andamento");
+  assert.deepEqual(await figuras(), [], "sem agentes, nenhuma figura sugere iniciar uma ação");
   await avisa({ texto: "Escrevendo a folha", agente: "claude", estado: "escrevendo", onde: ["web/js/render.js"], acaoId: acao.id, planoId: plano.id });
   await avisa({ texto: "Lendo os módulos do kit", agente: "explorador-kit", papel: "explorador", estado: "lendo", onde: ["kit/lathe/"], acaoId: acao.id, planoId: plano.id });
   await avisa({ texto: "Rodando cargo test", agente: "revisor-testes", papel: "revisor", estado: "testando", onde: ["src/"] });
@@ -81,10 +73,7 @@ try {
   assert((await js(`document.querySelectorAll("#claude-camada span[data-q]").length`)) > 0, "sem a preferência, os quadros voltam");
   assert(fs.find((f) => f.nome === "explorador-kit").rotulo.includes("explorador") && fs.find((f) => f.nome === "revisor-testes").rotulo.includes("revisor"), "subagentes na variante do papel");
   assert.equal(await js(`document.querySelectorAll(".robo-linha").length`), 1, "o plano com agente fica realçado");
-  assert.equal(await js(`document.getElementById("periodo-andamento-n").textContent`), "3", "o filtro Em andamento conta as figuras (e não a espera)");
-  const comAgentes = await espera();
-  assert(!comAgentes || comAgentes.acao !== acao.id, "a espera sai da ação em que há agente trabalhando");
-  assert.equal(comAgentes?.acao, proxima([acao.id])?.id, "e vai para a próxima ação livre");
+  assert.equal(await js(`document.getElementById("periodo-andamento-n").textContent`), "3", "o filtro Em andamento conta as figuras");
   const folga = await js(`(() => { const l = document.querySelector(".robo-linha").getBoundingClientRect(), c = document.querySelector('#claude-camada [data-robo-nome="claude"]').getBoundingClientRect(); return Math.round(l.left - c.right); })()`);
   assert(Math.abs(folga - 6) <= 2, `o Claude fica ao lado do plano dele (folga ${folga} px)`);
   assert.equal((await parado()).animacoes, 0, "parada, a figura não tem animação rodando");
@@ -114,9 +103,9 @@ try {
   // muitas figuras: com os 3 de antes são 8 (o limite), sobrepostas e sem contador
   for (let i = 0; i < 5; i++) await avisa({ texto: `extra ${i}`, agente: `extra-${i}`, papel: ["explorador", "construtor", "revisor"][i % 3], estado: "lendo", acaoId: acao.id, planoId: plano.id });
   await dormir(1500);
-  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 8, "as 8 figuras aparecem (1 principal + 7 subagentes; a espera é à parte)");
+  assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig").length`), 8, "as 8 figuras aparecem (1 principal + 7 subagentes)");
   assert.equal(await js(`document.querySelector("#claude-camada .claude-mais")`), null, "nunca há contador +N");
-  assert(await js(`(() => { const r = [...document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])")].map((f) => f.getBoundingClientRect()), c = document.querySelector('#claude-camada [data-robo-nome="claude"]').getBoundingClientRect(), g = r.filter((q) => Math.abs(q.top - c.top) < 2); return g.length >= 6 && Math.max(...g.map((q) => q.right)) - Math.min(...g.map((q) => q.left)) <= 5 * 48 + 16 + 2; })()`), "o grupo do plano (6 ou mais figuras) se junta: não passa da largura de 5 figuras; as de outros planos ficam à parte");
+  assert(await js(`(() => { const r = [...document.querySelectorAll("#claude-camada .claude-fig")].map((f) => f.getBoundingClientRect()), c = document.querySelector('#claude-camada [data-robo-nome="claude"]').getBoundingClientRect(), g = r.filter((q) => Math.abs(q.top - c.top) < 2); return g.length >= 6 && Math.max(...g.map((q) => q.right)) - Math.min(...g.map((q) => q.left)) <= 5 * 48 + 16 + 2; })()`), "o grupo do plano (6 ou mais figuras) se junta: não passa da largura de 5 figuras; as de outros planos ficam à parte");
 
   // clicar na figura abre a folhinha (só leitura)
   await js(`document.querySelector('#claude-camada [data-robo-nome="claude"]').click()`);
@@ -138,7 +127,6 @@ try {
   await dormir(600);
   assert((await figuras()).some((f) => f.nome === "claude" && /concluiu/.test(f.rotulo)), "o concluído continua na folha, na pose de concluído, sem ninguém ter clicado");
   assert.equal(await js(`document.querySelectorAll("rect.robo-linha").length`), 1, "e continua no plano em que concluiu");
-  assert.notEqual((await espera())?.acao, acao.id, "a espera não fica na ação do concluído");
   await js(`document.querySelector('#claude-camada [data-robo-nome="claude"]').click()`);
   await dormir(600);
   const nota = await js(`document.getElementById("nota-folha").innerText`);
@@ -157,13 +145,11 @@ try {
   assert.equal(await js(`document.querySelectorAll("rect.robo-linha").length`), 0, "e sai do plano");
   assert.equal((await figuras()).length, 7, "os outros 7 agentes (em repouso) continuam, todos dentro do limite de 8 figuras");
 
-  // o Claude esperando: clicar abre a folha da ação, com o botão "Iniciar com o Claude" (a rota é simulada: o fetch é interceptado)
-  const esp = await espera();
-  assert(esp, "o Claude espera na próxima ação");
+  // a folha da ação tem o botão "Iniciar com o Claude" (rota simulada)
   await js(`window.__iniciar = []; window.__resposta = { status: 200, corpo: { ok: true, pasta: "x", terminal: "wt" } }; const f0 = window.fetch; window.fetch = (u, o) => String(u).includes("/api/mcp/iniciar") ? (window.__iniciar.push(JSON.parse(o.body)), Promise.resolve(new Response(JSON.stringify(window.__resposta.corpo), { status: window.__resposta.status, headers: { "content-type": "application/json" } }))) : f0(u, o)`);
-  await js(`document.querySelector("#claude-camada [data-espera]").click()`);
+  await js(`abreFolhaDaAcao(${JSON.stringify(blueprint.id)}, ${JSON.stringify(acao.id)}, null)`);
   await dormir(700);
-  assert.equal(await js(`document.querySelector("#nota-folha h4")?.textContent`), "Instruções da ação", "clicar na espera abre a folha da ação");
+  assert.equal(await js(`document.querySelector("#nota-folha h4")?.textContent`), "Instruções da ação", "abre a folha da ação");
   const botao = `[...document.querySelectorAll("#nota-folha [data-nacao]")].find((b) => b.textContent === "Iniciar com o Claude")`;
   assert(await js(`!!${botao}`), "a folha da ação tem o botão Iniciar com o Claude");
   await js(`${botao}.click()`);
@@ -174,7 +160,7 @@ try {
   await dormir(600);
   const enviado = await js(`window.__iniciar`);
   assert.equal(enviado.length, 1, "confirmado: uma chamada a /api/mcp/iniciar");
-  assert.deepEqual([enviado[0].blueprintId, enviado[0].acaoId, typeof enviado[0].workspaceId], [blueprint.id, esp.acao, "string"], "com o blueprint e a ação da espera");
+  assert.deepEqual([enviado[0].blueprintId, enviado[0].acaoId, typeof enviado[0].workspaceId], [blueprint.id, acao.id, "string"], "com o blueprint e a ação escolhida");
   assert(/Terminal aberto/.test(await js(`document.querySelector("#nota-folha .iniciar-aviso")?.textContent || ""`)), "e avisa que o terminal abriu");
   await js(`window.__resposta = { status: 409, corpo: { erro: "sem pasta", codigo: "sem-pasta" } }; ${botao}.click()`);
   await dormir(500);

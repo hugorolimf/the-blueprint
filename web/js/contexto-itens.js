@@ -61,7 +61,7 @@ function itensDoContexto(alvo) {
     const noPlano = plano.dataset.tipo === "t" && agentesAtivos().find((a) => a.planoId === plano.dataset.id); // o agente que trabalha neste plano, se houver
     if (noPlano) add("abrir", "alvo", tr("Acompanhar este agente"), () => focoAbre(noPlano.agente)); // foco.js
   }
-  if (figura && !figura.dataset.espera) add("abrir", "alvo", tr("Acompanhar este agente"), () => focoAbre(figura.dataset.roboNome));
+  if (figura) add("abrir", "alvo", tr("Acompanhar este agente"), () => focoAbre(figura.dataset.roboNome));
   if (nota) add("abrir", "doc", nota.dataset.obs.split("|")[1] ? "Abrir instruções" : "Abrir observações", () => abreNotaObs(nota));
   if (marca) add("abrir", "losango", "Ver marca", () => abreNotaMarca(marca));
   if (link) add("abrir", "externo", tr("Abrir link em nova aba"), () => link.click());

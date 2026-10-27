@@ -1,6 +1,6 @@
 // ---- modo manual -------------------------------------------------------------------------------
 function htmlItem(t) {
-  return `<div class="item-ed${t.feito ? " feito" : ""}" data-t="${esc(t.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Plano feito")}"${t.feito ? " checked" : ""}><input data-c="texto" placeholder="${tr("Descreva o plano")}" aria-label="${tr("Texto do plano")}" value="${esc(t.texto)}"><input data-c="horas" type="number" min="0.5" max="16" step="0.5" placeholder="h" aria-label="${tr("Horas estimadas do plano")}" title="${tr("Estimativa de trabalho do agente, em horas")}" value="${t.horas ?? ""}">${responsavelSeletor(t)}<button class="x" data-act="del-plano" type="button" aria-label="${tr("Excluir plano")}">×</button></div>`;
+  return `<div class="item-ed${t.feito ? " feito" : ""}" data-t="${esc(t.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Plano feito")}"${t.feito ? " checked" : ""}><input data-c="texto" placeholder="${tr("Descreva o plano")}" aria-label="${tr("Texto do plano")}" value="${esc(t.texto)}"><input data-c="horas" type="number" min="0" step="any" placeholder="h" aria-label="${tr("Horas estimadas do plano")}" title="${tr("Estimativa de trabalho do agente, em horas")}" value="${t.horas ?? ""}">${responsavelSeletor(t)}<button class="x" data-act="del-plano" type="button" aria-label="${tr("Excluir plano")}">×</button></div>`;
 }
 function htmlCheckpoint(m) {
   return `<div class="checkpoint-ed" data-m="${esc(m.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Checkpoint feito")}"${m.feito ? " checked" : ""}><input data-c="nome" placeholder="${tr("Nome do checkpoint")}" aria-label="${tr("Nome do checkpoint")}" value="${esc(m.nome)}"><input type="date" data-c="data" aria-label="${tr("Data do checkpoint")}" value="${esc(m.data)}"><button class="x" data-act="del-checkpoint" type="button" aria-label="${tr("Excluir checkpoint")}">×</button></div>`;
@@ -122,7 +122,7 @@ pm.addEventListener("input", (e) => {
   if (item) {
     const plano = f.planos.find((x) => x.id === item.dataset.t);
     if (c === "responsavel") { responsavelAtribui(plano, val); return mudou(); }
-    if (c === "horas") { const n = Number(val); if (val === "" || !(n >= 0.5 && n <= 16)) delete plano.horas; else plano.horas = n; return mudou(); }
+    if (c === "horas") { const n = Number(val); if (val === "" || !(Number.isFinite(n) && n > 0)) delete plano.horas; else plano.horas = n; return mudou(); }
     plano[c] = val;
     if (c === "feito") { item.classList.toggle("feito", val); refrescaAcao(f); }
     return mudou();

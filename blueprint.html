@@ -32,6 +32,7 @@
 <link rel="stylesheet" href="/web/css/convite.css">
 <link rel="stylesheet" href="/web/css/pessoas.css">
 <link rel="stylesheet" href="/web/css/pesquisa.css">
+<link rel="stylesheet" href="/web/css/horas.css">
 </head>
 <body class="carregando">
 <section class="login" id="login" aria-label="Entrar">
@@ -79,7 +80,7 @@
     <div id="presenca" role="group" hidden></div>
     <div class="busca"><input id="busca" type="search" placeholder="Pesquisar blueprint ou ação…" aria-label="Pesquisar por nome de blueprint ou ação" aria-keyshortcuts="/ Control+K" autocomplete="off"><span id="busca-n" role="status"></span></div>
   </div>
-  <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button><button class="btn mini" id="periodo-andamento" type="button" aria-pressed="false">Em andamento · <span id="periodo-andamento-n">0</span></button><button class="btn mini" id="periodo-meus" type="button" aria-pressed="false" hidden>Meus planos</button></div></div>
+  <div class="periodo so-blueprint" id="periodo"><div class="periodo-controles"><span role="group" aria-label="Escala de tempo"><button class="btn mini" id="escala-dias" type="button" aria-pressed="true">Dias</button><button class="btn mini" id="escala-horas" type="button" aria-pressed="false" aria-keyshortcuts="Alt+H" title="Alternar Dias e Horas (Alt+H)">Horas</button></span><label id="escala-dia-label" hidden>Dia <input id="escala-dia" type="date" aria-label="Dia"></label><button class="btn mini" id="periodo-auto" type="button">Todo o blueprint</button><button class="btn mini" id="periodo-hoje" type="button">Hoje</button><button class="btn mini" id="periodo-pendentes" type="button">Pendentes</button><button class="btn mini" id="periodo-andamento" type="button" aria-pressed="false">Em andamento · <span id="periodo-andamento-n">0</span></button><button class="btn mini" id="periodo-meus" type="button" aria-pressed="false" hidden>Meus planos</button></div></div>
   <div id="desenho"></div>
   <div id="claude-camada"></div>
   <div class="nota-folha" id="nota-folha" role="dialog" aria-label="Detalhes" hidden></div>
@@ -181,6 +182,8 @@
 <script src="/web/js/arte.js"></script>
 <script src="/web/js/dados.js"></script>
 <script src="/web/js/projetos.js"></script>
+<script src="/web/js/horas-logica.js"></script>
+<script src="/web/js/regua-horas.js"></script>
 <script src="/web/js/cabecalho.js"></script>
 <script src="/web/js/capa-agrupa.js"></script>
 <script src="/web/js/render.js"></script>

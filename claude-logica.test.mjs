@@ -10,11 +10,19 @@ import { poseDoEstado, MAX_SUBAGENTES, ESCALA, PAPEIS, POSES, QUADROS, SEQUENCIA
 const ctx = vm.createContext({ navigator: { languages: ["pt-BR"] }, location: { search: "" } });
 vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "i18n.js"), "utf8"), ctx, { filename: "i18n.js" });
 vm.runInContext(readFileSync(join(import.meta.dirname, "web", "js", "claude-logica.js"), "utf8")
-  + "\nthis.api = { claudeEstadoDoEvento, claudePrincipal, claudeEhSub, claudeSubSumiu, claudeSubSomeEm, CLAUDE_SUB_SOME_MS, claudePapelDe, claudeFigura, claudeChave, claudeChaveSvg, claudeQuadrosUnicos, claudeVisiveis, claudeLugar, claudeItens, claudeLarguraDe, claudeLarguraItem, claudePosicao, claudeProximaAcao, claudeAgenteEspera, claudeItemEspera, CLAUDE_MAX_SUB, CLAUDE_ESCALA_SUB, CLAUDE_PAPEIS, CLAUDE_FOLGA };", ctx);
+  + "\nthis.api = { claudeEstadoDoEvento, claudePrincipal, claudeEhSub, claudeSubSumiu, claudeSubSomeEm, CLAUDE_SUB_SOME_MS, claudePapelDe, claudeFigura, claudeChave, claudeChaveSvg, claudeQuadrosUnicos, claudeVisiveis, claudeLugar, claudeItens, claudeLarguraDe, claudeLarguraItem, claudePosicao, CLAUDE_MAX_SUB, CLAUDE_ESCALA_SUB, CLAUDE_PAPEIS, CLAUDE_FOLGA };", ctx);
 const A = ctx.api;
 const J = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
 
 const ag = (agente, extra = {}) => ({ agente, blueprintId: "b1", planoId: "", estado: "escrevendo", em: 1000, ...extra });
+
+// A camada só cria figuras para agentes reais, mesmo com uma ação pendente.
+{
+  const camada = readFileSync(join(import.meta.dirname, "web", "js", "claude-camada.js"), "utf8");
+  const funcao = camada.slice(camada.indexOf("function claudeItensDaTela("), camada.indexOf("// ---- reconcilia a camada"));
+  const ambiente = { tela: "b1", D: { blueprints: [{ id: "b1", acoes: [{ id: "a1", planos: [{ feito: false }] }] }] }, agentesDoBlueprint: () => [], claudeItens: A.claudeItens };
+  assert.deepEqual(J(vm.runInNewContext(funcao + "\nclaudeItensDaTela({})", ambiente)), []);
+}
 
 // as constantes copiadas valem o mesmo que no desenho
 assert.equal(A.CLAUDE_MAX_SUB, MAX_SUBAGENTES);
@@ -121,31 +129,6 @@ const cab = J(A.claudePosicao("cab", { x: 62, y: 80, w: 800, h: 86 }, 0, [48]));
 assert(cab.x + 48 <= 62 + 800 - 100 && cab.base <= 80 + 86, "no cabeçalho a figura fica dentro da caixa, à esquerda do canto");
 const cartao = J(A.claudePosicao("cartao", { x: 70, y: 200, w: 330, h: 152 }, 0, [48]));
 assert(cartao.x + 48 <= 70 + 330, "no cartão da lista fica dentro da largura do cartão");
-
-// ---- o Claude esperando: a próxima ação do blueprint, só da interface ----
-const acao = (id, inicio, status, planos) => ({ id, nome: "Ação " + id, inicio, status, planos: planos.map((feito) => ({ feito })) });
-const proxima = (acoes, ags = []) => A.claudeProximaAcao(J({ id: "b1", acoes }), ags)?.id ?? null;
-assert.equal(proxima([acao("a", "2026-11-03", "planejado", [false]), acao("b", "2026-11-01", "planejado", [false])]), "b", "a primeira por data de início, não pela ordem do blueprint");
-assert.equal(proxima([acao("a", "2026-11-01", "concluido", [true]), acao("b", "2026-11-02", "andamento", [true, false])]), "b", "ação concluída é pulada");
-assert.equal(proxima([acao("a", "2026-11-01", "andamento", [true, true]), acao("b", "2026-11-02", "planejado", [false])]), "b", "ação sem plano pendente é pulada");
-assert.equal(proxima([acao("a", "2026-11-01", "planejado", []), acao("b", "2026-11-02", "planejado", [false])]), "b", "ação sem nenhum plano é pulada");
-assert.equal(proxima([acao("a", "2026-11-01", "andamento", [false]), acao("b", "2026-11-02", "planejado", [false])], [{ acaoId: "a", estado: "escrevendo" }]), "b", "ação com agente trabalhando é pulada");
-assert.equal(proxima([acao("a", "2026-11-01", "andamento", [false]), acao("b", "2026-11-02", "planejado", [false])], [{ acaoId: "a", estado: "concluido" }]), "b", "o concluído ainda não visto também ocupa a ação");
-assert.equal(proxima([acao("a", "2026-11-01", "andamento", [false])], [{ acaoId: "a", estado: "ocioso" }, { acaoId: "", estado: "escrevendo" }]), "a", "agente em repouso (ou sem ação) não ocupa");
-assert.equal(proxima([acao("a", "2026-11-01", "planejado", [false]), acao("b", "2026-11-01", "planejado", [false])]), "a", "empate de data: a ordem do blueprint");
-assert.equal(proxima([acao("a", "2026-11-01", "concluido", [true])]), null, "tudo concluído: ninguém espera");
-assert.equal(proxima([]), null, "blueprint sem ações: ninguém espera");
-assert.equal(A.claudeProximaAcao(null, []), null);
-const esp = J(A.claudeAgenteEspera({ id: "b1" }, { id: "a", nome: "Tela" }, "2.4"));
-assert.deepEqual([esp.estado, esp.espera, esp.acaoId, esp.blueprintId], ["aguardando", true, "a", "b1"]);
-assert.equal(poseDoEstado(A.claudeEstadoDoEvento(esp)), "esperando", "o estado da espera dá a pose esperando");
-assert(esp.texto.includes("2.4") && esp.texto.includes("Tela"));
-const itensCab = J(A.claudeItens([ag("claude", { planoId: "" })], () => false)), p0 = { id: "b1" }, f0 = { id: "a" };
-assert.equal(J(A.claudeItemEspera(p0, f0, "1.1", (id) => id === "a", itensCab)).lugar, "acao:a", "à vista e aberta: ao lado da barra da ação");
-const emCab = J(A.claudeItemEspera(p0, f0, "1.1", () => false, itensCab));
-assert.equal(J(A.claudeItemEspera(p0, f0, "1.1", () => false, [], () => "b1|p2")).lugar, "secao:b1|p2", "ação fora de vista: a espera fica no cabeçalho do projeto dela");
-assert.deepEqual([emCab.lugar, emCab.indice, emCab.papel, emCab.principal], ["cab:b1", 1, null, false], "fora de vista: no cabeçalho, depois do agente que já está lá");
-assert.equal(J(A.claudeItens([ag("claude")], () => false)).length, 1, "a espera não entra no limite nem nos extras (é um item à parte)");
 
 // ---- subagente que concluiu some depois de 10 s; o principal fica com "Concluído" até o usuário ver (terminar a tarefa dele não é terminar o trabalho)
 {

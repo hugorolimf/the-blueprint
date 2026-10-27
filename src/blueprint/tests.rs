@@ -91,10 +91,13 @@ fn formato_lista_de_acoes_datas_status_e_periodos() {
 #[test]
 fn planos_titulo_descricao_repeticao_e_quantidade() {
     let p = blueprint();
-    falha(json!({"acoes": [acao(json!({"planos": [com(plano(1), json!({"texto": "Criar um título que passa bastante dos quarenta e cinco caracteres"})), plano(2), plano(3)]}))]}), "o máximo é 45", Some(&p));
+    let longo = "Criar um título que passa bastante dos quarenta e cinco caracteres";
+    let r = ok(json!({"acoes": [acao(json!({"planos": [com(plano(1), json!({"texto": longo})), plano(2), plano(3)]}))]}), Some(&p));
+    assert_eq!(r.proposta.unwrap()["acoes"][0]["planos"][0]["texto"], longo);
     falha(json!({"acoes": [acao(json!({"planos": [com(plano(1), json!({"descricao": ""})), plano(2), plano(3)]}))]}), "falta a descrição", Some(&p));
     falha(json!({"acoes": [acao(json!({"planos": [plano(1), plano(1), plano(3)]}))]}), "título repetido", Some(&p));
-    falha(json!({"acoes": [acao(json!({"planos": (0..13).map(plano).collect::<Vec<_>>()}))]}), "o máximo é 12", Some(&p));
+    let r = ok(json!({"acoes": [acao(json!({"planos": (0..13).map(plano).collect::<Vec<_>>()}))]}), Some(&p));
+    assert_eq!(r.proposta.unwrap()["acoes"][0]["planos"].as_array().unwrap().len(), 13);
     let avisado = validar_proposta(&json!({"acoes": [acao(json!({"planos": [{"texto": "Pasta", "descricao": "só isso"}, plano(2)]}))]}), Some(&p), HOJE);
     assert!(avisado.erros.is_empty());
     assert!(avisado.avisos.iter().any(|a| a.contains("infinitivo")) && avisado.avisos.iter().any(|a| a.contains("como validar")) && avisado.avisos.iter().any(|a| a.contains("2 plano(s)")));

@@ -23,6 +23,12 @@ fn itens(acao: &Value, chave: &str, campos: &[&str], descricao: bool) -> Vec<Val
             if descricao {
                 o.insert("descricao".into(), Value::String(str_de(x, "descricao")));
                 o.insert("feito".into(), Value::Bool(marcado(x)));
+                if chave == "planos" {
+                    let tempo = pegar(&x["agente"], &["inicioEm", "feitoEm"]);
+                    if !tempo.is_empty() {
+                        o.insert("tempoReal".into(), Value::Object(tempo));
+                    }
+                }
             }
             Value::Object(o)
         })
@@ -116,7 +122,7 @@ fn tempo_real(p: &Value) -> Option<Value> {
         return None;
     }
     let media = horas.iter().sum::<f64>() / horas.len() as f64;
-    Some(json!({"planosMedidos": horas.len(), "horasPorPlano": (media * 10.0).round() / 10.0}))
+    Some(json!({"planosMedidos": horas.len(), "horasPorPlano": (media * 1000.0).round() / 1000.0}))
 }
 
 pub fn contexto_acao(p: &Value, acao_id: &str) -> Option<Value> {

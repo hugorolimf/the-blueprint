@@ -36,6 +36,18 @@ pub(super) fn evento(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<V
     let ctx = Contexto::local();
     let mut d = dados.lock().unwrap_or_else(|e| e.into_inner());
     let item = acoes::evento(mcp, d.ler_tudo(&ctx)?, corpo)?;
+    if let (Some(plano), Some(tipo), Some(em)) = (item["planoId"].as_str(), item["tipo"].as_str(), item["em"].as_str()) {
+        let ja_feito = if tipo == "progresso" {
+            let dados = d.ler_tudo(&ctx)?;
+            let bp = acoes::localizar(dados, item["workspaceId"].as_str().unwrap_or(""), item["blueprintId"].as_str().unwrap_or(""))?.1;
+            bp.and_then(|p| p["acoes"].as_array())
+                .and_then(|acoes| acoes.iter().find(|a| a["id"] == item["acaoId"]))
+                .and_then(|a| a["planos"].as_array())
+                .and_then(|planos| planos.iter().find(|t| t["id"] == plano))
+                .is_some_and(|t| t["feito"] == true)
+        } else { false };
+        if !ja_feito { d.registrar_tempo_plano(plano, tipo, em)?; }
+    }
     if let Some(e) = da_fila(&item) {
         match d.gravar_linha_do_tempo(&ctx, crate::tempo::agora_ms(), &e) {
             Ok(()) => mcp.notificar("linha-do-tempo", Some(json!({"workspaceId": e.workspace_id, "blueprintId": e.blueprint_id, "acaoId": e.acao_id}))),

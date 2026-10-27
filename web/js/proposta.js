@@ -25,7 +25,7 @@ function textoComoUsar() {
 }
 $("cu-abrir").onclick = () => { $("cu-corpo").textContent = textoComoUsar(); $("como-usar").showModal(); desenrolar($("como-usar"), $("como-usar")); }; // abre como as outras folhas: desenrola (ou escreve), já preenchida
 $("cu-fechar").onclick = () => $("como-usar").close();
-// estimativa em horas do plano (o servidor já validou de 0,5 a 16); sem número válido, o campo nem existe
+// estimativa em horas do plano (o servidor já validou como positiva); sem número válido, o campo nem existe
 const horasDe = (h) => (h != null && h !== "" && Number.isFinite(Number(h)) && Number(h) > 0 ? { horas: Number(h) } : {});
 const etiquetaHoras = (t) => (t.horas ? `<span class="badge" title="${tr("Estimativa de trabalho do agente")}">~${t.horas} h</span>` : "");
 function normalizaProposta(acoes, p) {

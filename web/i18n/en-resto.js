@@ -1,11 +1,13 @@
 // Inglês: o que sobrou das outras telas (cartão do carimbo, pastas, projetos, arte, protótipos, agentes, markdown, avisos pequenos). Chave = texto-fonte em português (web/js/i18n.js).
 Object.assign(I18N.catalogos.en, {
+  "Dias": "Days", "Horas": "Hours", "Dia": "Day", "AGORA": "NOW", "Desvio": "Difference",
+  "Escala de tempo": "Time scale", "Alternar Dias e Horas (Alt+H)": "Toggle Days and Hours (Alt+H)",
+  "Previsto: {horas} h": "Estimated: {horas} h", "Real: {horas} h": "Elapsed: {horas} h", "Em andamento: {horas} h": "In progress: {horas} h",
   // folha
   "Data": "Date", "Progresso": "Progress", "Folha": "Sheet", "Ações": "Actions", "Planejar este blueprint": "Plan this blueprint",
-  "Claude esperando: abrir a ação para iniciar": "Claude waiting: open the action to start", "Ver o que {agente} está fazendo": "See what {agente} is doing", "o agente": "the agent",
-  "{texto}. Clique para abrir a ação e iniciar com o Claude.": "{texto}. Click to open the action and start it with Claude.", "Agente": "Agent",
+  "Ver o que {agente} está fazendo": "See what {agente} is doing", "o agente": "the agent",
+  "Agente": "Agent",
   "(mais {n} agente junto aqui)": ["(plus {n} agent here)", "(plus {n} agents here)"],
-  "Esperando para começar a ação {numero} · {nome}": "Waiting to start action {numero} · {nome}",
   "Blueprint movido para a posição {n}": "Blueprint moved to position {n}",
   "Pressione F11 para uma melhor visualização desta tela.": "Press F11 for a better view of this screen.", "Fechar dica": "Close tip",
   // pastas

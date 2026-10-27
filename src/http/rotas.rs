@@ -76,7 +76,7 @@ fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
         return crate::mcp::http::rota(estado, pedido, ctx); // o MCP por HTTP: só para convidado e modo hospedado
     }
     if caminho.starts_with("/api/mcp/") {
-        return crate::mcp::rotas::rota_com(&estado.mcp, &estado.dados, pedido, ctx);
+        return crate::mcp::rotas::rota_estado(estado, pedido, ctx);
     }
     if caminho.starts_with("/api/terminal/") {
         return crate::terminal::rotas::rota(estado, pedido);

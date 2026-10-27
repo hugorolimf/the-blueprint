@@ -1,13 +1,14 @@
 {
   "dados": "data.exemplo.json",
   "tamanho": "1440x900",
+  "hoje": "2026-10-26",
   "telas": {
-    "01-lista-de-workspaces": "b6304a3351ffb157",
-    "02-workspace": "12807beb943281aa",
-    "03-blueprint": "efdc4cf6f4d13b3d",
-    "04-planejar": "6ab592961ab387b0",
-    "05-como-conectar": "de427ccd0c200f00",
-    "06-editar": "de427ccd0c200f00",
-    "07-visor-de-prototipo": "fdc221674710645e"
+    "01-lista-de-workspaces": "6351a5ef21fe0ba4",
+    "02-workspace": "bbaebc279a6ef1fd",
+    "03-blueprint": "1fddde6752bcc9ed",
+    "04-planejar": "8b965aed95965806",
+    "05-como-conectar": "e4bb2263ccf073af",
+    "06-editar": "6b90a928da40bdb0",
+    "07-visor-de-prototipo": "1855fed490b23e52"
   }
 }

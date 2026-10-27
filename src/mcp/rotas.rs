@@ -9,6 +9,25 @@ use crate::http::pedido::{falha, Corpo, ErroHttp, Pedido, Resposta};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 use std::sync::Mutex;
+use std::sync::atomic::Ordering;
+
+/// Serializa as gravações de tempo com a versão e a cópia HTTP dos dados.
+pub fn rota_estado(estado: &crate::http::Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
+    if pedido.metodo != "POST" || !matches!(pedido.caminho.as_str(), "/api/mcp/evento" | "/api/mcp/hook/edicao" | "/api/mcp/hook/subagente" | "/api/mcp/hook/subagentes") {
+        return rota_com(&estado.mcp, &estado.dados, pedido, ctx);
+    }
+    let mut cache = estado.dados_json.lock().unwrap_or_else(|e| e.into_inner());
+    let antes = estado.dados.lock().unwrap_or_else(|e| e.into_inner()).revisao_tempos();
+    let resposta = rota_com(&estado.mcp, &estado.dados, pedido, ctx);
+    let depois = estado.dados.lock().unwrap_or_else(|e| e.into_inner()).revisao_tempos();
+    if depois != antes {
+        *cache = None;
+        let nova = estado.versao_dados.fetch_add(1, Ordering::SeqCst) + 1;
+        estado.mcp.notificar("dados", Some(json!({"versao": nova})));
+        estado.sincronia.substituido(nova);
+    }
+    resposta
+}
 
 fn nao_encontrado() -> Resposta {
     Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"))

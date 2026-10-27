@@ -44,10 +44,10 @@ try {
   await cdp("Runtime.enable");
   await cdp("Browser.grantPermissions", { origin: servidor.url, permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"] });
   await cdp("Page.navigate", { url: `${servidor.url}/#/p/bp1a2b3` });
-  for (let i = 0; i < 60 && !(await js(`!!document.querySelector("#claude-camada [data-espera]")`)); i++) await dormir(150);
+  for (let i = 0; i < 60 && !(await js(`!!document.querySelector('[data-obs="bp1a2b3|ac1a002"]')`)); i++) await dormir(150);
   const aviso = () => js(`document.querySelector("#nota-folha .iniciar-aviso")?.textContent || ""`);
   const abreDialogo = async () => {
-    await js(`document.querySelector("#claude-camada [data-espera]").click()`);
+    await js(`document.querySelector('[data-obs="bp1a2b3|ac1a002"]').dispatchEvent(new MouseEvent("click", { bubbles: true }))`);
     await dormir(600);
     await js(`[...document.querySelectorAll("#nota-folha [data-nacao]")].find((b) => b.textContent === "Iniciar com o Claude").click()`);
     for (let i = 0; i < 40 && !(await js(`!!document.querySelector("dialog.escolher-sessao[open]")`)); i++) await dormir(100);

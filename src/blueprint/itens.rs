@@ -1,7 +1,7 @@
 //! Os planos (planos) e checkpoints de UMA ação da proposta: completa o que veio com o que já existe, valida e normaliza.
 use super::datas::dia_valido;
 use super::mover::noutra;
-use super::texto::{campo, entre_aspas, infinitivo, lista, ou, str_de, tamanho, texto, truncar};
+use super::texto::{campo, entre_aspas, infinitivo, lista, ou, str_de, texto, truncar};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 
@@ -49,19 +49,19 @@ fn com_origem(mut saida: Value, ex: &Option<Value>) -> Value {
     saida
 }
 
-/// Estimativa de trabalho do agente em horas (`horas`, de 0,5 a 16). Sem `horas` na proposta, vale a do plano existente (nada se apaga por omissão).
+/// Estimativa positiva em horas. Sem `horas` na proposta, vale a do plano existente.
 fn horas_do_plano(t: &Value, ex: Option<&Value>, rot: &str, erros: &mut Vec<String>, avisos: &mut Vec<String>) -> Option<f64> {
     let Some(enviado) = t.get("horas").filter(|v| !v.is_null()) else { return ex.and_then(|e| e.get("horas")).and_then(Value::as_f64) };
     let valor = enviado.as_f64().or_else(|| enviado.as_str().and_then(|s| s.trim().replace(',', ".").parse().ok()));
     match valor {
-        Some(h) if (0.5..=16.0).contains(&h) => {
+        Some(h) if h.is_finite() && h > 0.0 => {
             if h > 8.0 {
                 avisos.push(crate::tr!("{rot}: {h} h is a lot for a plan (ideally 0.5 to 4 h; above 8 h, split it).", "{rot}: {h} h é muito para um plano (o ideal é de 0,5 a 4 h; acima de 8 h, divida)."));
             }
-            Some((h * 10.0).round() / 10.0)
+            Some(h)
         }
         _ => {
-            erros.push(crate::tr!("{rot}: `horas` must be a number from 0.5 to 16 (got {enviado}).", "{rot}: `horas` deve ser um número de 0,5 a 16 (recebido {enviado})."));
+            erros.push(crate::tr!("{rot}: `horas` must be a positive number (got {enviado}).", "{rot}: `horas` deve ser um número positivo (recebido {enviado})."));
             None
         }
     }
@@ -82,9 +82,7 @@ pub fn planos(f: &Value, c: &Cenario, erros: &mut Vec<String>, avisos: &mut Vec<
     if total == 0 {
         avisos.push(crate::tr!("{rotulo}: no plans (fine only for a skeleton the user will detail).", "{rotulo}: sem planos (ok só se for um esqueleto que o usuário vai detalhar)."));
     }
-    if total > 12 {
-        erros.push(crate::tr!("{rotulo}: {total} plans; the maximum is 12 (ideally 3 to 8). Split the action.", "{rotulo}: {total} planos; o máximo é 12 (o ideal é de 3 a 8). Divida a ação."));
-    } else if total > 0 && !(3..=8).contains(&total) {
+    if total > 0 && !(3..=8).contains(&total) {
         avisos.push(crate::tr!("{rotulo}: {total} plan(s); ideally 3 to 8.", "{rotulo}: {total} plano(s); o ideal é de 3 a 8."));
     }
     if !mantidas.is_empty() && !enviadas.is_empty() {
@@ -92,7 +90,7 @@ pub fn planos(f: &Value, c: &Cenario, erros: &mut Vec<String>, avisos: &mut Vec<
     }
     let mut vistos: HashSet<String> = HashSet::new();
     let mut saida = Vec::new();
-    for (j, item) in itens.iter().take(12).enumerate() {
+    for (j, item) in itens.iter().enumerate() {
         let t = match item {
             Item::Mantido(x) => {
                 vistos.insert(str_de(x, "texto").to_lowercase()); // não veio: segue igual, sem revalidar
@@ -107,9 +105,6 @@ pub fn planos(f: &Value, c: &Cenario, erros: &mut Vec<String>, avisos: &mut Vec<
         if tx.is_empty() {
             erros.push(crate::tr!("{rot}: the title (`texto`) is missing.", "{rot}: falta o título (`texto`)."));
         } else {
-            if tamanho(&tx) > 45 {
-                erros.push(crate::tr!("{rot}: title has {} characters; the maximum is 45.", "{rot}: título com {} caracteres; o máximo é 45.", tamanho(&tx)));
-            }
             if !infinitivo(&tx) {
                 avisos.push(crate::tr!("{rot}: the title should start with a verb in the infinitive.", "{rot}: o título deveria começar com verbo no infinitivo."));
             }
@@ -129,7 +124,7 @@ pub fn planos(f: &Value, c: &Cenario, erros: &mut Vec<String>, avisos: &mut Vec<
             erros.push(crate::tr!("{rot}: id \"{id}\" does not exist in this action or another one of the blueprint (leave it empty for a new plan).", "{rot}: o id \"{id}\" não existe nesta ação nem em outra do blueprint (deixe vazio num plano novo)."));
         }
         let horas = horas_do_plano(t, ex.as_ref(), &rot, erros, avisos);
-        saida.push(com_horas(com_origem(json!({"id": id, "texto": truncar(&tx, 45), "descricao": truncar(&descricao, 3000)}), &ex), horas));
+        saida.push(com_horas(com_origem(json!({"id": id, "texto": tx, "descricao": descricao}), &ex), horas));
     }
     saida
 }

@@ -1,0 +1,77 @@
+// Edge: Dias e Horas, preservação visual, régua, tempos reais, persistência, atalho e desempenho com 80 ações.
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { createServer } from "node:net";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
+
+const raiz = resolve(import.meta.dirname, "..");
+const exe = resolve(process.argv[2] || join(raiz, "target/release/blueprint.exe"));
+const edgeExe = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", "C:/Program Files/Microsoft/Edge/Application/msedge.exe"].find(existsSync);
+assert(edgeExe, "o teste precisa do Microsoft Edge");
+const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
+const livre = () => new Promise((ok) => { const l = createServer(); l.listen(0, "127.0.0.1", () => { const p = l.address().port; l.close(() => ok(p)); }); });
+const [porta, depuracao] = [await livre(), await livre()];
+const url = `http://127.0.0.1:${porta}`;
+const tmp = mkdtempSync(join(tmpdir(), "blueprint-figuras-"));
+copyFileSync(join(raiz, "data.exemplo.json"), join(tmp, "data.json"));
+const env = { ...process.env, HOST: "127.0.0.1", PORT: String(porta), BLUEPRINT_DB: join(tmp, "blueprint.db"), DADOS_ARQ: join(tmp, "data.json"), PROTOTIPOS_DIR: join(tmp, "prototipos"), ...(process.env.BLUEPRINT_TEST_EMBEDDED ? {} : { BLUEPRINT_ASSETS_DIR: raiz }) };
+const servidor = spawn(exe, ["serve"], { env, stdio: "ignore", windowsHide: true });
+const edge = spawn(edgeExe, ["--headless=new", "--lang=pt-BR", "--disable-gpu", `--remote-debugging-port=${depuracao}`, `--user-data-dir=${join(tmp, "perfil")}`, "--window-size=1440,1000", "about:blank"], { stdio: "ignore" });
+const limpar = () => { try { edge.kill(); } catch {} try { servidor.kill(); } catch {} try { rmSync(tmp, { recursive: true, force: true }); } catch {} };
+process.on("exit", limpar);
+try {
+  for (let i = 0; i < 100; i++) { try { await fetch(url + "/api/dados"); break; } catch { await dormir(50); } }
+  const dados = await (await fetch(url + "/api/dados")).json();
+  const blueprint = dados.blueprints.find((p) => p.acoes?.some((f) => f.planos?.length));
+  const acao = blueprint.acoes.find((f) => f.planos?.length), plano = acao.planos[0];
+  let alvo;
+  for (let i = 0; i < 100 && !alvo; i++) { try { alvo = (await (await fetch(`http://127.0.0.1:${depuracao}/json/list`)).json()).find((t) => t.type === "page"); } catch {} await dormir(100); }
+  const ws = new WebSocket(alvo.webSocketDebuggerUrl);
+  await new Promise((r) => (ws.onopen = r));
+  let n = 0; const pend = new Map(); const erros = [];
+  ws.onmessage = (m) => { const d = JSON.parse(m.data); if (d.method === "Runtime.exceptionThrown") erros.push(d.params.exceptionDetails.exception?.description || d.params.exceptionDetails.text); pend.get(d.id)?.(d); pend.delete(d.id); };
+  const cdp = (method, params = {}) => new Promise((r) => { const id = ++n; pend.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
+  const js = async (expr) => { const r = await cdp("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails).slice(0, 400)); return r.result.result.value; };
+  await cdp("Runtime.enable");
+  await cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+  await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
+  for (let i = 0; i < 100 && !(await js(`!!document.querySelector("svg.desenho")`)); i++) await dormir(100);
+  assert(await js(`!!document.querySelector("svg.desenho")`), `a folha deve carregar: ${erros.join("; ")}`);
+  await js(`document.fonts.ready`);
+  assert((await js(`horasNumero(0.017)`)).includes("017"), "exibe frações curtas de hora");
+  assert(await js(`fetch("/web/css/horas.css").then(r => r.text()).then(s => s.includes(".horas-previsto"))`), "inclui os estilos das faixas");
+  const diasAntes = await js(`document.querySelector("svg.desenho").outerHTML`);
+  await js(`document.getElementById("escala-horas").click(); document.getElementById("escala-dias").click()`);
+  const diasDepois = await js(`document.querySelector("svg.desenho").outerHTML`);
+  assert(diasDepois === diasAntes, "alternar e voltar preserva o SVG do modo Dias");
+  await js(`(() => { const p = D.blueprints.find(x => x.id === ${JSON.stringify(blueprint.id)}), a = p.acoes.find(x => x.id === ${JSON.stringify(acao.id)}); a.planos[0].horas = 1; a.planos[0].agente = { inicioEm: new Date(a.inicio + "T01:00:00").toISOString(), feitoEm: new Date(a.inicio + "T03:00:00").toISOString() }; window.__antes = document.querySelector("svg.desenho"); window.__acao = document.querySelector('.acao[data-f="${acao.id}"]'); })()`);
+  await js(`document.getElementById("escala-horas").click()`);
+  assert.equal(await js(`document.getElementById("escala-horas").getAttribute("aria-pressed")`), "true");
+  assert.equal(await js(`document.querySelector("svg.desenho") === window.__antes`), true, "alternar mantém a folha");
+  assert.equal(await js(`document.querySelector('.acao[data-f="${acao.id}"]') === window.__acao`), true, "mantém as ações na mesma folha");
+  assert.equal(await js(`!!document.querySelector("svg.desenho .horas-regua") && !document.getElementById("horas-visao")`), true, "a régua fica na folha, sem painel separado");
+  assert.equal(await js(`document.querySelectorAll(".horas-regua .horas-marca").length`), 24);
+  assert.equal(await js(`!!document.querySelector(".horas-regua .horas-agora")`), true);
+  await js(`(() => { const e = document.getElementById("escala-dia"); e.value = ${JSON.stringify(acao.inicio)}; e.dispatchEvent(new Event("change", { bubbles: true })); })()`);
+  assert(await js(`document.querySelectorAll(".horas-acao .horas-previsto").length > 0 && document.querySelectorAll(".horas-acao .horas-real").length > 0`), "mostra previsto e real no dia");
+  assert((await js(`document.querySelector('.acao[data-f="${acao.id}"] .horas-real')?.getAttribute("aria-label")`)).includes("+1 h"), "mostra o desvio");
+  const virada = await js(`(() => { const p = D.blueprints.find(x => x.id === ${JSON.stringify(blueprint.id)}), a = p.acoes.find(x => x.id === ${JSON.stringify(acao.id)}); a.planos[0].horas = 24.5; diaHoras = deDia(dia(a.inicio) + 1); horasAtualiza(); const el = document.querySelector('.acao[data-f="${acao.id}"]'), v = [...el.querySelectorAll(".horas-previsto")].slice(0, 2).map(x => +x.getAttribute("x")); return {v, passo: (document.querySelector("svg.desenho").viewBox.baseVal.width - 156) / 24}; })()`);
+  assert(Math.abs(virada.v[0] - 70) < .01 && Math.abs(virada.v[1] - 70 - virada.passo / 2) < .01, "sequência atravessa a meia-noite");
+  await js(`(() => { const a = D.blueprints.find(x => x.id === ${JSON.stringify(blueprint.id)}).acoes.find(x => x.id === ${JSON.stringify(acao.id)}); a.planos[0].horas = 1; diaHoras = a.inicio; horasAtualiza(); })()`);
+  const inicioPendente = await js(`(() => { const p = D.blueprints.find(x => x.id === ${JSON.stringify(blueprint.id)}), a = p.acoes.find(x => x.id === ${JSON.stringify(acao.id)}); a.planos[0].feito = true; a.planos.slice(1).forEach(t => t.feito = false); soPendentes[p.id] = true; horasAtualiza(); return +document.querySelector('.acao[data-f="${acao.id}"] .horas-previsto')?.getAttribute("x"); })()`);
+  assert(Math.abs(inicioPendente - 70 - virada.passo) < .01, "filtrar planos feitos preserva a posição dos pendentes");
+  await js(`soPendentes[${JSON.stringify(blueprint.id)}] = false; horasAtualiza()`);
+  mkdirSync(join(raiz, "target"), { recursive: true });
+  writeFileSync(join(raiz, "target", "horas-e2e.png"), Buffer.from((await cdp("Page.captureScreenshot", {format:"png"})).result.data, "base64"));
+  const tempo = await js(`(() => { const p = D.blueprints.find(x => x.id === ${JSON.stringify(blueprint.id)}), a = p.acoes.find(x => x.id === ${JSON.stringify(acao.id)}); p.acoes = Array.from({length: 80}, (_, i) => ({...structuredClone(a), id: "med" + i})); render(); const t = performance.now(); horasAlterna(false); horasAlterna(true); return performance.now() - t; })()`);
+  assert(tempo < 100, `alternância com 80 ações: ${tempo} ms`);
+  await cdp("Page.reload");
+  for (let i = 0; i < 50 && !(await js(`document.getElementById("escala-horas")?.getAttribute("aria-pressed") === "true"`)); i++) await dormir(100);
+  assert.equal(await js(`document.getElementById("escala-horas").getAttribute("aria-pressed")`), "true", "preferência permanece após recarregar");
+  await js(`document.dispatchEvent(new KeyboardEvent("keydown", {key:"h", altKey:true, bubbles:true}))`);
+  assert.equal(await js(`document.getElementById("escala-dias").getAttribute("aria-pressed")`), "true", "Alt+H alterna");
+  assert.deepEqual(erros, []);
+  console.log(`horas e2e: ok (80 ações, ${tempo.toFixed(1)} ms)`);
+} finally { limpar(); }

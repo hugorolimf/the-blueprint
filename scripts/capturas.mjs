@@ -18,6 +18,7 @@ const posicionais = args.filter((a) => !a.startsWith("--"));
 const dadosArq = resolve(posicionais[0] || join(raiz, "data.exemplo.json"));
 const saida = resolve(posicionais[1] || join(raiz, "target", "capturas"));
 const referencia = join(raiz, "referencias", "capturas.json");
+const hoje = "2026-10-26"; // data fixa: o chip de hoje não muda a referência a cada dia
 const exe = resolve(process.env.BLUEPRINT_EXE || join(raiz, "target/release/blueprint.exe"));
 mkdirSync(saida, { recursive: true });
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -44,7 +45,15 @@ try {
   const acao = blueprint.acoes.find((f) => f.planos?.length);
   const wsId = ws.id || "sm";
   const html = "<!doctype html><title>Prototipo</title><body style='margin:0;background:#fff'><svg viewBox='0 0 200 100' width='100%'><rect x='10' y='10' width='180' height='80' fill='#0c3a78'/><text x='100' y='58' fill='#fff' text-anchor='middle' font-size='20'>Protótipo</text></svg>";
-  await fetch(url + "/api/mcp/prototipo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: wsId, blueprintId: blueprint.id, acaoId: acao.id, titulo: "Tela de teste", html }) });
+  const prot = await fetch(url + "/api/mcp/prototipo", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: wsId, blueprintId: blueprint.id, acaoId: acao.id, titulo: "Tela de teste", html }) });
+  assert.equal(prot.status, 200);
+  const item = await prot.json();
+  acao.prototipos ||= [];
+  acao.prototipos.push({ id: item.prototipoId, titulo: item.titulo, em: item.em });
+  const versao = (await fetch(url + "/api/dados")).headers.get("x-dados-versao");
+  const gravacao = await fetch(url + "/api/dados", { method: "PUT", headers: { "content-type": "application/json", "if-match": versao }, body: JSON.stringify(dados) });
+  assert.equal(gravacao.status, 200);
+  await fetch(url + "/api/mcp/fila/ack", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ids: [item.id] }) });
 
   let alvo;
   for (let i = 0; i < 100 && !alvo; i++) { try { alvo = (await (await fetch(`http://127.0.0.1:${depuracao}/json/list`)).json()).find((t) => t.type === "page"); } catch {} await dormir(100); }
@@ -69,12 +78,21 @@ try {
   ];
   const fotos = {};
   for (const [nome, hash, fazer] of TELAS) {
-    await cdp("Page.navigate", { url: `${url}/${hash}` });
-    await dormir(3000);
-    await js(`location.hash = ${JSON.stringify(hash.slice(1))}`); await dormir(1200);
+    await cdp("Page.navigate", { url: "about:blank" }); // hash sozinho preserva diálogos e telas da captura anterior
+    await cdp("Page.navigate", { url: `${url}/?hoje=${hoje}${hash}` });
+    let pronta = false;
+    for (let i = 0; i < 100 && !pronta; i++) {
+      try { pronta = await js(`(() => { try { return typeof carregado !== "undefined" && carregado; } catch { return false; } })()`); } catch {}
+      if (!pronta) await dormir(100);
+    }
+    assert(pronta, `a tela ${nome} não carregou`);
+    await js(`document.fonts.ready`);
+    await js(`location.hash = ${JSON.stringify(hash.slice(1))}`); await dormir(400);
     await js(`agenteAgora = null; render()`); // o aviso do protótipo enviado pelo script não entra na captura (o robô é só indicador e muda com o tempo)
     await fazer();
-    await dormir(2000);
+    await dormir(800);
+    const visivel = await js(`(() => { const id = ${JSON.stringify(nome)}; if (id === "04-planejar") return !document.getElementById("agente-tela").hidden; if (id === "05-como-conectar") return document.getElementById("como-usar").open; if (id === "06-editar") return !document.getElementById("editor").hidden; if (id === "07-visor-de-prototipo") return !document.getElementById("proto-tela").hidden; return !document.querySelector(".folha-aviso:not([hidden])"); })()`);
+    assert(visivel, `a captura ${nome} não mostra a tela esperada`);
     const r = await cdp("Page.captureScreenshot", { format: "png" });
     fotos[nome] = r.result.data;
     writeFileSync(join(saida, `${nome}.png`), Buffer.from(r.result.data, "base64"));
@@ -92,7 +110,7 @@ try {
     })()`);
   }
   console.log(`${TELAS.length} capturas em ${saida}`);
-  if (gravar) { writeFileSync(referencia, JSON.stringify({ dados: "data.exemplo.json", tamanho: "1440x900", telas: hashes }, null, 2) + "\n"); console.log(`hashes gravados em ${referencia}`); }
+  if (gravar) { writeFileSync(referencia, JSON.stringify({ dados: "data.exemplo.json", tamanho: "1440x900", hoje, telas: hashes }, null, 2) + "\n"); console.log(`hashes gravados em ${referencia}`); }
   if (comparar) {
     const esperado = JSON.parse(readFileSync(referencia, "utf8")).telas;
     let diferentes = 0;

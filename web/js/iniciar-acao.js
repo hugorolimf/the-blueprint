@@ -1,6 +1,6 @@
 // ---- a folha da ação (a nota "Instruções da ação") e o botão "Iniciar com o Claude": abre uma sessão nova do Claude Code em terminal novo (POST /api/mcp/iniciar) ----
-// Contrato em docs/claude-na-folha.md ("Claude esperando e iniciar a ação"). Só por clique confirmado do usuário; o app não manda nada a uma sessão já aberta.
-// Quem chama: nota.js (o ícone de instruções da ação), claude-camada.js (clique no Claude esperando).
+// Contrato em docs/claude-na-folha.md ("Iniciar a ação"). Só por clique confirmado do usuário; o app não manda nada a uma sessão já aberta.
+// Quem chama: nota.js (o ícone de instruções da ação).
 function abreFolhaDaAcao(pid, fid, ancora) {
   const p = D.blueprints.find((x) => x.id === pid), f = fid && p?.acoes.find((x) => x.id === fid);
   if (!p) return;

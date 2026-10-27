@@ -32,6 +32,8 @@ node scripts/capturas.mjs --comparar
 
 ## Rules
 
+- Run tests and builds only when they can finish in under one minute; stop any that reach the limit and report what was not verified.
+
 - Files of at most 350 lines (ceiling 500 with the reason at the top). One file, one responsibility.
 - Few dependencies; no framework or bundler in the interface.
 - **No emojis. Figures are drawn with Anatomy. The app's theme applies everywhere** (screens, prototypes, videos, documents).

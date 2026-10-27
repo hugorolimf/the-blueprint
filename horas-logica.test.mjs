@@ -1,0 +1,23 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import vm from "node:vm";
+
+const ctx = vm.createContext({ dia: (s) => Date.parse(s + "T00:00:00Z") / 864e5 });
+vm.runInContext(readFileSync(new URL("web/js/horas-logica.js", import.meta.url), "utf8") + "\nthis.api = { horasDaAcao, marcasDeHoras };", ctx);
+const { horasDaAcao, marcasDeHoras } = ctx.api;
+const acao = { inicio: "2026-10-26", planos: [{ id: "a", horas: 23 }, { id: "b", agente: { inicioEm: "2026-10-26T10:00:00Z", feitoEm: "2026-10-26T12:00:00Z" } }] };
+const [a, b] = horasDaAcao(acao);
+assert.equal(a.fim - a.inicio, 23);
+assert.equal(b.inicio, a.fim);
+assert.equal(b.previsto, 1.5);
+assert.equal(b.real, 2);
+assert.equal(a.real, null);
+const marcas = marcasDeHoras(a.inicio + 22.5, b.fim);
+assert.equal(marcas.length, 2);
+assert.equal(marcas[1].horaDoDia, 0);
+assert.equal(marcas[1].dia, Math.floor(a.inicio / 24) + 1);
+assert.equal(marcasDeHoras(2, 2).length, 0);
+assert.equal(horasDaAcao({ inicio: "2026-10-26", planos: [{ horas: 0.5 }] })[0].fim % 24, 0.5);
+assert.equal(horasDaAcao({ inicio: "2026-10-26", planos: [{ horas: 0.1, agente: { inicioEm: "2026-10-27T01:00:00Z", feitoEm: "2026-10-26T23:00:00Z" } }] })[0].real, null, "fim anterior ao início não vira medição");
+assert.equal(horasDaAcao({ inicio: "2026-10-26", planos: [{ agente: { inicioEm: "2026-10-26T23:30:00Z", feitoEm: "2026-10-27T01:00:00Z" } }] })[0].real, 1.5, "tempo real atravessa a meia-noite");
+console.log("horas-logica: ok");

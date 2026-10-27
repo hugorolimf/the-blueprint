@@ -1,4 +1,4 @@
-// O botão "Iniciar com o Claude" com a rota REAL: no Edge (sem janela), o clique no Claude esperando abre a folha da ação, o botão pede confirmação e chama o servidor de verdade, que
+// O botão "Iniciar com o Claude" com a rota REAL: no Edge (sem janela), a folha da ação é aberta, o botão pede confirmação e chama o servidor de verdade, que
 // abre o `wt` FALSO (nenhum terminal real) com o prompt da ação; sem pasta ligada a folha explica onde ligar; cancelar não chama nada. A opção padrão, "Terminal do app",
 // abre a sessão no pseudoconsole do app com um programa falso (cmd.exe por BLUEPRINT_TERMINAL_COMANDO, nada de claude) e a aba aparece no painel.
 // Uso: node scripts/iniciar-botao-e2e.mjs [blueprint.exe]   (padrão: target/release/blueprint.exe; precisa do Microsoft Edge). Captura em target/iniciar-botao.png.
@@ -32,18 +32,19 @@ try {
   const cdp = (method, params = {}) => new Promise((r) => { const id = ++n; pend.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
   const js = async (expr) => { const r = await cdp("Runtime.evaluate", { expression: expr, returnByValue: true, awaitPromise: true }); if (r.result.exceptionDetails) throw new Error(JSON.stringify(r.result.exceptionDetails).slice(0, 400)); return r.result.result.value; };
   await cdp("Runtime.enable");
-  const abreEspera = async (bp) => { // abre o blueprint, espera o Claude esperando aparecer e clica nele: abre a folha da ação
+  const abreAcao = async (bp) => { // abre o blueprint, espera o Claude esperando aparecer e clica nele: abre a folha da ação
     await cdp("Page.navigate", { url: `${servidor.url}/#/p/${bp}` });
-    for (let i = 0; i < 60 && !(await js(`!!document.querySelector("#claude-camada [data-espera]")`)); i++) await dormir(150);
-    assert.equal(await js(`!!document.querySelector("#claude-camada [data-espera]")`), true, "o Claude esperando aparece na próxima ação");
-    await js(`document.querySelector("#claude-camada [data-espera]").click()`);
+    for (let i = 0; i < 60 && !(await js(`!!document.querySelector('[data-obs="${bp}|ac1a002"]')`)); i++) await dormir(150);
+    assert.equal(await js(`!!document.querySelector('[data-obs="${bp}|ac1a002"]')`), true, "o ícone de instruções aparece");
+    assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig").length`), 0, "sem agente, não há sugestão de início");
+    await js(`document.querySelector('[data-obs="${bp}|ac1a002"]').dispatchEvent(new MouseEvent("click", { bubbles: true }))`);
     await dormir(800);
   };
   const botao = `[...document.querySelectorAll("#nota-folha [data-nacao]")].find((b) => b.textContent === "Iniciar com o Claude")`;
   const aviso = () => js(`document.querySelector("#nota-folha .iniciar-aviso")?.textContent || ""`);
 
   // sem pasta ligada: cancelar não chama nada; confirmar mostra onde ligar
-  await abreEspera("bp1a2b3");
+  await abreAcao("bp1a2b3");
   assert.equal(await js(`!!${botao}`), true, "a folha da ação tem o botão");
   await js(`${botao}.click()`);
   await dormir(500);
@@ -60,7 +61,7 @@ try {
 
   // com a pasta ligada: "Nova sessão" chama a rota real, que abre o terminal falso com o prompt da ação
   assert.equal((await liga("bp1a2b3")).status, 200);
-  await abreEspera("bp1a2b3");
+  await abreAcao("bp1a2b3");
   await js(`${botao}.click()`);
   await dormir(500);
   await js(`document.querySelector('dialog.confirmar input[value="nova"]').click()`);
@@ -70,12 +71,12 @@ try {
   for (let i = 0; i < 60 && !falso.chamadas().length; i++) await dormir(100);
   const [chamada, ...resto] = falso.chamadas();
   assert.equal(resto.length, 0, "uma só chamada ao terminal");
-  assert(chamada[4].startsWith("Execute a ação 1.2 «") && chamada[4].includes("acao_id ac1a002"), `o terminal recebeu o prompt da ação do Claude esperando: ${chamada[4].slice(0, 100)}`);
+  assert(chamada[4].startsWith("Execute a ação 1.2 «") && chamada[4].includes("acao_id ac1a002"), `o terminal recebeu o prompt da ação escolhida: ${chamada[4].slice(0, 100)}`);
   mkdirSync(join(raiz, "target"), { recursive: true });
   writeFileSync(join(raiz, "target", "iniciar-botao.png"), Buffer.from((await cdp("Page.captureScreenshot", { format: "png" })).result.data, "base64"));
 
   // "Terminal do app" (o padrão): a sessão abre no pseudoconsole do app, a aba aparece no painel e as teclas chegam ao programa
-  await abreEspera("bp1a2b3");
+  await abreAcao("bp1a2b3");
   await js(`${botao}.click()`);
   await dormir(500);
   assert.equal(await js(`document.querySelector('dialog.confirmar input[name="sessao"]:checked').value`), "app", "o terminal do app é o padrão");
@@ -83,7 +84,7 @@ try {
   for (let i = 0; i < 80 && !(await js(`!!document.querySelector("#terminal-painel:not([hidden]) .term-tela .xterm-rows")`)); i++) await dormir(100);
   assert(/Terminal do app aberto/.test(await aviso()), `a folha avisa que o terminal do app abriu (${await aviso()})`);
   const [sessao] = (await (await fetch(`${servidor.url}/api/terminal/sessoes`)).json()).sessoes;
-  assert.equal(sessao?.acaoId, "ac1a002", "a sessão é da ação do Claude esperando");
+  assert.equal(sessao?.acaoId, "ac1a002", "a sessão é da ação escolhida");
   for (let i = 0; i < 50 && !(await js(`document.activeElement?.classList.contains("xterm-helper-textarea")`)); i++) await dormir(100);
   await cdp("Input.insertText", { text: "set /a 6*7" });
   for (const type of ["keyDown", "keyUp"]) await cdp("Input.dispatchKeyEvent", { type, key: "Enter", code: "Enter", windowsVirtualKeyCode: 13 });
@@ -91,5 +92,5 @@ try {
   assert.equal(await js(`document.querySelector(".term-tela .xterm-rows").textContent.includes("42")`), true, "as teclas chegam ao programa da sessão");
   assert.equal(falso.chamadas().length, 1, "o terminal externo não foi chamado de novo");
   assert.deepEqual(erros, [], "sem erro no console");
-  console.log("botão Iniciar com o Claude (rota real, terminal falso): ok (esperando abre a folha, confirmação, cancelar não abre, sem pasta explica, Nova sessão abre o terminal externo com o prompt, Terminal do app abre a aba com a sessão)");
+  console.log("botão Iniciar com o Claude (rota real, terminal falso): ok (ícone abre a folha, confirmação, cancelar não abre, sem pasta explica, Nova sessão abre o terminal externo com o prompt, Terminal do app abre a aba com a sessão)");
 } finally { limpar(); }

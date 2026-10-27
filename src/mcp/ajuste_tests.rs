@@ -53,12 +53,12 @@ fn ajustar_o_titulo_muda_so_ele_e_revalida_a_proposta_inteira() {
     assert!(a["planos"][1]["descricao"].as_str().unwrap().contains("Validação"), "a descrição não some por omissão");
     assert_eq!((a["nome"].as_str(), a["checkpoints"].as_array().unwrap().len()), (Some("Nova ação"), 1));
     assert_eq!(m.itens().len(), 1, "o ajuste atualiza a proposta, não cria outra");
-    // um título que o validador recusa (mais de 45 caracteres) volta como erro e a proposta guardada fica como estava
+    // Títulos longos são preservados na proposta ajustada.
     let longo = "Montar uma rota com um título bem mais comprido que o limite de 45";
     let (status, r) = ajusta(&m, json!({"ajustar": 1, "acoes": [{"id": "+a1", "planos": [{"id": "+a1.p2", "texto": longo}]}]})).unwrap();
-    assert_eq!(status, 422);
-    assert!(r["erros"][0].as_str().unwrap().contains("máximo é 45"));
-    assert_eq!(na_fila(&m, 1)["proposta"]["acoes"][0]["planos"][1]["texto"], "Montar a rota");
+    assert_eq!(status, 200);
+    assert_eq!(r["numero"], 1);
+    assert_eq!(na_fila(&m, 1)["proposta"]["acoes"][0]["planos"][1]["texto"], longo);
 }
 
 #[test]

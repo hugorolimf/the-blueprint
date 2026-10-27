@@ -101,18 +101,15 @@ try {
   assert.equal(await relogios(), 0, "sem figura nenhum relógio");
   assert.equal(await figuras(), 0, "a lista de blueprints não tem figura de espera");
 
-  // (1b) dentro do blueprint, sem agente: só o Claude esperando na próxima ação (uma figura animada)
+  // (1b) dentro do blueprint, sem agente também não há figura nem relógio
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(3000);
   await js(`abertos[${JSON.stringify(blueprint.id)}] = true; render()`);
   await dormir(1500);
-  const soEspera = await medir();
-  relatorio.soEspera = { ...soEspera, figuras: await figuras(), relogios: await relogios() };
-  console.log("(1b) só o Claude esperando:", JSON.stringify(relatorio.soEspera));
-  assert.equal(await relogios(), 1, "só a figura de espera tem relógio");
-  assert(soEspera.cpu < TETO_UMA, `uma figura animada: ${soEspera.cpu}% (teto ${TETO_UMA}%)`);
+  assert.equal(await figuras(), 0, "sem agentes não há sugestão de início");
+  assert.equal(await relogios(), 0, "sem figuras não há relógios");
 
-  // (2) cinco agentes animados à vista (+ o Claude esperando na próxima ação)
+  // (2) cinco agentes animados à vista
   await poe(CINCO);
   const figs = await figuras(), anim = await animadas(), rel = await relogios();
   assert(figs >= 5, `as figuras aparecem (${figs})`);
@@ -181,13 +178,13 @@ try {
   relatorio.limpeza = { figurasNaFolha: await figuras(), registrosNoMapa: await js(`claudeFiguras.size`), intervalosAlemDaPagina: (await intervalos()) - base, maiorOrfaoNasTrocas: maximoOrfao };
   console.log("(6) trocas e remoção:", JSON.stringify(relatorio.limpeza));
   assert(await visivel(), "a aba continuou visível até o fim");
-  // sem agente sobra só o Claude esperando (figura da interface): uma figura, um relógio, e mais nada
-  assert.equal(await js(`claudeFiguras.size`), 1, "sem agentes o mapa fica só com a figura de espera");
+  // sem agentes, nenhuma figura ou relógio sobra
+  assert.equal(await js(`claudeFiguras.size`), 0, "sem agentes o mapa fica vazio");
   assert.equal(await js(`document.querySelectorAll("#claude-camada .claude-fig:not([data-espera])").length`), 0, "e nenhuma figura de agente");
-  assert.equal((await intervalos()) - base, 1, "nenhum relógio sobra além do da espera");
+  assert.equal((await intervalos()) - base, 0, "nenhum relógio sobra");
   const depois = await medir(3000);
   relatorio.depoisDeLimpar = depois;
-  assert(depois.cpu < TETO_UMA, `de volta só com a espera: ${depois.cpu}% (teto ${TETO_UMA}%)`);
+  assert(depois.cpu < TETO_UMA, `de volta sem figuras: ${depois.cpu}% (teto ${TETO_UMA}%)`);
   // (7) abrir e fechar um blueprint grande (ação 1.13): 45 ações com planos e checkpoints, seis ciclos de recolher e expandir; mede o pico de cada clique
   await js(`(() => { const b = D.blueprints.find((x) => x.id === ${JSON.stringify(blueprint.id)}); const molde = b.acoes.find((f) => f.planos?.length); b.acoes = Array.from({ length: 45 }, (_, i) => { const f = JSON.parse(JSON.stringify(molde)); f.id = "g" + i; f.planos.forEach((t, j) => { t.id = "g" + i + "p" + j; }); (f.checkpoints || []).forEach((m, j) => { m.id = "g" + i + "m" + j; }); return f; }); abertos[b.id] = true; render(); })()`);
   await dormir(2500);
@@ -206,5 +203,5 @@ try {
   assert.equal(await animacoes(), 0, "depois de abrir e fechar nenhuma animação sobra");
   assert.deepEqual(erros, [], "sem erro no console");
   console.log("RELATORIO " + JSON.stringify(relatorio));
-  console.log(`animações do Claude: ok (repouso ${repouso.cpu}%, só a espera ${soEspera.cpu}%, ${figs} figuras animadas ${animado.cpu}%, aba oculta ${oculta.cpu}%, movimento reduzido ${reduzido.cpu}%; um relógio por figura, nenhum órfão)`);
+  console.log(`animações do Claude: ok (repouso ${repouso.cpu}%, ${figs} figuras animadas ${animado.cpu}%, aba oculta ${oculta.cpu}%, movimento reduzido ${reduzido.cpu}%; um relógio por figura, nenhum órfão)`);
 } finally { clearInterval(mantemVisivel); limpar(); }

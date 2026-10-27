@@ -10,6 +10,7 @@ const MIGRACOES: &[(&str, &str)] = &[
     ("004_linha_do_tempo", include_str!("migracoes/004_linha_do_tempo.sql")),
     ("005_acesso", include_str!("migracoes/005_acesso.sql")),
     ("006_historico", include_str!("migracoes/006_historico.sql")),
+    ("007_tempos_planos", include_str!("migracoes/007_tempos_planos.sql")),
 ];
 
 /// Aplica as que faltam e devolve os nomes aplicados agora.

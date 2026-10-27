@@ -6,19 +6,13 @@
 - `inicio` and `fim`: a sequence with no gaps or conflicts. New actions start **today or later**, unless the user asks for past dates.
 - `status`: `planejado` or `andamento` (andamento only if the work has already started).
 - `observacao` (in the app: **Action instructions**): the **complete outline of the action**. It can be long (up to 20000 characters) and should carry: goal, deliverable, step by step in order, **dependencies** ("depends on action X"), decisions and assumptions, risks and the definition of done. The plans are the tickable items; the instructions tell how and why.
-- 3 to 8 plans and 1 to 3 checkpoints per action.
+- As many plans as the action needs, and 1 to 3 checkpoints per action.
 - `projeto` (optional): the action's group in the blueprint, by name or id; declare them in `blueprint.projetos` (`[{ "nome": "Interface" }]`, also valid on an existing blueprint). Only with distinct lines of work (2 to 5); without the field the action stays in "Geral" (a reserved name). Details: topic `editar`.
 - **Decisions** (stack, scope, rules chosen or still open): `blueprint.decisoes` = `[{ "titulo", "escolha", "motivo", "estado": "aberta|decidida" }]`, valid on any blueprint (existing ones come in `ler_blueprint`). Put them here, not as text in an action's `observacao`. With `id` it updates (what you omit stays), without it is new; `decidida` needs `escolha`. Only decisions is valid (`acoes: []`).
 
 ## Plans
 
-**Title (`texto`)**: up to **45 characters**, starting with a **verb in the infinitive form**, actionable.
-
-| Good | Bad |
-| --- | --- |
-| Validate the folder and the Git root | Folder |
-| Create a route to stop the agent | Do the server part |
-| Cover errors with tests | Tests and other assorted things |
+**Title (`texto`)**: actionable, starting with a **verb in the infinitive form**.
 
 **Description**: required on a new plan, concrete, with three parts:
 
@@ -44,14 +38,16 @@ Cite files or modules **only** if you have seen them in the folder. Never invent
 
 The one executing is the AI: short deadlines, in sequence, starting today, with no gaps of more than 2 days.
 
-- **Plan:** 0.5 to 4 h of agent work (above 8 h, split it). Give `horas` (0.5 to 16) on every new plan.
+Before estimating, use the blueprint's `tempoReal` when available and inspect comparable completed actions for their plans' `tempoReal.inicioEm` and `tempoReal.feitoEm`. Consider scope and sample size. These are elapsed times, including pauses, not active work. If measurements are absent or insufficient, say so; do not invent precision.
+
+- **Plan:** estimate positive `horas` based on the work; consider splitting unusually large plans when it helps the user.
 - **Action:** 1 to 3 calendar days. More only with a written reason in the instructions (waiting on a person, CI, publishing, a third party).
 - **The user's time** (reviewing, approving, testing on a real machine) becomes a dated checkpoint, never hidden slack in the deadline.
 - Good: a 2-day action with 4 plans of 1 to 3 h. Bad: a 3-week action with 5 plans of 1 day.
 
 ## Level of detail
 
-**Lean** (few plans, one-line descriptions), **standard** (as described above) or **detailed** (more small plans, command validation on all of them, risks in the instructions). Without a request, use standard.
+Choose lean, standard or detailed; default to standard.
 
 ## New blueprint
 
@@ -59,7 +55,7 @@ Without `blueprint_id`, also send `blueprint: { nome, descricao }` (a short name
 
 ## Before sending, check
 
-- [ ] Titles with a verb in the infinitive and up to 45 characters; none repeated within the action.
+- [ ] Titles with a verb in the infinitive; none repeated within the action.
 - [ ] Every new plan has a description (scope, result, validation).
 - [ ] Every new plan has `horas`; actions of up to 3 days (or with a reason) and no gaps between them.
 - [ ] Dates `yyyy-mm-dd`, `fim` after `inicio`, checkpoints inside the action, no past dates without a request.

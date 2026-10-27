@@ -31,6 +31,8 @@ node scripts/capturas.mjs --comparar
 
 ## Regras
 
+- Execute testes e compilações somente quando puderem terminar em menos de um minuto; interrompa os que atingirem o limite e informe o que não foi verificado.
+
 - Arquivos de até 350 linhas (teto 500 com motivo no topo). Um arquivo, uma responsabilidade.
 - Poucas dependências; sem framework nem bundler na interface.
 - Segurança: `/api/mcp/*` só em loopback, `Host` e `Origin` conferidos, todo POST `application/json`; protótipos em `iframe sandbox="allow-scripts"` de origem opaca (nunca `allow-same-origin`). O que o agente envia é proposta; concluir exige evidência.
