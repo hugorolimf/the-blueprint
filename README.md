@@ -16,7 +16,7 @@
   Beta · Windows 10/11 · MIT · <a href="README.pt-BR.md">Português</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="docs/comparison.md">How it compares</a>
 </p>
 
-![A blueprint sheet with projects, actions, plans and checkpoints](docs/img/blueprint.png)
+![Demo: the agent proposes an action, you apply it on Plan, Claude walks to the plan it works on, and the plan is checked with evidence](docs/img/demo.gif)
 
 ## Why
 

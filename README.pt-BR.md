@@ -16,7 +16,7 @@
   Beta · Windows 10/11 · MIT · <a href="README.md">English</a> · <a href="ROADMAP.pt-BR.md">Roadmap</a> · <a href="docs/pt-BR/comparison.md">Comparação</a>
 </p>
 
-![Uma folha de blueprint com projetos, ações, planos e checkpoints](docs/img/blueprint.png)
+![Demo: o agente propõe uma ação, você a aplica no Planejar, o Claude anda até o plano em que trabalha e o plano é marcado com evidência](docs/img/demo.gif)
 
 ## Por quê
 
