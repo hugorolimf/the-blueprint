@@ -146,6 +146,15 @@ fn onde(arquivo: &str, cwd: &str) -> Option<String> {
     (!curto.is_empty() && !curto.chars().any(char::is_control)).then_some(curto)
 }
 
+/// O arquivo da edição: `file_path` (Edit e Write do Claude Code) ou, no `apply_patch` do Codex, o primeiro `*** Add|Update|Delete File: <caminho>`
+/// do patch em `tool_input.command` (formato em openai/codex, `codex-rs/core/src/tools/handlers/apply_patch.rs`, tag rust-v0.164.0).
+fn arquivo_editado(tool_input: &Value) -> Option<&str> {
+    tool_input["file_path"].as_str().or_else(|| {
+        let patch = tool_input["command"].as_str()?;
+        patch.lines().find_map(|l| ["*** Add File: ", "*** Update File: ", "*** Delete File: "].iter().find_map(|p| l.strip_prefix(p)).map(str::trim))
+    })
+}
+
 /// Quem fez a chamada do hook: dentro de um subagente o Claude Code manda `agent_id` e `agent_type` (a sessão principal não manda). O subagente vira um agente
 /// próprio, "tipo + 4 primeiros caracteres do id" (até 40 caracteres), com o papel pelo tipo (Explore = explorador, *review* = revisor, o resto = construtor);
 /// a sessão principal continua sendo "Claude". Devolve (nome, papel, é subagente).
@@ -220,7 +229,7 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
 
 pub fn edicao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Value> {
     let Some((ws, bp)) = alvo_de(mcp, dados, corpo, ctx)? else { return Ok(json!({})) };
-    let Some(arquivo) = corpo["tool_input"]["file_path"].as_str().and_then(|f| onde(f, texto(corpo, "cwd"))) else { return Ok(json!({})) };
+    let Some(arquivo) = arquivo_editado(&corpo["tool_input"]).and_then(|f| onde(f, texto(corpo, "cwd"))) else { return Ok(json!({})) };
     let (nome, papel, _) = identidade_de(corpo, ctx);
     let mut evento = evento_de_membro(mcp, ctx, &nome, papel, &ws, &bp, &crate::tr!("Editing {arquivo}", "Editando {arquivo}"), "escrevendo");
     evento["onde"] = json!([arquivo]);

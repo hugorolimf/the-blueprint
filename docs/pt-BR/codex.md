@@ -4,6 +4,8 @@
 
 O Claude Code ganha um plugin ([guia](claude-code.md)). O Codex, e qualquer outro agente que fale MCP, ganha só o servidor MCP: as mesmas ferramentas, sem hooks, skill nem status line.
 
+Pesquisa e desenho da integração nativa com o Codex (hooks, plugin, tabela de paridade): [codex-parity.md](codex-parity.md).
+
 ## Codex
 
 **Conectar.** O instalador (tarefa *conectar*) e o `blueprint registrar` já rodam isto para o `codex` que acharem no PATH. À mão, com o app aberto:
