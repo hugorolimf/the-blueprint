@@ -1,6 +1,6 @@
 # The Blueprint v0.1.2 (beta)
 
-[Português](pt-BR/release-v0.1.2.md)
+[Português](../pt-BR/interno/release-v0.1.2.md)
 
 ## Fixes
 

@@ -1,6 +1,6 @@
 # The Blueprint v0.1.2 (beta)
 
-[English](../release-v0.1.2.md)
+[English](../../interno/release-v0.1.2.md)
 
 ## Correções
 
