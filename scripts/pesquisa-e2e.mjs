@@ -199,6 +199,10 @@ try {
   for (const largura of [1000, 640, 390]) {
     await cdp("Emulation.setDeviceMetricsOverride", { width: largura, height: 700, deviceScaleFactor: 1, mobile: false });
     await dormir(500);
+    await js(`document.getElementById("busca").focus()`); await dormir(100); // aberta (na barra compacta ela abre por cima dos ícones até o Esc): só precisa caber na janela
+    s = await sobreposicao(largura >= 640);
+    assert(s.dentro, `em ${largura} px, o campo aberto cabe na janela: ${JSON.stringify(s)}`);
+    await js(`document.getElementById("busca").blur()`); await dormir(100); // em repouso: não sobrepõe nenhum botão
     s = await sobreposicao(largura >= 640); // abaixo de 640 px a barra ocupa 4 fileiras e a faixa de período (fixa em 116 px) fica por baixo: sem essa conferência
     await captura(`estreita-${largura}`);
     assert(s.sobre === 0 && s.dentro, `em ${largura} px, no blueprint: ${JSON.stringify(s)}`);

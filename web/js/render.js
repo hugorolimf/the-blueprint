@@ -192,8 +192,8 @@ function render() {
     const comAcoes = todos.filter((x) => x.p.acoes.length);
     const geralTodos = comAcoes.length ? comAcoes.reduce((t, x) => t + resumo(acoesDe(x.p)).geral, 0) / comAcoes.length : 0;
     out.push(marcaFolha(pecasWorkspace(workspaceAtual, EMB), { centro: H / 2, maxLado: MINIMA * 0.55, progresso: geralTodos, titulo: D.empresa || "Workspace", fundo: true })); // a marca do workspace acompanha o progresso dos seus blueprints como uma marca d'água de fundo
-    out.push(`<text x="${L}" y="${IL + 36}" font-size="18" font-weight="700" class="cap">${esc(D.empresa)} · ${esc(D.titulo)}</text>`);
-    out.push(`<text class="mid cap" x="${L}" y="${IL + 56}" font-size="11">${tr("Blueprints · cada um abre o seu próprio blueprint")}</text>`);
+    out.push(`<text data-titulo="nome" x="${L}" y="${IL + 36}" font-size="18" font-weight="700" class="cap">${esc(D.empresa)} · ${esc(D.titulo)}</text>`);
+    out.push(`<text data-titulo class="mid cap" x="${L}" y="${IL + 56}" font-size="11">${tr("Blueprints · cada um abre o seu próprio blueprint")}</text>`);
     out.push(`<text class="mid cap" x="${L}" y="${yMapa + 6}" font-size="10">${tr("Clique para abrir o blueprint · segure e arraste para reordenar")}</text>`);
     mapa.forEach(({ p, pi, ok }, i) => {
       const col = i % cols, row = Math.floor(i / cols);
@@ -258,8 +258,8 @@ function render() {
     const agsP = agentesDoBlueprint(p.id); // as figuras do Claude ficam na camada à parte (claude-camada.js); aqui só o destaque do plano
     moldura(out, H);
     out.push(marcaFolha(p.emblema?.pecas, { centro: H / 2, progresso: b.geral, titulo: p.nome || "Blueprint", blueprint: p.id })); // a marca deste blueprint, sempre no centro da janela, construída conforme o progresso
-    out.push(`<text x="${L}" y="${IL + 36}" font-size="18" font-weight="700" class="cap">${esc(D.empresa)} · ${esc(D.titulo)}</text>`);
-    out.push(`<text class="mid cap" x="${L}" y="${IL + 56}" font-size="11">${tr("Folha {n} de {total} · Blueprint {bp} · {nome}", { n: numero, total, bp: pad(pi + 1), nome: esc(corta(p.nome || tr("Sem nome"), 60)) })}</text>`);
+    out.push(`<text data-titulo="nome" x="${L}" y="${IL + 36}" font-size="18" font-weight="700" class="cap">${esc(D.empresa)} · ${esc(D.titulo)}</text>`);
+    out.push(`<text data-titulo class="mid cap" x="${L}" y="${IL + 56}" font-size="11">${tr("Folha {n} de {total} · Blueprint {bp} · {nome}", { n: numero, total, bp: pad(pi + 1), nome: esc(corta(p.nome || tr("Sem nome"), 60)) })}</text>`);
     regua(out, H);
     const secao = (s) => {
       const yb = s.y;
@@ -362,6 +362,7 @@ function render() {
   host.innerHTML = bloco ? folhaBlueprint(bloco) : capa();
   horasAtualiza();
   posicionaMarca();
+  requestAnimationFrame(barraAjusta); // barra-topo.js: a barra começa depois do título (no quadro seguinte: medir aqui no meio dispararia as transições da folha)
   const alvo = [...host.querySelectorAll(".acao")].find((g) => g.getAttribute("aria-label") === selecionada);
   if (alvo) marcar(alvo);
   if (desenrolarNaProxima) { desenrolarNaProxima = false; desenrolar(); sugereF11(bloco ? "blueprint" : "lista"); }

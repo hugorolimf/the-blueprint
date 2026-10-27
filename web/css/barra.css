@@ -1,0 +1,28 @@
+/* A barra do topo da folha (posição e modo decididos por barra-topo.js): à direita do cabeçalho, nunca por cima dele.
+   "compacta" (sem espaço para o texto): uma fileira só de ícones e a pesquisa vira lupa, que abre por cima da fileira ao receber foco ou texto.
+   Sem mexer em display: o [hidden] e o .so-home/.so-blueprint continuam escondendo.
+   O ícone é uma máscara sobre currentColor: o texto continua no botão como nome acessível (e é o que edicao.js e terminal.js trocam). */
+.barra{left:clamp(16px,var(--barra-esq,40%),calc(100% - 280px))} /* no máximo 2 fileiras de ícones; a segunda fica à direita, longe do subtítulo */
+.barra .btn::before{display:inline-block;vertical-align:middle;width:16px;height:16px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+.barra .btn.ic,.barra.compacta .btn{font-size:0;letter-spacing:0;padding:0;width:34px;min-height:33px}
+.barra .btn.ic::before,.barra.compacta .btn::before{content:""}
+.barra.compacta .busca{position:absolute;top:0;right:0;width:min(380px,100%);z-index:1}
+.barra.compacta .busca input{background:#0c3a78}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))){position:relative;order:-1;flex:none;width:34px}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) input{width:34px;min-height:33px;padding:0;cursor:pointer;background:#0c3a78cc}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) input::placeholder{color:transparent}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) span{display:none}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown)))::before{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;background:var(--ink);pointer-events:none;-webkit-mask:var(--lupa) center/contain no-repeat;mask:var(--lupa) center/contain no-repeat}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))):hover input{background:var(--ink)}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))):hover::before{background:var(--paper)}
+.barra{--lupa:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><circle cx='7' cy='7' r='4.5'/><path d='M10.3 10.3L14 14'/></svg>")}
+#b-workspaces,#b-voltar{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M13 8H3M7 4L3 8l4 4'/></svg>")}
+#b-abrir{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 3.5l4 4 4-4M4 8.5l4 4 4-4'/></svg>")}
+#b-fechar{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 7.5l4-4 4 4M4 12.5l4-4 4 4'/></svg>")}
+#b-tela{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4'/></svg>")}
+#b-foco{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><circle cx='8' cy='8' r='5'/><circle cx='8' cy='8' r='1.5'/><path d='M8 1v2M8 13v2M1 8h2M13 8h2'/></svg>")}
+#b-ia{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path d='M8 1.5C8.6 6 10 7.4 14.5 8 10 8.6 8.6 10 8 14.5 7.4 10 6 8.6 1.5 8 6 7.4 7.4 6 8 1.5z'/></svg>")}
+#b-pessoas-folha{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'><circle cx='6' cy='5.5' r='2.5'/><path d='M1.5 13.5c.5-2.5 2.3-4 4.5-4s4 1.5 4.5 4'/><circle cx='11.5' cy='5' r='2'/><path d='M11.5 9.5c1.7 0 2.8 1.2 3.1 3'/></svg>")}
+#b-compartilhar{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5'><circle cx='4' cy='8' r='1.8'/><circle cx='12' cy='3.5' r='1.8'/><circle cx='12' cy='12.5' r='1.8'/><path d='M5.6 7.1l4.8-2.7M5.6 8.9l4.8 2.7'/></svg>")}
+#b-apresentar{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='3' width='12' height='8' rx='1'/><path d='M6 14h4M8 11v3M7 5.5l2.5 1.5L7 8.5z'/></svg>")}
+#b-terminal{--ic:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='1.5' y='2.5' width='13' height='11' rx='1'/><path d='M4.5 6l2 2-2 2M8.5 10.5h3'/></svg>")}

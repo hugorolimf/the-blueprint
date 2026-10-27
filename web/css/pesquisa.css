@@ -7,8 +7,6 @@
 .busca input:focus{outline:1px solid var(--ink);border-color:var(--ink)}
 .busca input::-webkit-search-cancel-button{-webkit-appearance:none;display:none} /* o contador ocupa o canto; Esc limpa */
 .busca span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);white-space:nowrap;pointer-events:none}
-/* janela estreita: os botões já quebram em fileiras; o campo divide a última com eles (ou ocupa uma própria) em vez de forçar uma fileira a mais */
-@media (max-width:960px){.busca{flex:1 1 220px;justify-content:stretch}.busca input{width:100%}}
 
 /* pesquisando, a ação esmaece inteira (fill/stroke-opacity: opacity criaria uma camada por item); acendem a que casa (e os itens dela), a que tem um item que casa
    (só o item que casa) e o trecho achado leva um retângulo atrás do texto */
