@@ -10,11 +10,11 @@ function (L, c) {
     const g = palco.querySelector('[data-peca="carro"]'), s = { x: 0, v: 0 };
     let t = 0;
     L.laco(palco, (dt, calmo) => {
-      t += dt;
+      if (!calmo) t += dt; // movimento reduzido: o carrinho fica parado e o laço termina
       L.mola(s, Math.sin(t * 0.8) * 60, dt, 120, 14, calmo);
       g.setAttribute("transform", L.translateAlong(P, [s.x, 0, 0]));
       dizer((pt ? "posição " : "position ") + s.x.toFixed(0));
-      return true;
+      return !calmo;
     });
   } };
 }

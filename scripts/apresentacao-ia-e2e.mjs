@@ -313,4 +313,4 @@ try {
   assert.equal(await js(`[...document.querySelectorAll('[data-fig="capa"][data-campo="secao"] option')].map((o) => o.textContent).slice(0, 3).join("|")`), "None|Overview|What you receive", "a Sessão da figura traduzida");
   assert.deepEqual(erros.filter((e) => !/NumberOfInputEventTimestampsToTrack/.test(e)), [], "sem erro no console"); // esse identificador é do próprio Edge (script interno que ele reinjeta ao navegar), não está no repositório
   console.log("apresentacao-ia-e2e: ok (abre na mais nova, Visão interna, editor, Sessão da figura, código, Desfazer, erro do servidor, edição do agente em paralelo, conversa, gerar no terminal do app, Gerar de novo com edições, remover, 390 px, en)");
-} finally { limpar(); }
+} finally { limpar(); setTimeout(() => process.exit(), 800); } // o WebSocket do Edge e o SSE pelo proxy prendiam o Node depois do "ok"
