@@ -15,7 +15,7 @@ When the user asks to bring issues from a GitHub repository into the blueprint, 
 | Body | Action `observacao`: a summary of at most 600 characters, then `GitHub issue <owner/name>#<number>` |
 | Task list in the body (`- [ ] ...`) | One plan per item, up to 6; an item already ticked (`- [x]`) is ignored (only plan what is not done) |
 | No task list | One plan: "Implement #<number>" |
-| Milestone | The `projeto` of the action (id or name); the milestone's due date, if any, only hints the end date |
+| Milestone | The `projeto` of the action (id or name); a milestone that is not a project yet goes in `blueprint.projetos` (`[{ "nome": "<milestone>" }]`). Its due date, if any, only hints the end date |
 | Labels | Written in the note; they do not change the status |
 | Closed issue | Not imported |
 

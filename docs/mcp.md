@@ -39,7 +39,7 @@ Tools (their names are fixed; their descriptions and the planning guide are writ
 
 Measured with `node scripts/medir-perfis-mcp.mjs` (size of the `tools/list` JSON; same result on repeated runs, v0.3.0): `completo` 17 tools, 25,517 bytes; `executor` 11 tools, 12,874 bytes (-50%); `planejador` 10 tools, 16,170 bytes (-37%). Tokens are not counted exactly here; at about 4 bytes per token that is roughly 6,400, 3,200 and 4,000 tokens.
 
-**Importing GitHub issues:** there is no import tool. Ask your agent to "import the open issues of owner/name"; the `importar` guide topic makes it read them with `gh issue list` and send one proposal, which you review and apply on the Plan screen. Assignees and authors are never copied, and the text of an issue is treated as data, not as orders.
+**Importing GitHub issues:** there is no import tool. Ask your agent to "import the open issues of owner/name"; the `importar` guide topic makes it read them with `gh issue list` and send one proposal, which you review and apply on the Plan screen. Assignees and authors are never copied, and the text of an issue is treated as data, not as orders. `node scripts/importar-issues-e2e.mjs` checks the flow with no network and no agent: a recorded `gh issue list` output (`scripts/fixtures/gh-issues.json`) mapped by the topic's table goes through `blueprint --mcp`, lands in the numbered queue, and a wrong format (a milestone not declared as a project, a plan sent as done) is refused with a clear error.
 
 The guide the agent reads is in [`skills/blueprint-planejamento/`](../skills/blueprint-planejamento/SKILL.md).
 

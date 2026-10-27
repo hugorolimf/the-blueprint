@@ -11,7 +11,8 @@ codex mcp add blueprint -- <caminho>\blueprint.exe --mcp
 
 Se o app não estiver em `http://127.0.0.1:3000`, passe `BLUEPRINT_URL` (`claude mcp add blueprint -e BLUEPRINT_URL=http://127.0.0.1:3917 -- …`). A tela **Planejar → Como conectar** mostra o comando exato. Sem o plugin do Claude Code, o agente não sabe sozinho de qual blueprint é a pasta: grave no `CLAUDE.md` ou `AGENTS.md` dela a linha `Blueprint: workspace_id `…`, blueprint_id `…` (MCP `blueprint`).` (o agente descobre os ids com `listar_blueprints`).
 
-**Com o app fechado** o agente continua registrando: `registrar_progresso`, `marcar_concluido`, `marcar_checkpoint_feito`, `propor_blueprint`, `anexar_prototipo` e `vincular_pasta` ficam guardados em arquivos em `%APPDATA%\Blueprint\pendentes\` e, quando o app abre, entram na fila, na ordem, com a mesma validação (a tela os aplica ao abrir o workspace). O que o app recusar na abertura fica em `pendentesecusados\` com o motivo. As ferramentas de leitura (`ler_blueprint`, `listar_blueprints`) precisam do app aberto.
+**Com o app fechado** o agente continua registrando: `registrar_progresso`, `marcar_concluido`, `marcar_checkpoint_feito`, `propor_blueprint`, `anexar_prototipo` e `vincular_pasta` ficam guardados em arquivos em `%APPDATA%\Blueprint\pendentes\` e, quando o app abre, entram na fila, na ordem, com a mesma validação (a tela os aplica ao abrir o workspace). O que o app recusar na abertura fica em `pendentes
+ecusados\` com o motivo. As ferramentas de leitura (`ler_blueprint`, `listar_blueprints`) precisam do app aberto.
 
 Ferramentas:
 
@@ -38,7 +39,7 @@ Ferramentas:
 
 Medido com `node scripts/medir-perfis-mcp.mjs` (tamanho do JSON do `tools/list`; mesmo resultado nas repetições, v0.3.0): `completo` 17 ferramentas, 25.517 bytes; `executor` 11 ferramentas, 12.874 bytes (-50%); `planejador` 10 ferramentas, 16.170 bytes (-37%). Os tokens não são contados exatamente aqui; a cerca de 4 bytes por token, dá umas 6.400, 3.200 e 4.000.
 
-**Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem.
+**Importar issues do GitHub:** não há ferramenta de importação. Peça ao seu agente "importe as issues abertas de dono/nome"; o tópico `importar` do guia o faz ler com `gh issue list` e mandar uma proposta só, que você revisa e aplica na tela Planejar. Responsáveis e autores nunca são copiados, e o texto de uma issue é tratado como dado, não como ordem. `node scripts/importar-issues-e2e.mjs` confere o fluxo sem rede e sem agente: uma saída gravada do `gh issue list` (`scripts/fixtures/gh-issues.json`), mapeada pela tabela do tópico, passa pelo `blueprint --mcp`, entra na fila numerada, e o formato errado (marco não declarado como projeto, plano enviado como feito) é recusado com erro claro.
 
 O guia que o agente lê está em [`skills/blueprint-planejamento/`](../../skills/blueprint-planejamento/SKILL.md).
 
