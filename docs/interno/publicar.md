@@ -59,3 +59,7 @@ Autenticidade: o `SHA256SUMS` vem da mesma release do instalador, então prova q
 Os manifestos da v0.3.0 estão em `instalador/winget/` (identificador `TheBlueprint.TheBlueprint`, instalador Inno, escopo do usuário) e `instalador/scoop/blueprint.json` (extrai o instalador com `innosetup`, desliga o atualizador próprio com `BLUEPRINT_SEM_ATUALIZACAO=1`, porque quem atualiza é o Scoop, e tem `checkver`/`autoupdate` pelo `SHA256SUMS`). Conferir: `winget validate --manifest instalador/winget` e `Test-Json -SchemaFile <scoop>\apps\scoop\current\schema.json`.
 
 A cada versão: troque versão, URL, hash (`SHA256SUMS` da release) e `ReleaseDate`. Publicar é ato público, só com autorização: no winget, um PR ao `microsoft/winget-pkgs` em `manifests/t/TheBlueprint/TheBlueprint/<versão>/` (ou `wingetcreate submit`); no Scoop, um bucket próprio (repositório `scoop-blueprint`) ou um PR ao bucket `extras`.
+
+## Imagem social
+
+`node scripts/imagem-social.mjs` gera `recursos/social.png` (1280x640, menos de 1 MB: o ícone do anatomy, o nome e a frase do README). Configurar em Settings → General → Social preview é ato público, só com autorização.
