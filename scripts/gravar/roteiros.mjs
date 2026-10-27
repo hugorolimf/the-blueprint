@@ -59,15 +59,19 @@ export const ROTEIROS = {
                    { texto: L(A, "Corrigir as pendências da revisão", "Fix the review findings"), horas: 2, descricao: d(["aplicar os ajustes", "apply the adjustments"], ["entrega limpa", "a clean delivery"], ["nenhuma pendência", "no open items"]) }],
           checkpoints: [{ nome: L(A, "Entrega revisada", "Delivery reviewed"), data: "2026-12-15" }] }] });
       await dormir(2200);
-      await tentar("abrir Planejar", () => A.clicarEm("#b-ia")); await dormir(2400);
+      // o aviso do agente (notificacao.js) aparece sobre a folha: o botão "Abrir o plano" dele leva ao Planejar; sem aviso, o botão da barra
+      await tentar("abrir Planejar", async () => { try { await A.clicarEm(".notif-ir"); } catch { await A.clicarEm("#b-ia"); } }); await dormir(2400);
       await A.mover(640, 420, 14); await dormir(1400);
       await tentar("aplicar", () => A.clicarEm("#agente-tela [data-pact=aplicar]")); await dormir(2600);
     }); } },
   "04-claude-na-folha": { gif: true, descricao: "O Claude anda pelos planos enquanto trabalha e conclui com evidência", async rodar(A) {
     const c = await contexto(A); await abrirFolha(A, c);
+    // uma ação com dois planos por fazer: o "concluir" tem de virar um check novo na tela, não cair num plano que o exemplo já traz feito
+    const acao = c.acoes.find((a) => a.planos?.filter((p) => !p.feito).length >= 2) || c.acao;
     await tentar("abrir ação", () => A.js(`abertos[${JSON.stringify(c.bp)}] = true; render()`));
-    const [p1, p2] = c.acao.planos;
-    const ev = (tipo, corpo) => A.evento(tipo, { workspaceId: ws, blueprintId: c.bp, acaoId: c.acao.id, ...corpo });
+    await tentar("rolar até a ação", () => A.js(`document.querySelector('.acao[data-f="${acao.id}"]')?.scrollIntoView({ block: "start" })`)); await dormir(900);
+    const [p1, p2] = acao.planos.filter((p) => !p.feito);
+    const ev = (tipo, corpo) => A.evento(tipo, { workspaceId: ws, blueprintId: c.bp, acaoId: acao.id, ...corpo });
     await A.gravar(async () => {
       await dormir(1400);
       await ev("progresso", { agente: "Claude", estado: "lendo", texto: L(A, "Lendo o plano antes de começar", "Reading the plan before starting"), planoId: p1.id }); await dormir(2600);

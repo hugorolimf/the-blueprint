@@ -1,6 +1,6 @@
 # The Blueprint v0.3.0 (beta)
 
-[Português](pt-BR/release-v0.3.0.md)
+[Português](../pt-BR/interno/release-v0.3.0.md)
 
 ## What is new
 

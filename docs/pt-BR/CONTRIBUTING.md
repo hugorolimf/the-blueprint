@@ -2,7 +2,7 @@
 
 # Como contribuir
 
-Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos. O que está planejado e o que está sendo feito fica no [ROADMAP](../../ROADMAP.pt-BR.md).
+Obrigado! O projeto é pequeno de propósito. Antes de uma mudança grande, abra uma issue para conversarmos. O que está planejado e o que está sendo feito fica no [ROADMAP](../../ROADMAP.pt-BR.md). Quem participa segue o [Código de Conduta](../../CODE_OF_CONDUCT.md) (em inglês).
 
 ## Vocabulário (importante)
 

@@ -12,7 +12,7 @@ function agentesDoBlueprint(id) {
   return lista; // o limite de figuras (e o contador "+N") é de claude-logica.js
 }
 const roboClasse = (a) => (a.tipo === "bloqueio" || a.tipo === "nao-concluida" || a.tipo === "checkpoint-nao-feito" ? " erro" : a.tipo === "concluir" || a.tipo === "checkpoint-feito" ? " ok" : "");
-const ROBO_ROTULO = { progresso: "trabalhando", concluir: "concluiu", "nao-concluida": "não concluiu", "checkpoint-feito": "atingiu um checkpoint", "checkpoint-nao-feito": "não atingiu um checkpoint", bloqueio: "travou", proposta: "enviou uma proposta", prototipo: "anexou um protótipo" };
+const roboRotulo = (tipo) => ({ progresso: tr("Agente trabalhando"), concluir: tr("Agente concluiu"), "nao-concluida": tr("Agente não concluiu"), "checkpoint-feito": tr("Agente atingiu um checkpoint"), "checkpoint-nao-feito": tr("Agente não atingiu um checkpoint"), bloqueio: tr("Agente travou"), proposta: tr("Agente enviou uma proposta"), prototipo: tr("Agente anexou um protótipo") })[tipo] || tr("Agente");
 function montaRobo() {
   claudeCamadaAtualiza(); // as figuras da folha seguem o estado: toda vez que a folha é desenhada
   if (typeof focoDepoisDoRender === "function") focoDepoisDoRender(); // o modo foco segue o agente depois de cada render (foco.js)
@@ -20,10 +20,10 @@ function montaRobo() {
   el.hidden = !a || !!a.visto; // depois de clicar e ir até ele, o aviso some; o robô fica na folha até chegar notícia nova
   if (el.hidden) return;
   const p = D.blueprints.find((x) => x.id === a.blueprintId), f = p?.acoes.find((x) => x.id === a.acaoId), t = f?.planos.find((x) => x.id === a.planoId);
-  const onde = [p?.nome, f?.nome, t?.texto].filter(Boolean).join(" › ") || "neste workspace";
+  const onde = [p?.nome, f?.nome, t?.texto].filter(Boolean).join(" › ") || tr("neste workspace");
   el.className = roboClasse(a).trim();
-  el.title = `${onde}\n${a.texto}${p ? "\nClique para ir até ele." : ""}`;
-  el.innerHTML = `${claudeMiniatura(a)}<div><b>Agente ${esc(ROBO_ROTULO[a.tipo] || "")} · ${esc(onde)}</b><span>${esc(umaLinha(a.texto, 200))}</span></div>`;
+  el.title = `${onde}\n${a.texto}${p ? "\n" + tr("Clique para ir até ele.") : ""}`;
+  el.innerHTML = `${claudeMiniatura(a)}<div><b>${esc(roboRotulo(a.tipo))} · ${esc(onde)}</b><span>${esc(umaLinha(a.texto, 200))}</span></div>`;
 }
 // clicar no robô abre a folhinha com o que o agente está fazendo (só leitura: o app não manda trabalho a ninguém)
 function abreNotaRobo(el) {
@@ -31,13 +31,13 @@ function abreNotaRobo(el) {
   if (!a) return;
   const concluiu = ag?.estado === "concluido", sub = !!ag && agenteEhSub(ag); // concluído e ainda não visto: a folhinha traz a mensagem de conclusão
   const p = D.blueprints.find((x) => x.id === a.blueprintId), f = p?.acoes.find((x) => x.id === a.acaoId), t = f?.planos.find((x) => x.id === a.planoId), pct = Number.isFinite(ag?.percentual) ? ` · ${ag.percentual}%` : "";
-  const linhas = [ag && `${sub && concluiu ? tr("Terminou a tarefa") : ESTADO_AG[ag.estado] || ag.estado || "Trabalhando"}${ag.papel ? ` · ${PAPEL_AG[ag.papel] || ag.papel}` : ""}${pct}`, `${concluiu ? (sub ? tr("Última tarefa") : "Mensagem de conclusão") : "Agora"}: ${ag?.mensagem || a.texto || "sem detalhe"}${ag ? ` · ${haQuanto(ag.em)}${Date.now() - Date.parse(ag.em) > 120000 ? " (sem notícia nova)" : ""}` : ""}`, t && `Plano: ${t.texto}`, f && `Ação: ${numeroDaAcao(p, f)} ${f.nome || ""}`.trim(), ag?.onde?.length && `Arquivos: ${ag.onde.join(" · ")}`].filter(Boolean);
+  const linhas = [ag && `${sub && concluiu ? tr("Terminou a tarefa") : ESTADO_AG[ag.estado] || ag.estado || tr("Trabalhando")}${ag.papel ? ` · ${PAPEL_AG[ag.papel] || ag.papel}` : ""}${pct}`, `${concluiu ? (sub ? tr("Última tarefa") : tr("Mensagem de conclusão")) : tr("Agora")}: ${ag?.mensagem || a.texto || tr("sem detalhe")}${ag ? ` · ${haQuanto(ag.em)}${Date.now() - Date.parse(ag.em) > 120000 ? " " + tr("(sem notícia nova)") : ""}` : ""}`, t && `${tr("Plano")}: ${t.texto}`, f && `${tr("Ação")}: ${numeroDaAcao(p, f)} ${f.nome || ""}`.trim(), ag?.onde?.length && `${tr("Arquivos")}: ${ag.onde.join(" · ")}`].filter(Boolean);
   // Concluído = o usuário já viu que acabou: o concluído sai da folha (e a figura de um evento sem agente identificado é dispensada). Fechar só fecha a folhinha: a figura fica.
   const visto = () => { fechaNota(); if (ag) agenteMarcaVisto(ag); else { a.visto = true; render(); } };
   const parado = ["aguardando", "ocioso"].includes(ag?.estado); // aguardando ou em repouso: o mesmo botão o dispensa até ele avisar de novo
   const dispensavel = (concluiu && !sub) || parado || (!ag && a === agenteAgora && a.tipo === "concluir");
   const acompanhar = ag ? [{ rotulo: tr("Acompanhar este agente"), fn: () => { fechaNota(true); focoAbre(ag.agente); } }] : []; // a visão de acompanhamento, no cartão dele (foco.js)
-  abreNota({ rotulo: concluiu ? (sub ? tr("Subagente terminou uma tarefa") : "Agente concluiu") : "Agente trabalhando", titulo: nome || "Agente", texto: linhas.join("\n"), acoes: [...(dispensavel ? [{ rotulo: "Concluído", fn: visto }] : []), ...acompanhar] }, el);
+  abreNota({ rotulo: concluiu ? (sub ? tr("Subagente terminou uma tarefa") : tr("Agente concluiu")) : tr("Agente trabalhando"), titulo: nome || tr("Agente"), texto: linhas.join("\n"), acoes: [...(dispensavel ? [{ rotulo: tr("Concluído"), fn: visto }] : []), ...acompanhar] }, el);
 }
 $("robo-agente").onclick = () => {
   const a = agenteAqui(), pid = a && D.blueprints.some((x) => x.id === a.blueprintId) ? a.blueprintId : "";

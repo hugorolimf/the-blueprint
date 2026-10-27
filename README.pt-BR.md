@@ -16,7 +16,7 @@
   Beta · Windows 10/11 · MIT · <a href="README.md">English</a> · <a href="ROADMAP.pt-BR.md">Roadmap</a> · <a href="docs/pt-BR/comparison.md">Comparação</a>
 </p>
 
-![Da lista de workspaces até a folha de um blueprint com projetos, ações, planos e checkpoints (interface em inglês)](docs/img/visao-geral.gif)
+![Demo: o agente propõe uma ação, você a aplica no Planejar, o Claude anda até o plano em que trabalha e o plano é marcado com evidência](docs/img/demo.gif)
 
 ## Por quê
 
@@ -57,10 +57,12 @@ O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos c
 | [Instalação e desempenho](docs/pt-BR/install.md) | detalhes do instalador, pasta de dados, números medidos |
 | [Plugin do Claude Code](docs/pt-BR/claude-code.md) | skill, agente, hooks, status line, `/blueprint:status`, o painel no terminal |
 | [MCP e outros agentes](docs/pt-BR/mcp.md) | ferramentas, Codex, fila com o app fechado |
+| [Codex e outros agentes](docs/pt-BR/codex.md) | conectar, vincular a pasta, o que o Codex vê sem o plugin |
 | [Atualizações](docs/pt-BR/updates.md) | download em segundo plano, conferência do SHA-256, instala só no seu clique |
 | [Servidor e comandos](docs/pt-BR/commands.md) | `blueprint serve`, variáveis de ambiente, todos os subcomandos |
 | [Desenvolvimento](docs/pt-BR/development.md) | `cargo dev`, testes, verificações de ponta a ponta |
 | [Comparação](docs/pt-BR/comparison.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
+| [Solução de problemas](docs/pt-BR/troubleshooting.md) | dois processos, app fechado, plugin ausente, SmartScreen, atualização recusada |
 
 ## Perguntas frequentes
 

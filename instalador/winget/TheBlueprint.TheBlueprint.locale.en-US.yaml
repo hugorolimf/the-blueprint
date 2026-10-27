@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: TheBlueprint.TheBlueprint
+PackageVersion: 0.3.0
+PackageLocale: en-US
+Publisher: The Blueprint
+PublisherUrl: https://github.com/hugorolimf/the-blueprint
+PublisherSupportUrl: https://github.com/hugorolimf/the-blueprint/issues
+PackageName: The Blueprint (beta)
+PackageUrl: https://github.com/hugorolimf/the-blueprint
+License: MIT
+LicenseUrl: https://github.com/hugorolimf/the-blueprint/blob/main/LICENSE
+ShortDescription: Local-first roadmap for AI coding agents. They propose, you approve, completion needs evidence.
+Description: A small desktop app that holds your project as one sheet (blueprints, actions, plans and checkpoints). Your own coding agent (Claude Code, Codex) talks to it over MCP; every change is a proposal you apply, and a plan is only done with evidence.
+Moniker: blueprint
+Tags:
+- mcp
+- claude-code
+- codex
+- roadmap
+- ai-agents
+- local-first
+ReleaseNotesUrl: https://github.com/hugorolimf/the-blueprint/releases/tag/v0.3.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

@@ -1,6 +1,6 @@
 # The Blueprint v0.3.0 (beta)
 
-[English](../release-v0.3.0.md)
+[English](../../interno/release-v0.3.0.md)
 
 ## Novidades
 

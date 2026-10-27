@@ -2,7 +2,7 @@
 
 [Português](docs/pt-BR/CONTRIBUTING.md)
 
-Thank you! The project is small on purpose. Before a big change, open an issue so we can talk about it. What is planned and what is being built is in the [ROADMAP](ROADMAP.md).
+Thank you! The project is small on purpose. Before a big change, open an issue so we can talk about it. What is planned and what is being built is in the [ROADMAP](ROADMAP.md). Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Vocabulary (important)
 

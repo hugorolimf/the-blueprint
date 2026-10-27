@@ -12,4 +12,4 @@ body:
     id: ideia
     attributes:
       label: Como você imagina
-      description: Lembre que o app não abre nem conversa com agentes; ele só mostra o que o seu agente informa pelo MCP.
+      description: Lembre que o app não manda trabalho ao agente sozinho; ele mostra e guarda o que o seu agente informa pelo MCP, e só inicia uma sessão quando você clica.

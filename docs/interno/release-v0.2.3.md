@@ -1,6 +1,6 @@
 # The Blueprint v0.2.3 (beta)
 
-[Português](pt-BR/release-v0.2.3.md)
+[Português](../pt-BR/interno/release-v0.2.3.md)
 
 ## What is fixed
 

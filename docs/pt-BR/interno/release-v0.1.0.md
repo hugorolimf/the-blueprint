@@ -1,6 +1,6 @@
 # The Blueprint v0.1.0 (beta)
 
-[English](../release-v0.1.0.md)
+[English](../../interno/release-v0.1.0.md)
 
 Primeira versão pública, em beta (pode mudar entre versões): um roadmap local-first, em Rust, que **o seu agente de IA** (Claude Code, Codex…) lê e atualiza pelo MCP e que **você** revisa numa folha de blueprint.
 
@@ -18,7 +18,7 @@ Primeira versão pública, em beta (pode mudar entre versões): um roadmap local
 
 ## Como instalar
 
-Baixe `Blueprint-0.1.0-instalador.exe` (instala só para o seu usuário) ou compile com `cargo build --release`. O instalador conecta o plugin e o MCP ao Claude Code e ao Codex que achar. À mão: `claude mcp add blueprint -- <caminho>\blueprint.exe --mcp`. Detalhes no [README](../../README.pt-BR.md). O `SHA256SUMS` desta release traz o hash do instalador.
+Baixe `Blueprint-0.1.0-instalador.exe` (instala só para o seu usuário) ou compile com `cargo build --release`. O instalador conecta o plugin e o MCP ao Claude Code e ao Codex que achar. À mão: `claude mcp add blueprint -- <caminho>\blueprint.exe --mcp`. Detalhes no [README](../../../README.pt-BR.md). O `SHA256SUMS` desta release traz o hash do instalador.
 
 ## Limitações
 

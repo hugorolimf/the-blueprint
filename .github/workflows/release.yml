@@ -47,8 +47,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           tag="${{ github.event.inputs.tag || github.ref_name }}"
-          # notas em docs/release-<tag>.md quando existirem; senão, as geradas pelo GitHub
-          if [ -f "docs/release-$tag.md" ]; then notas=(--notes-file "docs/release-$tag.md"); else notas=(--generate-notes); fi
+          # notas em docs/interno/release-<tag>.md quando existirem; senão, as geradas pelo GitHub
+          if [ -f "docs/interno/release-$tag.md" ]; then notas=(--notes-file "docs/interno/release-$tag.md"); else notas=(--generate-notes); fi
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" target/release-arquivos/* --clobber
           else

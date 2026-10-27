@@ -16,7 +16,7 @@
   Beta · Windows 10/11 · MIT · <a href="README.pt-BR.md">Português</a> · <a href="ROADMAP.md">Roadmap</a> · <a href="docs/comparison.md">How it compares</a>
 </p>
 
-![From the workspace list to a blueprint sheet with projects, actions, plans and checkpoints](docs/img/visao-geral.gif)
+![Demo: the agent proposes an action, you apply it on Plan, Claude walks to the plan it works on, and the plan is checked with evidence](docs/img/demo.gif)
 
 ## Why
 
@@ -59,10 +59,12 @@ The guides are English first; each has a Portuguese version in [`docs/pt-BR/`](d
 | [Install from source, performance](docs/install.md) | installer details, data folder, measured numbers |
 | [Claude Code plugin](docs/claude-code.md) | skill, agent, hooks, status line, `/blueprint:status`, the terminal panel |
 | [MCP and other agents](docs/mcp.md) | tools, Codex, offline queue |
+| [Codex and other agents](docs/codex.md) | connect, link the folder, what Codex sees without the plugin |
 | [Updates](docs/updates.md) | background download, SHA-256 check, install only on your click |
 | [Server and commands](docs/commands.md) | `blueprint serve`, environment variables, every subcommand |
 | [Development](docs/development.md) | `cargo dev`, tests, end-to-end checks |
 | [How it compares](docs/comparison.md) | Backlog.md, Task Master, Vibe Kanban, Plane |
+| [Troubleshooting](docs/troubleshooting.md) | two processes, app closed, plugin missing, SmartScreen, update refused |
 
 ## FAQ
 
