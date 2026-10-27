@@ -22,6 +22,7 @@ mod lembrete;
 mod linha_do_tempo;
 mod membro;
 pub(crate) mod pasta_local;
+mod perfil;
 mod registro;
 pub(crate) mod pedido_apresentacao;
 pub mod pendentes;
@@ -59,6 +60,8 @@ mod linha_do_tempo_tests;
 mod pedido_apresentacao_tests;
 #[cfg(test)]
 mod pendentes_tests;
+#[cfg(test)]
+mod perfil_tests;
 #[cfg(test)]
 mod projetos_tests;
 #[cfg(test)]

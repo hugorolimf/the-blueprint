@@ -252,6 +252,11 @@ pub fn tratar(msg: &Value) -> Option<Value> {
 
 /// `tratar` com a via das ferramentas escolhida (ver `Via`).
 pub(super) fn tratar_via(msg: &Value, via: Via) -> Option<Value> {
+    tratar_com(msg, via, super::perfil::atual())
+}
+
+/// `tratar_via` com o perfil de ferramentas dado (ver `perfil`): `tools/list` só lista as dele e `tools/call` recusa as outras.
+pub(super) fn tratar_com(msg: &Value, via: Via, perfil: super::perfil::Perfil) -> Option<Value> {
     let id = msg.get("id")?;
     let (metodo, params) = (msg["method"].as_str().unwrap_or(""), &msg["params"]);
     let erro = |codigo: i32, mensagem: String| resposta(id, json!({"error": {"code": codigo, "message": mensagem}}));
@@ -264,13 +269,16 @@ pub(super) fn tratar_via(msg: &Value, via: Via) -> Option<Value> {
         "ping" => resposta(id, json!({"result": {}})),
         "tools/list" => {
             let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
-            resposta(id, json!({"result": {"tools": ferramentas}}))
+            resposta(id, json!({"result": {"tools": perfil.filtrar(ferramentas)}}))
         }
         "tools/call" => {
             let nome = params["name"].as_str().unwrap_or("");
             let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
             if !ferramentas.as_array().is_some_and(|f| f.iter().any(|x| x["name"] == nome)) {
                 return Some(erro(-32602, format!("Unknown tool: {nome}")));
+            }
+            if !perfil.expoe(nome) {
+                return Some(erro(-32602, format!("Tool {nome} is not in the {} profile (BLUEPRINT_MCP_PERFIL)", perfil.nome())));
             }
             let argumentos = if params["arguments"].is_object() { params["arguments"].clone() } else { json!({}) };
             GUARDADO_OFFLINE.store(false, Ordering::Relaxed);
@@ -298,6 +306,10 @@ fn id_do_canal() -> String {
 
 /// Lê mensagens de stdin (uma por linha) até o agente fechar a conversa.
 pub fn executar() -> i32 {
+    if let Err(e) = super::perfil::iniciar() {
+        eprintln!("{e}");
+        return 2;
+    }
     crate::idioma::fixar(crate::idioma::Idioma::En); // texto para o agente: o servidor responde em inglês (Accept-Language do cliente)
     let saida = std::io::stdout();
     let mut canal_iniciado = false;

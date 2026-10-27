@@ -29,6 +29,16 @@ Tools (their names are fixed; their descriptions and the planning guide are writ
 | `vincular_pasta` | links the session's folder to a blueprint (the app keeps the link) |
 | `responder_conversa` | answers the user in the "Talk about the plan" panel of an action (the message arrives through the channel with the «The Blueprint · conversa do usuário» prefix); changes still go only as `propor_blueprint`. Memory only, needs the app open |
 
+**Tool profiles (less context).** Every tool description enters the agent's context. `BLUEPRINT_MCP_PERFIL` limits the list for an agent that only executes or only plans (`claude mcp add blueprint -e BLUEPRINT_MCP_PERFIL=executor -- <path>\blueprint.exe --mcp`). It is read once when `--mcp` starts; without it (or with `completo`) nothing changes; an unknown value stops `--mcp` with a clear message (exit code 2). Calling a tool outside the profile is refused. The server instructions stay the same in every profile.
+
+| Profile | Tools |
+| --- | --- |
+| `completo` (default) | all of them |
+| `executor` | `listar_blueprints`, `guia_de_planejamento`, `ler_blueprint`, `vincular_pasta`, `registrar_progresso`, `reportar_bloqueio`, `registrar_trabalho` (work outside the plan goes here instead of a proposal), `marcar_concluido`, `marcar_nao_concluido`, `marcar_checkpoint_feito`, `marcar_checkpoint_nao_feito` |
+| `planejador` | `listar_blueprints`, `guia_de_planejamento`, `ler_blueprint`, `vincular_pasta`, `propor_blueprint`, `anexar_prototipo`, `anexar_apresentacao`, `ler_apresentacao`, `editar_apresentacao`, `responder_conversa` |
+
+Measured with `node scripts/medir-perfis-mcp.mjs` (size of the `tools/list` JSON; same result on repeated runs, v0.3.0): `completo` 17 tools, 25,517 bytes; `executor` 11 tools, 12,874 bytes (-50%); `planejador` 10 tools, 16,170 bytes (-37%). Tokens are not counted exactly here; at about 4 bytes per token that is roughly 6,400, 3,200 and 4,000 tokens.
+
 **Importing GitHub issues:** there is no import tool. Ask your agent to "import the open issues of owner/name"; the `importar` guide topic makes it read them with `gh issue list` and send one proposal, which you review and apply on the Plan screen. Assignees and authors are never copied, and the text of an issue is treated as data, not as orders.
 
 The guide the agent reads is in [`skills/blueprint-planejamento/`](../skills/blueprint-planejamento/SKILL.md).
