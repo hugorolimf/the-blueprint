@@ -1,6 +1,7 @@
 // Mede o servidor Rust (blueprint serve) contra a linha de base do Node (referencias/linha-de-base.json). Só mede, não otimiza.
 // Uso: node scripts/medir-rust.mjs [caminho do blueprint.exe]   Grava referencias/medicao-rust.json
 // Com --limites (o CI): não grava nada e sai com 1 se passar dos limites folgados abaixo; --binario-mb=N, --p95-ms=N, --rss-mb=N e --cpu-pct=N trocam um limite.
+// Prova de que cada guarda reprova (regressão proposital num build de teste): referencias/relatorio-medicao.md, seção "Limites no CI".
 import { spawn, execFileSync } from "node:child_process";
 import http from "node:http";
 import { createServer, connect } from "node:net";
@@ -85,12 +86,18 @@ try {
     "POST /api/mcp/fila/ack": await latencia(100, "/api/mcp/fila/ack", { method: "POST", ...json, body: JSON.stringify({ ids: [] }) }),
   };
   await pedirHttp("/api/dados");
-  const latHttp = {
+  const rodadaHttp = async () => ({
     "GET /api/dados": await latenciaHttp(200, "/api/dados"),
     "GET /": await latenciaHttp(200, "/"),
     "GET /api/mcp/fila": await latenciaHttp(200, "/api/mcp/fila"),
     "POST /api/mcp/fila/ack": await latenciaHttp(200, "/api/mcp/fila/ack", "POST", JSON.stringify({ ids: [] })),
-  };
+  });
+  // com --limites, a melhor de 3 rodadas por rota: a máquina ocupada estoura uma rodada (medido: p95 de 0,9 a 23 ms), uma rota lenta estoura as 3
+  let latHttp = await rodadaHttp();
+  for (let i = 0; limites && i < 2; i++) {
+    const outra = await rodadaHttp();
+    for (const rota in latHttp) if (outra[rota].p95 < latHttp[rota].p95) latHttp[rota] = outra[rota];
+  }
   const comprimido = await fetch(base + "/", { headers: { "accept-encoding": "gzip" } });
   const html = Buffer.byteLength(await (await fetch(base + "/")).text());
   const linhaBase = JSON.parse(readFileSync(join(raiz, "referencias/linha-de-base.json"), "utf8"));
