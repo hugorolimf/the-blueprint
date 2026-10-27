@@ -37,4 +37,12 @@ Object.assign(I18N.catalogos.en, {
   "agora": "now", "há {n} s": "{n} s ago", "há {n} min": "{n} min ago", "há {n} h": "{n} h ago",
   // markdown
   "A prévia aparece aqui enquanto você escreve.": "The preview appears here as you write.", "Prévia": "Preview",
+  // primeiro uso (primeiro-uso.js): a entrada vazia e o exemplo
+  "Primeiros passos": "First steps", "Nenhum blueprint ainda. Por onde começar?": "No blueprints yet. Where do you want to start?",
+  "Abrir o exemplo": "Open the example", "Um workspace com dois blueprints fictícios, para ver o app cheio. Os seus dados não mudam e ele sai com um clique.": "A workspace with two made-up blueprints, to see the app full. Your data does not change and it goes away with one click.",
+  "Conectar seu agente": "Connect your agent", "Registre o MCP no Claude Code ou no Codex e peça um plano: a proposta aparece aqui para você aplicar.": "Register the MCP in Claude Code or Codex and ask for a plan: the proposal shows up here for you to apply.",
+  "Criar um blueprint": "Create a blueprint", "Escreva o primeiro blueprint à mão, com ações, planos e checkpoints.": "Write the first blueprint by hand, with actions, plans and checkpoints.",
+  "Exemplo": "Example", "Dados fictícios para conhecer o app. Remova quando quiser.": "Made-up data to get to know the app. Remove it whenever you want.",
+  "O workspace «{nome}» é o exemplo: dados fictícios, separados dos seus.": "The workspace «{nome}» is the example: made-up data, kept apart from yours.", "Remover exemplo": "Remove example",
+  "Abrindo o exemplo…": "Opening the example…", "Não foi possível abrir o exemplo. Tente novamente.": "Could not open the example. Try again.",
 });

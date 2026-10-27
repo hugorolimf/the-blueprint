@@ -7,6 +7,7 @@ pub mod config;
 mod equipes;
 pub mod estaticos;
 mod estado;
+mod exemplo;
 pub mod pedido;
 mod prototipos;
 pub(crate) mod rotas;

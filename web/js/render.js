@@ -67,6 +67,7 @@ function render() {
       const pecas = pecasWorkspace(c, EMB);
       return `<a class="blueprint-cartao" data-workspace="${esc(c.id)}" draggable="false" aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight Alt+ArrowUp Alt+ArrowDown" title="${esc(tr("Arraste para reordenar · Alt + setas no teclado"))}" href="#/c/${encodeURIComponent(c.id)}"><span class="cartao-tipo">${tr("Workspace")}</span><div class="cartao-arte" aria-hidden="true">${pecas ? previaMarca(pecas, 280, 120) : ""}</div><h2 title="${esc(c.nome)}">${esc(c.nome)}</h2><p title="${esc(c.dados.descricao || tr("Blueprints e planejamento do workspace"))}">${esc(c.dados.descricao || tr("Blueprints e planejamento do workspace"))}</p><footer><span>${trn(c.dados.blueprints.length, ["{n} blueprint", "{n} blueprints"])}</span><span>${tr("Abrir espaço →")}</span></footer></a>`;
     }).join("") + equipesCartoes() + `<button class="blueprint-cartao cartao-adicionar" type="button" data-adicionar-workspace><span class="mais" aria-hidden="true">+</span><strong>${tr("Criar workspace")}</strong><span>${tr("Um espaço para agrupar blueprints.")}</span></button>`;
+    primeiroUso(); // primeiro-uso.js: sem nenhum blueprint, os 3 caminhos; com o exemplo carregado, o "Remover exemplo"
     host.innerHTML = "";
     abrirEntrada();
     return;

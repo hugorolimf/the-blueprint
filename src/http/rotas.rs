@@ -105,6 +105,9 @@ fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     if caminho == "/api/dados" {
         return api_dados::rota(estado, pedido, ctx);
     }
+    if caminho == "/api/exemplo" {
+        return super::exemplo::rota(pedido);
+    }
     // frente SINCRONIA: mudanças por item, eventos, presença e histórico (o Contexto do pedido chega pronto à rota)
     if let Some(r) = crate::sincronia::rotas::rota(estado, pedido, ctx) {
         return r;

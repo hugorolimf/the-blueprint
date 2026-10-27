@@ -3,6 +3,7 @@ mod api_dados;
 mod apresentacao_rotas;
 mod atualizacao;
 mod equipes;
+mod exemplo;
 mod idioma;
 mod mcp_rotas;
 mod servidor;
