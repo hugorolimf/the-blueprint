@@ -53,3 +53,9 @@ O updater (`src/atualizador/`) lê a lista de releases do repositório, pega a p
 4. Os apps instalados baixam sozinhos em até 24 h depois de abrirem (ou na hora, em "Verificar atualizações" na bandeja) e perguntam antes de instalar.
 
 Autenticidade: o `SHA256SUMS` vem da mesma release do instalador, então prova que o download não corrompeu, mas não quem publicou. Assinar (ed25519 com a chave pública embutida no app, ou Authenticode no instalador) é a melhoria para quando houver uma chave.
+
+## winget e Scoop (preparados, nada enviado)
+
+Os manifestos da v0.3.0 estão em `instalador/winget/` (identificador `TheBlueprint.TheBlueprint`, instalador Inno, escopo do usuário) e `instalador/scoop/blueprint.json` (extrai o instalador com `innosetup`, desliga o atualizador próprio com `BLUEPRINT_SEM_ATUALIZACAO=1`, porque quem atualiza é o Scoop, e tem `checkver`/`autoupdate` pelo `SHA256SUMS`). Conferir: `winget validate --manifest instalador/winget` e `Test-Json -SchemaFile <scoop>\apps\scoop\current\schema.json`.
+
+A cada versão: troque versão, URL, hash (`SHA256SUMS` da release) e `ReleaseDate`. Publicar é ato público, só com autorização: no winget, um PR ao `microsoft/winget-pkgs` em `manifests/t/TheBlueprint/TheBlueprint/<versão>/` (ou `wingetcreate submit`); no Scoop, um bucket próprio (repositório `scoop-blueprint`) ou um PR ao bucket `extras`.

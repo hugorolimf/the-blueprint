@@ -1,0 +1,40 @@
+{
+    "version": "0.3.0",
+    "description": "Local-first roadmap for AI coding agents. They propose, you approve, completion needs evidence.",
+    "homepage": "https://github.com/hugorolimf/the-blueprint",
+    "license": "MIT",
+    "notes": [
+        "Run 'blueprint registrar' once to connect Claude Code (plugin) and Codex (MCP).",
+        "Scoop updates this app: the app's own updater is turned off (BLUEPRINT_SEM_ATUALIZACAO=1)."
+    ],
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/hugorolimf/the-blueprint/releases/download/v0.3.0/Blueprint-0.3.0-instalador.exe",
+            "hash": "b7e6af88e15bdb3e616afbe9d8b010115d78cc817a3cfe17a6c7d2bdb078ca3d"
+        }
+    },
+    "innosetup": true,
+    "bin": "blueprint.exe",
+    "shortcuts": [
+        [
+            "blueprint.exe",
+            "The Blueprint (beta)"
+        ]
+    ],
+    "env_set": {
+        "BLUEPRINT_SEM_ATUALIZACAO": "1"
+    },
+    "checkver": {
+        "github": "https://github.com/hugorolimf/the-blueprint"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/hugorolimf/the-blueprint/releases/download/v$version/Blueprint-$version-instalador.exe",
+                "hash": {
+                    "url": "$baseurl/SHA256SUMS"
+                }
+            }
+        }
+    }
+}
