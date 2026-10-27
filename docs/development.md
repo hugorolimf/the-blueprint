@@ -50,3 +50,7 @@ Glossary (use these names in English; the code, the database and the MCP fields 
 | Evidence | Evidência | `evidencia` |
 
 Do not use "phase", "task" or "milestone" for these ideas. The one exception is the agent notice on screen, which says "Task completed" for a finished plan.
+
+## Videos and GIFs
+
+`node scripts/gravar/index.mjs` re-records every video of the app in English and in Brazilian Portuguese (`--idioma en-US` for one language, `03 04` for some scripts, `--lista` to list them). It needs Microsoft Edge, `ffmpeg` on the PATH and a `blueprint.exe` (`BLUEPRINT_EXE`, default `target/debug/blueprint.exe`); the data is always the sample data, on a temporary server. Files go to `videos/<script>.<en|pt-BR>.mp4` and `.gif` (the first 12 s, under 3 MB), a folder Git ignores. Before using a video anywhere, look at its frames for personal data. The README GIF, `docs/img/visao-geral.gif`, is a copy of `videos/01-visao-geral.en.gif`.

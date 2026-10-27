@@ -22,7 +22,7 @@ A apresentação pode mostrar um GIF curto do app numa página (por exemplo, o f
 
 ## Tamanhos esperados
 
-Os GIFs gravados vão de cerca de 0,7 a 2,2 MB. Só alguns cabem no limite padrão; nos demais, grave um trecho mais curto ou suba o `maxKb` sabendo o que faz. Uma apresentação com três GIFs de 1,5 MB vira um arquivo de uns 6 MB.
+Os GIFs gravados vão de cerca de 0,5 a 2,5 MB (os primeiros 12 s de cada vídeo). Só alguns cabem no limite padrão; nos demais, grave um trecho mais curto ou suba o `maxKb` sabendo o que faz. Uma apresentação com três GIFs de 1,5 MB vira um arquivo de uns 6 MB.
 
 ## Privacidade
 

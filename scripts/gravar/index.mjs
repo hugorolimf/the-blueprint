@@ -24,7 +24,7 @@ for (const idioma of idiomas) for (const nome of nomes) {
     A.gravar = async (f) => (quadros = await orig(f));
     await ROTEIROS[nome].rodar(A);
     const sufixo = idioma.startsWith("pt") ? "pt-BR" : "en";
-    const r = codificar(quadros, join(raiz, "videos", `${nome}.${sufixo}`), { gif: ROTEIROS[nome].gif ? {} : null });
+    const r = codificar(quadros, join(raiz, "videos", `${nome}.${sufixo}`), { gif: ROTEIROS[nome].gif ? { ...ROTEIROS[nome].gif } : null });
     console.log(`  ${r.quadros} quadros, ${r.duracao} s${A.erros.length ? " | erros no console: " + A.erros.length : ""}`);
   } catch (e) { falhas++; console.error(`  FALHOU: ${e.message}`); } finally { A.fechar(); }
 }

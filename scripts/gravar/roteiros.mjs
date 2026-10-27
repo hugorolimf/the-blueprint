@@ -26,7 +26,8 @@ async function abrirFolha(A, c) { await A.ir("#/", 2200); await A.js(`location.h
 const esc = async (A) => { await A.cdp("Input.dispatchKeyEvent", { type: "keyDown", key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 }); await dormir(700); };
 
 export const ROTEIROS = {
-  "01-visao-geral": { gif: true, descricao: "Da lista de workspaces até a folha do blueprint, por projetos e ações", async rodar(A) {
+  "01-visao-geral": { gif: { largura: 640, fps: 8 }, // menor: a visão geral muda muito de tela e passaria de 3 MB
+    descricao: "Da lista de workspaces até a folha do blueprint, por projetos e ações", async rodar(A) {
     const c = await contexto(A);
     await A.ir("#/", 2600);
     await A.gravar(async () => {
