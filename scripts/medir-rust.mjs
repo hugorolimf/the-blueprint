@@ -1,5 +1,6 @@
 // Mede o servidor Rust (blueprint serve) contra a linha de base do Node (referencias/linha-de-base.json). Só mede, não otimiza.
 // Uso: node scripts/medir-rust.mjs [caminho do blueprint.exe]   Grava referencias/medicao-rust.json
+// Com --limites (o CI): não grava nada e sai com 1 se passar dos limites folgados abaixo; --binario-mb=N, --p95-ms=N, --rss-mb=N e --cpu-pct=N trocam um limite.
 import { spawn, execFileSync } from "node:child_process";
 import http from "node:http";
 import { createServer, connect } from "node:net";
@@ -8,7 +9,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 const raiz = resolve(import.meta.dirname, "..");
-const exe = resolve(process.argv[2] || join(raiz, "target/release/blueprint.exe"));
+const args = process.argv.slice(2);
+const exe = resolve(args.find((a) => !a.startsWith("--")) || join(raiz, "target/release/blueprint.exe"));
+const opcao = (nome, padrao) => Number(args.find((a) => a.startsWith(`--${nome}=`))?.split("=")[1] ?? padrao);
+// folga sobre as metas do CLAUDE.md (5 MB, 5 ms, 20 MB, 0%), porque o runner do CI oscila; tabela em referencias/relatorio-medicao.md
+const limites = args.includes("--limites") && { binarioMB: opcao("binario-mb", 5), p95Ms: opcao("p95-ms", 15), rssMB: opcao("rss-mb", 40), cpuPct: opcao("cpu-pct", 1) };
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 const r1 = (n) => Math.round(n * 10) / 10;
 const porta = await new Promise((ok) => { const s = createServer().listen(0, "127.0.0.1", () => { const p = s.address().port; s.close(() => ok(p)); }); });
@@ -97,7 +102,17 @@ try {
     tamanho: { html_servido_bytes: html, html_gzip_bytes: Number(comprimido.headers.get("content-length")) || null },
     linha_de_base_node: { partida_ms: linhaBase.partida_ms, rss_apos_20_req_mb: linhaBase.rss_apos_20_req_mb, cpu_repouso_pct_de_um_nucleo: linhaBase.cpu_repouso_pct_de_um_nucleo, p95_api_dados_ms: linhaBase.latencia_ms["GET /api/dados"].p95 },
   };
-  writeFileSync(join(raiz, "referencias", "medicao-rust.json"), JSON.stringify(res, null, 2) + "\n");
+  if (limites) {
+    const falhas = [
+      [res.binario_bytes / 1048576, limites.binarioMB, "binário (MB)"],
+      [b.rssMB, limites.rssMB, "memória após 10 s de repouso (MB)"],
+      [res.cpu_repouso_pct_de_um_nucleo, limites.cpuPct, "CPU em repouso (% de um núcleo)"],
+      ...Object.entries(latHttp).map(([rota, l]) => [l.p95, limites.p95Ms, `p95 ${rota} (ms)`]),
+    ].filter(([valor, teto]) => !(valor <= teto));
+    for (const [valor, teto, nome] of falhas) console.error(`acima do limite: ${nome} = ${r1(valor)} (limite ${teto})`);
+    console.log(falhas.length ? `${falhas.length} limite(s) estourado(s)` : `dentro dos limites ${JSON.stringify(limites)}`);
+    process.exitCode = falhas.length ? 1 : 0;
+  } else writeFileSync(join(raiz, "referencias", "medicao-rust.json"), JSON.stringify(res, null, 2) + "\n");
   console.table({
     "Binário (MB)": { rust: r1(res.binario_bytes / 1048576), node: "-", meta: "< 5" },
     "Partida até 1º 200 (ms)": { rust: res.partida_ms, node: linhaBase.partida_ms, meta: "-" },
@@ -107,5 +122,5 @@ try {
     "p95 GET /api/mcp/fila, http persistente (ms)": { rust: latHttp["GET /api/mcp/fila"].p95, node: "-", meta: "< 5" },
     "p95 GET /api/dados, fetch (ms)": { rust: lat["GET /api/dados"].p95, node: linhaBase.latencia_ms["GET /api/dados"].p95, meta: "-" },
   });
-  console.log("Gravado em referencias/medicao-rust.json");
+  if (!limites) console.log("Gravado em referencias/medicao-rust.json");
 } finally { limpar(); }
