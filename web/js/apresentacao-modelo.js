@@ -1,10 +1,10 @@
 // ---- apresentação: o modelo (função pura, sem DOM) ----
 // montarApresentacao(blueprint, opcoes) -> { titulo, tipo, idioma, paginas: [{ tipo, html }] }; cada `html` é um <section class="ap-pagina" data-tipo="..."> inteiro.
-// Tipos: "resumo" (capa, resumo, fim), "andamento" (+ uma página por projeto) e "completo" (+ uma página por ação, com planos e checkpoints).
+// Tipos: "andamento" (capa, uma página por projeto, fim) e "completo" (capa, uma página por ação com planos e checkpoints, fim). Não há página de resumo (decisão do usuário, 2026-10-26).
 // opcoes: { tipo, workspace, hoje (ISO), posicao (índice do blueprint no workspace, para numerar as ações), figura (SVG pronto da figura do anatomy; confiável, entra sem escape) }.
 // Usa os globais de base.js (esc, dia, corta, ROTULO), dados.js (acoesDe, resumo), projetos.js (projetoDaAcao, projetosOrdenados, numeroDaAcao) e i18n.js (tr).
 // Todo texto vindo dos dados passa por esc(); links não viram <a> (clicar numa página da apresentação nunca leva a janela embora).
-const TIPOS_APRESENTACAO = ["resumo", "andamento", "completo"];
+const TIPOS_APRESENTACAO = ["andamento", "completo"];
 const AP_POR_PAGINA = { andamento: 6, completo: 7 }; // linhas por página antes de continuar na seguinte (a página é 16:9 e não rola: o que passa vai para a próxima)
 
 const apPct = (x) => Math.round(x * 100);
@@ -16,12 +16,7 @@ const apData = (iso) => {
 const apPeriodo = (f) => `${apData(f.inicio)} – ${apData(f.fim)}`;
 const apPartes = (lista, n) => Array.from({ length: Math.max(1, Math.ceil(lista.length / n)) }, (_, i) => lista.slice(i * n, (i + 1) * n));
 const apMarca = (feito) => `<span class="ap-marca" data-feito="${feito ? 1 : 0}" aria-hidden="true"></span><span class="ap-so-leitor">${feito ? tr("Feito") : tr("Pendente")}</span>`;
-const apTipoRotulo = () => ({ resumo: tr("Resumo executivo"), andamento: tr("Andamento por projeto"), completo: tr("Plano completo") });
-
-function apNumeros(fs) {
-  const r = resumo(fs), planos = fs.flatMap((f) => f.planos || []), cps = fs.flatMap((f) => f.checkpoints || []);
-  return { geral: r.geral, horas: r.horas, acoes: [r.concl, fs.length], planos: [planos.filter((x) => x.feito).length, planos.length], checkpoints: [cps.filter((x) => x.feito).length, cps.length] };
-}
+const apTipoRotulo = () => ({ andamento: tr("Andamento por projeto"), completo: tr("Plano completo") });
 
 // as ações em grupos (os projetos na ordem da folha e, por último, o Geral); sem projetos, um grupo só com o blueprint inteiro
 function apGrupos(p, fs) {
@@ -36,18 +31,6 @@ const apLinhaAcao = (f, num) => `<li><span class="ap-num">${esc(num)}</span><spa
 function apCapa(p, o, titulo) {
   const figura = o.figura ? `<figure class="ap-figura">${o.figura}</figure>` : "";
   return { tipo: "capa", corpo: `<div class="ap-capa"><div class="ap-capa-texto"><p class="ap-rot">${esc(o.workspace || "The Blueprint")}</p><h1 class="ap-titulo">${esc(p.nome)}</h1>${p.descricao ? `<p class="ap-sub">${esc(p.descricao)}</p>` : ""}<p class="ap-data">${esc(titulo)} · ${esc(apData(o.hoje))}</p></div>${figura}</div>` };
-}
-
-function apResumo(p, fs, num) {
-  if (!fs.length) return { tipo: "resumo", corpo: `<h2 class="ap-titulo">${tr("Resumo")}</h2><p class="ap-vazio">${tr("Nenhuma ação com datas válidas.")}</p>` };
-  const n = apNumeros(fs), hoje = dia(num.hoje);
-  const atrasadas = fs.filter((f) => f.status !== "concluido" && f.b < hoje).length;
-  const proximas = fs.filter((f) => f.status !== "concluido").sort((x, y) => x.a - y.a).slice(0, 5);
-  const kpi = (valor, rotulo) => `<div class="ap-kpi"><b>${valor}</b><span>${rotulo}</span></div>`;
-  const lista = proximas.length ? `<h3 class="ap-sec">${tr("Próximas ações")}</h3><ol class="ap-lista">${proximas.map((f) => apLinhaAcao(f, numeroDaAcao(p, f, num.posicao))).join("")}</ol>` : `<p class="ap-vazio">${tr("Tudo concluído.")}</p>`;
-  return { tipo: "resumo", corpo: `<h2 class="ap-titulo">${tr("Resumo")}</h2><div class="ap-geral"><span class="ap-grande">${apPct(n.geral)}%</span>${apBarra(n.geral)}</div>
-<div class="ap-kpis">${kpi(tr("{a} de {b}", { a: n.acoes[0], b: n.acoes[1] }), tr("ações concluídas"))}${kpi(tr("{a} de {b}", { a: n.planos[0], b: n.planos[1] }), tr("planos feitos"))}${kpi(tr("{a} de {b}", { a: n.checkpoints[0], b: n.checkpoints[1] }), tr("checkpoints"))}${kpi(`${n.horas} h`, tr("horas planejadas"))}</div>
-${atrasadas ? `<p class="ap-alerta">${trn(atrasadas, ["{n} ação atrasada", "{n} ações atrasadas"])}</p>` : ""}${lista}` };
 }
 
 function apProjetos(p, fs, num) {
@@ -76,10 +59,10 @@ function apFim(p) {
 }
 
 function montarApresentacao(p, opcoes = {}) {
-  const tipo = TIPOS_APRESENTACAO.includes(opcoes.tipo) ? opcoes.tipo : "resumo";
+  const tipo = TIPOS_APRESENTACAO.includes(opcoes.tipo) ? opcoes.tipo : "andamento";
   const o = { ...opcoes, tipo, hoje: opcoes.hoje || local(new Date()) }, num = { hoje: o.hoje, posicao: opcoes.posicao ?? 0 };
   const fs = acoesDe(p), titulo = apTipoRotulo()[tipo];
-  const paginas = [apCapa(p, o, titulo), apResumo(p, fs, num), ...(tipo === "andamento" ? apProjetos(p, fs, num) : []), ...(tipo === "completo" ? apAcoes(p, fs, num) : []), apFim(p)];
+  const paginas = [apCapa(p, o, titulo), ...(tipo === "andamento" ? apProjetos(p, fs, num) : []), ...(tipo === "completo" ? apAcoes(p, fs, num) : []), apFim(p)];
   return {
     titulo: p.nome || tr("Sem nome"), tipo, idioma: I18N.ativo,
     paginas: paginas.map((pg, i) => ({ tipo: pg.tipo, html: `<section class="ap-pagina" data-tipo="${pg.tipo}"><div class="ap-int">${pg.corpo}${pg.tipo === "capa" ? "" : `<footer class="ap-rodape"><span>${esc(p.nome)}</span><span>${i + 1} / ${paginas.length}</span></footer>`}</div></section>` })),

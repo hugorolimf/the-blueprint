@@ -55,7 +55,7 @@ pub fn exige_hospedado(ctx: &Contexto, recurso: &str, pedido: &Pedido, corpo: &V
             ctx.pode(Acao::Ler, ws, bp)
         }
         ("GET", _) => true,
-        ("POST", "proposta" | "registro" | "evento" | "aviso" | "prototipo") => {
+        ("POST", "proposta" | "registro" | "evento" | "aviso" | "prototipo" | "apresentacao") => {
             let (ws, bp) = alvo(texto("workspaceId"), texto("blueprintId"));
             ctx.pode(Acao::Gravar, ws, bp)
         }
@@ -64,6 +64,8 @@ pub fn exige_hospedado(ctx: &Contexto, recurso: &str, pedido: &Pedido, corpo: &V
             // já saiu dos dados (a página apaga antes de pedir o arquivo): basta gravar em algum lugar
             None => ctx.pode_editar(),
         },
+        // o blueprint dono dela está no arquivo da apresentação, não nos dados: `apresentacao::remover` confere se o papel grava nele (sem arquivo, não há o que revelar)
+        ("POST", "apresentacao/remover") => true,
         // os hooks do Claude do membro (só com a chave: `acesso::hook_de_membro`): o blueprint vem no corpo e precisa ser um em que ele grava
         ("POST", "hook/sessao" | "hook/edicao" | "hook/subagente") => {
             let (ws, bp) = (texto("workspaceId"), texto("blueprintId"));

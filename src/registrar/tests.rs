@@ -56,6 +56,11 @@ fn grava_o_plugin_completo_com_o_exe_no_mcp_e_sem_agente_padrao() {
     let skill = fs::read_to_string(raiz.join("skills/status/SKILL.md")).unwrap();
     assert!(skill.contains("name: status") && skill.contains("disable-model-invocation: true"));
     assert!(skill.contains("!`\"C:/Apps/Blueprint/blueprint.exe\" hook status`"), "{skill}");
+    let apresentar = fs::read_to_string(raiz.join("skills/apresentar/SKILL.md")).unwrap();
+    assert!(apresentar.contains("name: apresentar") && apresentar.contains("disable-model-invocation: true"), "só o usuário chama /blueprint:apresentar");
+    for trecho in ["guia_de_planejamento", "topico \"apresentacao_ia\"", "ler_blueprint", "anexar_apresentacao", "$ARGUMENTS", "epic only if the user asks for it by name"] {
+        assert!(apresentar.contains(trecho), "falta no comando: {trecho}");
+    }
     let manifesto: serde_json::Value = serde_json::from_str(&fs::read_to_string(raiz.join(".claude-plugin/plugin.json")).unwrap()).unwrap();
     assert!(manifesto.get("settings").is_none(), "settings.agent faria toda sessão do Claude usar o agente");
     // idempotente: gravar de novo não reescreve o que não mudou

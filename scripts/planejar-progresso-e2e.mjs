@@ -37,6 +37,8 @@ try {
   const proposta = (corpo) => fetch(url + "/api/mcp/proposta", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ workspaceId: "sm", blueprintId: blueprint.id, ...corpo }) });
   const acao = blueprint.acoes.find((a) => a.planos?.some((t) => !t.feito));
   const plano = acao.planos.find((t) => !t.feito);
+  await cdp("Page.enable");
+  await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `try{localStorage.setItem("blueprint.autoAplicar.sm:${blueprint.id}","0")}catch{}` }); // este teste revisa e aplica à mão: o aplicar sozinho (auto-aplicar.js) fica desligado
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   for (let i = 0; i < 100 && !(await js(`!!document.querySelector("svg.desenho")`)); i++) await dormir(100);
   assert.equal((await proposta({ acoes: [{ id: acao.id, observacao: "Escopo: teste de foco." }] })).status, 200);

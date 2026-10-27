@@ -2,6 +2,7 @@
 //! (porte de mcp-roadmap.mjs). Aqui nada grava no banco: a página aplica o que chega e só então algo muda.
 pub mod acoes;
 mod ajuste;
+mod apresentacao;
 mod argumentos;
 pub mod atividade;
 pub(crate) mod cliente;
@@ -21,6 +22,7 @@ mod linha_do_tempo;
 mod membro;
 pub(crate) mod pasta_local;
 mod registro;
+mod pedido_apresentacao;
 pub mod pendentes;
 pub(crate) mod permissao;
 pub mod rotas;
@@ -52,6 +54,8 @@ mod lembrete_tests;
 mod lembrete_rota_tests;
 #[cfg(test)]
 mod linha_do_tempo_tests;
+#[cfg(test)]
+mod pedido_apresentacao_tests;
 #[cfg(test)]
 mod pendentes_tests;
 #[cfg(test)]
@@ -114,6 +118,15 @@ const MAX_SESSOES: usize = 64;
 impl Mcp {
     pub fn novo(host: &str, rede: bool, arquivo: &str, url: &str, prototipos: PathBuf) -> Mcp {
         Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()), conversas: Default::default() }
+    }
+
+    /// Onde ficam as apresentações geradas: `apresentacoes/` ao lado da pasta dos protótipos (a pasta de dados do app); numa pasta de protótipos com outro nome
+    /// (testes, `PROTOTIPOS_DIR`), dentro dela, para nunca misturar dados de instâncias diferentes.
+    pub fn pasta_apresentacoes(&self) -> PathBuf {
+        match self.prototipos.file_name().is_some_and(|n| n == "prototipos") {
+            true => self.prototipos.with_file_name("apresentacoes"),
+            false => self.prototipos.join("apresentacoes"),
+        }
     }
 
     pub fn lembrar_sessao(&self, session_id: &str, workspace_id: &str, blueprint_id: &str) {

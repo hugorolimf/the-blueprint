@@ -1,19 +1,22 @@
 //! O roteador: a mesma ordem do servidor Node (página, estáticos, protótipos, /api/mcp, /api/dados, 404).
 use super::pedido::{Pedido, Resposta};
-use super::{api_dados, prototipos, Estado};
+use super::{api_dados, apresentacao, prototipos, Estado};
 use crate::contexto::Contexto;
 
 const LIMITE_PADRAO: usize = 256 * 1024;
 const LIMITE_DADOS: usize = 10 * 1024 * 1024;
 const LIMITE_MUDANCAS: usize = 2 * 1024 * 1024;
 const LIMITE_PROTOTIPO: usize = crate::mcp::acoes::PROTOTIPO_MAX + 64 * 1024;
+/// O conteúdo e as figuras (até 2 MB juntos, contrato das apresentações) mais o que o JSON escapa.
+const LIMITE_APRESENTACAO: usize = crate::apresentacao::validar::TOTAL_MAX + 256 * 1024;
 
 /// Quanto corpo cada rota aceita (o Node decide isto ao ler o corpo; aqui se decide antes de ler).
 pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
     match (metodo, caminho) {
         ("PUT", "/api/dados") => LIMITE_DADOS,
         ("POST", "/api/mudancas") => LIMITE_MUDANCAS,
-        (_, "/api/mcp/prototipo" | "/mcp") => LIMITE_PROTOTIPO, // /mcp também leva anexar_prototipo
+        (_, "/api/mcp/prototipo") => LIMITE_PROTOTIPO,
+        (_, "/api/mcp/apresentacao" | "/mcp") => LIMITE_APRESENTACAO, // /mcp também leva anexar_prototipo e anexar_apresentacao (o maior dos dois)
         _ => LIMITE_PADRAO,
     }
 }
@@ -67,6 +70,9 @@ fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
         return Resposta::texto(404, "text/plain", crate::tr!("not found", "não encontrado"));
     }
     if let Some(r) = prototipos::rota(estado, caminho) {
+        return r;
+    }
+    if let Some(r) = apresentacao::rota(estado, pedido, ctx) {
         return r;
     }
     if crate::acesso::rotas::eh_rota(caminho) {

@@ -52,5 +52,5 @@ $("cl-reg").addEventListener("click", (e) => {
   registroRetira(r); // sai da lista e da fila do servidor
   mudou();
   montaHub();
-  aviso(tr("Registro adicionado: {feitos} feito(s){nf}{nt}{nc}.", { feitos: res.feitos, nf: res.nf ? tr(", {n} ação(ões) nova(s)", { n: res.nf }) : "", nt: res.nt ? tr(", {n} plano(s) novo(s)", { n: res.nt }) : "", nc: res.nc ? tr(", {n} checkpoint(s) novo(s)", { n: res.nc }) : "" }));
+  aviso(textoRegistroAdicionado(res));
 });

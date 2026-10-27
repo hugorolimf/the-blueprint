@@ -31,11 +31,11 @@ const blueprint = (extra = {}) => ({ id: "b1", nome: "Portal", descricao: "Porta
 const tipos = (doc) => [...doc.paginas.map((p) => p.tipo)]; // cópia no realm do teste: o array do contexto isolado tem outro prototype
 const HOJE = "2026-11-20";
 
-// cada tipo tem as suas páginas; tipo desconhecido cai no resumo
-assert.deepEqual(tipos(montar(blueprint(), { tipo: "resumo", hoje: HOJE })), ["capa", "resumo", "fim"]);
-assert.deepEqual(tipos(montar(blueprint(), { tipo: "andamento", hoje: HOJE })), ["capa", "resumo", "projeto", "projeto", "projeto", "fim"], "Interface, Servidor e Geral");
-assert.deepEqual(tipos(montar(blueprint(), { tipo: "completo", hoje: HOJE })), ["capa", "resumo", "acao", "acao", "acao", "acao", "fim"]);
-assert.equal(montar(blueprint(), { tipo: "nada", hoje: HOJE }).tipo, "resumo");
+// cada tipo tem as suas páginas; tipo desconhecido (e o antigo "resumo", que saiu) cai em andamento
+assert.deepEqual(tipos(montar(blueprint(), { tipo: "andamento", hoje: HOJE })), ["capa", "projeto", "projeto", "projeto", "fim"], "Interface, Servidor e Geral");
+assert.deepEqual(tipos(montar(blueprint(), { tipo: "completo", hoje: HOJE })), ["capa", "acao", "acao", "acao", "acao", "fim"]);
+assert.equal(montar(blueprint(), { tipo: "nada", hoje: HOJE }).tipo, "andamento");
+assert.equal(montar(blueprint(), { tipo: "resumo", hoje: HOJE }).tipo, "andamento", "o tipo resumo saiu");
 
 // contrato com as outras frentes: <section class="ap-pagina" data-tipo>, rodapé "n / total" fora da capa, título na capa
 {
@@ -61,12 +61,10 @@ assert.equal(montar(blueprint(), { tipo: "nada", hoje: HOJE }).tipo, "resumo");
   assert.ok(a2.includes("Objetivo: telas.") && a2.includes("Revisão"));
 }
 
-// resumo: porcentagem, contagens e atrasadas (A2 e A3 terminaram antes de HOJE e não estão concluídas, A4 também)
-{
-  const resumo = montar(blueprint(), { tipo: "resumo", hoje: HOJE }).paginas[1].html;
-  assert.ok(resumo.includes("1 de 4") && resumo.includes("ações concluídas"));
-  assert.ok(resumo.includes("3 ações atrasadas"));
-  assert.ok(!montar(blueprint(), { tipo: "resumo", hoje: "2026-11-01" }).paginas[1].html.includes("atrasada"));
+// não há página de resumo (0%, contagens e horas planejadas não dizem nada a quem lê um plano): nenhum tipo a traz
+for (const tipo of ["andamento", "completo"]) {
+  const tudo = montar(blueprint(), { tipo, hoje: HOJE }).paginas.map((p) => p.html).join("");
+  assert.ok(!tudo.includes('data-tipo="resumo"') && !tudo.includes("horas planejadas") && !tudo.includes("ap-kpi"), `${tipo} sem página de resumo`);
 }
 
 // nada vindo dos dados vira HTML; link que não é http(s) fica de fora; sem emoji
@@ -94,12 +92,11 @@ assert.equal(montar(blueprint(), { tipo: "nada", hoje: HOJE }).tipo, "resumo");
   const grande = blueprint({ projetos: [] });
   grande.acoes = [acao("g1", "2026-11-01", "2026-11-09", { planos: Array.from({ length: 25 }, (_, i) => plano("q" + i, i < 5)) })];
   const doc = montar(grande, { tipo: "completo", hoje: HOJE });
-  assert.deepEqual(tipos(doc), ["capa", "resumo", "acao", "acao", "acao", "acao", "fim"], "25 itens = 4 páginas de 7");
+  assert.deepEqual(tipos(doc), ["capa", "acao", "acao", "acao", "acao", "fim"], "25 itens = 4 páginas de 7");
   assert.equal(doc.paginas.filter((p) => p.html.includes("(continuação)")).length, 3);
-  assert.ok(doc.paginas[2].html.includes("1.1"), "sem projetos: <blueprint>.<posição>");
+  assert.ok(doc.paginas[1].html.includes("1.1"), "sem projetos: <blueprint>.<posição>");
   const vazio = montar(blueprint({ acoes: [], projetos: [] }), { tipo: "completo", hoje: HOJE });
-  assert.deepEqual(tipos(vazio), ["capa", "resumo", "fim"]);
-  assert.ok(vazio.paginas[1].html.includes("Nenhuma ação com datas válidas."));
+  assert.deepEqual(tipos(vazio), ["capa", "fim"]);
   const lotes = montar(blueprint({ acoes: Array.from({ length: 20 }, (_, i) => acao("x" + i, "2026-11-01", "2026-11-02")), projetos: [] }), { tipo: "andamento", hoje: HOJE });
   assert.equal(lotes.paginas.filter((p) => p.tipo === "projeto").length, 4, "20 ações = 4 páginas de 6");
 }
@@ -108,10 +105,10 @@ assert.equal(montar(blueprint(), { tipo: "nada", hoje: HOJE }).tipo, "resumo");
 {
   const en = contexto("en-US", ["en-edicao.js", "en-folha.js", "en-resto.js", "en-apresentacao.js"]) // "{a} de {b}", "Sem nome" e "Geral" vêm dos catálogos da folha;
   const doc = en(blueprint(), { tipo: "andamento", hoje: HOJE });
-  const resumo = doc.paginas[1].html;
+  const projeto = doc.paginas[1].html;
   assert.equal(doc.idioma, "en");
-  assert.ok(doc.paginas[0].html.includes("Progress by project") && resumo.includes("actions completed") && resumo.includes("Next actions"), resumo.slice(0, 300));
-  assert.ok(/Nov \d{2}, 2026/.test(resumo), "datas no formato do idioma");
+  assert.ok(doc.paginas[0].html.includes("Progress by project") && projeto.includes("actions completed"), projeto.slice(0, 300));
+  assert.ok(/Nov \d{2}, 2026/.test(projeto), "datas no formato do idioma");
   assert.ok(!/Resumo|Próximas|ações/.test(doc.paginas.map((p) => p.html).join("")), "nada em português");
 }
 console.log("apresentacao-modelo: ok");

@@ -1,0 +1,38 @@
+/* "Gerar com IA" na tela Apresentação (web/js/apresentacao-ia.js): o grupo no trilho lateral, a lista das apresentações geradas e o visor isolado delas.
+   Usa os tokens do app (--ink, --mid, --lo, --mono) e os mesmos cartões de .ap-tipo; nada anima. */
+.ap-ia{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.ap-ia .rot{margin:14px 0 0}
+.ap-ia-grupo{margin:0;padding:0;border:0;display:grid;gap:6px;min-width:0}
+.ap-ia-grupo legend{padding:0;margin:0 0 6px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid)}
+.ap-ia-op{display:grid;grid-template-columns:16px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--lo);background:#0c3a7866;color:var(--ink);font:12px var(--mono);cursor:pointer}
+.ap-ia-op:hover{border-color:var(--ink);background:#17539f66}
+.ap-ia-op:has(input:checked){border-color:var(--ink);background:#17539f;box-shadow:inset 3px 0 0 var(--ink)}
+.ap-ia-op:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+.ap-ia-op input{margin:2px 0 0;accent-color:#eaf4ff}
+.ap-ia-op span{display:grid;gap:3px;min-width:0}
+.ap-ia-op b{text-transform:uppercase;letter-spacing:.04em}
+.ap-ia-op em{font-style:normal;color:var(--ink);font-size:11px}
+.ap-ia-op small{color:var(--mid);font-size:11px;line-height:1.4}
+.ap-ia-gerar{width:100%}
+.ap-ia-msg{margin:0;min-height:1.4em;font-size:11px;line-height:1.4;color:var(--mid)}
+.ap-ia-msg.erro{color:var(--erro,#ffb4a8)}
+.ap-ia-lista ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:6px}
+.ap-ia-item{display:grid;gap:3px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--lo);background:#0c3a7866;color:var(--ink);font:12px var(--mono);cursor:pointer}
+.ap-ia-item b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-ia-item span{color:var(--mid);font-size:11px}
+.ap-ia-item:hover,.ap-ia-item:focus-visible{border-color:var(--ink);outline:none;background:#17539f66}
+.ap-ia-item[aria-pressed=true]{border-color:var(--ink);background:#17539f;box-shadow:inset 3px 0 0 var(--ink)}
+
+/* o visor: a barra com o nome e as ações, e o iframe ocupando o resto da prévia */
+.ap-previa:has(.ap-ia-visor){display:flex;flex-direction:column;padding:0;overflow:hidden}
+.ap-ia-visor{flex:1;min-height:0;display:flex;flex-direction:column}
+.ap-ia-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;border-bottom:1px solid var(--lo);background:#082b5e99}
+.ap-ia-nome{display:grid;gap:2px;min-width:0}
+.ap-ia-nome b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-ia-nome span{color:var(--mid);font-size:11px}
+.ap-ia-barra a.btn{text-decoration:none;display:inline-flex;align-items:center}
+.ap-ia-quadro{flex:1;min-height:0;width:100%;border:0;background:#0c3a78}
+@media (max-width:760px){.ap-ia-barra{padding:8px 12px}.ap-ia-quadro{min-height:70vh}.ap-previa:has(.ap-ia-visor){overflow:auto}}
+
+/* com apresentações geradas, a lista vem antes do formulário: quem volta quer abri-las, e o formulário fica logo abaixo */
+.ap-ia-lista:has(ul){order:-1}

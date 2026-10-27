@@ -1,0 +1,66 @@
+/* Apresentação gerada por IA: tema do app (papel de plotagem azul, mono, caixas com régua), igual a web/css/tokens.css, apresentacao.css e marca.css.
+   As variáveis --anatomy-* repetem as de .emblema (marca.css) para os sólidos do kit saírem nos tons do blueprint. */
+*{box-sizing:border-box}
+html{color-scheme:dark;scroll-behavior:auto}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+html,body{margin:0;background:#061d42}
+.ap-ia{--paper:#0c3a78;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;--topo:66px;
+  --anatomy-page:#082b5e;--anatomy-card:#0b3570;--anatomy-text:#9cc4ee;--anatomy-strong:#eaf4ff;--anatomy-muted:#7fb0e6;
+  --anatomy-paper:#0c3a78;--anatomy-face:#17508f;--anatomy-top:#1a5398;--anatomy-shade-0:#0a2f63;--anatomy-shade-1:#0c346c;--anatomy-shade-2:#0f3a75;--anatomy-shade-3:#13427f;
+  --anatomy-hi:#eaf4ff;--anatomy-mid:#8dbaea;--anatomy-lo:#518ac8;--anatomy-faint:#2d63a6;--anatomy-lit:#fff;--anatomy-lit-top:#2b69b3;--anatomy-lit-shade:#1d5aa3;
+  --anatomy-glow:#cfe6ff;--anatomy-halo:#03142e;--anatomy-halo-opacity:.55;--anatomy-dot:#e6f2ff;--anatomy-weight:.6px;--anatomy-mono:var(--mono);
+  --anatomy-lift:none;min-height:100vh;display:flex;flex-direction:column;color:var(--ink);font:13px/1.55 var(--mono);
+  background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,
+    linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
+    radial-gradient(ellipse at 50% 18%,#1250a0 0,#0c3a78 62%,#082b5e 100%) fixed}
+.ap-ia *{scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.ap-ia a{color:inherit}
+.ap-ia :focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+.ap-pular{position:absolute;left:12px;top:-60px;z-index:30;padding:8px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none}
+.ap-pular:focus{top:10px}
+/* as marcas do kit: a peça "lit" é a única que o olhar segue (contorno mais grosso, brilho e preenchimento claro) */
+.ap-ia .iso-line[data-tone="lit"]{stroke-width:1.6px}
+.ap-ia .iso-solid:has(>.iso-edge[data-tone="lit"]),.ap-ia .iso-solid[data-lit]{filter:drop-shadow(0 0 3px var(--anatomy-glow))}
+.ap-ia .iso-solid:has(>.iso-edge[data-tone="lit"])>.iso-top{fill:var(--anatomy-lit-top)}
+.ap-ia .iso-solid:has(>.iso-edge[data-tone="lit"])>.iso-shade{fill:var(--anatomy-lit-shade)}
+.ap-ia .iso-stage{outline:none}
+.ap-ia .iso-stage:focus-visible{outline:1px solid var(--anatomy-muted);outline-offset:6px}
+.ap-ia .iso-plate{box-shadow:0 0 0 1px var(--lo)}
+.ap-ia .iso-plate-corner{white-space:normal;line-height:1.4}
+.ap-ia .iso-plate-corner[data-corner=hint]{max-width:38%}
+.ap-ia .iso-plate-corner[data-corner=readout],.ap-ia .iso-plate-corner[data-corner=title]{max-width:58%;text-align:right}
+.ap-ia .iso-legend{color:var(--mid);font:12px/1.55 var(--mono)}
+
+/* barra superior: migalhas, título em caixa, nível e imprimir (como o cabeçalho do Planejar) */
+.ap-topo{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:18px;min-height:var(--topo);padding:12px 22px;border-bottom:1px solid var(--lo);background:#082b5ef5}
+.ap-migalhas{display:flex;align-items:center;gap:8px;color:var(--mid);font-size:11px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+.ap-migalhas i{font-style:normal;color:var(--lo)}
+.ap-titulo-caixa{flex:1;min-width:0;display:flex;align-items:baseline;gap:14px;padding:8px 14px;border:1px solid var(--lo);background:#0c3a7870}
+.ap-titulo-caixa b{font-size:16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ap-titulo-caixa span{color:var(--mid);font-size:11px;white-space:nowrap}
+.ap-topo-acoes{display:flex;align-items:center;gap:10px}
+.ap-etiqueta{padding:3px 9px;border:1px solid var(--lo);color:var(--mid);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.ap-btn{padding:8px 14px;border:1px solid var(--ink);background:#0c3a78aa;color:var(--ink);font:11px var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.ap-btn:hover{background:#17539f}
+
+/* corpo: navegação por seções à esquerda, painéis à direita */
+.ap-corpo{flex:1;display:grid;grid-template-columns:232px minmax(0,1fr);align-items:start}
+.ap-nav{position:sticky;top:var(--topo);height:calc(100vh - var(--topo));overflow-y:auto;padding:22px 16px;border-right:1px solid var(--lo)}
+.ap-rot{margin:0 0 12px;color:var(--mid);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase}
+.ap-nav ol{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.ap-nav a{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:baseline;padding:10px 12px;border:1px solid var(--faint);background:#0c3a7866;text-decoration:none;font-size:12px;letter-spacing:.04em}
+.ap-nav a i{font-style:normal;color:var(--mid)}
+.ap-nav a:hover{border-color:var(--lo);background:#17539f55}
+.ap-nav a[aria-current]{border-color:var(--ink);background:#17539f;box-shadow:inset 3px 0 0 var(--ink)}
+.ap-dica{margin:14px 0 0;color:var(--mid);font-size:10.5px;line-height:1.5}
+.ap-principal{display:grid;gap:26px;min-width:0;max-width:1240px;padding:26px clamp(16px,3.4vw,40px) 56px;outline:none}
+.ap-rodape{display:flex;justify-content:space-between;gap:16px;padding:12px 22px;border-top:1px solid var(--lo);background:#082b5ef5;color:var(--lo);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+
+@media (max-width:900px){
+  .ap-topo{position:static;flex-wrap:wrap;gap:10px;padding:10px 14px}.ap-titulo-caixa{order:3;flex:1 1 100%}.ap-titulo-caixa span{display:none}
+  .ap-corpo{grid-template-columns:minmax(0,1fr)}
+  .ap-nav{position:sticky;top:0;z-index:15;height:auto;padding:8px 12px;border-right:0;border-bottom:1px solid var(--lo);background:#082b5ef5}
+  .ap-rot,.ap-dica{display:none}.ap-nav ol{display:flex;overflow-x:auto;gap:6px;padding-bottom:2px}
+  .ap-nav a{white-space:nowrap;padding:7px 10px}
+  .ap-rodape{flex-direction:column;gap:4px}
+}

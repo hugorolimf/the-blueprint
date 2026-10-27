@@ -3,11 +3,10 @@
 // de window.imprimirApresentacao / window.exportarApresentacao (apresentacao-exportar.js). Se alguma faltar, a tela segue sem ela (botão desligado ou capa sem figura).
 // Zero trabalho em repouso: nada anima nem mede sozinho; as páginas se ajustam ao tamanho por unidades de contêiner (apresentacao.css).
 const CHAVE_AP_TIPO = "blueprint.apresentacaoTipo";
-let apRaiz = null, apBlueprint = null, apTipo = "resumo", apDoc = null, apOrigem = null, apPalco = null, apIndice = 0, apAoTecla = null;
+let apRaiz = null, apBlueprint = null, apTipo = "andamento", apDoc = null, apOrigem = null, apPalco = null, apIndice = 0, apAoTecla = null;
 try { const t = localStorage.getItem(CHAVE_AP_TIPO); if (TIPOS_APRESENTACAO.includes(t)) apTipo = t; } catch {}
 
 const apDescricoes = () => ({
-  resumo: tr("Capa, resumo com o progresso e as próximas ações."),
   andamento: tr("Uma página por projeto, com o progresso e as ações de cada um."),
   completo: tr("Uma página por ação, com planos e checkpoints. Para revisar tudo."),
 });
@@ -34,6 +33,7 @@ function apDesenha() {
   apRaiz.querySelector(".ap-previa").innerHTML = apDoc.paginas.map((p) => p.html).join("");
   apRaiz.querySelector(".ap-nome-bp").textContent = apDoc.titulo;
   for (const b of apRaiz.querySelectorAll(".ap-tipo")) b.setAttribute("aria-pressed", String(b.dataset.tipo === apTipo));
+  if (typeof apIaDepoisDePaginas === "function") apIaDepoisDePaginas(); // apresentacao-ia.js: nenhuma apresentação gerada fica aberta por cima das páginas
 }
 
 async function apAcao(nome) {
@@ -90,6 +90,7 @@ function apTecla(e) {
 function apFechar() {
   if (!apRaiz || apRaiz.hidden) return;
   apSair();
+  if (typeof apIaFechar === "function") apIaFechar();
   apRaiz.hidden = true;
   document.body.classList.remove("ap-aberto");
   apOrigem?.focus?.({ preventScroll: true });
@@ -108,6 +109,7 @@ function abrirApresentacao(blueprintId, quemAbriu) {
   apRaiz.hidden = false;
   document.body.classList.add("ap-aberto");
   apDesenha();
+  if (typeof apIaAbrir === "function") apIaAbrir(apRaiz, apBlueprint); // o grupo "Gerar com IA" e a lista das já geradas (apresentacao-ia.js)
   apRaiz.onclick = (e) => {
     const t = e.target.closest(".ap-tipo");
     if (t) { apTipo = t.dataset.tipo; try { localStorage.setItem(CHAVE_AP_TIPO, apTipo); } catch {} apMensagem(""); apDesenha(); return; }

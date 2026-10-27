@@ -12,6 +12,15 @@ pub(super) fn opcional(a: &Value, chave: &str) -> String {
     a.get(chave).and_then(Value::as_str).unwrap_or("").to_string()
 }
 
+/// Um campo que deve chegar como objeto ou lista; alguns clientes mandam o JSON já em texto, e isso também vale. Ausente vira `null` (a validação responde).
+pub(super) fn estruturado(a: &Value, chave: &str) -> Value {
+    match a.get(chave) {
+        Some(Value::String(t)) => serde_json::from_str(t).unwrap_or(Value::Null),
+        Some(v) => v.clone(),
+        None => Value::Null,
+    }
+}
+
 pub(super) fn alvo(a: &Value) -> Map<String, Value> {
     let mut m = Map::new();
     m.insert("workspaceId".into(), json!(opcional(a, "workspace_id")));

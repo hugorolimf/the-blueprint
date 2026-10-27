@@ -2,7 +2,7 @@
 //! (`claude mcp add blueprint -- blueprint.exe --mcp`). Porte de mcp-roadmap.mjs: mesmas ferramentas e instruções. Não tem dados próprios: cada ferramenta
 //! chama as rotas /api/mcp do servidor local. Tudo aqui é texto para o AGENTE, então é inglês (o agente responde ao usuário no idioma dele); o
 //! servidor também responde em inglês porque o cliente manda `Accept-Language: en` (ver `crate::idioma`).
-use super::argumentos::{alvo, checkpoint, com, com_atividade, opcional, plano, plano_se_houver, texto};
+use super::argumentos::{alvo, checkpoint, com, com_atividade, estruturado, opcional, plano, plano_se_houver, texto};
 use super::cliente::{codificar, requisitar};
 use serde_json::{json, Map, Value};
 use std::io::{BufRead, Write};
@@ -12,13 +12,16 @@ const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 car
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
 pub(super) const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
-const TOPICOS: [(&str, &str); 6] = [
+const TOPICOS: [(&str, &str); 9] = [
     ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
     ("editar", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("executar", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
     ("prototipos", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
     ("importar", include_str!("../../skills/blueprint-planejamento/topicos/importar.md")),
     ("apresentar", include_str!("../../skills/blueprint-planejamento/topicos/apresentar.md")),
+    ("apresentacao_ia", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ia.md")),
+    ("apresentacao_conteudo", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_conteudo.md")),
+    ("apresentacao_figuras", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_figuras.md")),
 ];
 const REGRA: &str = "Keep this blueprint always up to date: plans and plan changes via propor_blueprint; when you start a plan, registrar_progresso; when you finish, marcar_concluido with the evidence; if it did not work, marcar_nao_concluido; if you get stuck, reportar_bloqueio.";
 
@@ -151,7 +154,7 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
             let aviso = if avisos.is_empty() { String::new() } else { format!("\nWarnings (they do not block the submission, but worth fixing):\n- {}", avisos.join("\n- ")) };
             let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
-            Ok(format!("Proposal no. {} is in the app's queue for the user to review and apply (one at a time; the others in the queue were not touched).{aviso}\n{}\nIf the user asks for changes, send `ajustar: {}` with only what changes (the action, plan or checkpoint by the id above); `substituir: {}` replaces the whole proposal.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
+            Ok(format!("Proposal no. {} is in the app's queue (one at a time; the others in the queue were not touched). The app applies it by itself when automatic application is on (the default in the local app); removals, moved actions and new blueprints still wait for the user's click on the Plan screen. Do not say it entered before ler_blueprint shows it.{aviso}\n{}\nIf the user asks for changes, send `ajustar: {}` with only what changes (the action, plan or checkpoint by the id above); `substituir: {}` replaces the whole proposal.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
         }
         "registrar_trabalho" => {
             let mut corpo = alvo(a);
@@ -167,7 +170,7 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
             }
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
             let aviso = if avisos.is_empty() { String::new() } else { format!("\nWarnings:\n- {}", avisos.join("\n- ")) };
-            Ok(format!("Record no. {} is in the app's queue (it is not a proposal). Nothing was saved: the user sees what was done, with the checks, and decides whether to add it to the blueprint. Tell the user now and ask whether to add it.{aviso}", r["numero"]))
+            Ok(format!("Record no. {} is in the app's queue (it is not a proposal). The app adds it by itself when automatic application is on (the default in the local app); otherwise the user sees what was done, with the checks, and decides on the Plan screen. Check with ler_blueprint before saying it was added, and tell the user it was sent.{aviso}", r["numero"]))
         }
         "vincular_pasta" => {
             // o servidor MCP roda na pasta da sessão do agente: é ela que fica ligada
@@ -191,6 +194,14 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
             }
             let acao = if r["atualizado"] == true { "updated in" } else { "attached to" };
             Ok(format!("Prototype \"{}\" {acao} the action (prototipo_id: {}); the user sees it on the blueprint sheet, in the action's prototype icon. To revise it, call again with this prototipo_id.", r["titulo"].as_str().unwrap_or(""), r["prototipoId"].as_str().unwrap_or("")))
+        }
+        "anexar_apresentacao" => {
+            let corpo = com(alvo(a), &[("conteudo", estruturado(a, "conteudo")), ("figuras", estruturado(a, "figuras")), ("apresentacaoId", json!(opcional(a, "apresentacao_id")))]);
+            let r = servidor(via, "apresentacao", "POST", Some(&Value::Object(corpo)))?;
+            let avisos: Vec<&str> = r["avisos"].as_array().map(Vec::as_slice).unwrap_or(&[]).iter().filter_map(Value::as_str).collect();
+            let aviso = if avisos.is_empty() { String::new() } else { format!("\nWarnings (fix them and send again with this apresentacao_id):\n- {}", avisos.join("\n- ")) };
+            let acao = if r["atualizado"] == true { "updated" } else { "saved" };
+            Ok(format!("Presentation \"{}\" {acao} (apresentacao_id: {}). The user opens it on the Present screen of the blueprint, at {}. To revise it or regenerate only some figures, call again with this apresentacao_id.{aviso}", r["titulo"].as_str().unwrap_or(""), r["apresentacaoId"].as_str().unwrap_or(""), r["caminho"].as_str().unwrap_or("")))
         }
         "registrar_progresso" => {
             evento(via, "progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;

@@ -1,0 +1,21 @@
+/* Impressão em A4: o papel vira branco e a tinta, o azul do blueprint. Navegação, botões e barras somem; cada painel evita quebrar no meio. */
+@media print{
+  @page{size:A4;margin:12mm}
+  html,body{background:#fff}
+  .ap-ia{--paper:#fff;--ink:#0a2a5a;--mid:#2c5a9a;--lo:#7a9cc8;--faint:#c3d3ea;--erro:#a52a1a;
+    --anatomy-page:#fff;--anatomy-card:#fff;--anatomy-text:#2c5a9a;--anatomy-strong:#0a2a5a;--anatomy-muted:#5b7fae;
+    --anatomy-paper:#fff;--anatomy-face:#f3f7fd;--anatomy-top:#fff;--anatomy-shade-0:#c9d8ee;--anatomy-shade-1:#d7e3f3;--anatomy-shade-2:#e4edf8;--anatomy-shade-3:#eef3fb;
+    --anatomy-hi:#0a2a5a;--anatomy-mid:#4d78b0;--anatomy-lo:#9db8dc;--anatomy-faint:#d3dff0;--anatomy-lit:#000;--anatomy-lit-top:#fff;--anatomy-lit-shade:#e9f0fa;
+    --anatomy-glow:transparent;--anatomy-halo:#8aa6cc;--anatomy-halo-opacity:.3;--anatomy-dot:#0a2a5a;
+    background:#fff;color:var(--ink);font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ap-pular,.ap-nav,.ap-btn,.ap-etiqueta,.ap-g-hoje,.ap-sec-regua{display:none!important}
+  .ap-topo,.ap-rodape{position:static;background:#fff;border-color:var(--lo)}
+  .ap-corpo{display:block}
+  .ap-principal{max-width:none;padding:14px 0;gap:14px}
+  .ap-sec{break-inside:avoid-page;background:#fff;border-color:var(--lo)}
+  .ap-sec[data-sec=etapas],.ap-sec[data-sec=linha]{break-inside:auto}
+  .ap-etapa,.ap-cartao,.ap-item,.ap-kpi,.iso-figure{break-inside:avoid;background:#fff}
+  .ap-tag[data-st=andamento]{color:#fff}
+  .ap-ia .iso-plate{box-shadow:0 0 0 1px var(--lo)}
+  .ap-ia .iso-solid[data-lit]{filter:none}
+}

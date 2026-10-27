@@ -35,6 +35,8 @@ function registroMarcaPlano(t, evidencia, r) {
   confirmarConclusaoAgente(t, true);
   t.agente.feitoEm = r.em;
 }
+// o que se conta ao usuário depois de adicionar um registro (o clique em "Adicionar ao blueprint" e o aplicar sozinho usam o mesmo texto)
+const textoRegistroAdicionado = (res) => tr("Registro adicionado: {feitos} feito(s){nf}{nt}{nc}.", { feitos: res.feitos, nf: res.nf ? tr(", {n} ação(ões) nova(s)", { n: res.nf }) : "", nt: res.nt ? tr(", {n} plano(s) novo(s)", { n: res.nt }) : "", nc: res.nc ? tr(", {n} checkpoint(s) novo(s)", { n: res.nc }) : "" });
 // grava o registro no blueprint: ação nova entra na ordem do tempo; plano e checkpoint novos entram pendentes e só ficam feitos se o registro (e o usuário) os marcaram.
 // Devolve { nf, nt, nc, feitos } ou null se o blueprint sumiu.
 function registroAdiciona(r) {

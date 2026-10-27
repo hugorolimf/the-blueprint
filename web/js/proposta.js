@@ -13,6 +13,7 @@ function montaMcp() {
   $("ag-mcp").hidden = !mcpFalhou; // só aparece se o servidor não responde
   montaRegistros(); // o que o agente já fez fora do plano (painel próprio acima da proposta)
   montaProposta();
+  montaAutoAplicados(); // o interruptor de aplicar sozinho, o que já entrou sozinho e a nota do que espera o clique (auto-aplicar-vista.js)
 }
 // como ligar o agente fica numa folha à parte (botão "Como conectar"): a tela do Planejar foca na proposta
 function textoComoUsar() {
@@ -173,16 +174,24 @@ function aplicarAcoes(p, c) {
   if (c.emblema?.inc) { p.emblema = { pecas: c.emblema.pecas }; marca = true; }
   return { nf, nt, nm, nmv, nr: removerItens(p, c), na: moverAcoes(p, c), marca, nd: aplicaDecisoes(p, c) };
 }
+// aplica a proposta ABERTA de `c` em `p`, tira-a da fila (ack) e abre a próxima; não toca na tela. Serve ao clique (aplicarProposta) e ao aplicar sozinho (auto-aplicar.js).
+// Devolve o que mudou e os dois textos: `historico` ("Aplicado: …", o mesmo do chat) e `aviso` ("Proposta aplicada: …").
+function aplicarAberta(p, c) {
+  const { nf, nt, nm, nmv, nr, na, marca, nd } = aplicarAcoes(p, c);
+  const dec = nd ? tr(", {n} decisão(ões)", { n: nd }) : "";
+  filaConclui(c); // sai da fila (ack) e abre a próxima proposta, se houver
+  const historico = tr("Aplicado: {nf} ação(s) nova(s), {nt} plano(s) e {nm} checkpoint(s) novos{mov}{trazidas}{apagados}{marca}{dec}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s) de outro blueprint", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(", e a marca da folha") : "", dec });
+  c.msgs.push({ papel: "sistema", texto: historico });
+  const aviso = tr("Proposta aplicada: {nf} ação(s), {nt} plano(s), {nm} checkpoint(s){mov}{trazidas}{apagados}{marca}{dec}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s)", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(" e a marca") : "", dec });
+  return { nf, nt, nm, nmv, nr, na, marca, nd, historico, aviso };
+}
 function aplicarProposta() {
   const p = blueprintEd(), c = p && conv(p.id);
   if (!c || (!c.proposta && !c.emblema && !c.dadosBlueprint && !c.remover?.length && !c.mover?.length)) return;
   if (emNovo() && c.dadosBlueprint) { p.nome = c.dadosBlueprint.nome.trim(); p.descricao = c.dadosBlueprint.descricao.trim(); }
-  const { nf, nt, nm, nmv, nr, na, marca, nd } = aplicarAcoes(p, c);
-  const dec = nd ? tr(", {n} decisão(ões)", { n: nd }) : "";
-  filaConclui(c); // sai da fila (ack) e abre a próxima proposta, se houver
-  c.msgs.push({ papel: "sistema", texto: tr("Aplicado: {nf} ação(s) nova(s), {nt} plano(s) e {nm} checkpoint(s) novos{mov}{trazidas}{apagados}{marca}{dec}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s) de outro blueprint", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(", e a marca da folha") : "", dec }) });
+  const { aviso: texto } = aplicarAberta(p, c);
   if (emNovo()) montaMcp(); else { avisarMonitor("proposta-aplicada", p.id); mudou(); montaHub(); if (!filaTemAberta(c)) agenteTela(false); } // aprovou e não há outra proposta esperando: a tela Planejar fecha (com outra na fila, ela abre a próxima)
-  aviso(tr("Proposta aplicada: {nf} ação(s), {nt} plano(s), {nm} checkpoint(s){mov}{trazidas}{apagados}{marca}{dec}.", { nf, nt, nm, mov: nmv ? tr(", {n} movido(s)", { n: nmv }) : "", trazidas: na ? tr(", {n} ação(ões) trazida(s)", { n: na }) : "", apagados: nr ? tr(", {n} apagado(s)", { n: nr }) : "", marca: marca ? tr(" e a marca") : "", dec }));
+  aviso(texto);
 }
 function guardarChatDosBlueprints(c, blueprints) {
   blueprints.forEach((p, i) => {

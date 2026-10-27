@@ -59,5 +59,5 @@ function htmlTopoProposta(c, p) {
   const soma = (k) => diffs.reduce((t, d) => t + d[k], 0), semMudar = diffs.filter((d) => !d.mudancas).length;
   const resumo = [soma("novos") && pvPlural(soma("novos"), "item novo", "itens novos"), soma("alterados") && pvPlural(soma("alterados"), "alterado", "alterados"), soma("movidos") && pvPlural(soma("movidos"), "movido", "movidos"), semMudar && pvPlural(semMudar, "ação sem mudança", "ações sem mudança")].filter(Boolean);
   const msg = c.mensagem ? (c.mensagem.length > 280 ? `<details class="pv-msg"><summary>${tr("Mensagem do agente")}</summary><p class="cl-msg">${esc(c.mensagem)}</p></details>` : `<p class="cl-msg">${esc(c.mensagem)}</p>`) : "";
-  return `${msg}${resumo.length ? `<p class="pv-resumo">${resumo.map((f) => `<span class="chip">${esc(f)}</span>`).join("")}</p>` : ""}`;
+  return `${autoNotaConfirmar(c, p)}${msg}${resumo.length ?`<p class="pv-resumo">${resumo.map((f) => `<span class="chip">${esc(f)}</span>`).join("")}</p>` : ""}`;
 }

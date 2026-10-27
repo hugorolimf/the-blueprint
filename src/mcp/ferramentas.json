@@ -9,7 +9,7 @@
  },
  {
   "name": "guia_de_planejamento",
-  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print). Call it before planning.",
+  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs). Call it before planning.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -21,7 +21,10 @@
       "executar",
       "prototipos",
       "importar",
-      "apresentar"
+      "apresentar",
+      "apresentacao_ia",
+      "apresentacao_conteudo",
+      "apresentacao_figuras"
      ]
     }
    }
@@ -63,7 +66,7 @@
  },
  {
   "name": "propor_blueprint",
-  "description": "Sends the proposal to the app for the user to review and apply (nothing changes before that). Each submission goes into the blueprint's QUEUE with a number and never erases another proposal; the reply carries the number and the provisional ids (+a1, +a1.p2…). To fix a proposal that is still in the queue, use `ajustar: <number>` and send only what changes (action, plan or checkpoint by provisional id); `substituir: <number>` replaces the whole proposal. Include only the new or changed actions. A new action goes in full; an existing action goes with its id and only what changes (whatever is missing stays as it is, nothing is erased). Move: cite the plan/checkpoint id in the destination action. Delete: the `remover` list, which the user approves on screen. Without blueprint_id it is a new blueprint: include blueprint: {nome, descricao}. It returns format errors for you to fix. A new blueprint carries the session folder; the link is only created when the user applies it in the app.",
+  "description": "Sends the proposal to the app. The app applies it by itself when automatic application is on (the default in the local app); otherwise the user reviews and applies it. Removals, moved actions and new blueprints always wait for the user's click. Each submission goes into the blueprint's QUEUE with a number and never erases another proposal; the reply carries the number and the provisional ids (+a1, +a1.p2…). To fix a proposal that is still in the queue, use `ajustar: <number>` and send only what changes (action, plan or checkpoint by provisional id); `substituir: <number>` replaces the whole proposal. Include only the new or changed actions. A new action goes in full; an existing action goes with its id and only what changes (whatever is missing stays as it is, nothing is erased). Move: cite the plan/checkpoint id in the destination action. Delete: the `remover` list, which the user approves on screen. Without blueprint_id it is a new blueprint: include blueprint: {nome, descricao}. It returns format errors for you to fix. A new blueprint carries the session folder; the link is only created when the user applies it in the app.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -279,7 +282,7 @@
  },
  {
   "name": "registrar_trabalho",
-  "description": "Records in the blueprint what you ALREADY did that was not in the plan (a one-off adjustment, a fix asked for in the conversation). It is NOT a proposal (a proposal is future work): it enters the queue as \"Record no. N\" and nothing is saved before the user adds it. Mark feito: true with the evidence on what was done; leave without feito what is still pending (plan, checkpoint or open action). After sending, tell the user and ask whether they want to add it. Accepts an existing action (id) or a new one, with past dates.",
+  "description": "Records in the blueprint what you ALREADY did that was not in the plan (a one-off adjustment, a fix asked for in the conversation). It is NOT a proposal (a proposal is future work): it enters the queue as \"Record no. N\" and the app adds it by itself when automatic application is on (the default in the local app), otherwise the user adds it. Mark feito: true with the evidence on what was done; leave without feito what is still pending (plan, checkpoint or open action). After sending, tell the user it was sent and check with ler_blueprint that it entered. Accepts an existing action (id) or a new one, with past dates.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -439,6 +442,43 @@
     "acao_id",
     "titulo",
     "html"
+   ]
+  }
+ },
+ {
+  "name": "anexar_apresentacao",
+  "description": "Attaches an AI-generated presentation to a blueprint: the content JSON plus one small JavaScript program per figure. The app assembles the page (a real presentation interface in the app's look, with live anatomy figures) and shows it in an isolated viewer on the Present screen. Send DATA, never HTML: conteudo = {versao: 1, publico: cliente|interno, nivel: rapido|padrao|completo|epico, idioma, titulo, resumo[], entregas[], etapas[], precisamosDeVoce[], decisoes[], riscos[]}; the client audience is a PROJECT PLAN (no technology, files, hours or internal instructions, and no interno block). figuras = [{id, titulo, dica, leitura, chaves, legenda, rotulo, impressao, codigo}], codigo being a JS function expression (L) => ({svg, vivo}). Limits: 128 KB of content, 12 figures of 200 KB each, 2 MB in all. The reply lists warnings to fix. To revise, pass the apresentacao_id from ler_blueprint (apresentacoes): it is replaced. Read guia_de_planejamento with topico apresentar first: it has the exact format and the library.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint (from listar_blueprints)."
+    },
+    "conteudo": {
+     "type": "object",
+     "description": "The content of the presentation (see guia_de_planejamento apresentacao_conteudo)."
+    },
+    "figuras": {
+     "type": "array",
+     "items": {
+      "type": "object"
+     },
+     "description": "The figures: one object per figure, with its codigo."
+    },
+    "apresentacao_id": {
+     "type": "string",
+     "description": "Only to replace an existing presentation of the blueprint."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id",
+    "conteudo"
    ]
   }
  },

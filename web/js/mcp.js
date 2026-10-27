@@ -17,6 +17,7 @@ function mcpAssina() {
   es.addEventListener("conversa", (e) => { try { conversaRecebe(JSON.parse(e.data)); } catch {} }); // a IA respondeu na conversa de uma ação (conversa.js)
   es.addEventListener("atualizacao", (e) => { try { atualizacaoRecebe(JSON.parse(e.data)); } catch {} }); // o updater: baixando, pronta (atualizacao.js)
   es.addEventListener("compartilhar", (e) => { try { compartilharRecebe(JSON.parse(e.data)); } catch {} }); // o túnel do Compartilhar mudou de estado (sessao.js)
+  es.addEventListener("apresentacao", (e) => { try { apIaRecebe(JSON.parse(e.data)); } catch {} }); // o servidor guardou ou removeu uma apresentacao gerada pela IA: a tela Apresentacao busca a lista (apresentacao-ia.js)
   es.onerror = () => { mcpSse = null; mcpConsulta(); };
 }
 // a fila só é aplicada ao workspace aberto: ao entrar num workspace (ou quando os dados chegam depois da conexão SSE), consulta de novo,
@@ -56,9 +57,11 @@ async function mcpAplica(itens) {
   const chave = (x) => `${x.id}|${x.em}`; // a fila é da memória do servidor: ao reiniciar, os números voltam a 1, e só o id faria a página ignorar eventos novos
   for (const i of meus.filter((x) => !mcpVistos.has(chave(x)))) {
     mcpVistos.add(chave(i));
+    if (autoJaAplicado(i)) { autoAck(i); continue; } // esta página já aplicou sozinha (auto-aplicar.js) e o ack se perdeu: só confirma de novo, nunca aplica duas vezes
     if (i.tipo === "proposta" && filaJaVista(i)) continue; // a página recarregou e o servidor mandou de novo uma que já está aqui
     if (i.tipo === "registro") { // o que o agente JÁ fez fora do plano (registrar_trabalho): espera aqui e na fila do servidor até o usuário adicionar ou descartar
       if (registroRecebe(i)) {
+        if (autoElegivel(i) && autoAplicaRegistro(i)) { atualizarHub = true; continue; } // interruptor ligado: entra sozinho, com aviso e Desfazer
         notificar(i);
         mcpFeed.push({ tipo: "registro", texto: tr("Registro nº {n} recebido: veja em ✦ Planejar e adicione ao blueprint o que quiser.", { n: i.numero }) });
         aviso(tr("O seu agente enviou um registro do que fez: abra ✦ Planejar para adicioná-lo ao blueprint."));
@@ -68,8 +71,9 @@ async function mcpAplica(itens) {
     }
     viu = true;
     if (i.tipo !== "progresso" && i.tipo !== "bloqueio") atualizarHub = true;
-    notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
-    agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? "Proposta enviada: revise em ✦ Planejar." : i.texto, em: Date.now() };
+    const auto = i.tipo === "proposta" && autoElegivel(i); // entra sozinha (interruptor ligado, sem apagar nem mover): não pede revisão
+    if (!auto) notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
+    agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? (auto ? tr("Proposta aplicada.") : "Proposta enviada: revise em ✦ Planejar.") : i.texto, em: Date.now() };
     const nomeProj = D.blueprints.find((x) => x.id === i.blueprintId)?.nome;
     if (i.tipo === "progresso" && i.planoId) { // o primeiro aviso de progresso com o plano marca o início do tempo real
       const t0 = mcpPlano(i);
@@ -77,6 +81,8 @@ async function mcpAplica(itens) {
     }
     if (i.tipo === "proposta") {
       if (!mcpProposta(i)) { soltar.add(i.id); continue; }
+      if (auto && autoAplicaProposta(i)) { muda = true; continue; } // aplicada sozinha: o aviso com Desfazer vem de auto-aplicar-vista.js
+      if (auto) notificar(i); // não deu para aplicar sozinha: o aviso de revisão de sempre
       mcpFeed.push({ tipo: "proposta", texto: tr("Proposta recebida para {alvo}: revise ao lado e aplique.", { alvo: i.blueprintId ? `“${nomeProj}”` : tr("um blueprint novo") }) });
       aviso(tr("O seu agente enviou uma proposta: abra ✦ Planejar para revisar."));
       muda = true;

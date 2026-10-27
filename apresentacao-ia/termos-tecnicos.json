@@ -1,0 +1,11 @@
+{
+  "descricao": "Termos que nao podem aparecer numa apresentacao para o publico cliente. Minusculas; cada termo vale como PALAVRA INTEIRA (api casa api e nao aplicativo; cli nao casa cliente), por isso o plural vem escrito. Numero seguido de h ou horas e checado a parte.",
+  "termos": [
+    "rust", "sqlite", "postgres", "postgresql", "mysql", "sql", "api", "apis", "webhook", "webhooks", "endpoint", "endpoints", "rest", "graphql", "json", "yaml", "xml",
+    "token", "tokens", "hmac", "sha", "ssl", "tls", "dns", "http", "https", "sse", "websocket", "localhost", "loopback", "proxy",
+    "servidor", "servidores", "backend", "frontend", "back-end", "front-end", "crate", "npm", "node", "docker", "kubernetes", "deploy", "commit", "git", "github",
+    "repositorio", "repositório", "framework", "stack", "sdk", "cli", "mcp", "n8n", "workflow", "workflows", "prompt", "prompts", "llm", "claude", "anthropic", "openai",
+    "banco de dados", "migracao", "migração", "migracoes", "migrações", "cache", "hash", "query", "script", "scripts", "sandbox", "i18n", "cloud api", "ci/cd",
+    "refactor", "refatorar", "refatoração", "bug", "bugs", "debug", "log", "logs", "idempotente", "idempotência", "assinatura do webhook"
+  ]
+}

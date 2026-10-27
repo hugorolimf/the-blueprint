@@ -1,0 +1,26 @@
+{
+  "modelo": "<!doctype html><html lang=\"{{idioma}}\"><head><title>{{titulo}}</title><style>{{css}}</style></head><body>\n<script>{{kit}}</script>\n<script>{{biblioteca}}</script>\n{{codigos}}\n<script>\nconst CONTEUDO = {{conteudo}};\nconst FIGURAS = {{figuras}};\n</script></body></html>\n",
+  "css": "a{color:red}</style><b>x</b>/* {{titulo}} */",
+  "biblioteca": "var L={};/*</script><!--*/ var s='{{conteudo}}';",
+  "conteudo": {
+    "idioma": "pt-BR",
+    "resumo": [
+      "</script><!-- {{css}}"
+    ],
+    "titulo": "Plano <A> & \"B\""
+  },
+  "figuras": [
+    {
+      "codigo": "function (L) { return { svg: '</script>$&' }; }",
+      "dica": "d",
+      "id": "capa",
+      "titulo": "Capa"
+    },
+    {
+      "codigo": "function (L) { /* <!-- */ return { svg: \"\" }; }",
+      "id": "a\"b",
+      "titulo": "T </script>"
+    }
+  ],
+  "esperado": "<!doctype html><html lang=\"pt-BR\"><head><title>Plano &lt;A&gt; &amp; &quot;B&quot;</title><style>a{color:red}<\\/style><b>x</b>/* {{titulo}} */</style></head><body>\n<script></script>\n<script>var L={};/*<\\/script><\\!--*/ var s='{{conteudo}}';</script>\n<script>(window.AP_CODIGOS=window.AP_CODIGOS||{})[\"capa\"]=(function (L) { return { svg: '<\\/script>$&' }; });</script>\n<script>(window.AP_CODIGOS=window.AP_CODIGOS||{})[\"a\\\"b\"]=(function (L) { /* <\\!-- */ return { svg: \"\" }; });</script>\n<script>\nconst CONTEUDO = {\"idioma\":\"pt-BR\",\"resumo\":[\"<\\/script><\\!-- {{css}}\"],\"titulo\":\"Plano <A> & \\\"B\\\"\"};\nconst FIGURAS = [{\"dica\":\"d\",\"id\":\"capa\",\"titulo\":\"Capa\"},{\"id\":\"a\\\"b\",\"titulo\":\"T <\\/script>\"}];\n</script></body></html>\n"
+}

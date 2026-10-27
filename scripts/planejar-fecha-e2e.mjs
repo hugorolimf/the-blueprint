@@ -41,6 +41,8 @@ try {
   const abrePlanejar = async () => { await js(`document.getElementById("b-ia").click()`); await dormir(1800); };
   const aplica = async () => { await js(`document.querySelector("#agente-tela [data-pact=aplicar]").click()`); await dormir(1500); };
   const a1 = blueprint.acoes[0], a2 = blueprint.acoes[1] || blueprint.acoes[0];
+  await cdp("Page.enable");
+  await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `try{localStorage.setItem("blueprint.autoAplicar.sm:${blueprint.id}","0")}catch{}` }); // este teste revisa e aplica à mão: o aplicar sozinho (auto-aplicar.js) fica desligado
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(2500);
 

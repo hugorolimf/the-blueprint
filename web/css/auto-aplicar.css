@@ -1,0 +1,14 @@
+/* aplicar sozinho (web/js/auto-aplicar*.js): o interruptor no Planejar, o aviso com Desfazer e a lista "Aplicado sozinho" */
+#ag-auto[hidden]{display:none}
+#ag-auto[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+#auto-aviso{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:70;display:flex;align-items:center;gap:12px;max-width:min(92vw,760px);padding:10px 14px;color:var(--ink);font:12px var(--mono);background:#082b5ef2;border:1px solid var(--mid);box-shadow:0 8px 28px #02132e99}
+#auto-aviso[hidden],#auto-aviso .btn[hidden]{display:none}
+#auto-aviso .aa-rot{flex:none;font-size:10px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+#auto-aviso .aa-texto{min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+#cl-auto{flex:0 1 auto;max-height:30%;overflow:auto}
+#cl-auto[hidden]{display:none}
+.aa-item{display:flex;align-items:center;gap:12px;padding:6px 14px;border-bottom:1px dashed var(--faint);font-size:12px}
+.aa-item .aa-hora{flex:none;color:var(--mid)}
+.aa-item .aa-texto{flex:1;min-width:0;overflow-wrap:anywhere}
+.aa-nota{margin:0 0 10px;color:var(--mid)}
+@media (max-width:650px){#auto-aviso{left:8px;right:8px;bottom:10px;transform:none;max-width:none}}

@@ -29,13 +29,16 @@ pub(crate) fn prompt_da_acao(numero: &str, acao: &str, nome_bp: &str, ws: &str, 
     )
 }
 
-fn id_valido(id: &str) -> bool {
+pub(super) fn id_valido(id: &str) -> bool {
     !id.is_empty() && id.chars().count() <= 100 && !id.chars().any(char::is_control)
 }
 
-fn recusa(status: u16, erro: &str, codigo: &str) -> (u16, Value) {
+pub(super) fn recusa(status: u16, erro: &str, codigo: &str) -> (u16, Value) {
     (status, json!({"erro": erro, "codigo": codigo}))
 }
+
+/// O lançador: abre o terminal na pasta (1º argumento) rodando o exe (2º) com o prompt (3º) e devolve qual abriu.
+pub(super) type Lancador<'a> = dyn Fn(&Path, &Path, &str) -> Result<&'static str, String> + 'a;
 
 /// `lancar` abre o terminal na pasta (1º argumento) rodando o exe (2º) com `claude` e o prompt (3º) e devolve qual abriu ("wt" ou "cmd"); os testes passam um falso.
 pub(crate) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path, &Path, &str) -> Result<&'static str, String>) -> Result<(u16, Value), ErroHttp> {
@@ -70,6 +73,11 @@ pub(crate) fn iniciar(dados: &Mutex<Dados>, corpo: &Value, lancar: &dyn Fn(&Path
 /// `semCanal: true` nada é entregue: a resposta só traz o `prompt` para a página copiar. A resposta sempre traz o `prompt`; os erros da entrega (sessão que caiu,
 /// de outra pasta) saem com o status e o código deles, no lugar do `sem-terminal`.
 pub(super) fn em_sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Result<(u16, Value), ErroHttp> {
+    em_sessao_de(mcp, dados, corpo, &|d, c, l| iniciar(d, c, l))
+}
+
+/// O mesmo, para qualquer pedido que abra uma sessão (`base`): a ação (`iniciar`) ou a apresentação (`pedido_apresentacao::apresentar`).
+pub(super) fn em_sessao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, base: &dyn Fn(&Mutex<Dados>, &Value, &Lancador<'_>) -> Result<(u16, Value), ErroHttp>) -> Result<(u16, Value), ErroHttp> {
     let sessao = texto(corpo, "sessaoId");
     if !id_valido(sessao) {
         return Err(falha(400, crate::tr!("invalid sessaoId.", "sessaoId inválido.")).codigo("sessao-invalida"));
@@ -86,7 +94,7 @@ pub(super) fn em_sessao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> Resul
             e.2.to_string()
         })
     };
-    let (mut status, mut resposta) = iniciar(dados, corpo, &lancar)?;
+    let (mut status, mut resposta) = base(dados, corpo, &lancar)?;
     if let Some((s, codigo, frase)) = recusa_da_entrega.take() {
         (status, resposta) = recusa(s, frase, codigo);
     }

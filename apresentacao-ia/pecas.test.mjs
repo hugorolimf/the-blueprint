@@ -1,0 +1,20 @@
+import assert from "node:assert/strict";
+import { carregar } from "./teste-comum.mjs";
+
+const { L } = carregar();
+const plano = { x: -50, y: -50, w: 100, d: 100, r: 4 };
+const P = L.fitProjection(L.boxCorners(plano, -17, 40), 400, 300, { pad: 10, azimuth: 40 });
+const solidos = (s) => (s.match(/class="iso-solid"/g) || []).length;
+assert.equal(solidos(L.pecas.base(P, plano)), 10, "base: quatro pés (dois sólidos cada), a placa e a faixa da régua");
+assert.ok(L.pecas.base(P, plano).includes("iso-halo"));
+assert.equal(solidos(L.pecas.base(P, plano, { regua: false })), 9);
+assert.equal(solidos(L.pecas.trilhos(P, { de: -40, ate: 40, ys: [-10, 5] })), 4, "dois trilhos e dois batentes");
+const ficha = L.pecas.ficha(P, { x: 0, y0: -20, y1: 20, z: 3, alto: 40, aba: { y: -10, w: 10, h: 4 } });
+assert.ok(ficha.startsWith('<g data-peca="ficha">') && solidos(ficha) === 2, "ficha com aba: corpo e aba");
+assert.equal(solidos(L.pecas.ficha(P, { x: 0, y0: -20, y1: 20, alto: 40 })), 1);
+assert.ok(ficha.includes("data-free"), "linhas de texto marcadas como livres");
+const m = L.pecas.mostrador(P, { x: 0, y: 0, r: 20, h: 8 });
+assert.ok(solidos(m.svg) === 1 && /^M[\d.\- ]+L/.test(m.agulha(0.25)), "mostrador e agulha");
+assert.notEqual(m.agulha(0), m.agulha(0.5), "a agulha gira");
+assert.ok(L.pecas.botao(P, { x: 0, y: 0 }).includes("iso-solid") && L.pecas.placa(P, { x: 0, y: 0 }).includes("iso-solid"));
+console.log("pecas.test.mjs: ok");

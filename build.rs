@@ -69,13 +69,23 @@ fn main() {
     codigo.push_str("];\n");
     let saida = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR"));
     fs::write(saida.join("assets.rs"), codigo).expect("gravar assets.rs");
+    // os 4 arquivos fixos da biblioteca das apresentações com IA (docs/interno/apresentacao-ia.md); o que ainda não existe fica de fora e a rota avisa
+    let mut ia = String::from("pub static IA: &[(&str, &[u8])] = &[\n");
+    for nome in ["modelo.html", "dist/biblioteca.js", "dist/estilo.css", "termos-tecnicos.json"] {
+        let arquivo = raiz.join("apresentacao-ia").join(nome);
+        if arquivo.is_file() {
+            ia.push_str(&format!("    ({nome:?}, include_bytes!({:?})),\n", arquivo.to_string_lossy().replace('\\', "/")));
+        }
+    }
+    ia.push_str("];\n");
+    fs::write(saida.join("ia_assets.rs"), ia).expect("gravar ia_assets.rs");
     if env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows") && env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
         let ico = fs::read(raiz.join("recursos/icone/icone.ico")).expect("ler recursos/icone/icone.ico (gere com node scripts/icone/desenhar.mjs)");
         let res = saida.join("icone.res");
         fs::write(&res, res_do_ico(&ico)).expect("gravar icone.res");
         println!("cargo:rustc-link-arg-bins={}", res.display());
     }
-    for pasta in ["web", "kit", "blueprint.html", "emblemas.mjs", "agentes-figura.mjs", "agentes-claude.mjs", "recursos/icone/icone.ico", "build.rs"] {
+    for pasta in ["web", "kit", "blueprint.html", "emblemas.mjs", "agentes-figura.mjs", "agentes-claude.mjs", "apresentacao-ia", "recursos/icone/icone.ico", "build.rs"] {
         println!("cargo:rerun-if-changed={pasta}");
     }
 }

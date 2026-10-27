@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="{{idioma}}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{titulo}}</title>
+<style>{{css}}</style>
+</head>
+<body>
+<div id="apresentacao"></div>
+<script>{{kit}}</script>
+<script>{{biblioteca}}</script>
+{{codigos}}
+<script>
+const CONTEUDO = {{conteudo}};
+const FIGURAS = {{figuras}};
+L.casca.montar(document.getElementById("apresentacao"), CONTEUDO, FIGURAS.map((f) => Object.assign({}, f, { codigo: (window.AP_CODIGOS || {})[f.id] })));
+</script>
+</body>
+</html>

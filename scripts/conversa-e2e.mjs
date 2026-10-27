@@ -58,6 +58,8 @@ try {
   const espera = async (expr, msg) => { for (let i = 0; i < 60 && !(await js(expr)); i++) await dormir(150); assert(await js(expr), msg); };
   await cdp("Runtime.enable");
   await cdp("Browser.grantPermissions", { origin: servidor.url, permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"] });
+  await cdp("Page.enable");
+  await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `try{localStorage.setItem("blueprint.autoAplicar.sm:${BP}","0")}catch{}` }); // este teste revisa e aplica à mão: o aplicar sozinho (auto-aplicar.js) fica desligado
   await cdp("Page.navigate", { url: `${servidor.url}/#/p/${BP}` });
   await espera(`!!document.querySelector('.chk[data-tipo="t"]') || typeof enviarComentarioAoAgente === "function" && D.blueprints.length > 0`, "a folha abriu");
 

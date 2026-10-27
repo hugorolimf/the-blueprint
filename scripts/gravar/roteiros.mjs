@@ -48,6 +48,7 @@ export const ROTEIROS = {
     }); } },
   "03-proposta-do-agente": { gif: true, descricao: "O agente propõe, o usuário revisa e aplica no Planejar", async rodar(A) {
     const c = await contexto(A); await abrirFolha(A, c);
+    await A.js(`try { localStorage.setItem("blueprint.autoAplicar.${ws}:${c.bp}", "0"); } catch {}`); // este vídeo mostra a revisão e o aplicar à mão: o aplicar sozinho fica desligado
     const d = (e, r, v) => L(A, `Escopo: ${e[0]}\nResultado esperado: ${r[0]}\nValidação: ${v[0]}`, `Scope: ${e[1]}\nExpected result: ${r[1]}\nValidation: ${v[1]}`);
     await A.gravar(async () => {
       await dormir(1500);

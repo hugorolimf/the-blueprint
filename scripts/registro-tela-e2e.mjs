@@ -54,6 +54,8 @@ try {
   const acaoNova = async () => (await (await fetch(url + "/api/dados")).json()).blueprints.find((x) => x.id === blueprint.id).acoes.find((f) => f.nome === NOME);
   const fila = async () => (await (await fetch(url + "/api/mcp/fila")).json()).itens.filter((i) => i.tipo === "registro");
 
+  await cdp("Page.enable");
+  await cdp("Page.addScriptToEvaluateOnNewDocument", { source: `try{localStorage.setItem("blueprint.autoAplicar.sm:${blueprint.id}","0")}catch{}` }); // este teste revisa e aplica à mão: o aplicar sozinho (auto-aplicar.js) fica desligado
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(2500);
   const total = (await (await fetch(url + "/api/dados")).json()).blueprints.find((x) => x.id === blueprint.id).acoes.length;

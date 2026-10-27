@@ -258,7 +258,7 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
 }
 
 /// 16 hexadecimais aleatórios (o `randomBytes(8)` do Node). Não é segredo: só evita colisão de nome de arquivo.
-fn novo_id_prototipo() -> String {
+pub(crate) fn novo_id_prototipo() -> String {
     let (a, b) = (RandomState::new().build_hasher().finish(), RandomState::new().build_hasher().finish());
     format!("{:016x}", a ^ b.rotate_left(32) ^ u64::from(std::process::id()))
 }

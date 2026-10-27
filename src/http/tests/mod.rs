@@ -1,5 +1,6 @@
 //! Testes do servidor HTTP: as rotas sem socket (funções de Pedido para Resposta) e um servidor de verdade numa porta livre.
 mod api_dados;
+mod apresentacao_rotas;
 mod atualizacao;
 mod equipes;
 mod idioma;

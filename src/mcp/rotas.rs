@@ -1,5 +1,6 @@
 //! As rotas /api/mcp/* (porte de `rota` do mcp.mjs): só esta máquina, JSON em todo POST, e erros JSON como `{ "erro", "codigo", "params"? }` (`ErroHttp::json`), o texto no idioma do pedido.
 use super::acoes::{self, id_prototipo_valido};
+use super::apresentacao;
 use super::hooks;
 use super::permissao::{permitido, pode_gravar_item, pode_ler_item, so_loopback};
 use super::{FluxoSse, Mcp};
@@ -45,7 +46,7 @@ pub fn rota_com(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, ctx: &Contexto
         if !permitido(mcp, pedido) {
             return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
         }
-        if (recurso == "iniciar" || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
+        if (matches!(recurso, "iniciar" | "apresentar") || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
             return Resposta::texto(403, "text/plain", crate::tr!("starting an action only works on this machine (not even MCP_REDE=1 opens it)", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)"));
         }
     } else if let Err(e) = exige_hospedado(dados, pedido, recurso, ctx) {
@@ -84,11 +85,19 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
             "blueprint" => {
                 let p = |nome: &str| pedido.parametro(nome).unwrap_or_default();
                 let mut lido = com_dados(dados, ctx, |d| acoes::blueprint_lido(d, &p("workspace"), &p("blueprint"), pedido.parametro("acao").as_deref(), &p("incluir"), &p("projeto")))?;
+                if pedido.parametro("acao").is_none_or(|a| a.is_empty()) {
+                    // as apresentações geradas (só os metadados): o agente vê o que já existe e as impressões das figuras, para refazer só o que mudou
+                    let existentes = apresentacao::listar(mcp, &p("workspace"), &p("blueprint"), ctx)["apresentacoes"].take();
+                    if existentes.as_array().is_some_and(|a| !a.is_empty()) {
+                        lido["apresentacoes"] = existentes;
+                    }
+                }
                 if !ctx.local {
                     lido["voce"] = json!({"id": ctx.usuario, "nome": ctx.nome}); // o membro da chave: o agente prioriza os planos com `responsavel.id` igual a este id
                 }
                 Resposta::json(200, &lido)
             }
+            "apresentacoes" => Resposta::json(200, &apresentacao::listar(mcp, &pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default(), ctx)),
             "pastas" => Resposta::json(200, &json!({"pastas": hooks::travado(dados).listar_pastas(&Contexto::local())?})),
             "fila" => Resposta::json(200, &json!({"itens": mcp.itens().into_iter().filter(|i| pode_ler_item(ctx, i)).collect::<Vec<_>>()})),
             "sessoes" => Resposta::json(200, &mcp.sessoes_do_blueprint(&pedido.parametro("workspace").unwrap_or_default(), &pedido.parametro("blueprint").unwrap_or_default())), // as sessões do Claude abertas no blueprint
@@ -155,6 +164,8 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
         "hook/parada" => Resposta::json(200, &super::lembrete::parada(mcp, &corpo)), // o Stop do turno (ver lembrete.rs)
         "aviso" => Resposta::json(200, &com_dados(dados, ctx, |d| super::eventos::aviso(mcp, d, &corpo))?),
         "prototipo" => Resposta::json(200, &com_dados(dados, ctx, |d| acoes::prototipo(mcp, d, &corpo))?),
+        "apresentacao" => Resposta::json(200, &com_dados(dados, ctx, |d| apresentacao::anexar(mcp, d, &corpo))?), // contrato em docs/interno/apresentacao-ia.md
+        "apresentacao/remover" => Resposta::json(200, &apresentacao::remover(mcp, &corpo, ctx)?),
         // os hooks do Claude Code e a ligação pasta → blueprint (ver hooks.rs)
         "hook/sessao" => Resposta::json(200, &hooks::sessao_de(mcp, dados, &corpo, ctx)?),
         // o SessionEnd tira a sessão da lista (de membro nunca entra nela: Iniciar é só local)
@@ -171,6 +182,15 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
                 super::iniciar::em_sessao(mcp, dados, &corpo)? // entrega o pedido a uma sessão já aberta, pelo canal dela
             } else {
                 super::iniciar::iniciar(dados, &corpo, &super::iniciar::abrir_terminal)? // abre o terminal de verdade; os testes usam um lançador falso
+            };
+            Resposta::json(status, &resposta)
+        }
+        // o botão Gerar com IA da tela Apresentar: público e nível já escolhidos (ver pedido_apresentacao.rs)
+        "apresentar" => {
+            let (status, resposta) = if corpo.get("sessaoId").is_some() {
+                super::iniciar::em_sessao_de(mcp, dados, &corpo, &|d, c, l| super::pedido_apresentacao::apresentar(d, c, l))?
+            } else {
+                super::pedido_apresentacao::apresentar(dados, &corpo, &super::iniciar::abrir_terminal)?
             };
             Resposta::json(status, &resposta)
         }

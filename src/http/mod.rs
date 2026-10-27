@@ -1,6 +1,7 @@
 //! O servidor HTTP: a interface e o kit (estáticos), /api/dados, /api/mcp e os protótipos. Síncrono (tiny_http), uma thread por pedido,
 //! sem runtime assíncrono. As rotas são funções de `Pedido` para `Resposta`, então testam sem abrir socket.
 mod api_dados;
+mod apresentacao;
 pub mod atualizacao;
 pub mod config;
 mod equipes;

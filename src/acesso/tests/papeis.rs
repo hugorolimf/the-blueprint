@@ -23,6 +23,10 @@ fn evento() -> Value {
     json!({"tipo": "progresso", "workspaceId": "w2", "blueprintId": "p9", "texto": "trabalhando"})
 }
 
+fn apresentacao_w2() -> Value {
+    json!({"workspaceId": "w2", "blueprintId": "p9", "conteudo": {"versao": 1, "publico": "cliente", "nivel": "rapido", "titulo": "Plano"}, "figuras": []})
+}
+
 #[test]
 fn cada_rota_responde_conforme_o_papel() {
     let e = estado();
@@ -43,6 +47,9 @@ fn cada_rota_responde_conforme_o_papel() {
         ("GET", "/api/mcp/linha-do-tempo?workspace=sm&blueprint=p1&acao=f1", None, [200, 403, 403, 403, 403]),
         ("POST", "/api/mcp/evento", Some(evento()), [200, 200, 200, 403, 403]),
         ("POST", "/api/mcp/aviso", Some(json!({"tipo": "proposta-aplicada", "workspaceId": "w2", "blueprintId": "p9"})), [200, 200, 200, 403, 403]),
+        ("POST", "/api/mcp/apresentacao", Some(apresentacao_w2()), [200, 200, 200, 403, 403]),
+        ("GET", "/api/mcp/apresentacoes?workspace=w2&blueprint=p9", None, [200, 200, 200, 200, 403]),
+        ("POST", "/api/mcp/apresentar", Some(json!({"workspaceId": "w2", "blueprintId": "p9", "publico": "cliente", "nivel": "padrao"})), [404, 404, 404, 404, 404]),
         ("POST", "/api/mcp/prototipo/remover", Some(json!({"prototipoId": "0123456789abcdef"})), [200, 403, 403, 403, 403]),
         ("POST", "/api/mcp/fila/ack", Some(json!({"ids": []})), [200, 200, 200, 403, 403]),
         ("GET", "/api/pessoas?workspace=w2", None, [200, 200, 403, 200, 403]),
@@ -124,6 +131,30 @@ fn prototipo_so_para_quem_le_o_blueprint() {
     assert_eq!((r.status, r.cabecalho("x-frame-options")), (200, Some("SAMEORIGIN")));
     assert_eq!(despachar(&e, &pedido("GET", url, Some(&p.colab), None)).status, 404);
     assert_eq!(despachar(&e, &pedido("GET", url, None, None)).status, 404);
+}
+
+#[test]
+fn apresentacao_so_para_quem_le_e_grava_o_blueprint() {
+    let e = estado();
+    let p = pessoas(&e);
+    let id = json_de(&despachar(&e, &pedido("POST", "/api/mcp/apresentacao", Some(&p.dono), Some(apresentacao_w2()))))["apresentacaoId"].as_str().unwrap().to_string();
+    let url = format!("/apresentacao/{id}");
+    let ler = |quem: Option<&str>| despachar(&e, &pedido("GET", &url, quem, None)).status;
+    for (quem, esperado) in [(Some(p.todos.as_str()), true), (Some(p.dono.as_str()), true), (Some(p.colab.as_str()), true), (Some(p.sup.as_str()), true), (Some(p.visit.as_str()), false), (None, false)] {
+        assert_eq!(ler(quem) != 404, esperado, "quem lê o blueprint p9 abre a página (200, ou 503 sem a biblioteca na compilação): {quem:?}");
+    }
+    let remover = |quem: &str| despachar(&e, &pedido("POST", "/api/mcp/apresentacao/remover", Some(quem), Some(json!({"apresentacaoId": id})))).status;
+    assert_eq!((remover(&p.sup), remover(&p.visit)), (403, 403), "quem só lê não remove");
+    assert!(e.mcp.pasta_apresentacoes().join(format!("{id}.json")).is_file());
+    assert_eq!(remover(&p.colab), 200, "quem grava remove");
+    assert!(!e.mcp.pasta_apresentacoes().join(format!("{id}.json")).exists());
+    // uma de outro blueprint não abre para quem não o lê
+    let da_raiz = json_de(&despachar(&e, &pedido("POST", "/api/mcp/apresentacao", Some(&p.todos), Some(json!({"workspaceId": "sm", "blueprintId": "p1", "conteudo": {"versao": 1, "publico": "interno", "nivel": "rapido", "titulo": "Raiz"}})))));
+    let url_raiz = format!("/apresentacao/{}", da_raiz["apresentacaoId"].as_str().unwrap());
+    assert_ne!(despachar(&e, &pedido("GET", &url_raiz, Some(&p.todos), None)).status, 404);
+    assert_eq!(despachar(&e, &pedido("GET", &url_raiz, Some(&p.colab), None)).status, 404);
+    assert_eq!(despachar(&e, &pedido("POST", "/api/mcp/apresentacao", Some(&p.colab), Some(json!({"workspaceId": "sm", "blueprintId": "p1", "conteudo": {"versao": 1, "publico": "interno", "nivel": "rapido", "titulo": "x"}})))).status, 403, "não grava no blueprint que não é dele");
+    let _ = std::fs::remove_dir_all(e.mcp.pasta_apresentacoes());
 }
 
 #[test]

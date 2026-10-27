@@ -26,6 +26,9 @@ const ARQUIVOS: &[(&str, &str)] = &[
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/prototipos.md", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/importar.md", include_str!("../../skills/blueprint-planejamento/topicos/importar.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentar.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentar.md")),
+    ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_ia.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ia.md")),
+    ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_conteudo.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_conteudo.md")),
+    ("plugins/blueprint/skills/blueprint-planejamento/topicos/apresentacao_figuras.md", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_figuras.md")),
     ("plugins/blueprint-terminal/.claude-plugin/plugin.json", include_str!("../../claude-plugin/plugins/blueprint-terminal/.claude-plugin/plugin.json")),
     ("plugins/blueprint-terminal/hooks/hooks.json", include_str!("../../claude-plugin/plugins/blueprint-terminal/hooks/hooks.json")),
     ("plugins/blueprint-terminal/hooks/register.tsx", include_str!("../../claude-plugin/plugins/blueprint-terminal/hooks/register.tsx")),
@@ -63,7 +66,8 @@ pub fn gravar(pasta: &Path, exe: &Path) -> io::Result<()> {
     gravar_se_mudou(&pasta.join("plugins/blueprint/hooks/hooks.json"), &(serde_json::to_string_pretty(&hooks(&exe)).expect("json") + "\n"))?;
     let monitor = json!([{ "name": "blueprint", "command": format!("\"{}\" watch", exe.replace('\\', "/")), "description": "Avisos do blueprint desta pasta", "when": "always" }]);
     gravar_se_mudou(&pasta.join("plugins/blueprint/monitors/monitors.json"), &(serde_json::to_string_pretty(&monitor).expect("json") + "\n"))?;
-    gravar_se_mudou(&pasta.join("plugins/blueprint/skills/status/SKILL.md"), &skill_status(&exe))
+    gravar_se_mudou(&pasta.join("plugins/blueprint/skills/status/SKILL.md"), &skill_status(&exe))?;
+    gravar_se_mudou(&pasta.join("plugins/blueprint/skills/apresentar/SKILL.md"), SKILL_APRESENTAR)
 }
 
 /// `/blueprint:status`: o comando do usuário. O estado vem pronto do app por `!`comando`` (o Claude Code roda o comando antes de o modelo ler),
@@ -74,6 +78,10 @@ fn skill_status(exe: &str) -> String {
         "---\nname: status\ndescription: Mostra o estado do blueprint desta pasta: a ação atual, os planos e o próximo checkpoint. Só o usuário chama, com /blueprint:status.\ndisable-model-invocation: true\nallowed-tools: Bash(\"{exe}\" hook status)\n---\n\nMostre ao usuário exatamente o texto abaixo, sem acrescentar nada, sem comentar e sem chamar ferramentas:\n\n!`\"{exe}\" hook status`\n"
     )
 }
+
+/// `/blueprint:apresentar`: o comando do usuário que abre a conversa de apresentação (contrato em docs/interno/apresentacao-ia.md). O roteiro em si vive no tópico
+/// `apresentar` do guia (um só lugar para o agente e para este comando); aqui só se manda segui-lo. Texto para o AGENTE, então em inglês; ele responde no idioma do usuário.
+const SKILL_APRESENTAR: &str = "---\nname: apresentar\ndescription: Conduz a conversa que gera a apresentação do blueprint desta pasta (público e nível, com figuras vivas do anatomy). Só o usuário chama, com /blueprint:apresentar.\ndisable-model-invocation: true\n---\n\nPresent the blueprint of this folder, talking with the user in their language.\n\n1. Call guia_de_planejamento with topico \"apresentacao_ia\" and follow its flow; read \"apresentacao_conteudo\" and \"apresentacao_figuras\" when you write the content and the figures.\n2. Call ler_blueprint (workspace_id and blueprint_id come from the session context or the \"Blueprint:\" line of CLAUDE.md or AGENTS.md; without them, listar_blueprints) to read the structure and the `apresentacoes` that already exist.\n3. Arguments typed by the user after the command (they may be empty, and are the audience and the level): $ARGUMENTS\n4. Ask in ONE message only what is still missing: the audience (client, a project plan without the technical development, or internal), the level (quick, standard or complete; epic only if the user asks for it by name) and, for the client audience, what the client must provide or decide. Say the time estimate of the level before starting.\n5. Generate the content and the figures and attach them with anexar_apresentacao. Tell the user where to open it: the Present screen of the blueprint in the app.\n\nNever export or print for the user: that is their click in the app.\n";
 
 /// Os hooks do plugin. Sessão: hook de comando (o SessionStart roda antes de o MCP conectar, então `mcp_tool` não serve), em forma de execução
 /// direta (`args`, sem shell, então o caminho do .exe com espaços não quebra). Edição: hook `http` direto no app, sem abrir processo a cada edição.

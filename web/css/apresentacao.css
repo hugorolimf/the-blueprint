@@ -35,13 +35,10 @@ body.ap-aberto{overflow:hidden}
 .ap-data{color:var(--lo);font-size:1cqw;letter-spacing:.14em;text-transform:uppercase}
 .ap-figura{flex:0 0 40%;margin:0}.ap-figura svg{display:block;width:100%;height:auto;max-height:62cqh}
 
-/* resumo e projetos */
+/* projetos */
 .ap-geral{display:flex;align-items:center;gap:2.4cqw}.ap-grande{font-size:5.4cqw;font-weight:500;letter-spacing:-.04em;line-height:1}
 .ap-barra{flex:1;height:1.1cqw;border:1px solid var(--lo);background:#082b5e99}.ap-barra i{display:block;height:100%;width:calc(var(--p) * 1%);background:var(--ink)}
 .ap-geral .ap-barra{height:1.5cqw}.ap-meta+.ap-barra{flex:none}
-.ap-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2cqw}
-.ap-kpi{display:grid;gap:.3cqw;padding:1.1cqw 1.3cqw;border:1px solid var(--lo);background:#082b5ecc}.ap-kpi b{font-size:2.5cqw;font-weight:500}.ap-kpi span{font-size:.95cqw;letter-spacing:.12em;text-transform:uppercase;color:var(--mid)}
-.ap-alerta{color:var(--erro);letter-spacing:.04em}
 .ap-lista{list-style:none;padding:0;display:grid}
 .ap-lista li{display:grid;grid-template-columns:5cqw minmax(0,1fr) auto 6cqw;gap:1.4cqw;align-items:baseline;padding:.55cqw 0;border-bottom:1px dashed var(--faint)}
 .ap-num{color:var(--mid)}.ap-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ap-datas{color:var(--mid);font-size:1.05cqw}

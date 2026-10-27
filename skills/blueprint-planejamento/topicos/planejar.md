@@ -2,13 +2,13 @@
 
 ## Actions
 
-- `nome`: short and specific (e.g. "Real terminal for the agent"), not "Action 1".
+- `nome`: short and specific, not "Action 1".
 - `inicio` and `fim`: a sequence with no gaps or conflicts. New actions start **today or later**, unless the user asks for past dates.
 - `status`: `planejado` or `andamento` (andamento only if the work has already started).
-- `observacao` (in the app: **Action instructions**): the **complete outline of the action**. It can be long (up to 20000 characters) and should carry: goal, deliverable, step by step in order, **dependencies** ("depends on action X"), decisions and assumptions, risks and the definition of done. The plans are the tickable items; the instructions tell how and why.
+- `observacao` (in the app: **Action instructions**): the **complete outline of the action** (up to 20000 characters): goal, deliverable, ordered steps, **dependencies**, decisions and assumptions, risks and the definition of done. The plans are the tickable items; the instructions tell how and why.
 - As many plans as the action needs, and 1 to 3 checkpoints per action.
-- `projeto` (optional): the action's group in the blueprint, by name or id; declare them in `blueprint.projetos` (`[{ "nome": "Interface" }]`, also valid on an existing blueprint). Only with distinct lines of work (2 to 5); without the field the action stays in "Geral" (a reserved name). Details: topic `editar`.
-- **Decisions** (stack, scope, rules chosen or still open): `blueprint.decisoes` = `[{ "titulo", "escolha", "motivo", "estado": "aberta|decidida" }]`, valid on any blueprint (existing ones come in `ler_blueprint`). Put them here, not as text in an action's `observacao`. With `id` it updates (what you omit stays), without it is new; `decidida` needs `escolha`. Only decisions is valid (`acoes: []`).
+- `projeto` (optional): the action's group, by name or id; declare them in `blueprint.projetos` (`[{ "nome": "Interface" }]`, also valid on an existing blueprint). Only for 2 to 5 distinct lines of work; without it the action stays in "Geral" (reserved). Details: topic `editar`.
+- **Decisions** (stack, scope, rules, chosen or open): `blueprint.decisoes` = `[{ "titulo", "escolha", "motivo", "estado": "aberta|decidida" }]`, valid on any blueprint (read them in `ler_blueprint`); not as text in `observacao`. With `id` it updates (omitted fields stay), without it is new; `decidida` needs `escolha`; `acoes: []` is valid with only decisions.
 
 ## Plans
 
@@ -19,18 +19,18 @@
 ```
 Scope: what goes in (and what does not).
 Expected result: what will exist when it is done.
-Validation: how to prove it is done — preferably a command or test ("node x.test.mjs passes"), or an observable behavior.
+Validation: how to prove it is done, preferably a command or test, or an observable behavior.
 ```
 
-**Size**: fits in **one work session** (a few hours). If it needs "and then...", split it; if it is too trivial, merge it.
+**Size**: **one work session** (a few hours). If it needs "and then...", split it; if too trivial, merge it.
 
 **Order**: in the order they must be done; dependencies between actions go in the action's instructions.
 
-Cite files or modules **only** if you have seen them in the folder. Never invent paths, APIs or business facts: when information is missing, propose something reasonable and say it is an assumption.
+Cite files or modules **only** if you have seen them in the folder. Never invent paths, APIs or business facts: propose something reasonable and label it an assumption.
 
 ## Checkpoints
 
-- **Verifiable checkpoints**: a deliverable, a decision or a demonstration ("End-to-end flow validated"), not an activity ("Work on the flow").
+- **Verifiable checkpoints**: a deliverable, a decision or a demonstration ("End-to-end flow validated"), not an activity.
 - `data` within the action's period, usually near the end or near an important risk.
 - A short name that someone can answer with yes or no.
 
@@ -38,16 +38,13 @@ Cite files or modules **only** if you have seen them in the folder. Never invent
 
 The one executing is the AI: short deadlines, in sequence, starting today, with no gaps of more than 2 days.
 
-Before estimating, use the blueprint's `tempoReal` when available and inspect comparable completed actions for their plans' `tempoReal.inicioEm` and `tempoReal.feitoEm`. Consider scope and sample size. These are elapsed times, including pauses, not active work. If measurements are absent or insufficient, say so; do not invent precision.
+Before estimating, use the blueprint's `tempoReal` and the `tempoReal.inicioEm`/`feitoEm` of comparable completed plans (elapsed time, pauses included). If measurements are absent or thin, say so; do not invent precision.
 
 - **Plan:** estimate positive `horas` based on the work; consider splitting unusually large plans when it helps the user.
 - **Action:** 1 to 3 calendar days. More only with a written reason in the instructions (waiting on a person, CI, publishing, a third party).
 - **The user's time** (reviewing, approving, testing on a real machine) becomes a dated checkpoint, never hidden slack in the deadline.
-- Good: a 2-day action with 4 plans of 1 to 3 h. Bad: a 3-week action with 5 plans of 1 day.
 
-## Level of detail
-
-Choose lean, standard or detailed; default to standard.
+Detail: lean, standard (default) or detailed.
 
 ## New blueprint
 
@@ -61,3 +58,7 @@ Without `blueprint_id`, also send `blueprint: { nome, descricao }` (a short name
 - [ ] Dates `yyyy-mm-dd`, `fim` after `inicio`, checkpoints inside the action, no past dates without a request.
 - [ ] Nothing marked done; ids only the ones you read in `ler_blueprint`.
 - [ ] Invented facts? If so, turn them into declared assumptions.
+
+## After sending
+
+With the **Apply automatically** switch on (default in the local app) a proposal enters by itself, with a notice and a 60 s Undo; otherwise it waits in the Plan screen. If the user already approved it in the conversation, say "sent; it enters by itself if automatic apply is on" and check with `ler_blueprint` before saying it is in. `remover`, `mover` and new blueprints always wait for the user's click.

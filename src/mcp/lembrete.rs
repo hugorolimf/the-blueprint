@@ -28,9 +28,9 @@ pub fn parada(mcp: &Mcp, corpo: &Value) -> Value {
     let Some((ws, bp)) = travado(&mcp.sem_registro).remove(texto(corpo, "session_id")) else { return json!({}) };
     let aviso = crate::tr!(
         "The Blueprint: there were edits outside a plan in this session. Before finishing, call registrar_trabalho (workspace_id {ws}, blueprint_id {bp}) with what was already done, \
-         and ask the user whether to add it to the blueprint.",
+         and tell the user it was sent (it enters by itself when automatic application is on).",
         "The Blueprint: houve edições fora de um plano nesta sessão. Antes de encerrar, chame registrar_trabalho (workspace_id {ws}, blueprint_id {bp}) com o que já foi feito, \
-         e pergunte ao usuário se ele quer adicionar isso ao blueprint."
+         e avise o usuário que foi enviado (entra sozinho se a aplicação automática estiver ligada)."
     );
     json!({"hookSpecificOutput": {"hookEventName": "Stop", "additionalContext": aviso}})
 }

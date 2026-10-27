@@ -1,0 +1,42 @@
+{
+  "versao": 1,
+  "publico": "cliente",
+  "nivel": "rapido",
+  "idioma": "pt-BR",
+  "titulo": "Plano do aplicativo de entregas",
+  "subtitulo": "Do protótipo ao piloto com os entregadores, em quatro etapas.",
+  "cliente": "Estúdio Aurora (exemplo)",
+  "data": "2026-10-12",
+  "resumo": [
+    "Um aplicativo para o entregador receber pedidos, seguir a rota e confirmar a entrega.",
+    "O trabalho vai do protótipo navegável ao piloto com um grupo pequeno de entregadores.",
+    "Cada etapa termina num marco que você vê e aprova antes de a próxima começar."
+  ],
+  "entregas": [
+    { "titulo": "Protótipo navegável", "texto": "As telas principais ligadas num fluxo que se testa no celular, antes de qualquer programação definitiva." },
+    { "titulo": "Aplicativo do entregador", "texto": "Pedidos, rota e confirmação de entrega num só lugar." },
+    { "titulo": "Painel da operação", "texto": "A visão de quem coordena: entregas em andamento, atrasadas e concluídas." }
+  ],
+  "etapas": [
+    { "id": "e1", "titulo": "Protótipo navegável", "inicio": "2026-10-05", "fim": "2026-10-12", "texto": "Desenhar as telas, ligá-las num fluxo clicável e testar com três entregadores.", "figura": null,
+      "marcos": [{ "data": "2026-10-12", "nome": "Protótipo aprovado pela operação" }] },
+    { "id": "e2", "titulo": "Aplicativo do entregador", "inicio": "2026-10-13", "fim": "2026-10-22", "texto": "Construir o aplicativo com pedidos, rota e confirmação, pronto para uso em campo.", "figura": null,
+      "marcos": [{ "data": "2026-10-22", "nome": "Primeira versão instalada em um celular de teste" }] },
+    { "id": "e3", "titulo": "Painel da operação", "inicio": "2026-10-23", "fim": "2026-10-30", "texto": "Montar a visão de coordenação com as entregas e os atrasos.", "figura": null,
+      "marcos": [{ "data": "2026-10-30", "nome": "Painel revisado com a operação" }] },
+    { "id": "e4", "titulo": "Piloto com os entregadores", "inicio": "2026-11-02", "fim": "2026-11-13", "texto": "Usar o conjunto com um grupo pequeno, medir e ajustar o que aparecer.", "figura": null,
+      "marcos": [{ "data": "2026-11-13", "nome": "Piloto avaliado e aprovado" }] }
+  ],
+  "precisamosDeVoce": [
+    { "titulo": "Três entregadores para o teste", "texto": "Pessoas que aceitem testar o protótipo por cerca de vinte minutos cada.", "ate": "2026-10-09" },
+    { "titulo": "Aprovar o piloto", "texto": "Dizer se o piloto cumpriu o que se esperava para seguir à abertura geral.", "ate": "2026-11-13" }
+  ],
+  "decisoes": [
+    { "titulo": "Quem participa do piloto", "texto": "Escolher o grupo de entregadores e a região.", "estado": "aberta" },
+    { "titulo": "Primeira versão só para celular", "texto": "O aplicativo nasce para celular; o painel é aberto no computador.", "estado": "decidida" }
+  ],
+  "riscos": [
+    { "titulo": "Poucos entregadores disponíveis para o teste", "texto": "Sem eles a validação atrasa; por isso o pedido de participantes é o primeiro." },
+    { "titulo": "Sinal fraco em campo", "texto": "A confirmação de entrega precisa funcionar mesmo com sinal ruim; será testada no piloto." }
+  ]
+}
