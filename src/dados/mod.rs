@@ -2,6 +2,7 @@
 //! Leituras saem de uma cópia em memória (refeita só depois de uma gravação); toda gravação é uma transação, então nunca fica pela metade.
 pub mod arquivo;
 pub mod atividade;
+pub mod backups;
 pub mod contagens;
 pub mod convites;
 pub mod membros;

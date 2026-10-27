@@ -43,6 +43,8 @@ node scripts/capturas.mjs --comparar # the 7 screens, pixel by pixel (hash)
 
 Changed an API answer or the look of a screen on purpose? Re-record the reference (`contrato-http.mjs --gravar`, `capturas.mjs --gravar`), check the difference and say in the pull request what changed and why.
 
+CI also fails when the release binary, the p95 of the `/api` routes or the server's memory and CPU at rest go over their limits (`node scripts/medir-rust.mjs target/release/blueprint.exe --limites`, Windows). The limits, why they are looser than the project's targets and how to change them are in [the measurement report](referencias/relatorio-medicao.md#limites-no-ci).
+
 ## Pull requests
 
 1. One change per PR, with the why in the description.

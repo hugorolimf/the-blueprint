@@ -17,6 +17,19 @@ Reproduzir: `node scripts/medir-rust.mjs` e `node scripts/medir-janela.mjs`. Dad
 | App na bandeja (sem WebView2) | — | — | 26,3 MB | — |
 | Janela aberta (blueprint.exe + 6 processos WebView2) | — | — | 381,9 MB (soma conta páginas compartilhadas mais de uma vez) | — |
 
+## Limites no CI
+
+O job `desempenho` de `.github/workflows/test.yml` compila em release no `windows-latest` e roda `node scripts/medir-rust.mjs target/release/blueprint.exe --limites`, que sai com erro se uma medida passar do limite. O runner oscila, então os limites do CI são folgados e só um desvio claro reprova; as metas finas continuam valendo nesta tabela de medição.
+
+| Meta (CLAUDE.md) | Limite no CI | Opção para trocar |
+| --- | --- | --- |
+| Binário < 5 MB | 5 MB (sem folga: o tamanho não oscila) | `--binario-mb=N` |
+| `/api/*` < 5 ms | p95 de `GET /api/dados`, `GET /`, `GET /api/mcp/fila` e `POST /api/mcp/fila/ack` < 15 ms (http persistente, 200 pedidos) | `--p95-ms=N` |
+| Backend em repouso < 20 MB | memória depois de 10 s de repouso com SSE aberto < 40 MB | `--rss-mb=N` |
+| 0% de CPU em repouso | < 1% de um núcleo nos mesmos 10 s | `--cpu-pct=N` |
+
+Mudar um limite é mudar o padrão em `scripts/medir-rust.mjs` e esta tabela no mesmo PR, com a medição que justifica; quem decide é quem mantém o projeto (veja `CONTRIBUTING.md`). Sem histórico de tendência: só limite fixo.
+
 ## Leitura
 
 - A memória do servidor caiu de 60 para 11 MB. A partida ficou parecida (o SQLite abre e migra no começo).

@@ -19,6 +19,21 @@ jobs:
       - name: cargo test
         run: cargo test --lib --locked
 
+  # metas de desempenho do projeto com folga para o runner (binário, p95 das rotas, memória e CPU em repouso); limites em referencias/relatorio-medicao.md
+  desempenho:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+      - name: cargo build --release
+        run: cargo build --release --locked
+      - name: limites de desempenho
+        run: node scripts/medir-rust.mjs target/release/blueprint.exe --limites
+
   node:
     strategy:
       fail-fast: false
