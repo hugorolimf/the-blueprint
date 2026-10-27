@@ -2,6 +2,7 @@
 //! contextoAcao do antigo plano.mjs, mais a estimativa (`horas`) de cada plano e a média do tempo real medido.
 use super::datas::ms_do_iso;
 use super::decisoes::{decisoes_do, resumo_das_decisoes};
+use super::impressao::impressao_do_projeto;
 use super::projetos::{nome_do_projeto, projetos_do};
 use super::texto::{lista, str_de, truncar, verdade};
 use serde_json::{json, Map, Value};
@@ -88,9 +89,10 @@ pub fn estrutura_blueprint(p: &Value) -> Value {
     let mut o = pegar(p, &["id", "nome"]);
     o.insert("descricao".into(), Value::String(str_de(p, "descricao")));
     o.insert("acoes".into(), Value::Array(acoes.collect()));
-    let projetos = projetos_do(p);
-    if !projetos.is_empty() {
-        o.insert("projetos".into(), Value::Array(projetos.into_iter().map(|(id, nome)| json!({"id": id, "nome": nome})).collect()));
+    if !projetos_do(p).is_empty() {
+        // `impressao`: o que a figura de apresentação daquele projeto guarda, para refazer só as que mudaram
+        let projetos = lista(p.get("projetos")).iter().filter(|x| !str_de(x, "id").is_empty()).map(|x| json!({"id": str_de(x, "id"), "nome": str_de(x, "nome"), "impressao": impressao_do_projeto(p, x)}));
+        o.insert("projetos".into(), Value::Array(projetos.collect()));
     }
     if !decisoes_do(p).is_empty() {
         o.insert("decisoes".into(), Value::Array(resumo_das_decisoes(p)));

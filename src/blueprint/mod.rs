@@ -3,6 +3,7 @@
 mod datas;
 mod decisoes;
 mod enxuta;
+mod impressao;
 mod itens;
 mod mover;
 mod mover_acao;
@@ -28,6 +29,9 @@ mod tests_enxuta;
 
 #[cfg(test)]
 mod tests_projetos;
+
+#[cfg(test)]
+mod tests_impressao;
 
 #[cfg(test)]
 mod tests_numeros;
