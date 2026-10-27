@@ -22,7 +22,7 @@ The presentation can show a short GIF of the app on a page (for example the prop
 
 ## Sizes to expect
 
-The recorded GIFs go from about 0.7 to 2.2 MB. Only some fit the default limit; for the rest, record a shorter clip or raise `maxKb` knowingly. A presentation with three GIFs of 1.5 MB becomes a file of about 6 MB.
+The recorded GIFs go from about 0.5 to 2.5 MB (the first 12 s of each video). Only some fit the default limit; for the rest, record a shorter clip or raise `maxKb` knowingly. A presentation with three GIFs of 1.5 MB becomes a file of about 6 MB.
 
 ## Privacy
 

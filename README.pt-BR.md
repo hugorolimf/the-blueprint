@@ -16,7 +16,7 @@
   Beta · Windows 10/11 · MIT · <a href="README.md">English</a> · <a href="ROADMAP.pt-BR.md">Roadmap</a> · <a href="docs/pt-BR/comparison.md">Comparação</a>
 </p>
 
-![Uma folha de blueprint com projetos, ações, planos e checkpoints](docs/img/blueprint.png)
+![Da lista de workspaces até a folha de um blueprint com projetos, ações, planos e checkpoints (interface em inglês)](docs/img/visao-geral.gif)
 
 ## Por quê
 

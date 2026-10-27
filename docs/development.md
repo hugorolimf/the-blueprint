@@ -22,3 +22,7 @@ End-to-end checks (they need `target/release/blueprint.exe` and, for the screen 
 ## Languages
 
 The interface follows the Windows language and falls back to English. In the code, every user-visible text goes through `tr("texto em português")`; the Portuguese source text is the key, so text without a translation falls back to Portuguese and never breaks. Catalogs live in `web/i18n/en-<area>.js`. `node scripts/i18n-varrer.mjs` opens every screen in English and lists what is still in Portuguese; `node scripts/i18n-inventario.mjs` lists candidates to convert.
+
+## Videos and GIFs
+
+`node scripts/gravar/index.mjs` re-records every video of the app in English and in Brazilian Portuguese (`--idioma en-US` for one language, `03 04` for some scripts, `--lista` to list them). It needs Microsoft Edge, `ffmpeg` on the PATH and a `blueprint.exe` (`BLUEPRINT_EXE`, default `target/debug/blueprint.exe`); the data is always the sample data, on a temporary server. Files go to `videos/<script>.<en|pt-BR>.mp4` and `.gif` (the first 12 s, under 3 MB), a folder Git ignores. Before using a video anywhere, look at its frames for personal data. The README GIF, `docs/img/visao-geral.gif`, is a copy of `videos/01-visao-geral.en.gif`.

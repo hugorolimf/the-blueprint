@@ -64,7 +64,7 @@ export async function abrirAmbiente({ exe, dados, largura = 1280, altura = 800, 
   return A;
 }
 
-/** Codifica os quadros: MP4 (30 fps) e, se `gif`, um GIF de 15 fps com paleta própria. Devolve os tamanhos. */
+/** Codifica os quadros: MP4 (30 fps) e, se `gif`, um GIF dos primeiros 12 s a 10 fps com paleta própria (abaixo de 3 MB, para a apresentação e o README). Devolve os tamanhos. */
 export function codificar(quadros, base, { gif = null } = {}) {
   if (quadros.length < 2) throw new Error("o screencast não trouxe quadros");
   const dir = mkdtempSync(join(tmpdir(), "quadros-")), lista = [];
@@ -79,7 +79,7 @@ export function codificar(quadros, base, { gif = null } = {}) {
   mkdirSync(resolve(base, ".."), { recursive: true });
   const exec = (args) => { const r = spawnSync("ffmpeg", ["-y", "-loglevel", "error", ...args], { encoding: "utf8" }); if (r.status !== 0) throw new Error("ffmpeg: " + (r.stderr || "").slice(0, 400)); };
   exec(["-f", "concat", "-safe", "0", "-i", join(dir, "lista.txt"), "-vf", "fps=30,format=yuv420p", "-c:v", "libx264", "-crf", "20", "-preset", "medium", "-movflags", "+faststart", `${base}.mp4`]);
-  if (gif) exec(["-t", String(gif.segundos || 14), "-i", `${base}.mp4`, "-vf", `fps=${gif.fps || 10},scale=${gif.largura || 720}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=${gif.cores || 64}:stats_mode=diff[p];[b][p]paletteuse=dither=none`, "-loop", "0", `${base}.gif`]);
+  if (gif) exec(["-t", String(gif.segundos || 12), "-i", `${base}.mp4`, "-vf", `fps=${gif.fps || 10},scale=${gif.largura || 720}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=${gif.cores || 64}:stats_mode=diff[p];[b][p]paletteuse=dither=none`, "-loop", "0", `${base}.gif`]);
   rmSync(dir, { recursive: true, force: true });
   return { quadros: quadros.length, duracao: +(quadros.at(-1).t - quadros[0].t + 0.4).toFixed(1) };
 }

@@ -16,3 +16,7 @@ node scripts/migrar-vocabulario.test.mjs
 ```
 
 Verificações de ponta a ponta (precisam do `target/release/blueprint.exe` e, as de tela, do Microsoft Edge): `scripts/contrato-http.mjs`, `fumaca-rust.mjs`, `ui-e2e.mjs`, `robo-e2e.mjs`, `painel-agentes-e2e.mjs`, `capturas.mjs --comparar`, `mutacoes.mjs` (quebra as regras de segurança de propósito e confere que algum teste falha) e `testar-instalador.mjs`. Veja [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+## Vídeos e GIFs
+
+`node scripts/gravar/index.mjs` regrava todos os vídeos do app em inglês e em português do Brasil (`--idioma en-US` para um idioma só, `03 04` para alguns roteiros, `--lista` para listá-los). Precisa do Microsoft Edge, do `ffmpeg` no PATH e de um `blueprint.exe` (`BLUEPRINT_EXE`, padrão `target/debug/blueprint.exe`); os dados são sempre os de exemplo, num servidor temporário. Os arquivos vão para `videos/<roteiro>.<en|pt-BR>.mp4` e `.gif` (os primeiros 12 s, abaixo de 3 MB), pasta que o Git ignora. Antes de usar um vídeo em qualquer lugar, confira os quadros por dados pessoais. O GIF do README, `docs/img/visao-geral.gif`, é cópia de `videos/01-visao-geral.en.gif`.
