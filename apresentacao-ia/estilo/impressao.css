@@ -18,5 +18,7 @@
   .ap-tag[data-st=andamento]{color:#fff}
   .ap-ia .iso-plate{box-shadow:0 0 0 1px var(--lo)}
   .ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}
+  [data-item]:hover,[data-item][data-ativo]{box-shadow:none;background:transparent;border-color:var(--lo)}
+  .ap-ref-dica{display:none}
   .ap-ia .iso-solid[data-lit]{filter:none}
 }

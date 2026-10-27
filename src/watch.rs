@@ -68,6 +68,25 @@ fn prefixo(nome: &str) -> Option<&'static str> {
     }
 }
 
+/// Proposta aplicada ou registro adicionado, dizendo QUAL (o número) e QUEM aplicou: o usuário, ao clicar, é aprovação explícita; a aplicação automática não é (ele ainda
+/// não revisou e pode desfazer por 60 s). Sem `origem` (página antiga) fica o texto genérico. Só entram o número e uma de duas origens, nunca texto livre.
+fn aviso_aplicado(nome: &str, dados: &Value) -> Option<String> {
+    let proposta = nome == "proposta-aplicada";
+    if !proposta && nome != "registro-adicionado" { return None; }
+    let (en, pt) = match (proposta, dados["origem"].as_str()?) {
+        (true, "usuario") => ("The Blueprint: the user approved proposal no. {n} by clicking Apply on the Plan screen. It is in this folder's blueprint now. This is the user's explicit approval. Check ler_blueprint for the current state.", "The Blueprint: o usuário aprovou a proposta nº {n} ao clicar em Aplicar na tela Planejar. Ela já está no blueprint desta pasta. É a aprovação explícita do usuário. Consulte ler_blueprint para ver o estado atual."),
+        (true, "automatica") => ("The Blueprint: proposal no. {n} was applied AUTOMATICALLY (automatic application is on). The user has not reviewed it yet and can undo it for 60 seconds, so this is not an explicit approval. It is in this folder's blueprint now. Check ler_blueprint for the current state.", "The Blueprint: a proposta nº {n} foi aplicada AUTOMATICAMENTE (a aplicação automática está ligada). O usuário ainda não a revisou e pode desfazer por 60 segundos, então isto não é uma aprovação explícita. Ela já está no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual."),
+        (false, "usuario") => ("The Blueprint: the user added record no. {n} to the blueprint by clicking Add. This is the user's explicit approval. Check ler_blueprint for the current state.", "The Blueprint: o usuário adicionou o registro nº {n} ao blueprint ao clicar em Adicionar. É a aprovação explícita do usuário. Consulte ler_blueprint para ver o estado atual."),
+        (false, "automatica") => ("The Blueprint: record no. {n} was added AUTOMATICALLY (automatic application is on). The user has not reviewed it yet and can undo it for 60 seconds, so this is not an explicit approval. Check ler_blueprint for the current state.", "The Blueprint: o registro nº {n} foi adicionado AUTOMATICAMENTE (a aplicação automática está ligada). O usuário ainda não o revisou e pode desfazer por 60 segundos, então isto não é uma aprovação explícita. Consulte ler_blueprint para ver o estado atual."),
+        _ => return None,
+    };
+    let texto = crate::idioma::ou(en, pt);
+    Some(match dados["numero"].as_u64() {
+        Some(n) => texto.replace("{n}", &n.to_string()),
+        None => texto.replace(" no. {n}", "").replace(" nº {n}", ""),
+    })
+}
+
 struct Limite { inicio: Instant, linhas: usize, canal: Option<String> }
 impl Limite {
     fn novo() -> Self { Self { inicio: Instant::now(), linhas: 0, canal: None } }
@@ -75,13 +94,14 @@ impl Limite {
         let texto = match nome {
             // avisos informativos no idioma do usuário; os prefixos de prefixo() são contrato com as instruções do MCP e não se traduzem
             "proposta-aplicada" => crate::idioma::ou("The Blueprint: the user applied a proposal to this folder's blueprint. Check ler_blueprint for the current state.", "The Blueprint: o usuário aplicou uma proposta no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual."),
+            "registro-adicionado" => crate::idioma::ou("The Blueprint: a record was added to this folder's blueprint. Check ler_blueprint for the current state.", "The Blueprint: um registro foi adicionado ao blueprint desta pasta. Consulte ler_blueprint para ver o estado atual."),
             "checkpoint-marcado" => crate::idioma::ou("The Blueprint: the user marked a checkpoint in this folder's blueprint. Check ler_blueprint for the current state.", "The Blueprint: o usuário marcou um checkpoint no blueprint desta pasta. Consulte ler_blueprint para ver o estado atual."),
             _ if prefixo(nome).is_some() => "", // o texto vem do evento, abaixo; só a sessão com canal endereçada o recebe
             _ => return None,
         };
         let dados: Value = serde_json::from_str(dados).ok()?;
         if dados["workspaceId"] != alvo.0 || dados["blueprintId"] != alvo.1 { return None; }
-        let texto = if let Some(prefixo) = prefixo(nome) {
+        let texto = if let Some(especifico) = aviso_aplicado(nome, &dados) { especifico } else if let Some(prefixo) = prefixo(nome) {
             if dados["canalId"].as_str()? != self.canal.as_deref()? { return None; }
             let pedido: String = dados["texto"].as_str()?.chars().filter(|c| !c.is_control()).take(1200).collect();
             format!("{prefixo}{pedido}")

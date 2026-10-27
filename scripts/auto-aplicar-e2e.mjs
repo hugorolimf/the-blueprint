@@ -60,6 +60,25 @@ async function rodar(lang) {
     await cdp("Page.navigate", { url: `${url}/#/p/${bp.id}` });
     await espera(() => js(`typeof autoElegivel === "function" && carregado && !!workspaceAtual`), "a página não carregou");
     const total = (await dados()).acoes.length;
+    // o que o agente recebe quando algo é aplicado: QUAL item (número) e QUEM aplicou (usuario no clique, automatica pelo interruptor); lido do mesmo SSE que o monitor usa
+    const avisosSse = [], ac = new AbortController();
+    (async () => {
+      try {
+        const leitor = (await fetch(url + "/api/mcp/eventos", { signal: ac.signal })).body.getReader(), dec = new TextDecoder();
+        let buf = "";
+        for (;;) {
+          const { done, value } = await leitor.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          for (let i; (i = buf.indexOf("\n\n")) >= 0;) {
+            const bloco = buf.slice(0, i); buf = buf.slice(i + 2);
+            const nome = /^event: (.+)$/m.exec(bloco)?.[1], dados = /^data: (.+)$/m.exec(bloco)?.[1];
+            if (dados && (nome === "proposta-aplicada" || nome === "registro-adicionado")) avisosSse.push({ nome, ...JSON.parse(dados) });
+          }
+        }
+      } catch {}
+    })();
+    const avisouAgente = (nome, origem) => espera(async () => avisosSse.some((e) => e.nome === nome && e.origem === origem && Number.isInteger(e.numero)), `o aviso ao agente (${nome}) diz origem ${origem} e o número`, 8000);
 
     // 1) padrão local: ligado, e o interruptor aparece no Planejar
     assert.equal(await js(`autoEstadoDe(${JSON.stringify(bp.id)}).ligado`), true, "app local: ligado por padrão");
@@ -77,6 +96,7 @@ async function rodar(lang) {
     assert.equal((await dados()).acoes.length, total + 1);
     const a1 = await aviso();
     assert(a1, "o aviso Aplicado sozinho aparece");
+    await avisouAgente("proposta-aplicada", "automatica");
     assert.match(a1.texto, T.aplicado);
     assert.equal(a1.desfazer, true, "o aviso traz o Desfazer");
     assert.equal((await fila("proposta")).length, 0, "a proposta saiu da fila do servidor (ack)");
@@ -98,6 +118,7 @@ async function rodar(lang) {
     assert.equal(f.planos[0].feito, true, "o plano feito ficou feito");
     assert(f.planos[0].agente?.comentarios.some((c) => c.texto === EVID && c.tipo === "relatorio"), "a evidência virou comentário do plano");
     assert.match((await aviso()).texto, T.registro);
+    await avisouAgente("registro-adicionado", "automatica");
     assert.equal((await fila("registro")).length, 0, "o registro saiu da fila do servidor");
 
     // 5) remoção NÃO entra sozinha: espera o clique, com a nota, e nada muda nos dados
@@ -130,6 +151,11 @@ async function rodar(lang) {
     assert.match(await js(`document.getElementById("cl-prop").textContent`), /Ação que espera o clique/, "a proposta espera na tela Planejar");
     await js(`document.querySelector("#cl-prop [data-pact=descartar]").click()`);
     await espera(async () => (await fila("proposta")).length === 0, "descartada");
+    // 6b) o clique do usuário também avisa o agente, com a origem "usuario" (a aprovação explícita)
+    assert.equal((await proposta("Ação aplicada no clique")).isError, false);
+    await espera(async () => (await fila("proposta")).length === 1, "a proposta do clique chegou");
+    await js(`aplicarProposta()`);
+    await avisouAgente("proposta-aplicada", "usuario");
     await js(`document.getElementById("ag-auto").click()`); // religa
 
     // 7) modo equipe: o padrão é desligado, só o dono pode ligar, e os outros papéis nunca aplicam sozinhos
@@ -141,6 +167,7 @@ async function rodar(lang) {
     assert.deepEqual(await estado({ modo: "servidor", visitante: true, membro: null, acessos: [{ workspaceId: "sm", papel: "visitante" }] }, true), { pode: false, ligado: false }, "visitante nunca aplica sozinho");
 
     assert.deepEqual(erros, [], "nenhum erro de script na página");
+    ac.abort();
     console.log(`auto-aplicar-e2e (${lang}): ok em ${((Date.now() - t0) / 1000).toFixed(1)} s`);
   } finally { limpar(); }
 }

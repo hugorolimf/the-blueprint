@@ -189,8 +189,9 @@ function aplicarProposta() {
   const p = blueprintEd(), c = p && conv(p.id);
   if (!c || (!c.proposta && !c.emblema && !c.dadosBlueprint && !c.remover?.length && !c.mover?.length)) return;
   if (emNovo() && c.dadosBlueprint) { p.nome = c.dadosBlueprint.nome.trim(); p.descricao = c.dadosBlueprint.descricao.trim(); }
+  const numero = c.numero; // antes de aplicar: depois a fila abre a próxima
   const { aviso: texto } = aplicarAberta(p, c);
-  if (emNovo()) montaMcp(); else { avisarMonitor("proposta-aplicada", p.id); mudou(); montaHub(); if (!filaTemAberta(c)) agenteTela(false); } // aprovou e não há outra proposta esperando: a tela Planejar fecha (com outra na fila, ela abre a próxima)
+  if (emNovo()) montaMcp(); else { avisarMonitor("proposta-aplicada", p.id, { numero, origem: "usuario" }); mudou(); montaHub(); if (!filaTemAberta(c)) agenteTela(false); } // aprovou e não há outra proposta esperando: a tela Planejar fecha (com outra na fila, ela abre a próxima)
   aviso(texto);
 }
 function guardarChatDosBlueprints(c, blueprints) {
@@ -216,7 +217,7 @@ async function criarBlueprint(comProposta) {
   filaMonta(conv(NOVO), naFila);
   conv(p.id).pasta = null;
   edProj = p.id;
-  if (comProposta) avisarMonitor("proposta-aplicada", p.id);
+  if (comProposta) avisarMonitor("proposta-aplicada", p.id, { origem: "usuario" });
   mudou();
   fechaTelas();
   irBlueprint(p.id);

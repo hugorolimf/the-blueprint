@@ -74,6 +74,56 @@ assert.ok(L.casca.html({ ...conteudo, idioma: "en" }, [{ id: "capa", titulo: "z"
   assert.equal(L.casca.secaoDaFigura({ secao: "banana" }), undefined, "secao desconhecida vale como sem seção");
 }
 
+// texto e figura ligados: cada item de texto das seções com itens é focável e tem data-item (0-based, na ordem do conteúdo) e data-sessao
+{
+  const h = L.casca.html(conteudo, []).html;
+  const itens = (grupo) => [...h.matchAll(new RegExp(`data-item="(\\d+)" data-sessao="${grupo}" tabindex="0"`, "g"))].map((m) => +m[1]);
+  assert.deepEqual(itens("recebe"), [0, 1, 2], "entregas");
+  assert.deepEqual(itens("etapas"), [0, 1, 2, 3], "etapas");
+  assert.deepEqual(itens("linha"), [0, 1, 2, 3], "as linhas da linha do tempo valem por etapa");
+  assert.deepEqual(itens("precisamos"), [0, 1], "precisamosDeVoce");
+  assert.deepEqual(itens("decisoes"), [0, 1], "decisoes");
+  assert.deepEqual(itens("riscos"), [0, 1], "riscos");
+  assert.ok(!/s-visao[\s\S]*?data-item[\s\S]*?id="s-entregas"/.test(h.slice(0, h.indexOf('id="s-entregas"'))), "a Visão geral não tem itens");
+  assert.equal(conta(h, /class="ap-etapa" id="e-e1" data-st="[a-z]+" data-item="0"/g), 1, "o item da etapa é o artigo dela");
+  // etapa com data inválida some da linha do tempo mas o índice das outras continua o da etapa
+  const torta = { ...conteudo, etapas: conteudo.etapas.map((e, i) => (i === 1 ? { ...e, inicio: "x" } : e)) };
+  assert.deepEqual([...L.casca.html(torta, []).html.matchAll(/data-item="(\d+)" data-sessao="linha"/g)].map((m) => +m[1]), [0, 2, 3]);
+}
+
+// a linha de referência sob o título: "Fig n · dica", com o link, mais a frase; só nas seções que têm figura
+{
+  const com = (id, secao, dica) => ({ ...falsa(id), secao, dica });
+  const painel = (h, id) => { const i = h.indexOf(`id="s-${id}"`); return h.slice(i, h.indexOf("</section>", i)); };
+  const h = L.casca.html(conteudo, comFuncao([com("v", "visao", "dica da visão"), com("rec", "recebe", "Passe o mouse $& aqui"), com("de", "decisoes", "dica de"), com("ri", "riscos", "dica ri")])).html;
+  const rec = painel(h, "entregas");
+  assert.ok(/<p class="ap-ref"><a class="ap-ref-link" href="#fig-rec" data-ref="rec" aria-label="Ir para a figura 2">Fig 2<\/a> · <span>Passe o mouse \$&amp; aqui<\/span> <span class="ap-ref-dica">Aponte um item do texto para vê-lo na figura\.<\/span><\/p>/.test(rec), "linha de referência de Entregas: " + rec.slice(rec.indexOf("ap-ref") - 5, rec.indexOf("ap-ref") + 380));
+  assert.ok(rec.indexOf("ap-ref") < rec.indexOf("ap-com-fig"), "a linha fica sob o título, antes do texto e da figura");
+  const vis = painel(h, "visao");
+  assert.ok(vis.includes('data-ref="v"') && !vis.includes("ap-ref-dica"), "a Visão geral tem a linha, sem a frase dos itens (ela não tem itens)");
+  const dec = painel(h, "decisoes");
+  assert.equal(conta(dec, /class="ap-ref"/g), 1);
+  assert.ok(dec.includes('data-ref="de"') && dec.includes('data-ref="ri"') && dec.indexOf('data-ref="de"') < dec.indexOf('data-ref="ri"'), "decisões e riscos numa linha só, com as duas figuras");
+  assert.equal(conta(painel(h, "etapas"), /ap-ref/g), 0, "seção sem figura: sem linha");
+  assert.equal(conta(painel(h, "linha"), /ap-ref/g), 0);
+  // o cartão de cada figura tem o id para onde o link rola; em inglês a frase e o rótulo mudam
+  assert.ok(h.includes('<div class="ap-fig" id="fig-rec">'));
+  const en = L.casca.html({ ...conteudo, idioma: "en" }, comFuncao([com("rec", "recebe", "dica")])).html;
+  assert.ok(en.includes("Point at an item of the text to see it in the figure.") && en.includes('aria-label="Go to figure 1"'));
+  // as figuras que a etapa cita e as soltas não têm linha de referência (não são de uma seção)
+  const solta = L.casca.html(conteudo, comFuncao([falsa("capa"), falsa("solta")])).html;
+  assert.ok(solta.includes('data-ref="capa"') && !solta.includes('data-ref="solta"'), "a capa tem linha; a solta (fim de Etapas) não");
+  // cada figura viva sabe de que grupo de itens é (para a ponte)
+  const { vivos } = L.casca.html(conteudo, comFuncao([{ ...falsa("a", ", vivo() {}"), secao: "recebe" }, { ...falsa("b", ", vivo() {}"), secao: "visao" }, falsa("c", ", vivo() {}")]));
+  assert.deepEqual(JSON.parse(JSON.stringify(vivos.map((v) => [v.id, v.grupo ?? null]))), [["a", "recebe"], ["b", null], ["c", null]]); // cópia: o array vem de outro contexto
+}
+
 // movimento: só quem devolve `vivo` entra na lista
 assert.equal(L.casca.html(conteudo, comFuncao([falsa("a", ", vivo() {}"), falsa("b")])).vivos.length, 1);
+// as teclas de uma figura com foco (setas, Home, End) são dela: o atalho global da página as ignora dentro de .iso-stage
+{
+  const { readFileSync } = await import("node:fs");
+  const fonte = readFileSync(new URL("./biblioteca/casca.js", import.meta.url), "utf8");
+  assert.ok(fonte.includes('closest(".iso-stage")'), "o atalho global ignora teclas vindas de uma figura");
+}
 console.log("casca.test.mjs: ok");

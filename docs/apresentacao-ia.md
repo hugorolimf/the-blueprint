@@ -36,6 +36,10 @@ The times are estimates the agent announces before it starts. A bigger level (Ep
 
 **Talk**, next to the viewer, sends a request such as "shorten the text of stage 3 and change its end date" to a Claude session (the one you pick, or a new tab of the app terminal). The agent reads the presentation and changes **only what you asked**, straight in the file, with small edits: it does not redo the rest, and it keeps what you edited by hand. You can also type the request in the terminal where it is running. When it changes the presentation, the viewer reloads by itself.
 
+## Text and figure work together
+
+In each section the figure is part of the text. Under the section title a line `Fig n · <hint>` links to the figure; point at an item of the text (or reach it with the keyboard, or tap it) and the figure shows that item; move the figure with its own mouse, keys or tour and the matching item of the text is marked. Leave the item and the figure goes back to its own tour. The overview has no items, so its figure keeps its own tour.
+
 ## From the terminal
 
 Type `/blueprint:apresentar` in a Claude Code session in the blueprint's folder. The agent asks for the audience and the level, asks what the client must provide or decide, announces the time, builds the presentation and tells you where to open it.

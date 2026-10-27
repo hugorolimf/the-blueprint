@@ -10,25 +10,29 @@
     `<figure class="iso-figure ap-fig-erro" role="alert"><div class="iso-plate"><p class="ap-erro-t"><b>${esc(L.t("fig", idioma))} ${n}</b> ${esc(f.titulo || f.id)}</p>${erro ? `<p>${esc(L.t("figura_erro", idioma))}</p><p class="ap-erro-d">${esc(L.t("figura_erro_det", idioma))}: <code>${esc(erro.message ? erro.message : String(erro))}</code></p>` : `<p>${esc(L.t("codigo_nao_carregou", idioma))}</p>`}</div></figure>`;
 
   // cada figura vira um cartão do kit (Fig, título, dica, leitura, chaves, legenda); `vivos` guarda o que ganha movimento depois
+  // o cartão de cada figura vai num .ap-fig com id: é para onde o link "Fig n" da linha de referência rola
+  const embrulha = (f, html) => `<div class="ap-fig" id="fig-${esc(f.id)}">${html}</div>`;
   const rodar = (c, figuras) => {
     const cartoes = {}, vivos = [];
     figuras.forEach((f, i) => {
       const n = i + 1;
-      if (typeof f.codigo !== "function") { cartoes[f.id] = cartaoDeErro(f, n, c.idioma, null); return; }
+      if (typeof f.codigo !== "function") { cartoes[f.id] = embrulha(f, cartaoDeErro(f, n, c.idioma, null)); return; }
       try {
         const r = f.codigo(L, c);
-        cartoes[f.id] = L.plateHtml({
+        cartoes[f.id] = embrulha(f, L.plateHtml({
           fig: `${L.t("fig", c.idioma)} ${n}`, title: f.titulo, hint: f.dica, readout: f.leitura || "",
           keys: (f.chaves || []).map((k) => ({ mark: k.marca, label: k.rotulo })), caption: f.legenda,
           body: `<div class="iso-stage" tabindex="0" role="group" aria-label="${esc(f.rotulo || f.titulo)}" data-figura="${esc(f.id)}">${r.svg}</div>`,
-        });
+        }));
         if (typeof r.vivo === "function") vivos.push({ id: f.id, vivo: r.vivo });
-      } catch (e) { cartoes[f.id] = cartaoDeErro(f, n, c.idioma, e); }
+      } catch (e) { cartoes[f.id] = embrulha(f, cartaoDeErro(f, n, c.idioma, e)); }
     });
     return { cartoes, vivos };
   };
 
   // o nome da figura no conteúdo -> o id da seção da página (riscos mora na seção Decisões e riscos); desconhecido = sem seção
+  // a seção da página onde a figura está -> o grupo de itens do texto que ela comanda pela ponte (biblioteca/ponte.js); visao e acoes não têm itens
+  const GRUPO_DA_SECAO = { entregas: "recebe", etapas: "etapas", linha: "linha", voce: "precisamos", decisoes: "decisoes", riscos: "riscos" };
   const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", linha: "linha", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
   const secaoDaFigura = (f) => SECAO_DA_FIGURA[f && f.secao];
   const usadasPorEtapas = (c) => new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
@@ -47,16 +51,28 @@
     const { cartoes, vivos } = rodar(c, figuras);
     const ids = secoesDe(c), capa = capaDe(c, figuras), usadas = usadasPorEtapas(c);
     // onde cada figura cai: a da etapa, dentro dela; a da capa e as de seção, no painel da seção; o resto (e o que cairia numa seção que não existe), no fim de Etapas
-    const porSecao = {}, soltas = [];
+    // `refs`: a linha "Fig n · dica" de cada seção que tem figura; `grupos`: de que grupo de itens do texto cada figura é (para a ponte)
+    const porSecao = {}, refs = {}, grupos = {}, soltas = [];
     for (const f of figuras) {
       if (usadas.has(f.id)) continue;
       const sec = f.id === capa ? "visao" : secaoDaFigura(f), existe = sec && ids.includes(sec === "riscos" ? "decisoes" : sec);
-      if (!existe) soltas.push(cartoes[f.id]);
-      else (porSecao[sec] = porSecao[sec] || [])[f.id === capa ? "unshift" : "push"](cartoes[f.id]);
+      if (!existe) { soltas.push(cartoes[f.id]); continue; }
+      const pos = f.id === capa ? "unshift" : "push";
+      (porSecao[sec] = porSecao[sec] || [])[pos](cartoes[f.id]);
+      (refs[sec] = refs[sec] || [])[pos]({ id: f.id, n: figuras.indexOf(f) + 1, dica: f.dica });
+      grupos[f.id] = GRUPO_DA_SECAO[sec];
     }
+    vivos.forEach((v) => { v.grupo = grupos[v.id]; });
+    const refLinha = (id) => {
+      const lista = [...(refs[id] || []), ...(id === "decisoes" ? refs.riscos || [] : [])];
+      if (!lista.length) return "";
+      const links = lista.map((r) => `<a class="ap-ref-link" href="#fig-${esc(r.id)}" data-ref="${esc(r.id)}" aria-label="${esc(t("ir_fig", { n: r.n }))}">${esc(t("fig"))} ${r.n}</a>${r.dica ? ` · <span>${esc(r.dica)}</span>` : ""}`).join(" · ");
+      return `<p class="ap-ref">${links}${id === "visao" || id === "acoes" ? "" : ` <span class="ap-ref-dica">${esc(t("ref_item"))}</span>`}</p>`;
+    };
+    const comRef = (id, secaoHtml) => secaoHtml.replace('<div class="ap-sec-corpo">', (m) => m + refLinha(id)); // função: a dica da figura pode ter "$&"
     const j = (k) => (porSecao[k] || []).join(""), extras = soltas.join("");
     const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), linha: (n) => S.linha(c, n, j("linha")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
-    const corpo = ids.map((id, i) => montar[id](i + 1)).join("");
+    const corpo = ids.map((id, i) => comRef(id, montar[id](i + 1))).join("");
     const nav = ids.map((id, i) => `<li><a href="#s-${id}" data-nav="${id}"><i>${String(i + 1).padStart(2, "0")}</i>${esc(t(id))}</a></li>`).join("");
     const nivel = c.nivel ? `<span class="ap-etiqueta">${esc(t("nivel"))}: ${esc(t("nivel_" + c.nivel))}</span>` : "";
     const quem = c.publico === "interno" ? "interno" : "cliente";
@@ -70,10 +86,11 @@
   const montar = (raiz, conteudo, figuras) => {
     const { html: pagina, vivos } = html(conteudo, figuras);
     raiz.innerHTML = pagina;
-    for (const { id, vivo } of vivos) {
+    const pontes = L.ponte.ligar(raiz, conteudo);
+    for (const { id, vivo, grupo } of vivos) {
       const palco = raiz.querySelector(`[data-figura="${CSS.escape(id)}"]`), leitura = palco && palco.closest(".iso-plate").querySelector("[data-readout]");
       if (!palco) continue;
-      try { vivo(palco, (texto) => { if (leitura && leitura.textContent !== texto) leitura.textContent = texto; }); } catch (e) { console.error(e); }
+      try { vivo(palco, (texto) => { if (leitura && leitura.textContent !== texto) leitura.textContent = texto; }, pontes.criar(grupo)); } catch (e) { console.error(e); }
     }
     ligarNavegacao(raiz);
   };
@@ -96,6 +113,7 @@
     const atual = () => Math.max(0, secoes.findIndex((s) => s.dataset.sec === (links.find((a) => a.getAttribute("aria-current")) || { dataset: {} }).dataset.nav));
     addEventListener("keydown", (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "")) return;
+      if (e.target && e.target.closest && e.target.closest(".iso-stage")) return; // com o foco numa figura, as teclas (setas, Home, End) são dela, não da página
       if (e.key === "]") { e.preventDefault(); ir(atual() + 1); } else if (e.key === "[") { e.preventDefault(); ir(atual() - 1); }
       else if (e.key === "Home") { e.preventDefault(); ir(0); } else if (e.key === "End") { e.preventDefault(); ir(secoes.length - 1); }
     });

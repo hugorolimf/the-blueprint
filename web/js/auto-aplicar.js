@@ -54,7 +54,7 @@ function autoAplicaProposta(i) {
   const antes = autoEnvolve(p);
   let r;
   try { r = aplicarAberta(p, c); } catch { autoRestaura(p, antes); return false; } // falhou no meio: o blueprint volta ao que era e a proposta fica esperando
-  avisarMonitor("proposta-aplicada", p.id);
+  avisarMonitor("proposta-aplicada", p.id, { numero: i.numero, origem: "automatica" });
   autoRegistra(i, p, antes, r.historico);
   if (!hub.hidden) montaHub(); // o mcp.js refaz a folha e grava (mudarComSaida); o Planejar aberto mostra a próxima da fila
   return true;
@@ -69,6 +69,7 @@ function autoAplicaRegistro(i) {
   try { res = registroAdiciona(r); } catch { autoRestaura(p, antes); return false; }
   if (!res) return false;
   registroRetira(r); // sai da lista e da fila do servidor
+  avisarMonitor("registro-adicionado", p.id, { numero: i.numero, origem: "automatica" });
   mudou(); // este caminho não passa pelo mudarComSaida do mcp.js
   autoRegistra(i, p, antes, textoRegistroAdicionado(res));
   if (!hub.hidden) montaHub();

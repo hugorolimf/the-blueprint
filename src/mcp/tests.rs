@@ -37,6 +37,20 @@ fn aviso_so_aceita_alvo_existente_e_checkpoint_persistido() {
     assert!(super::eventos::aviso(&m, &dados, &corpo).is_err());
     corpo["tipo"] = json!("proposta-aplicada");
     assert!(super::eventos::aviso(&m, &dados, &corpo).is_ok());
+    // número e origem passam (só valores validados: o texto livre e uma origem inventada ficam de fora)
+    rx.recv().unwrap();
+    corpo["numero"] = json!(3);
+    corpo["origem"] = json!("automatica");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_ok());
+    assert_eq!(rx.recv().unwrap().dados.unwrap(), json!({"workspaceId":"sm", "blueprintId":"p1", "numero":3, "origem":"automatica"}));
+    corpo["numero"] = json!("tres");
+    corpo["origem"] = json!("o-agente");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_ok());
+    assert_eq!(rx.recv().unwrap().dados.unwrap(), json!({"workspaceId":"sm", "blueprintId":"p1"}));
+    corpo["tipo"] = json!("registro-adicionado");
+    assert!(super::eventos::aviso(&m, &dados, &corpo).is_ok());
+    assert_eq!(rx.recv().unwrap().nome, "registro-adicionado");
+    corpo["tipo"] = json!("proposta-aplicada");
     corpo["blueprintId"] = json!("outro");
     assert!(super::eventos::aviso(&m, &dados, &corpo).is_err());
     corpo["tipo"] = json!("arbitrario");

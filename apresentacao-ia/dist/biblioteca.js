@@ -2117,6 +2117,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
       st_prevista: "prevista", st_andamento: "em andamento", st_concluida: "concluída",
       comeca: "começa em {d}", hoje: "hoje", nada: "Nada a informar nesta seção.",
       nav_dica: "Teclas: [ e ] trocam de seção, Home e End vão ao começo e ao fim.",
+      ref_item: "Aponte um item do texto para vê-lo na figura.", ir_fig: "Ir para a figura {n}",
       gerado: "Gerado em {d}", nivel: "Nível", publico: "Público", cliente: "Cliente", interno: "Interno",
       nivel_rapido: "Rápido", nivel_padrao: "Padrão", nivel_completo: "Completo", nivel_epico: "Épico",
       inicio: "Início", fim: "Fim", progresso: "Dia do plano", sem_figura: "Sem figura nesta etapa.",
@@ -2132,6 +2133,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
       st_prevista: "planned", st_andamento: "in progress", st_concluida: "done",
       comeca: "starts {d}", hoje: "today", nada: "Nothing to report in this section.",
       nav_dica: "Keys: [ and ] switch section, Home and End jump to the start and the end.",
+      ref_item: "Point at an item of the text to see it in the figure.", ir_fig: "Go to figure {n}",
       gerado: "Generated {d}", nivel: "Level", publico: "Audience", cliente: "Client", interno: "Internal",
       nivel_rapido: "Quick", nivel_padrao: "Standard", nivel_completo: "Complete", nivel_epico: "Epic",
       inicio: "Start", fim: "End", progresso: "Plan day", sem_figura: "No figure for this stage.",
@@ -2400,7 +2402,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 
   const entregas = (c, n, fig) => {
     const l = lista(c.entregas);
-    return secao("entregas", n, L.t("entregas", c.idioma), lado(l.length ? `<div class="ap-grade">${l.map((e, i) => `<article class="ap-cartao"><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></article>`).join("")}</div>` : vazio(c.idioma), fig));
+    return secao("entregas", n, L.t("entregas", c.idioma), lado(l.length ? `<div class="ap-grade">${l.map((e, i) => `<article class="ap-cartao" data-item="${i}" data-sessao="recebe" tabindex="0"><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></article>`).join("")}</div>` : vazio(c.idioma), fig));
   };
 
   const etapas = (c, cartoes, n, extras = "", fig = "") => {
@@ -2408,7 +2410,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     const corpo = l.map((e, i) => {
       const st = situacao(e, c), marcos = lista(e.marcos);
       const m = marcos.length ? `<ul class="ap-marcos" aria-label="${esc(L.t("marcos", idioma))}">${marcos.map((k) => `<li><i aria-hidden="true"></i><b>${esc(L.dataCurta(k.data, idioma))}</b><span>${esc(k.nome)}</span></li>`).join("")}</ul>` : "";
-      return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-datas">${datas(e.inicio, e.fim, idioma)}</span><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
+      return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}" data-item="${i}" data-sessao="etapas" tabindex="0"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-datas">${datas(e.inicio, e.fim, idioma)}</span><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
     }).join("");
     return secao("etapas", n, L.t("etapas", idioma), lado((l.length ? corpo : vazio(idioma)) + (extras ? `<div class="ap-etapa-fig ap-extras">${extras}</div>` : ""), fig));
   };
@@ -2424,7 +2426,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
       const a = dia(e.inicio), b = dia(e.fim);
       if (!Number.isFinite(a) || !Number.isFinite(b)) return "";
       const marcos = lista(e.marcos).map((k) => (Number.isFinite(dia(k.data)) ? `<b class="ap-g-marco" style="left:${pos(dia(k.data) + 0.5)}%" title="${esc(k.nome)}"></b>` : "")).join("");
-      return `<li class="ap-g-linha"><span class="ap-g-nome"><i>${num(i + 1)}</i>${esc(e.titulo)}</span><div class="ap-g-faixa"><i class="ap-g-barra" data-st="${situacao(e, c)}" style="left:${pos(a)}%;width:${(((b - a + 1) / p.total) * 100).toFixed(2)}%"></i>${marcos}</div></li>`;
+      return `<li class="ap-g-linha" data-item="${i}" data-sessao="linha" tabindex="0"><span class="ap-g-nome"><i>${num(i + 1)}</i>${esc(e.titulo)}</span><div class="ap-g-faixa"><i class="ap-g-barra" data-st="${situacao(e, c)}" style="left:${pos(a)}%;width:${(((b - a + 1) / p.total) * 100).toFixed(2)}%"></i>${marcos}</div></li>`;
     }).join("");
     const hoje = p.hoje !== null && p.hoje >= p.ini && p.hoje <= p.fim ? `<i class="ap-g-hoje" style="--p:${((p.hoje + 0.5 - p.ini) / p.total).toFixed(4)}" title="${esc(L.t("hoje", idioma))}"></i>` : "";
     return secao("linha", n, L.t("linha", idioma), lado(`<div class="ap-gantt" style="--passo:${((passo / p.total) * 100).toFixed(3)}%"><div class="ap-g-eixo" aria-hidden="true"><span></span><div>${eixo.join("")}</div></div><ol class="ap-g-lista">${linhas}</ol>${hoje}</div>`, fig));
@@ -2432,13 +2434,13 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 
   const voce = (c, n, fig = "") => {
     const l = lista(c.precisamosDeVoce), idioma = c.idioma;
-    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma), fig));
+    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido" data-item="${i}" data-sessao="precisamos" tabindex="0"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma), fig));
   };
 
   const decisoes = (c, n, figD = "", figR = "") => {
     const idioma = c.idioma, d = lista(c.decisoes), r = lista(c.riscos);
-    const colD = d.length ? d.map((x) => `<article class="ap-item" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p><span class="ap-tag" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}">${esc(L.t(x.estado === "decidida" ? "decidida" : "aberta", idioma))}</span></article>`).join("") : vazio(idioma);
-    const colR = r.length ? r.map((x) => `<article class="ap-item"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p></article>`).join("") : vazio(idioma);
+    const colD = d.length ? d.map((x, i) => `<article class="ap-item" data-item="${i}" data-sessao="decisoes" tabindex="0" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p><span class="ap-tag" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}">${esc(L.t(x.estado === "decidida" ? "decidida" : "aberta", idioma))}</span></article>`).join("") : vazio(idioma);
+    const colR = r.length ? r.map((x, i) => `<article class="ap-item" data-item="${i}" data-sessao="riscos" tabindex="0"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p></article>`).join("") : vazio(idioma);
     return secao("decisoes", n, L.t("decisoes", idioma), `<div class="ap-duas"><div><h3 class="ap-sub-t">${esc(L.t("decisoes_t", idioma))}</h3>${colD}${figD ? `<div class="ap-fig-col">${figD}</div>` : ""}</div><div><h3 class="ap-sub-t">${esc(L.t("riscos", idioma))}</h3>${colR}${figR ? `<div class="ap-fig-col">${figR}</div>` : ""}</div></div>`);
   };
 
@@ -2560,6 +2562,101 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
   L.fragmento = { ORDEM, ALIAS, resolver, texto, ligar };
 })(L);
 
+// ---- biblioteca/ponte.js ----
+// A ponte entre o texto e a figura de uma seção: o texto faz referência à figura e as duas se comandam.
+// Cada item de texto tem data-item (índice a partir de 0, na ordem do conteúdo), data-sessao e tabindex="0". Grupos (o `secao` da figura): recebe (entregas), etapas e linha
+// (etapas), precisamos (precisamosDeVoce), decisoes e riscos. A figura recebe `ponte` como 3º argumento de vivo(palco, dizer, ponte) (pode faltar: sempre `if (ponte)`):
+//   ponte.total              quantos itens a seção tem (0 se a figura não é de uma seção com itens)
+//   ponte.liga({ selecionar(i) })   registra como a figura seleciona o item i; a página chama selecionar(i) quando o mouse entra ou o foco chega
+//                            num item do texto, e selecionar(null) quando sai (a figura volta ao seu passeio); devolve uma função que desfaz o registro
+//   ponte.mudou(i | null)    a figura avisa que o item atual mudou (por mouse, teclas ou passeio): a página marca o item (data-ativo, aria-current) e limpa o anterior
+// Toque: o toque num item o seleciona (e o foco que ele recebe também); toque fora o solta. Sem figura registrada nada quebra. Os ouvintes são delegados na raiz (um só conjunto,
+// desfeito por desligar()) e nada roda em repouso: só os eventos e, ao sair de um item, um único adiamento de 0 ms que junta "saiu de um" com "entrou no outro".
+(function (L) {
+  const GRUPOS = { recebe: (c) => c.entregas, etapas: (c) => c.etapas, linha: (c) => c.etapas, precisamos: (c) => c.precisamosDeVoce, decisoes: (c) => c.decisoes, riscos: (c) => c.riscos };
+  const ITEM = "[data-item][data-sessao]";
+  const inteiro = (i) => (Number.isInteger(i) && i >= 0 ? i : null);
+
+  const ligar = (raiz, conteudo) => {
+    const itens = {}; // grupo -> elementos pelo índice
+    for (const el of raiz.querySelectorAll(ITEM)) (itens[el.dataset.sessao] = itens[el.dataset.sessao] || [])[+el.dataset.item] = el;
+    const totalDe = (g) => (GRUPOS[g] && Array.isArray(GRUPOS[g](conteudo || {})) ? GRUPOS[g](conteudo || {}).length : 0);
+    const figuras = {}; // grupo -> conjunto de { selecionar }
+    const marcado = {}; // grupo -> índice marcado
+
+    const marca = (grupo, i) => {
+      i = inteiro(i);
+      const antes = marcado[grupo] == null ? null : marcado[grupo];
+      if (antes === i) return;
+      const lista = itens[grupo] || [], velho = antes == null ? null : lista[antes];
+      if (velho) { velho.removeAttribute("data-ativo"); velho.removeAttribute("aria-current"); }
+      marcado[grupo] = i;
+      const novo = i == null ? null : lista[i];
+      if (novo) { novo.setAttribute("data-ativo", "true"); novo.setAttribute("aria-current", "true"); }
+    };
+    const chama = (grupo, i) => { for (const f of [...(figuras[grupo] || [])]) { try { f.selecionar(i); } catch (e) { console.error(e); } } };
+
+    let ativo = null, pendente = 0, tipo = "mouse";
+    const seleciona = (el) => {
+      clearTimeout(pendente);
+      if (ativo && ativo.el === el) return;
+      const grupo = el.dataset.sessao;
+      if (ativo && ativo.grupo !== grupo) chama(ativo.grupo, null);
+      ativo = { grupo, el };
+      chama(grupo, +el.dataset.item);
+    };
+    const larga = () => { clearTimeout(pendente); if (!ativo) return; const { grupo } = ativo; ativo = null; chama(grupo, null); };
+    const solta = () => { clearTimeout(pendente); pendente = setTimeout(larga, 0); }; // sair de um item e entrar noutro vira uma seleção só
+    const item = (alvo) => (alvo && alvo.closest ? alvo.closest(ITEM) : null);
+    const dentro = (el, alvo) => !!(el && alvo && el.contains && el.contains(alvo));
+
+    const ouvintes = {
+      pointerdown: (e) => { tipo = e.pointerType || "mouse"; },
+      pointerover: (e) => { const el = e.pointerType === "touch" ? null : item(e.target); if (el) seleciona(el); },
+      pointerout: (e) => { const el = e.pointerType === "touch" ? null : item(e.target); if (el && !dentro(el, e.relatedTarget)) solta(); },
+      focusin: (e) => { const el = item(e.target); if (el) seleciona(el); },
+      focusout: (e) => { const el = item(e.target); if (el && !dentro(el, e.relatedTarget)) solta(); },
+      click: (e) => {
+        const a = e.target && e.target.closest && e.target.closest("[data-ref]");
+        if (a) { e.preventDefault(); irParaFigura(raiz, a.dataset.ref); return; }
+        if (tipo === "mouse") return; // o mouse já seleciona ao passar; o toque (e a caneta) seleciona e solta pelo toque
+        const el = item(e.target);
+        if (el) seleciona(el); else larga();
+      },
+    };
+    for (const [nome, f] of Object.entries(ouvintes)) raiz.addEventListener(nome, f);
+
+    return {
+      // a ponte de uma figura da seção `grupo` (qualquer outro valor: ponte sem itens, que não faz nada)
+      criar(grupo) {
+        const g = GRUPOS[grupo] ? grupo : null;
+        let registro = null;
+        const desfaz = () => { if (registro && g) (figuras[g] || new Set()).delete(registro); registro = null; };
+        return {
+          total: g ? totalDe(g) : 0,
+          liga(obj) {
+            desfaz();
+            if (g && obj && typeof obj.selecionar === "function") { registro = obj; (figuras[g] = figuras[g] || new Set()).add(obj); }
+            return desfaz;
+          },
+          mudou(i) { if (g) marca(g, i); },
+        };
+      },
+      desligar() { clearTimeout(pendente); for (const [nome, f] of Object.entries(ouvintes)) raiz.removeEventListener(nome, f); },
+    };
+  };
+
+  // o link "Fig n" da linha de referência: rola até o cartão da figura e põe o foco no palco dela
+  const irParaFigura = (raiz, id) => {
+    const palco = raiz.querySelector(`[data-figura="${CSS.escape(String(id))}"]`);
+    if (!palco) return;
+    (palco.closest(".ap-fig") || palco).scrollIntoView({ block: "center" });
+    palco.focus({ preventScroll: true });
+  };
+
+  L.ponte = { GRUPOS: Object.keys(GRUPOS), ligar };
+})(L);
+
 // ---- biblioteca/casca.js ----
 // A casca da apresentação: monta a interface (barra superior, navegação por seções, painéis) a partir de `conteudo` e roda as figuras.
 // L.casca.html(conteudo, figuras) devolve { html, vivos } sem tocar no DOM (serve aos testes e à prévia); L.casca.montar(raiz, ...) a põe na página.
@@ -2573,25 +2670,29 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     `<figure class="iso-figure ap-fig-erro" role="alert"><div class="iso-plate"><p class="ap-erro-t"><b>${esc(L.t("fig", idioma))} ${n}</b> ${esc(f.titulo || f.id)}</p>${erro ? `<p>${esc(L.t("figura_erro", idioma))}</p><p class="ap-erro-d">${esc(L.t("figura_erro_det", idioma))}: <code>${esc(erro.message ? erro.message : String(erro))}</code></p>` : `<p>${esc(L.t("codigo_nao_carregou", idioma))}</p>`}</div></figure>`;
 
   // cada figura vira um cartão do kit (Fig, título, dica, leitura, chaves, legenda); `vivos` guarda o que ganha movimento depois
+  // o cartão de cada figura vai num .ap-fig com id: é para onde o link "Fig n" da linha de referência rola
+  const embrulha = (f, html) => `<div class="ap-fig" id="fig-${esc(f.id)}">${html}</div>`;
   const rodar = (c, figuras) => {
     const cartoes = {}, vivos = [];
     figuras.forEach((f, i) => {
       const n = i + 1;
-      if (typeof f.codigo !== "function") { cartoes[f.id] = cartaoDeErro(f, n, c.idioma, null); return; }
+      if (typeof f.codigo !== "function") { cartoes[f.id] = embrulha(f, cartaoDeErro(f, n, c.idioma, null)); return; }
       try {
         const r = f.codigo(L, c);
-        cartoes[f.id] = L.plateHtml({
+        cartoes[f.id] = embrulha(f, L.plateHtml({
           fig: `${L.t("fig", c.idioma)} ${n}`, title: f.titulo, hint: f.dica, readout: f.leitura || "",
           keys: (f.chaves || []).map((k) => ({ mark: k.marca, label: k.rotulo })), caption: f.legenda,
           body: `<div class="iso-stage" tabindex="0" role="group" aria-label="${esc(f.rotulo || f.titulo)}" data-figura="${esc(f.id)}">${r.svg}</div>`,
-        });
+        }));
         if (typeof r.vivo === "function") vivos.push({ id: f.id, vivo: r.vivo });
-      } catch (e) { cartoes[f.id] = cartaoDeErro(f, n, c.idioma, e); }
+      } catch (e) { cartoes[f.id] = embrulha(f, cartaoDeErro(f, n, c.idioma, e)); }
     });
     return { cartoes, vivos };
   };
 
   // o nome da figura no conteúdo -> o id da seção da página (riscos mora na seção Decisões e riscos); desconhecido = sem seção
+  // a seção da página onde a figura está -> o grupo de itens do texto que ela comanda pela ponte (biblioteca/ponte.js); visao e acoes não têm itens
+  const GRUPO_DA_SECAO = { entregas: "recebe", etapas: "etapas", linha: "linha", voce: "precisamos", decisoes: "decisoes", riscos: "riscos" };
   const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", linha: "linha", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
   const secaoDaFigura = (f) => SECAO_DA_FIGURA[f && f.secao];
   const usadasPorEtapas = (c) => new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
@@ -2610,16 +2711,28 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     const { cartoes, vivos } = rodar(c, figuras);
     const ids = secoesDe(c), capa = capaDe(c, figuras), usadas = usadasPorEtapas(c);
     // onde cada figura cai: a da etapa, dentro dela; a da capa e as de seção, no painel da seção; o resto (e o que cairia numa seção que não existe), no fim de Etapas
-    const porSecao = {}, soltas = [];
+    // `refs`: a linha "Fig n · dica" de cada seção que tem figura; `grupos`: de que grupo de itens do texto cada figura é (para a ponte)
+    const porSecao = {}, refs = {}, grupos = {}, soltas = [];
     for (const f of figuras) {
       if (usadas.has(f.id)) continue;
       const sec = f.id === capa ? "visao" : secaoDaFigura(f), existe = sec && ids.includes(sec === "riscos" ? "decisoes" : sec);
-      if (!existe) soltas.push(cartoes[f.id]);
-      else (porSecao[sec] = porSecao[sec] || [])[f.id === capa ? "unshift" : "push"](cartoes[f.id]);
+      if (!existe) { soltas.push(cartoes[f.id]); continue; }
+      const pos = f.id === capa ? "unshift" : "push";
+      (porSecao[sec] = porSecao[sec] || [])[pos](cartoes[f.id]);
+      (refs[sec] = refs[sec] || [])[pos]({ id: f.id, n: figuras.indexOf(f) + 1, dica: f.dica });
+      grupos[f.id] = GRUPO_DA_SECAO[sec];
     }
+    vivos.forEach((v) => { v.grupo = grupos[v.id]; });
+    const refLinha = (id) => {
+      const lista = [...(refs[id] || []), ...(id === "decisoes" ? refs.riscos || [] : [])];
+      if (!lista.length) return "";
+      const links = lista.map((r) => `<a class="ap-ref-link" href="#fig-${esc(r.id)}" data-ref="${esc(r.id)}" aria-label="${esc(t("ir_fig", { n: r.n }))}">${esc(t("fig"))} ${r.n}</a>${r.dica ? ` · <span>${esc(r.dica)}</span>` : ""}`).join(" · ");
+      return `<p class="ap-ref">${links}${id === "visao" || id === "acoes" ? "" : ` <span class="ap-ref-dica">${esc(t("ref_item"))}</span>`}</p>`;
+    };
+    const comRef = (id, secaoHtml) => secaoHtml.replace('<div class="ap-sec-corpo">', (m) => m + refLinha(id)); // função: a dica da figura pode ter "$&"
     const j = (k) => (porSecao[k] || []).join(""), extras = soltas.join("");
     const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), linha: (n) => S.linha(c, n, j("linha")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
-    const corpo = ids.map((id, i) => montar[id](i + 1)).join("");
+    const corpo = ids.map((id, i) => comRef(id, montar[id](i + 1))).join("");
     const nav = ids.map((id, i) => `<li><a href="#s-${id}" data-nav="${id}"><i>${String(i + 1).padStart(2, "0")}</i>${esc(t(id))}</a></li>`).join("");
     const nivel = c.nivel ? `<span class="ap-etiqueta">${esc(t("nivel"))}: ${esc(t("nivel_" + c.nivel))}</span>` : "";
     const quem = c.publico === "interno" ? "interno" : "cliente";
@@ -2633,10 +2746,11 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
   const montar = (raiz, conteudo, figuras) => {
     const { html: pagina, vivos } = html(conteudo, figuras);
     raiz.innerHTML = pagina;
-    for (const { id, vivo } of vivos) {
+    const pontes = L.ponte.ligar(raiz, conteudo);
+    for (const { id, vivo, grupo } of vivos) {
       const palco = raiz.querySelector(`[data-figura="${CSS.escape(id)}"]`), leitura = palco && palco.closest(".iso-plate").querySelector("[data-readout]");
       if (!palco) continue;
-      try { vivo(palco, (texto) => { if (leitura && leitura.textContent !== texto) leitura.textContent = texto; }); } catch (e) { console.error(e); }
+      try { vivo(palco, (texto) => { if (leitura && leitura.textContent !== texto) leitura.textContent = texto; }, pontes.criar(grupo)); } catch (e) { console.error(e); }
     }
     ligarNavegacao(raiz);
   };
@@ -2659,6 +2773,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     const atual = () => Math.max(0, secoes.findIndex((s) => s.dataset.sec === (links.find((a) => a.getAttribute("aria-current")) || { dataset: {} }).dataset.nav));
     addEventListener("keydown", (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "")) return;
+      if (e.target && e.target.closest && e.target.closest(".iso-stage")) return; // com o foco numa figura, as teclas (setas, Home, End) são dela, não da página
       if (e.key === "]") { e.preventDefault(); ir(atual() + 1); } else if (e.key === "[") { e.preventDefault(); ir(atual() - 1); }
       else if (e.key === "Home") { e.preventDefault(); ir(0); } else if (e.key === "End") { e.preventDefault(); ir(secoes.length - 1); }
     });

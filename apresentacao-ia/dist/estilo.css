@@ -274,6 +274,16 @@ html,body{margin:0;background:#061d42}
 .ap-com-fig-col .iso-figure,.ap-fig-col .iso-figure{margin:0}
 @media (max-width:900px){.ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}}
 
+/* texto e figura ligados: a linha de referência sob o título e o item apontado (ou marcado pela figura) no estado selecionado do app (borda e barra à esquerda), sem animação */
+.ap-ref{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin:0 0 22px;color:var(--mid);font-size:11px;letter-spacing:.03em}
+.ap-ref-link{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.ap-ref-link:hover{text-decoration-thickness:2px}
+.ap-ref-link:focus-visible,[data-item]:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.ap-ref-dica{color:var(--lo)}
+.ap-fig{min-width:0;scroll-margin-top:calc(var(--topo) + 14px)}
+[data-item]:hover,[data-item][data-ativo]{border-color:var(--ink);background:#17539f66;box-shadow:inset 3px 0 0 var(--ink)}
+.ap-g-linha[data-item]:hover,.ap-g-linha[data-item][data-ativo]{background:#17539f66}
+
 /* ---- estilo/impressao.css ---- */
 /* Impressão em A4: o papel vira branco e a tinta, o azul do blueprint. Navegação, botões e barras somem; cada painel evita quebrar no meio. */
 @media print{
@@ -295,5 +305,7 @@ html,body{margin:0;background:#061d42}
   .ap-tag[data-st=andamento]{color:#fff}
   .ap-ia .iso-plate{box-shadow:0 0 0 1px var(--lo)}
   .ap-com-fig{grid-template-columns:minmax(0,1fr)}.ap-com-fig-col{position:static}
+  [data-item]:hover,[data-item][data-ativo]{box-shadow:none;background:transparent;border-color:var(--lo)}
+  .ap-ref-dica{display:none}
   .ap-ia .iso-solid[data-lit]{filter:none}
 }

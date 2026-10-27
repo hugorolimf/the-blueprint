@@ -8,7 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const AQUI = dirname(fileURLToPath(import.meta.url));
 const KIT = join(AQUI, "..", "kit");
-const BIBLIOTECA = ["textos", "laco", "auditoria", "pecas", "secoes", "fragmento", "casca"];
+const BIBLIOTECA = ["textos", "laco", "auditoria", "pecas", "secoes", "fragmento", "ponte", "casca"];
 const ESTILOS = ["base", "secoes", "impressao"];
 
 const ler = (caminho) => readFileSync(caminho, "utf8").replace(/\r\n/g, "\n");

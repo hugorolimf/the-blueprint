@@ -50,6 +50,7 @@ $("cl-reg").addEventListener("click", (e) => {
   const res = registroAdiciona(r);
   if (!res) return aviso(tr("Este blueprint não existe mais; o registro não foi adicionado."));
   registroRetira(r); // sai da lista e da fila do servidor
+  avisarMonitor("registro-adicionado", p.id, { numero: r.numero, origem: "usuario" });
   mudou();
   montaHub();
   aviso(textoRegistroAdicionado(res));

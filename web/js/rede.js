@@ -81,9 +81,10 @@ async function carregar() {
   }
 }
 const avisosDoMonitor = new Map();
-function avisarMonitor(tipo, blueprintId, checkpointId = "") {
+// o 3º argumento é o id do checkpoint (texto) ou { numero, origem: "usuario" | "automatica" } (proposta aplicada, registro adicionado: o agente lê QUAL e QUEM)
+function avisarMonitor(tipo, blueprintId, extra = "") {
   if (avisosDoMonitor.size >= 100) return;
-  const evento = { tipo, workspaceId: workspaceAtual.id, blueprintId, checkpointId };
+  const evento = { tipo, workspaceId: workspaceAtual.id, blueprintId, ...(typeof extra === "string" ? { checkpointId: extra } : { checkpointId: "", ...extra }) };
   avisosDoMonitor.set(JSON.stringify(evento), evento);
 }
 // Salvar manda só a diferença entre a base (o servidor como esta página o conhece) e a tela, em operações por item (operacoes.js, ao-vivo.js).

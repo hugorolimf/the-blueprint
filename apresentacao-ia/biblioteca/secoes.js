@@ -45,7 +45,7 @@
 
   const entregas = (c, n, fig) => {
     const l = lista(c.entregas);
-    return secao("entregas", n, L.t("entregas", c.idioma), lado(l.length ? `<div class="ap-grade">${l.map((e, i) => `<article class="ap-cartao"><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></article>`).join("")}</div>` : vazio(c.idioma), fig));
+    return secao("entregas", n, L.t("entregas", c.idioma), lado(l.length ? `<div class="ap-grade">${l.map((e, i) => `<article class="ap-cartao" data-item="${i}" data-sessao="recebe" tabindex="0"><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><p>${esc(e.texto)}</p></article>`).join("")}</div>` : vazio(c.idioma), fig));
   };
 
   const etapas = (c, cartoes, n, extras = "", fig = "") => {
@@ -53,7 +53,7 @@
     const corpo = l.map((e, i) => {
       const st = situacao(e, c), marcos = lista(e.marcos);
       const m = marcos.length ? `<ul class="ap-marcos" aria-label="${esc(L.t("marcos", idioma))}">${marcos.map((k) => `<li><i aria-hidden="true"></i><b>${esc(L.dataCurta(k.data, idioma))}</b><span>${esc(k.nome)}</span></li>`).join("")}</ul>` : "";
-      return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-datas">${datas(e.inicio, e.fim, idioma)}</span><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
+      return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}" data-item="${i}" data-sessao="etapas" tabindex="0"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-datas">${datas(e.inicio, e.fim, idioma)}</span><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
     }).join("");
     return secao("etapas", n, L.t("etapas", idioma), lado((l.length ? corpo : vazio(idioma)) + (extras ? `<div class="ap-etapa-fig ap-extras">${extras}</div>` : ""), fig));
   };
@@ -69,7 +69,7 @@
       const a = dia(e.inicio), b = dia(e.fim);
       if (!Number.isFinite(a) || !Number.isFinite(b)) return "";
       const marcos = lista(e.marcos).map((k) => (Number.isFinite(dia(k.data)) ? `<b class="ap-g-marco" style="left:${pos(dia(k.data) + 0.5)}%" title="${esc(k.nome)}"></b>` : "")).join("");
-      return `<li class="ap-g-linha"><span class="ap-g-nome"><i>${num(i + 1)}</i>${esc(e.titulo)}</span><div class="ap-g-faixa"><i class="ap-g-barra" data-st="${situacao(e, c)}" style="left:${pos(a)}%;width:${(((b - a + 1) / p.total) * 100).toFixed(2)}%"></i>${marcos}</div></li>`;
+      return `<li class="ap-g-linha" data-item="${i}" data-sessao="linha" tabindex="0"><span class="ap-g-nome"><i>${num(i + 1)}</i>${esc(e.titulo)}</span><div class="ap-g-faixa"><i class="ap-g-barra" data-st="${situacao(e, c)}" style="left:${pos(a)}%;width:${(((b - a + 1) / p.total) * 100).toFixed(2)}%"></i>${marcos}</div></li>`;
     }).join("");
     const hoje = p.hoje !== null && p.hoje >= p.ini && p.hoje <= p.fim ? `<i class="ap-g-hoje" style="--p:${((p.hoje + 0.5 - p.ini) / p.total).toFixed(4)}" title="${esc(L.t("hoje", idioma))}"></i>` : "";
     return secao("linha", n, L.t("linha", idioma), lado(`<div class="ap-gantt" style="--passo:${((passo / p.total) * 100).toFixed(3)}%"><div class="ap-g-eixo" aria-hidden="true"><span></span><div>${eixo.join("")}</div></div><ol class="ap-g-lista">${linhas}</ol>${hoje}</div>`, fig));
@@ -77,13 +77,13 @@
 
   const voce = (c, n, fig = "") => {
     const l = lista(c.precisamosDeVoce), idioma = c.idioma;
-    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma), fig));
+    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido" data-item="${i}" data-sessao="precisamos" tabindex="0"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma), fig));
   };
 
   const decisoes = (c, n, figD = "", figR = "") => {
     const idioma = c.idioma, d = lista(c.decisoes), r = lista(c.riscos);
-    const colD = d.length ? d.map((x) => `<article class="ap-item" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p><span class="ap-tag" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}">${esc(L.t(x.estado === "decidida" ? "decidida" : "aberta", idioma))}</span></article>`).join("") : vazio(idioma);
-    const colR = r.length ? r.map((x) => `<article class="ap-item"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p></article>`).join("") : vazio(idioma);
+    const colD = d.length ? d.map((x, i) => `<article class="ap-item" data-item="${i}" data-sessao="decisoes" tabindex="0" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p><span class="ap-tag" data-estado="${x.estado === "decidida" ? "decidida" : "aberta"}">${esc(L.t(x.estado === "decidida" ? "decidida" : "aberta", idioma))}</span></article>`).join("") : vazio(idioma);
+    const colR = r.length ? r.map((x, i) => `<article class="ap-item" data-item="${i}" data-sessao="riscos" tabindex="0"><h4>${esc(x.titulo)}</h4><p>${esc(x.texto)}</p></article>`).join("") : vazio(idioma);
     return secao("decisoes", n, L.t("decisoes", idioma), `<div class="ap-duas"><div><h3 class="ap-sub-t">${esc(L.t("decisoes_t", idioma))}</h3>${colD}${figD ? `<div class="ap-fig-col">${figD}</div>` : ""}</div><div><h3 class="ap-sub-t">${esc(L.t("riscos", idioma))}</h3>${colR}${figR ? `<div class="ap-fig-col">${figR}</div>` : ""}</div></div>`);
   };
 

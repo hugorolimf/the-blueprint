@@ -18,6 +18,7 @@ pub(super) fn aviso(mcp: &super::Mcp, dados: &Value, corpo: &Value) -> Result<Va
     let texto = |chave: &str| corpo[chave].as_str().unwrap_or("");
     let nome = match texto("tipo") {
         "proposta-aplicada" => "proposta-aplicada",
+        "registro-adicionado" => "registro-adicionado",
         "checkpoint-marcado" => "checkpoint-marcado",
         _ => return Err(falha(400, crate::tr!("invalid notice type", "tipo de aviso inválido")).codigo("tipo-invalido")),
     };
@@ -28,7 +29,11 @@ pub(super) fn aviso(mcp: &super::Mcp, dados: &Value, corpo: &Value) -> Result<Va
         let existe = acoes.iter().flat_map(|a| a["checkpoints"].as_array().map(Vec::as_slice).unwrap_or(&[])).any(|c| c["id"] == texto("checkpointId") && c["feito"] == true);
         if !existe { return Err(falha(400, crate::tr!("the checkpoint is not marked in the database", "checkpoint não está marcado no banco")).codigo("checkpoint-nao-marcado")); }
     }
-    mcp.notificar(nome, Some(serde_json::json!({"workspaceId": ws, "blueprintId": bp})));
+    // quem aplicou e qual item: o agente precisa saber se foi o clique do usuário ou a aplicação automática (só número e uma de duas origens; nada de texto livre)
+    let mut aviso = serde_json::json!({"workspaceId": ws, "blueprintId": bp});
+    if let Some(n) = corpo["numero"].as_u64().filter(|n| (1..1_000_000).contains(n)) { aviso["numero"] = serde_json::json!(n); }
+    if let Some(o) = corpo["origem"].as_str().filter(|o| matches!(*o, "usuario" | "automatica")) { aviso["origem"] = serde_json::json!(o); }
+    mcp.notificar(nome, Some(aviso));
     Ok(serde_json::json!({"ok": true}))
 }
 

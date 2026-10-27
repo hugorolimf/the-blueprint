@@ -83,3 +83,35 @@ fn a_pasta_vai_codificada_na_query_do_canal() {
     assert_eq!(codificar("C:\\Meus Projetos\\ação"), "C%3A%5CMeus%20Projetos%5Ca%C3%A7%C3%A3o".to_string());
     assert_eq!(codificar("a/b-c_d.e~"), "a/b-c_d.e~");
 }
+
+#[test]
+fn o_aviso_diz_qual_item_e_quem_aplicou() {
+    use crate::idioma::{com, Idioma};
+    let alvo = ("ws".into(), "bp".into());
+    let rodar = |idioma: Idioma, eventos: &[&str]| -> String {
+        let sse: String = eventos.iter().map(|d| format!("event: {}\ndata: {}\n\n", d.split_once('|').unwrap().0, d.split_once('|').unwrap().1)).collect();
+        let mut saida = Vec::new();
+        com(idioma, || acompanhar(&mut Cursor::new(sse), &mut saida, &alvo, &mut Limite::novo()).unwrap());
+        String::from_utf8(saida).unwrap()
+    };
+    let base = r#""workspaceId":"ws","blueprintId":"bp""#;
+    let em = rodar(Idioma::En, &[
+        &format!(r#"proposta-aplicada|{{{base},"numero":3,"origem":"usuario"}}"#),
+        &format!(r#"proposta-aplicada|{{{base},"numero":4,"origem":"automatica"}}"#),
+        &format!(r#"registro-adicionado|{{{base},"numero":2,"origem":"usuario"}}"#),
+        &format!(r#"registro-adicionado|{{{base},"numero":5,"origem":"automatica"}}"#),
+    ]);
+    let linhas: Vec<&str> = em.lines().collect();
+    assert!(linhas[0].contains("approved proposal no. 3") && linhas[0].contains("explicit approval"), "{}", linhas[0]);
+    assert!(linhas[1].contains("proposal no. 4 was applied AUTOMATICALLY") && linhas[1].contains("not an explicit approval"), "{}", linhas[1]);
+    assert!(linhas[2].contains("added record no. 2") && linhas[2].contains("explicit approval"), "{}", linhas[2]);
+    assert!(linhas[3].contains("record no. 5 was added AUTOMATICALLY") && linhas[3].contains("not an explicit approval"), "{}", linhas[3]);
+    // em português, e sem número
+    let pt = rodar(Idioma::Pt, &[&format!(r#"proposta-aplicada|{{{base},"numero":7,"origem":"automatica"}}"#), &format!(r#"proposta-aplicada|{{{base},"origem":"usuario"}}"#)]);
+    let p: Vec<&str> = pt.lines().collect();
+    assert!(p[0].contains("proposta nº 7 foi aplicada AUTOMATICAMENTE") && p[0].contains("não é uma aprovação explícita"), "{}", p[0]);
+    assert!(p[1].contains("aprovou a proposta ao clicar") && !p[1].contains("{n}"), "{}", p[1]);
+    // página antiga (sem origem) ou origem inventada: o texto genérico de sempre, nunca o de aprovação
+    let velho = rodar(Idioma::En, &[&format!(r#"proposta-aplicada|{{{base}}}"#), &format!(r#"proposta-aplicada|{{{base},"numero":1,"origem":"o-agente"}}"#)]);
+    assert!(velho.lines().all(|l| l.contains("applied a proposal") && !l.contains("explicit approval")), "{velho}");
+}

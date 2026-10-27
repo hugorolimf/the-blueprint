@@ -66,13 +66,16 @@ function (L, c) {
 
   return {
     svg,
-    vivo(palco, dizer) {
+    vivo(palco, dizer, ponte) {
       const raiz = palco.querySelector("svg"), leitorEl = raiz.querySelector('[data-peca="leitor"]'), agulha = raiz.querySelector('[data-peca="agulha"] path');
       const els = [...raiz.querySelectorAll("[data-i]")], corpos = els.map((g) => g.querySelector(".iso-solid"));
       const lift = els.map(() => ({ x: 0, v: 0 }));
       const sx = (i) => L.iso([centro(i), -13, 30], P)[0], sx0 = sx(0), sx1 = sx(N - 1);
       let alvo = 0, atual = 0, x = REACH[0], interagiu = false, relogio = 0, ultimaLeitura = -1, ocioso = !L.calmo(), esperaVolta = 0;
       const PASSOS = [0, 4, 9, 13, 7, 2];
+      // a ponte com o texto (só se a figura está numa seção com itens): o item i do texto aponta uma ficha e a ficha atual marca o seu item
+      const T = ponte ? ponte.total : 0;
+      const cartaoDoItem = (i) => (T > 1 ? Math.round((i * (N - 1)) / (T - 1)) : 0), itemDoCartao = (c) => Math.min(T - 1, Math.floor((c * T) / N));
       const leitura = (i) => `${pt ? "ficha" : "card"} ${String(i + 1).padStart(2, "0")} · ${textoSit[situacao(i)]} · ${abertas[situacao(i)]} ${pt ? "em aberto" : "open"}`;
       const laco = L.laco(palco, (dt, calmo) => {
         if (ocioso && !calmo) { relogio += dt; alvo = PASSOS[Math.floor(relogio / 2.4) % PASSOS.length]; }
@@ -85,7 +88,7 @@ function (L, c) {
           if (m.x !== antes) els[i].setAttribute("transform", m.x ? L.translateAlong(P, [0, 0, m.x]) : "");
           movendo = movendo || mexe;
         });
-        if (alvo !== atual) { corpos[atual].removeAttribute("data-lit"); atual = alvo; corpos[atual].setAttribute("data-lit", ""); }
+        if (alvo !== atual) { corpos[atual].removeAttribute("data-lit"); atual = alvo; corpos[atual].setAttribute("data-lit", ""); if (T) ponte.mudou(itemDoCartao(atual)); }
         agulha.setAttribute("d", mostr.agulha(0.08 + 0.74 * (atual / (N - 1))));
         if (atual !== ultimaLeitura) { ultimaLeitura = atual; dizer(leitura(atual)); }
         return movendo || (ocioso && !calmo);
@@ -95,6 +98,11 @@ function (L, c) {
         clearTimeout(esperaVolta); esperaVolta = setTimeout(() => { ocioso = !L.calmo(); relogio = 0; laco.acordar(); }, 3600);
         laco.acordar();
       };
+      if (T) ponte.liga({ selecionar(i) {
+        clearTimeout(esperaVolta);
+        if (i == null) { ocioso = !L.calmo(); relogio = 0; } else { ocioso = false; alvo = cartaoDoItem(i); } // sem item: volta ao passeio; com item: o passeio espera
+        laco.acordar();
+      } });
       palco.addEventListener("pointermove", (e) => {
         const caixa = raiz.getBoundingClientRect(), vx = ((e.clientX - caixa.left) / caixa.width) * W;
         escolhe(Math.round(((vx - sx0) / (sx1 - sx0)) * (N - 1)));
@@ -106,6 +114,7 @@ function (L, c) {
         else if (e.key === "Home") { e.preventDefault(); escolhe(0); } else if (e.key === "End") { e.preventDefault(); escolhe(N - 1); }
       });
       corpos[0].setAttribute("data-lit", "");
+      if (T) ponte.mudou(itemDoCartao(0));
       agulha.setAttribute("d", mostr.agulha(0.08));
       dizer(leitura(0));
     },

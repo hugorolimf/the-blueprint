@@ -36,6 +36,10 @@ Os tempos são estimativas que o agente anuncia antes de começar. Um nível mai
 
 **Conversar**, ao lado do visor, manda um pedido como "deixe o texto da etapa 3 mais curto e troque a data de fim" a uma sessão do Claude (a que você escolher, ou uma aba nova do terminal do app). O agente lê a apresentação e muda **só o que você pediu**, direto no arquivo, com ajustes pequenos: não refaz o resto e mantém o que você editou à mão. Também dá para digitar o pedido no terminal onde ele está. Quando ele muda a apresentação, o visor recarrega sozinho.
 
+## Texto e figura trabalham juntos
+
+Em cada sessão a figura faz parte do texto. Sob o título da sessão, uma linha `Fig n · <dica>` leva à figura; aponte um item do texto (ou chegue nele pelo teclado, ou toque nele) e a figura mostra esse item; mexa na figura com o mouse, as teclas ou o passeio dela e o item correspondente do texto fica marcado. Saindo do item, a figura volta ao passeio dela. A visão geral não tem itens, então a figura dela segue o próprio passeio.
+
 ## Pelo terminal
 
 Digite `/blueprint:apresentar` numa sessão do Claude Code na pasta do blueprint. O agente pergunta o público e o nível, pergunta o que o cliente precisa fornecer ou decidir, anuncia o tempo, monta a apresentação e diz onde abrir.
