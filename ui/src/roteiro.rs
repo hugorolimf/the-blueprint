@@ -51,6 +51,11 @@ impl Roteiro {
                     _ => None,
                 }
             }
+            "secao" => {
+                // secao:blueprint|projeto abre a seção (testes)
+                vista.abertas.insert(arg.into(), true);
+                None
+            }
             "rolar" => {
                 vista.rolagem = arg.parse().ok();
                 None

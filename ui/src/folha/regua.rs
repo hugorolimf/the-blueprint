@@ -23,6 +23,11 @@ impl Regua<'_> {
         self.l + (d - self.janela.t0) as f32 / (self.janela.t1 - self.janela.t0).max(1) as f32 * (self.r - self.l)
     }
 
+    /// O x de um dia fracionário (`X(dia + 0,5)`: o meio do dia).
+    pub fn xf(&self, d: f32) -> f32 {
+        self.l + (d - self.janela.t0 as f32) / (self.janela.t1 - self.janela.t0).max(1) as f32 * (self.r - self.l)
+    }
+
     /// O x do começo do mês `m` (0 a NM).
     pub fn mes(&self, m: usize) -> f32 {
         self.x(dia(&format!("{}-01", mes_iso(self.janela.inicio + m as i64))).unwrap_or(self.janela.t0))

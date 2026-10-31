@@ -51,11 +51,13 @@ pub struct Vista {
     pub consulta: String,
     /// só nos testes: o quanto rolar a folha ao abrir (`BLUEPRINT_UI_ROLAR`)
     pub rolagem: Option<f32>,
+    /// as seções abertas ou recolhidas (`blueprint|projeto`); sem entrada vale o padrão: o blueprint sem projetos nasce aberto, o projeto nasce fechado
+    pub abertas: std::collections::HashMap<String, bool>,
 }
 
 impl Vista {
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, abertas: std::collections::HashMap::new() }
     }
 }
 

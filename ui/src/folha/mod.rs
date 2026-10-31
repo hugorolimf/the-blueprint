@@ -102,12 +102,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
             }
             if resposta.clicked() {
-                // o blueprint com projetos (seções) ainda é da versão web
-                if p.get("projetos").and_then(|v| v.as_array()).is_some_and(|l| !l.is_empty()) {
-                    abrir_web = Some(format!("#/p/{}", texto(p, "id")));
-                } else {
-                    vista.tela = Tela::Blueprint(id.to_string(), texto(p, "id"));
-                }
+                vista.tela = Tela::Blueprint(id.to_string(), texto(p, "id"));
             }
         }
         // «novo blueprint»: o cartão tracejado depois do último

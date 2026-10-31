@@ -16,8 +16,17 @@ use serde_json::Value;
 pub struct Secao<'a> {
     pub ws: &'a str,
     pub p: &'a Value,
-    pub pi: usize,
-    pub acoes: &'a [Acao],
+    /// as ações desta seção (o blueprint inteiro, ou as de um projeto)
+    pub acoes: &'a [&'a Acao],
+    pub numero: String,
+    pub nome: String,
+    pub descricao: String,
+    pub total: usize,
+    pub ok: bool,
+    pub aberto: bool,
+    /// a seção do blueprint sem projetos tem a nota e os links; a de um projeto não
+    pub principal: bool,
+    pub resumo: dominio::Resumo,
     pub disp: &'a Disposicao,
     pub regua: &'a Regua<'a>,
     /// o topo da seção (`y0`)
@@ -31,22 +40,27 @@ fn texto(v: &Value, campo: &str) -> String {
     v.get(campo).and_then(Value::as_str).unwrap_or("").to_string()
 }
 
-/// O cabeçalho: o círculo com o número, o nome, a descrição, o progresso geral, a linha, o «− Recolher» e os links.
-pub fn cabecalho(c: &Cena, ui: &mut Ui, s: &Secao) {
+/// O cabeçalho: o círculo com o número, o nome, a descrição, o progresso geral, a linha, o «− Recolher»/«+ Abrir» e os links.
+/// Devolve `true` se a pessoa clicou para abrir ou recolher a seção (o cabeçalho inteiro ou o botão).
+pub fn cabecalho(c: &Cena, ui: &mut Ui, s: &Secao) -> bool {
     let (l, r, yb) = (s.l, s.r, s.y);
-    let nome = corta(&if texto(s.p, "nome").is_empty() { tr("Sem nome").to_string() } else { texto(s.p, "nome") }, 48);
-    let descricao = corta(&texto(s.p, "descricao"), 70);
-    let obs = !texto(s.p, "obs").trim().is_empty();
+    let nome = corta(&if s.nome.is_empty() { tr("Sem nome").to_string() } else { s.nome.clone() }, 48);
+    let descricao = corta(&s.descricao, 70);
+    let obs = s.principal && !texto(s.p, "obs").trim().is_empty();
+    let area = Rect::from_min_size(c.pt(l - 8.0, yb - 8.0), vec2(r - l + 16.0, 86.0));
+    let resposta = ui.interact(area, ui.scope_id().with(("secao", s.numero.as_str())), Sense::click());
+    if resposta.hovered() {
+        c.retangulo(l - 8.0, yb - 8.0, r - l + 16.0, 86.0, Some(rgba(0xffffff, 0x14)), None);
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+    }
     c.p.circle_stroke(c.pt(l + 14.0, yb + 20.0), 14.0, egui::Stroke::new(1.0, TINTA));
-    c.texto(&format!("{:02}", s.pi + 1), l + 14.0, yb + 25.0, 13.0, Peso::Negrito, TINTA, Ancora::Meio, false);
+    c.texto(&s.numero, l + 14.0, yb + 25.0, 13.0, Peso::Negrito, TINTA, Ancora::Meio, false);
     c.texto(&nome, l + 40.0, yb + 19.0, 17.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
     c.texto(&descricao, l + 40.0, yb + 38.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     if obs {
         c.nota(l + 40.0 + nome.chars().count() as f32 * 11.6 + 10.0, yb + 3.0, false);
     }
-    let resumo = dominio::resumo(s.acoes);
-    let total = s.acoes.len().max(lista_len(s.p, "acoes"));
-    let ok = dominio::concluido(s.p);
+    let (resumo, total, ok) = (&s.resumo, s.total, s.ok);
     let px = (l + 40.0 + (nome.chars().count() as f32 * 11.6 + if obs { 30.0 } else { 0.0 }).max(descricao.chars().count() as f32 * 7.2) + 64.0).min(r - 330.0);
     let horas = if resumo.horas > 0.0 { format!(" · {}", tr_com("{horas} h de desenvolvimento", &[("horas", &resumo.horas.to_string())])) } else { String::new() };
     let contagem = format!("{}{horas}", tr_com("{concl}/{total} ações concluídas", &[("concl", &resumo.concl.to_string()), ("total", &total.to_string())]));
@@ -65,13 +79,13 @@ pub fn cabecalho(c: &Cena, ui: &mut Ui, s: &Secao) {
     c.fio(MEDIO, 1.0, (l, yb + 58.0), (if total > 0 { r - 144.0 } else { r }, yb + 58.0));
     if total > 0 {
         c.retangulo(r - 136.0, yb + 44.0, 132.0, 30.0, Some(PAPEL), Some((TINTA, 1.2)));
-        c.texto_liso(&tr("− Recolher").to_uppercase(), r - 70.0, yb + 63.0, 11.0, Peso::Normal, TINTA, Ancora::Meio);
+        let rotulo = if s.aberto { tr("− Recolher").to_string() } else { format!("+ {}", trn(total, "Abrir {n} ação", "Abrir {n} ações")) };
+        c.texto_liso(&rotulo.to_uppercase(), r - 70.0, yb + 63.0, 11.0, Peso::Normal, TINTA, Ancora::Meio);
     }
-    links(c, ui, s, px);
-}
-
-fn lista_len(v: &Value, campo: &str) -> usize {
-    v.get(campo).and_then(Value::as_array).map_or(0, Vec::len)
+    if s.principal {
+        links(c, ui, s, px);
+    }
+    resposta.clicked()
 }
 
 /// Os links do blueprint, em até duas linhas à direita (`↗ REPOSITÓRIO`); o que não cabe vira «+N LINKS».
@@ -124,10 +138,16 @@ fn links(c: &Cena, ui: &mut Ui, s: &Secao, px: f32) {
 /// As ações abertas, com as caixas marcáveis. Devolve o pedido de marcar, se houve clique.
 pub fn acoes(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
     let mut pedido = None;
-    let _ = hoje;
     let j = s.regua.janela;
+    if s.total == 0 {
+        c.texto(&tr("Sem ações · abra Editar para adicionar"), s.l + 40.0, s.y + PH + 8.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
+    }
     for pos in &s.disp.posicoes {
-        let f = &s.acoes[pos.i];
+        let f = s.acoes[pos.i];
+        if !s.aberto {
+            compacta(c, s, pos, f, hoje);
+            continue;
+        }
         let (x0, x1, w) = (pos.bx0, pos.bx0 + pos.bw, pos.bw);
         let fy = s.y + PH + s.disp.linha_y[pos.linha];
         let (by, bh) = (fy + 20.0, 26.0);
@@ -241,4 +261,25 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
     }
     let _ = rgba;
     pedido
+}
+
+/// A ação da seção recolhida: só a barra fina na linha dela, com o hachurado ou o andamento e os checkpoints (`!s.aberto` em render.js).
+fn compacta(c: &Cena, s: &Secao, pos: &super::disposicao::Posicao, f: &Acao, _hoje: i64) {
+    let (x0, w) = (pos.x0, (pos.x1 - pos.x0).max(6.0));
+    let by = s.y + PH - 12.0 + s.disp.linha_y[pos.linha];
+    match f.status {
+        Situacao::Planejado => c.moldura(x0, by, w, 10.0, MEDIO, 1.2, false),
+        Situacao::Andamento => c.retangulo(x0, by, w, 10.0, Some(PAPEL), Some((TINTA, 1.8))),
+        Situacao::Concluido => c.retangulo(x0, by, w, 10.0, Some(PAPEL), Some((TINTA, 1.2))),
+    }
+    match f.status {
+        Situacao::Concluido => c.hachura(x0 + 1.0, by + 1.0, w - 2.0, 8.0),
+        Situacao::Andamento => c.retangulo(x0 + 1.0, by + 1.0, ((w - 2.0) * f.pct).max(0.0), 8.0, Some(TINTA.gamma_multiply(0.9)), None),
+        Situacao::Planejado => {}
+    }
+    let j = s.regua.janela;
+    for m in f.checkpoints.iter().filter(|m| m.data.is_some_and(|d| d >= j.t0 && d < j.t1)) {
+        let mx = s.regua.xf(m.data.unwrap_or(0) as f32 + 0.5).clamp(s.l, s.r);
+        c.losango_r(mx, by + 5.0, 4.5, m.feito, 1.4);
+    }
 }

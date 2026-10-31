@@ -29,6 +29,8 @@ pub struct Plano {
 pub struct Acao {
     pub id: String,
     pub nome: String,
+    /// o projeto da ação (`projetoId`); vazio se não tem
+    pub projeto: String,
     /// a posição na lista de ações do blueprint (conta também as sem data): é o número da ação, `1.2`
     pub idx: usize,
     /// primeiro e último dia (desde 1970)
@@ -97,8 +99,59 @@ pub fn acoes_de(p: &Value) -> Vec<Acao> {
         let horas = lista(f, "planos").iter().map(|x| x.get("horas").and_then(Value::as_f64).unwrap_or(0.0) as f32).sum();
         let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { id: texto(m, "id").into(), nome: texto(m, "nome").into(), data: dia(texto(m, "data")), feito: feito(m) }).collect();
         let planos = lista(f, "planos").iter().map(|t| Plano { id: texto(t, "id").into(), texto: texto(t, "texto").into(), feito: feito(t) }).collect();
-        Some(Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), idx, a, b: b.max(a), status, pct, itens, horas, planos, checkpoints })
+        Some(Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), projeto: texto(f, "projetoId").into(), idx, a, b: b.max(a), status, pct, itens, horas, planos, checkpoints })
     }).collect()
+}
+
+/// Um grupo de ações do blueprint: um projeto (uma seção da folha) ou o «Geral» (id vazio).
+pub struct Grupo {
+    pub id: String,
+    pub nome: String,
+    pub descricao: String,
+    /// índices em `acoes_de(p)`
+    pub acoes: Vec<usize>,
+}
+
+/// O id do projeto da ação, ou vazio (Geral) se ela não tem projeto ou o projeto não existe mais (`projetoDaAcao`).
+fn projeto_da(p: &Value, f: &Acao) -> String {
+    if lista(p, "projetos").iter().any(|x| texto(x, "id") == f.projeto) { f.projeto.clone() } else { String::new() }
+}
+
+/// As seções do blueprint: os projetos pela data de início da primeira ação de cada um (empate: a ordem em que foram criados; sem ações vai depois) e,
+/// por último, o Geral se tiver ações. `None` se o blueprint não tem projetos (`gruposDoBlueprint` e `projetosOrdenados`).
+pub fn grupos(p: &Value, acoes: &[Acao]) -> Option<Vec<Grupo>> {
+    let projetos = lista(p, "projetos");
+    if projetos.is_empty() {
+        return None;
+    }
+    let do_grupo = |id: &str| -> Vec<usize> { acoes.iter().enumerate().filter(|(_, f)| projeto_da(p, f) == id).map(|(i, _)| i).collect() };
+    let mut ordem: Vec<(i64, usize, &Value)> = projetos.iter().enumerate().map(|(i, x)| (do_grupo(&texto(x, "id")).iter().map(|k| acoes[*k].a).min().unwrap_or(i64::MAX), i, x)).collect();
+    ordem.sort_by_key(|(ini, i, _)| (*ini, *i));
+    let mut grupos: Vec<Grupo> = ordem.into_iter().map(|(_, _, x)| Grupo { id: texto(x, "id").into(), nome: texto(x, "nome").into(), descricao: texto(x, "descricao").into(), acoes: do_grupo(&texto(x, "id")) }).collect();
+    let geral = do_grupo("");
+    if !geral.is_empty() {
+        grupos.push(Grupo { id: String::new(), nome: "Geral".into(), descricao: String::new(), acoes: geral });
+    }
+    Some(grupos)
+}
+
+/// O número da ação na folha (`numeroDaAcao`): `<projeto>.<posição no projeto>` com projetos (o Geral é o último), senão `<blueprint>.<posição>`.
+/// A posição conta todas as ações do blueprint, também as sem data.
+pub fn numero_da_acao(p: &Value, f: &Acao, pi: usize, acoes: &[Acao]) -> String {
+    match grupos(p, acoes) {
+        None => format!("{}.{}", pi + 1, f.idx + 1),
+        Some(gs) => {
+            let id = projeto_da(p, f);
+            let ordem = gs.iter().position(|g| g.id == id).map_or(gs.len() + 1, |k| k + 1);
+            let posicao = lista(p, "acoes").iter().filter(|x| projeto_da_json(p, x) == id).position(|x| texto(x, "id") == f.id).map_or(1, |k| k + 1);
+            format!("{ordem}.{posicao}")
+        }
+    }
+}
+
+fn projeto_da_json(p: &Value, a: &Value) -> String {
+    let id = texto(a, "projetoId");
+    if lista(p, "projetos").iter().any(|x| texto(x, "id") == id) { id.into() } else { String::new() }
 }
 
 /// O blueprint está concluído: tem ações e todas concluídas (o status efetivo, mesmo das que não têm datas).
@@ -116,7 +169,8 @@ pub struct Resumo {
     pub futuro: bool,
 }
 
-pub fn resumo(fs: &[Acao]) -> Resumo {
+pub fn resumo<'a>(fs: impl IntoIterator<Item = &'a Acao>) -> Resumo {
+    let fs: Vec<&Acao> = fs.into_iter().collect();
     let duracao: i64 = fs.iter().map(|f| f.b - f.a + 1).sum();
     let todas = !fs.is_empty() && fs.iter().all(|f| f.status == Situacao::Concluido);
     let media = if duracao > 0 { fs.iter().map(|f| (f.b - f.a + 1) as f32 * f.pct).sum::<f32>() / duracao as f32 } else { 0.0 };
@@ -177,6 +231,24 @@ mod testes {
         // o carimbo da folha: média dos blueprints (25%)
         let media = d["blueprints"].as_array().unwrap().iter().map(progresso).sum::<f32>() / 2.0;
         assert_eq!((media * 100.0).round() as i32, 25);
+    }
+
+    /// As seções vêm pela data de início (Piloto 05/10 antes de Entregador 28/10, mesmo criado depois) e o Geral por último; a ação 3 é a `2.1`.
+    #[test]
+    fn projetos_ordenam_por_inicio_e_o_geral_vai_por_ultimo() {
+        let p = serde_json::json!({ "projetos": [{ "id": "B", "nome": "Entregador" }, { "id": "A", "nome": "Piloto" }], "acoes": [
+            { "id": "a1", "nome": "x", "inicio": "2026-10-05", "fim": "2026-10-12", "projetoId": "A" },
+            { "id": "a2", "nome": "y", "inicio": "2026-10-13", "fim": "2026-10-27", "projetoId": "A" },
+            { "id": "a3", "nome": "z", "inicio": "2026-10-28", "fim": "2026-11-10", "projetoId": "B" },
+            { "id": "a4", "nome": "w", "inicio": "2026-10-20", "fim": "2026-11-02", "projetoId": "inexistente" } ] });
+        let fs = acoes_de(&p);
+        let gs = grupos(&p, &fs).unwrap();
+        assert_eq!(gs.iter().map(|g| g.id.as_str()).collect::<Vec<_>>(), ["A", "B", ""]);
+        assert_eq!(gs[2].acoes, [3], "projeto que não existe mais cai no Geral");
+        assert_eq!(numero_da_acao(&p, &fs[2], 0, &fs), "2.1");
+        assert_eq!(numero_da_acao(&p, &fs[1], 0, &fs), "1.2");
+        assert_eq!(numero_da_acao(&p, &fs[3], 0, &fs), "3.1");
+        assert!(grupos(&serde_json::json!({ "acoes": [] }), &[]).is_none());
     }
 
     #[test]

@@ -90,7 +90,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, abrir_w
 }
 
 /// O blueprint aberto. `cabecalho_fim`: o x onde termina o título/subtítulo (já com os 24 px de respiro) para decidir entre a barra cheia e a de ícones.
-pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, abrir_web: &mut Option<String>) {
+pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, abrir_web: &mut Option<String>) -> Option<&'static str> {
     let (direita, y) = (c.o.x + w - 64.0, c.o.y + 44.0);
     let compacta = (w - 64.0) - cabecalho_fim < BARRA_CHEIA;
     let comum = [Item::Icone("expandir"), Item::Icone("recolher"), Item::Icone("tela"), Item::Icone("foco")];
@@ -110,6 +110,7 @@ pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cab
         _ => {}
     }
     período(ui, c);
+    clique.filter(|n| matches!(*n, "expandir" | "recolher"))
 }
 
 /// O período (Dias | Horas e os filtros): os botões existem, o filtro ainda não.

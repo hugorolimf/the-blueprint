@@ -16,6 +16,9 @@ pub struct Posicao {
     /// o índice da ação na lista dada
     pub i: usize,
     pub rotulo: String,
+    /// o começo e o fim da ação na régua (a barra recolhida usa estes)
+    pub x0: f32,
+    pub x1: f32,
     pub bw: f32,
     pub bx0: f32,
     pub lx: f32,
@@ -64,8 +67,8 @@ pub fn linhas_do_plano(texto: &str, largura: usize) -> Vec<String> {
     linhas
 }
 
-/// Dispõe as ações visíveis do blueprint aberto. `numero` dá o `1.2` de cada ação; `colw` é a largura de uma coluna de planos.
-pub fn dispor(acoes: &[Acao], numero: impl Fn(&Acao) -> String, j: &Janela, l: f32, r: f32, colw: f32) -> Disposicao {
+/// Dispõe as ações de uma seção. `aberto`: com planos e checkpoints (senão só as barras compactas); `numero` dá o `1.2` de cada ação; `colw` é a largura de uma coluna de planos.
+pub fn dispor(acoes: &[&Acao], aberto: bool, numero: impl Fn(&Acao) -> String, j: &Janela, l: f32, r: f32, colw: f32) -> Disposicao {
     let x = |d: i64| l + (d - j.t0) as f32 / (j.t1 - j.t0).max(1) as f32 * (r - l);
     let mut posicoes: Vec<Posicao> = acoes.iter().enumerate().filter(|(_, f)| f.a < j.t1 && f.b >= j.t0).map(|(i, f)| {
         let rotulo = format!("{} · {}", numero(f), if f.nome.is_empty() { tr("SEM NOME") } else { &f.nome });
@@ -83,10 +86,11 @@ pub fn dispor(acoes: &[Acao], numero: impl Fn(&Acao) -> String, j: &Janela, l: f
         let linhas_planos: Vec<Vec<String>> = f.planos.iter().map(|t| linhas_do_plano(if t.texto.is_empty() { tr("sem texto") } else { &t.texto }, ((colw - 28.0) / 7.3).floor() as usize)).collect();
         let altura_planos: f32 = linhas_planos.iter().map(|ls| (ls.len() as f32 * 14.0 + 8.0).max(22.0)).sum();
         let alt = if ncol > 0 { 100.0 + 34.0 + altura_planos.max(nm as f32 * 22.0) + 44.0 } else { RH };
-        Posicao { i, rotulo, bw, bx0, lx, lw, bloco_w, linhas_planos, alt, linha: 0 }
+        Posicao { i, rotulo, x0, x1: x1.max(x0), bw, bx0, lx, lw, bloco_w, linhas_planos, alt, linha: 0 }
     }).collect();
     // a linha de cada ação: a primeira cujo fim ficou antes do começo dela (`linhas`)
-    let (de, ate) = (|p: &Posicao| p.lx.min(p.bx0), |p: &Posicao| (p.lx + p.lw).max(p.bx0 + p.bw + 56.0).max(p.lx + p.bloco_w) + 24.0);
+    let de = |p: &Posicao| if aberto { p.lx.min(p.bx0) } else { p.x0 };
+    let ate = |p: &Posicao| if aberto { (p.lx + p.lw).max(p.bx0 + p.bw + 56.0).max(p.lx + p.bloco_w) + 24.0 } else { p.x1 + 6.0 };
     let mut ordem: Vec<usize> = (0..posicoes.len()).collect();
     ordem.sort_by(|&a, &b| de(&posicoes[a]).total_cmp(&de(&posicoes[b])));
     let mut fins: Vec<f32> = Vec::new();
@@ -101,9 +105,11 @@ pub fn dispor(acoes: &[Acao], numero: impl Fn(&Acao) -> String, j: &Janela, l: f
         }
         posicoes[k].linha = linha;
     }
-    let mut alturas = vec![RH; fins.len()];
-    for p in &posicoes {
-        alturas[p.linha] = alturas[p.linha].max(p.alt);
+    let mut alturas = vec![if aberto { RH } else { 24.0 }; fins.len()];
+    if aberto {
+        for p in &posicoes {
+            alturas[p.linha] = alturas[p.linha].max(p.alt);
+        }
     }
     let mut linha_y = Vec::new();
     let mut corpo = 0.0;
@@ -111,7 +117,7 @@ pub fn dispor(acoes: &[Acao], numero: impl Fn(&Acao) -> String, j: &Janela, l: f
         linha_y.push(corpo);
         corpo += h;
     }
-    Disposicao { posicoes, linha_y, alto: if alturas.is_empty() { PH + 36.0 + FOLGA } else { PH + corpo + FOLGA } }
+    Disposicao { posicoes, linha_y, alto: if alturas.is_empty() { PH + 36.0 + FOLGA } else { PH + corpo + if aberto { 0.0 } else { 10.0 } + FOLGA } }
 }
 
 #[cfg(test)]
@@ -132,7 +138,10 @@ mod testes {
         let dados: serde_json::Value = serde_json::from_str(include_str!("../../../data.exemplo.json")).unwrap();
         let acoes = crate::dominio::acoes_de(&dados["blueprints"][0]);
         let j = crate::dominio::janela(&acoes, crate::documento::dia("2026-10-31").unwrap());
-        let d = dispor(&acoes, |f| format!("1.{}", f.idx + 1), &j, 70.0, 1194.0, 430.0);
+        let refs: Vec<&Acao> = acoes.iter().collect();
+        let d = dispor(&refs, true, |f| format!("1.{}", f.idx + 1), &j, 70.0, 1194.0, 430.0);
+        let fechada = dispor(&refs, false, |f| format!("1.{}", f.idx + 1), &j, 70.0, 1194.0, 430.0);
+        assert_eq!(fechada.alto, PH + 24.0 * fechada.linha_y.len() as f32 + 10.0 + FOLGA, "recolhida: linhas de 24 px");
         assert_eq!(d.posicoes.iter().map(|p| p.linha).collect::<Vec<_>>(), [0, 1, 2]);
         assert_eq!(d.linha_y[..2], [0.0, 244.0]);
         assert!(d.posicoes.iter().all(|p| p.bw >= BARRA_MIN && p.bx0 >= 70.0 && p.bx0 + p.bw <= 1194.0 + 0.01));
