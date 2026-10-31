@@ -9,6 +9,14 @@ publish = false
 # Fora do pacote `blueprint` da raiz: o `cargo test` e o CI de lá não compilam a interface nativa (ainda).
 [workspace]
 
+[lib]
+name = "blueprint_ui"
+path = "src/lib.rs"
+
+[[bin]]
+name = "blueprint-ui"
+path = "src/main.rs"
+
 [dependencies]
 eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts"] }
 egui = { version = "0.37.0", default-features = false, features = ["default_fonts"] }

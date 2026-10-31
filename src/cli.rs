@@ -65,6 +65,7 @@ pub fn executar(args: Vec<String>) -> i32 {
         ["watch"] => return crate::watch::executar(),
         ["doctor"] => return doctor::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
+        #[cfg(windows)]
         ["atualizando", ..] => return crate::janela::atualizando::executar(&args[1..]), // interno: a janela de progresso que o app abre ao atualizar
         ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),
         ["restaurar"] | ["restaurar", _] => return restaurar::executar(a.get(1).copied()),
@@ -120,9 +121,15 @@ pub fn executar(args: Vec<String>) -> i32 {
     }
 }
 
-/// Sem argumentos: o app com janela.
+/// Sem argumentos: o app com janela (WebView2 no Windows; a interface nativa nos outros sistemas).
+#[cfg(windows)]
 fn abrir_janela(dev: bool, link: Option<String>) -> i32 {
     crate::janela::abrir(dev, link)
+}
+
+#[cfg(not(windows))]
+fn abrir_janela(dev: bool, link: Option<String>) -> i32 {
+    crate::nativa::abrir(dev, link)
 }
 
 /// Liga o servidor e fica atendendo até o processo ser encerrado.

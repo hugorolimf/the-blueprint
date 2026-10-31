@@ -60,7 +60,7 @@ impl Ambiente {
             claude: config.unwrap_or_else(|| home.join(".claude")),
             codex: var("CODEX_HOME").unwrap_or_else(|| home.join(".codex")),
             cwd: std::env::current_dir().unwrap_or_default(),
-            instancia: crate::janela::instancia::aberta(),
+            instancia: crate::instancia::aberta(),
         }
     }
 }

@@ -12,7 +12,7 @@ pub fn abrir() {
             dizer("A página veio sem o canvas.");
             return;
         };
-        let inicio = eframe::WebRunner::new().start(canvas, eframe::WebOptions::default(), Box::new(|cc| Ok(Box::new(crate::app::App::nova(cc, crate::rede::servidor()))))).await;
+        let inicio = eframe::WebRunner::new().start(canvas, eframe::WebOptions::default(), Box::new(|cc| Ok(Box::new(crate::app::App::nova(cc, crate::rede::servidor(), Box::new(|_| {})))))).await;
         match inicio {
             Ok(()) => {
                 if let Some(mensagem) = documento().and_then(|d| d.get_element_by_id(CARREGANDO)) {

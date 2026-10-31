@@ -21,6 +21,18 @@ pub struct Servidor {
     fio: Option<JoinHandle<()>>,
 }
 
+/// Liga o servidor do app; se a porta (3000) estiver ocupada, deixa o sistema escolher outra.
+pub fn iniciar_ou_porta_livre(mut config: Config) -> Resultado<Servidor> {
+    match iniciar(config.clone()) {
+        Ok(s) => Ok(s),
+        Err(_) if config.porta != 0 => {
+            config.porta = 0;
+            iniciar(config)
+        }
+        Err(e) => Err(e),
+    }
+}
+
 /// Abre o banco, liga o servidor e começa a atender em segundo plano. Com `porta = 0` o sistema escolhe uma porta livre.
 pub fn iniciar(config: Config) -> Resultado<Servidor> {
     let dados = abrir_dados(&config)?;

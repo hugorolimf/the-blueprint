@@ -49,7 +49,7 @@ pub fn executar(escolha: Option<&str>) -> i32 {
 /// O app (mutex da instância única) ou um `blueprint serve` (responde em BLUEPRINT_URL, padrão a porta 3000).
 fn app_aberto() -> bool {
     // a trava fica com este processo até ele sair: o app também não abre no meio da restauração
-    if crate::janela::instancia::garantir() == crate::janela::instancia::Instancia::JaAberta {
+    if crate::instancia::garantir() == crate::instancia::Instancia::JaAberta {
         return true;
     }
     crate::mcp::cliente::requisitar_em(&crate::mcp::stdio::base(), "GET", "/api/atualizacao", None).is_ok()

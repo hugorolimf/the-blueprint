@@ -8,11 +8,11 @@ Code read at `f65fb76` (version 0.3.0); web sources consulted on 2026-10-27.
 
 ## Status (2026-10-31)
 
-The window now runs on Linux (checked on Wayland): the data folder (`$XDG_DATA_HOME` or `~/.local/share`), the local day, the single-instance lock (`flock`),
-the icon (the same `icone.ico`), the WebView inside the window's GTK box and the terminal launcher (`xdg-terminal-exec`) have a Linux branch, and the window code
-is no longer `cfg(windows)`. The WebKitGTK window is not fast enough, though (15 fps with `WEBKIT_DISABLE_DMABUF_RENDERER=1`, which the app sets on Linux because
-NVIDIA on Wayland otherwise closes it with "Error 71"; 60 fps at best without it), so the way forward is the native interface in `ui/` (egui, one code for Windows, Linux, the browser
-and later macOS). Still Windows-only: the app's terminal (ConPTY), the updater and installer, and the sharing tunnel.
+Outside Windows the app window is the native interface (`ui/`, egui): `blueprint` starts the server and opens that window in the same process. There is no WebView
+outside Windows (the WebKitGTK window ran at 15 fps with the DMABUF workaround NVIDIA on Wayland needs, and 60 fps at best), so WebKitGTK and the GTK libraries are no longer
+needed to build or run. The data folder (`$XDG_DATA_HOME` or `~/.local/share`), the local day, the single-instance lock (`flock`) and the terminal launcher (`xdg-terminal-exec`)
+have a Linux branch. The same `ui/` code runs in the browser as WebAssembly and is the way to macOS later. Not outside Windows yet: the tray icon, the team invite window, the
+app's terminal (ConPTY), the updater and installer, and the sharing tunnel. Only the Entrada screens are native so far; the blueprint sheet still opens in the web version.
 
 ## What already works outside Windows (measured)
 
@@ -51,16 +51,6 @@ Hours are agent hours per system, from reading the code; Linux and macOS are clo
 
 **Total, first usable build:** about **52 h for Linux** and **51 h for macOS**, plus about **6 h shared** (data folder, scripts).
 Dropping the app's terminal (external terminal only) saves 8 h per system.
-
-## The window outside Windows (CI job)
-
-The `janela-fora-do-windows` job in `.github/workflows/test.yml` installs WebKitGTK, GTK and the tray library on Ubuntu, removes the
-`cfg(windows)` gate from the window **only inside the job**, runs `cargo check --bin blueprint` on Ubuntu and macOS, prints the errors per
-file and uploads the log as the `janela-Linux` and `janela-macOS` artifacts. It has `continue-on-error: true`: it records, never fixes.
-
-Result: **pending.** The job runs on the next push to `main` (or pull request); its error list replaces the estimates of the first five
-rows above. Expected from reading the code: errors only in `instancia.rs`, `icone.rs`, `equipe.rs`, `console.rs` and `atualizando/`
-(the `windows_sys` imports), not in the `wry`/`tao` calls themselves.
 
 ## Platform requirements (official sources, consulted 2026-10-27)
 

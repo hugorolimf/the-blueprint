@@ -3,6 +3,7 @@
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    #[cfg(windows)]
     if args.is_empty() {
         blueprint::janela::console::soltar_console_proprio();
     }

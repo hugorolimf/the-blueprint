@@ -8,9 +8,6 @@ repository = "https://github.com/hugorolimf/the-blueprint"
 publish = false
 
 [dependencies]
-tao = "0.37.1"
-tray-icon = "0.26.1"
-wry = "0.57.0"
 flate2 = "1.1.10"
 getrandom = "0.3.4"
 rusqlite = { version = "0.40.2", features = ["bundled"] }
@@ -27,7 +24,13 @@ opt-level = "z"
 
 [target."cfg(unix)".dependencies]
 libc = "0.2"
-png = "0.18"
+
+# fora do Windows a janela é a interface nativa (ui/, egui), no mesmo processo do servidor
+[target."cfg(not(windows))".dependencies]
+blueprint-ui = { path = "ui" }
 
 [target."cfg(windows)".dependencies]
+tao = "0.37.1"
+tray-icon = "0.26.1"
+wry = "0.57.0"
 windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_Globalization", "Win32_Security", "Win32_Storage_FileSystem", "Win32_System_Console", "Win32_System_JobObjects", "Win32_System_Pipes", "Win32_System_SystemInformation", "Win32_System_Threading", "Win32_UI_WindowsAndMessaging"] }

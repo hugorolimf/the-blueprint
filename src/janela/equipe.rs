@@ -8,7 +8,6 @@ use crate::registrar::conectar::{executar, validar_endereco};
 use tao::event_loop::{EventLoopProxy, EventLoopWindowTarget};
 use tao::window::{Window, WindowBuilder};
 use wry::{WebContext, WebView};
-#[cfg(windows)]
 use windows_sys::Win32::UI::WindowsAndMessaging::{MessageBoxW, IDYES, MB_ICONQUESTION, MB_OK, MB_SETFOREGROUND, MB_YESNO};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,44 +44,21 @@ fn host(origem: &str) -> &str {
     origem.split_once("://").map_or(origem, |(_, h)| h)
 }
 
-const TITULO: &str = "The Blueprint (beta)";
-
-/// Caixa de diálogo nativa; bloqueia a thread que chama (nunca chame no laço da janela).
-#[cfg(windows)]
-pub(super) fn perguntar(texto: &str) -> bool {
-    let (t, c) = (largo(texto), largo(TITULO));
-    // SAFETY: as duas strings terminam em zero e vivem durante a chamada; sem janela dona (ponteiro nulo).
-    unsafe { MessageBoxW(std::ptr::null_mut(), t.as_ptr(), c.as_ptr(), MB_YESNO | MB_ICONQUESTION | MB_SETFOREGROUND) == IDYES }
-}
-
-#[cfg(windows)]
-pub(super) fn avisar(texto: &str) {
-    let (t, c) = (largo(texto), largo(TITULO));
-    // SAFETY: igual a `perguntar`.
-    unsafe { MessageBoxW(std::ptr::null_mut(), t.as_ptr(), c.as_ptr(), MB_OK | MB_SETFOREGROUND) };
-}
-
-#[cfg(windows)]
 fn largo(texto: &str) -> Vec<u16> {
     texto.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
-/// Fora do Windows o diálogo é o do ambiente (zenity ou kdialog). Sem nenhum deles a pergunta é recusada: nada abre sem uma pergunta nativa.
-#[cfg(not(windows))]
-fn dialogo(zenity: &str, kdialog: &str, texto: &str) -> bool {
-    use std::process::Command;
-    let z = Command::new("zenity").args([zenity, "--no-markup", "--title", TITULO, "--text", texto]).status();
-    z.or_else(|_| Command::new("kdialog").args(["--title", TITULO, kdialog, texto]).status()).is_ok_and(|s| s.success())
-}
-
-#[cfg(not(windows))]
+/// Caixa de diálogo do Windows; bloqueia a thread que chama (nunca chame no laço da janela).
 pub(super) fn perguntar(texto: &str) -> bool {
-    dialogo("--question", "--yesno", texto)
+    let (t, c) = (largo(texto), largo("The Blueprint (beta)"));
+    // SAFETY: as duas strings terminam em zero e vivem durante a chamada; sem janela dona (ponteiro nulo).
+    unsafe { MessageBoxW(std::ptr::null_mut(), t.as_ptr(), c.as_ptr(), MB_YESNO | MB_ICONQUESTION | MB_SETFOREGROUND) == IDYES }
 }
 
-#[cfg(not(windows))]
 pub(super) fn avisar(texto: &str) {
-    dialogo("--info", "--msgbox", texto);
+    let (t, c) = (largo(texto), largo("The Blueprint (beta)"));
+    // SAFETY: igual a `perguntar`.
+    unsafe { MessageBoxW(std::ptr::null_mut(), t.as_ptr(), c.as_ptr(), MB_OK | MB_SETFOREGROUND) };
 }
 
 /// Pergunta se abre o convite e só então manda o laço da janela abrir (recusou: só traz a janela principal).

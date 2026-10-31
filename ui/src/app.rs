@@ -7,7 +7,9 @@ use crate::rede::{self, Falha, Msg};
 use crate::telas::{self, Acao, Tela, Vista};
 use crate::{fonte, tema};
 use serde_json::Value;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::Arc;
 
 enum Estado {
     Carregando,
@@ -23,6 +25,8 @@ pub struct App {
     gravando: Option<Value>,
     envio: Sender<Msg>,
     recebe: Receiver<Msg>,
+    /// alguém pediu a janela à frente (`Mostrar`)
+    mostrar: Arc<AtomicBool>,
     #[cfg(not(target_arch = "wasm32"))]
     captura: Option<crate::captura::Captura>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -30,8 +34,16 @@ pub struct App {
 }
 
 impl App {
-    pub fn nova(cc: &eframe::CreationContext<'_>, servidor: String) -> App {
+    pub fn nova(cc: &eframe::CreationContext<'_>, servidor: String, ao_abrir: Box<dyn FnOnce(crate::Mostrar)>) -> App {
         let (envio, recebe) = channel();
+        let mostrar = Arc::new(AtomicBool::new(false));
+        ao_abrir(Box::new({
+            let (mostrar, ctx) = (mostrar.clone(), cc.egui_ctx.clone());
+            move || {
+                mostrar.store(true, Ordering::SeqCst);
+                ctx.request_repaint();
+            }
+        }));
         #[cfg_attr(target_arch = "wasm32", allow(unused_mut))]
         let mut app = App {
             servidor,
@@ -40,6 +52,7 @@ impl App {
             gravando: None,
             envio,
             recebe,
+            mostrar,
             #[cfg(not(target_arch = "wasm32"))]
             captura: crate::captura::do_ambiente(),
             #[cfg(not(target_arch = "wasm32"))]
@@ -162,6 +175,10 @@ impl eframe::App for App {
         }
         #[cfg(not(target_arch = "wasm32"))]
         crate::roteiro::escala(&ctx);
+        if self.mostrar.swap(false, Ordering::SeqCst) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        }
         self.receber(&ctx);
         let mut pedida = None;
         let ocupado = self.gravando.is_some();

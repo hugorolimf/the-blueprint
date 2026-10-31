@@ -18,4 +18,4 @@ pub(crate) mod tests;
 
 pub use config::Config;
 pub use estado::Estado;
-pub use servidor::{escutar_convidados, iniciar, Servidor};
+pub use servidor::{escutar_convidados, iniciar, iniciar_ou_porta_livre, Servidor};

@@ -2,6 +2,8 @@
 
 [Back to the README](../README.md) · [Português](pt-BR/development.md)
 
+The interface is moving to a native crate (egui, one code for Windows, Linux and the browser): see [ui/README.md](../ui/README.md) to run and test it. `web/` is legacy until each screen is migrated.
+
 ```
 cargo dev                                    # the app in dev mode, with automatic reload (needs cargo-watch)
 ```

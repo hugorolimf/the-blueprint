@@ -1,4 +1,4 @@
-//! Instância única: a segunda execução não abre outro app, só pede à primeira que traga a janela à frente.
+//! Instância única do app com janela (`janela` no Windows, `nativa` nos outros): a segunda execução não abre outro app, só pede à primeira que traga a janela à frente.
 //! A trava é um mutex nomeado no Windows e um `flock` em `instancia.lock` nos outros sistemas (os dois somem sozinhos se o app cair); a porta do servidor da primeira
 //! fica num arquivo `porta` na pasta do app, porque a porta pode não ser a 3000 (se estava ocupada, o app usa outra).
 use crate::http::config::pasta_do_app;

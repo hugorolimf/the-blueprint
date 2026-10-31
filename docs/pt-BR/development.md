@@ -2,6 +2,8 @@
 
 [Voltar ao README](../../README.pt-BR.md) · [English](../development.md)
 
+A interface está migrando para um crate nativo (egui, o mesmo código no Windows, no Linux e no navegador): veja [ui/README.md](../../ui/README.md) para rodar e testar. O `web/` é legado até cada tela migrar.
+
 ```
 cargo dev                                    # o app em modo dev, com recarga automática (precisa do cargo-watch)
 ```

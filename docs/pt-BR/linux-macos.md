@@ -8,11 +8,11 @@ Código lido em `f65fb76` (versão 0.3.0); fontes da web consultadas em 2026-10-
 
 ## Situação (2026-10-31)
 
-A janela agora roda no Linux (conferido no Wayland): a pasta de dados (`$XDG_DATA_HOME` ou `~/.local/share`), o dia local, a trava de instância única (`flock`),
-o ícone (o mesmo `icone.ico`), o WebView dentro da caixa GTK da janela e o lançador de terminal (`xdg-terminal-exec`) têm um ramo para Linux, e o código da janela
-deixou de ser `cfg(windows)`. A janela com WebKitGTK, porém, não é rápida o bastante (15 fps com `WEBKIT_DISABLE_DMABUF_RENDERER=1`, que o app define no Linux porque a NVIDIA
-no Wayland fecha a janela com "Error 71"; 60 fps no máximo sem ele), então o caminho é a interface nativa de `ui/` (egui, o mesmo código no Windows, no Linux, no navegador
-e depois no macOS). Continuam só no Windows: o terminal do app (ConPTY), o atualizador e o instalador, e o túnel de compartilhamento.
+Fora do Windows a janela do app é a interface nativa (`ui/`, egui): o `blueprint` liga o servidor e abre essa janela no mesmo processo. Não há WebView fora do Windows
+(a janela com WebKitGTK rodava a 15 fps com o contorno do DMABUF que a NVIDIA no Wayland exige, e a 60 fps no máximo), então o WebKitGTK e as bibliotecas GTK
+deixaram de ser necessários para compilar e rodar. A pasta de dados (`$XDG_DATA_HOME` ou `~/.local/share`), o dia local, a trava de instância única (`flock`) e o lançador de terminal
+(`xdg-terminal-exec`) têm um ramo para Linux. O mesmo código de `ui/` roda no navegador como WebAssembly e é o caminho para o macOS depois. Ainda não fora do Windows: o ícone da bandeja,
+a janela de convite de equipe, o terminal do app (ConPTY), o atualizador e o instalador, e o túnel de compartilhamento. Só as telas da Entrada são nativas por enquanto; a folha do blueprint ainda abre na versão web.
 
 ## O que já funciona fora do Windows (medido)
 
@@ -51,16 +51,6 @@ Horas de agente por sistema, pela leitura do código; Linux e macOS ficam pareci
 
 **Total, primeira versão usável:** cerca de **52 h no Linux** e **51 h no macOS**, mais cerca de **6 h em comum** (pasta de dados, scripts).
 Descartar o terminal do app (só o terminal externo) economiza 8 h por sistema.
-
-## A janela fora do Windows (job de CI)
-
-O job `janela-fora-do-windows` em `.github/workflows/test.yml` instala WebKitGTK, GTK e a biblioteca da bandeja no Ubuntu, tira o
-`cfg(windows)` da janela **só dentro do job**, roda `cargo check --bin blueprint` no Ubuntu e no macOS, mostra os erros por arquivo e
-sobe o log como os artefatos `janela-Linux` e `janela-macOS`. Tem `continue-on-error: true`: registra, nunca corrige.
-
-Resultado: **pendente.** O job roda no próximo push para o `main` (ou pull request); a lista de erros dele substitui as estimativas das
-cinco primeiras linhas acima. O esperado pela leitura do código: erros só em `instancia.rs`, `icone.rs`, `equipe.rs`, `console.rs` e
-`atualizando/` (os imports de `windows_sys`), não nas chamadas do `wry`/`tao` em si.
 
 ## Requisitos de cada sistema (fontes oficiais, consultadas em 2026-10-27)
 
