@@ -1,5 +1,5 @@
-//! O app como aplicativo do Windows: janela nativa (WebView2, via `wry` e `tao`) apontada para o servidor local, ícone na bandeja,
-//! instância única e dados em %APPDATA%\Blueprint\. Só existe no Windows. A janela é só a tela: tudo (dados, MCP, protótipos) é do servidor,
+//! O app como aplicativo de desktop: janela nativa (WebView2 no Windows, WebKitGTK no Linux, via `wry` e `tao`) apontada para o servidor local, ícone na bandeja,
+//! instância única e dados na pasta do app (`pasta_do_app`). A janela é só a tela: tudo (dados, MCP, protótipos) é do servidor,
 //! que continua de pé com a janela fechada, e por isso o agente segue falando com o app.
 pub mod atualizando;
 pub mod bandeja;
@@ -49,9 +49,18 @@ fn falha(msg: impl std::fmt::Display) -> Erro {
 
 /// Abre o link num navegador de verdade (a janela do app só mostra o próprio app).
 fn abrir_no_navegador(url: &str) {
-    use std::os::windows::process::CommandExt;
-    if url.starts_with("http://") || url.starts_with("https://") {
+    if !(url.starts_with("http://") || url.starts_with("https://")) {
+        return;
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
         let _ = std::process::Command::new("rundll32").args(["url.dll,FileProtocolHandler", url]).creation_flags(0x0800_0000).spawn(); // sem janela de console
+    }
+    #[cfg(not(windows))]
+    {
+        let abrir = if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+        let _ = std::process::Command::new(abrir).arg(url).stdin(std::process::Stdio::null()).stdout(std::process::Stdio::null()).stderr(std::process::Stdio::null()).spawn();
     }
 }
 
@@ -59,7 +68,7 @@ fn abrir_no_navegador(url: &str) {
 /// `origem` é até onde a página pode navegar (o servidor local, ou o da equipe); só a janela da equipe (https) aceita o IPC `conectar`.
 fn criar_webview(window: &Window, contexto: &mut WebContext, url: &str, origem: &str, dev: bool, avisa: impl Fn() + 'static, proxy: EventLoopProxy<Evento>) -> Result<WebView, wry::Error> {
     let (origem, origem_ipc) = (origem.to_string(), origem.to_string());
-    WebViewBuilder::new_with_web_context(contexto)
+    let construtor = WebViewBuilder::new_with_web_context(contexto)
         .with_devtools(dev) // F12 só no modo dev
         .with_url(url)
         .with_background_color(icone::PAPEL) // o fundo do tema desde o primeiro quadro: sem flash branco
@@ -85,8 +94,21 @@ fn criar_webview(window: &Window, contexto: &mut WebContext, url: &str, origem: 
         .with_new_window_req_handler(|destino, _| {
             abrir_no_navegador(&destino);
             NewWindowResponse::Deny
-        })
-        .build(window)
+        });
+    montar(construtor, window)
+}
+
+/// Põe o WebView na janela. No Linux ele vai dentro da caixa GTK da janela (é o que funciona no X11 e no Wayland); nos outros sistemas, direto na janela.
+pub(super) fn montar(construtor: WebViewBuilder, window: &Window) -> Result<WebView, wry::Error> {
+    #[cfg(target_os = "linux")]
+    {
+        use tao::platform::unix::WindowExtUnix;
+        use wry::WebViewBuilderExtUnix;
+        let caixa = window.default_vbox().ok_or_else(|| wry::Error::Io(std::io::Error::other("a janela não tem caixa GTK")))?;
+        construtor.build_gtk(caixa)
+    }
+    #[cfg(not(target_os = "linux"))]
+    construtor.build(window)
 }
 
 /// Liga o servidor; se a porta (3000) estiver ocupada, deixa o sistema escolher outra.
@@ -105,6 +127,11 @@ fn iniciar_servidor(mut config: Config) -> Resultado<Servidor> {
 /// `dev` (`blueprint dev`): o mesmo app, mas com a interface lida da pasta do projeto, F12 e recarga ao salvar; fechar a janela encerra tudo.
 /// `link`: o `blueprint://convite?…` que o navegador entregou (equipe.rs); um link que não vale abre o app como sem link.
 pub fn abrir(dev: bool, link: Option<String>) -> i32 {
+    // Linux: o renderizador DMABUF do WebKitGTK derruba a janela no Wayland com placa NVIDIA ("Error 71"); só vale se o usuário não decidiu o contrário
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    }
     let convite = link.as_deref().and_then(equipe::convite_do_link);
     if instancia::garantir() == Instancia::JaAberta {
         if dev {

@@ -6,6 +6,14 @@ A survey, not a promise: what it would take to run The Blueprint outside Windows
 The decision to support Linux or macOS (or not) belongs to the maintainer; no implementation work starts without it.
 Code read at `f65fb76` (version 0.3.0); web sources consulted on 2026-10-27.
 
+## Status (2026-10-31)
+
+The window now runs on Linux (checked on Wayland): the data folder (`$XDG_DATA_HOME` or `~/.local/share`), the local day, the single-instance lock (`flock`),
+the icon (the same `icone.ico`), the WebView inside the window's GTK box and the terminal launcher (`xdg-terminal-exec`) have a Linux branch, and the window code
+is no longer `cfg(windows)`. The WebKitGTK window is not fast enough, though (15 fps with `WEBKIT_DISABLE_DMABUF_RENDERER=1`, which the app sets on Linux because
+NVIDIA on Wayland otherwise closes it with "Error 71"; 60 fps at best without it), so the way forward is the native interface in `ui/` (egui, one code for Windows, Linux, the browser
+and later macOS). Still Windows-only: the app's terminal (ConPTY), the updater and installer, and the sharing tunnel.
+
 ## What already works outside Windows (measured)
 
 - The CI `rust (ubuntu-latest)` job runs `cargo test --lib --locked` and passes (run 40504789617, commit `f65fb76`, 2026-10-27).

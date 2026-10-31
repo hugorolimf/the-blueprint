@@ -100,6 +100,8 @@ version = "0.4.0"
 dependencies = [
  "flate2",
  "getrandom",
+ "libc",
+ "png",
  "rusqlite",
  "serde_json",
  "sha2",

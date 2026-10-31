@@ -105,7 +105,7 @@ pub(super) fn em_sessao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, base:
 }
 
 /// O lançador de verdade: Windows Terminal (`wt -d <pasta> <exe> claude <prompt> --canal`; `--canal` liga o canal da sessão, ver `cli/claude.rs`) se existir no PATH; senão um console novo, direto no processo (sem passar pelo
-/// cmd.exe, que leria `&` e `|` dos nomes). Não espera o filho. shortcut: só Windows (o app é só Windows); em outro sistema as flags não existem e abre sem elas.
+/// cmd.exe, que leria `&` e `|` dos nomes). Não espera o filho. Fora do Windows abre o terminal do ambiente (xdg-terminal-exec).
 pub(crate) fn abrir_terminal(pasta: &Path, exe: &Path, prompt: &str) -> Result<&'static str, String> {
     abrir_terminal_com(pasta, exe, prompt, "--canal")
 }
@@ -117,6 +117,15 @@ pub(crate) fn argumentos_do_wt(pasta: &Path, exe: &Path, prompt: &str, flag: &st
 
 /// `abrir_terminal` com a flag de `blueprint claude` que a sessão pede.
 pub(crate) fn abrir_terminal_com(pasta: &Path, exe: &Path, prompt: &str, flag: &str) -> Result<&'static str, String> {
+    // fora do Windows: o terminal padrão do ambiente (xdg-terminal-exec, o do Omarchy) ou o x-terminal-emulator, já na pasta, rodando o exe
+    #[cfg(not(windows))]
+    for (terminal, antes) in [("xdg-terminal-exec", &[][..]), ("x-terminal-emulator", &["-e"][..])] {
+        if let Some(caminho) = crate::registrar::procurar(terminal) {
+            let mut c = Command::new(caminho);
+            c.args(antes).arg(exe).arg("claude").arg(prompt).arg(flag).current_dir(pasta);
+            return c.spawn().map(|_| terminal).map_err(|e| format!("{terminal} em {}: {e}", pasta.display()));
+        }
+    }
     let mut falha_wt = String::new();
     if let Some(wt) = crate::registrar::procurar("wt") {
         let mut c = Command::new(&wt);

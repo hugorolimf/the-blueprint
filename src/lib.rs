@@ -14,7 +14,6 @@ mod hook_extras;
 mod hook_subagentes;
 pub mod http;
 pub mod idioma;
-#[cfg(windows)]
 pub mod janela;
 pub mod mcp;
 pub mod blueprint;

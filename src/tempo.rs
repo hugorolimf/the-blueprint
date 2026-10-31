@@ -46,11 +46,19 @@ fn dia_local() -> (i64, u32, u32) {
     (i64::from(t.wYear), u32::from(t.wMonth), u32::from(t.wDay))
 }
 
-/// Fora do Windows usa o dia em UTC (o app é para Windows; isto só deixa o código compilar e testar em outro sistema).
+/// Fora do Windows, o dia no fuso do sistema pela libc.
 #[cfg(not(windows))]
 fn dia_local() -> (i64, u32, u32) {
-    let ms = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_millis() as i64).unwrap_or(0);
-    civil(ms.div_euclid(86_400_000))
+    let segundos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs() as libc::time_t).unwrap_or(0);
+    // SAFETY: `tm` é só números e `localtime_r` preenche a estrutura inteira; ao falhar devolvemos o dia em UTC.
+    let t = unsafe {
+        let mut t: libc::tm = std::mem::zeroed();
+        if libc::localtime_r(&segundos, &mut t).is_null() {
+            return civil(i64::from(segundos).div_euclid(86_400));
+        }
+        t
+    };
+    (i64::from(t.tm_year) + 1900, t.tm_mon as u32 + 1, t.tm_mday as u32)
 }
 
 /// O dia de hoje no fuso do usuário, `aaaa-mm-dd` (o `hojeIso()` do plano.mjs).

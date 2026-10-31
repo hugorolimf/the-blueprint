@@ -13,7 +13,8 @@ The Blueprint (beta), a local-first roadmap in Rust (`blueprint.exe`) with a web
 | `src/mcp/` | the queue (read from memory, saved in the database), MCP actions, agent activity, SSE, `ferramentas.json` and `instrucoes.txt` (the source of truth of the MCP, written in English) |
 | `src/http/` | the synchronous HTTP server (`tiny_http`), pure routes, static files with ETag and gzip, the versioned `/api/dados` |
 | `src/janela/` | the WebView2 window, tray and single instance (Windows only) |
-| `web/`, `blueprint.html` | the interface: CSS in `web/css`, classic scripts in `web/js` in the order listed in `blueprint.html`, language catalogs in `web/i18n` |
+| `ui/` | the native interface (egui): one crate that runs as a window on Windows and Linux and in the browser as WebAssembly; see [ui/README.md](ui/README.md). It replaces `web/` screen by screen |
+| `web/`, `blueprint.html` | the legacy web interface, until each screen is migrated to `ui/`: CSS in `web/css`, classic scripts in `web/js` in the order listed in `blueprint.html`, language catalogs in `web/i18n` |
 | `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | the isometric kit (Anatomy) and figures; they run in the browser |
 | `skills/blueprint-planejamento/` | the guide the agent reads through the MCP (`guia_de_planejamento`), in English |
 | `scripts/` | end-to-end checks (HTTP contract, Edge e2e, mutations, measurements, installer, the video recorder) |
@@ -35,7 +36,7 @@ node scripts/capturas.mjs --comparar
 - Run tests and builds only when they can finish in under one minute; stop any that reach the limit and report what was not verified.
 
 - Files of at most 350 lines (ceiling 500 with the reason at the top). One file, one responsibility.
-- Few dependencies; no framework or bundler in the interface.
+- Few dependencies. The interface is native (`ui/`, egui, one code for every system); `web/` is legacy: no new screens there, and no framework or bundler in it.
 - **No emojis. Figures are drawn with Anatomy. The app's theme applies everywhere** (screens, prototypes, videos, documents).
 - Every user-visible text goes through `tr()` and has an English catalog entry (`web/i18n`); documentation is English first, with Portuguese in `docs/pt-BR/`.
 - Security: `/api/mcp/*` loopback only, `Host` and `Origin` checked, every POST `application/json`; prototypes in an opaque-origin `iframe sandbox="allow-scripts"` (never `allow-same-origin`). What the agent sends is a proposal; completing requires evidence. Writes to `/api/dados` carry `If-Match`.

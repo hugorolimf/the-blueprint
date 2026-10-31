@@ -19,9 +19,10 @@ const args = process.argv.slice(2);
 const porta = Number(args.find((a) => a.startsWith("--porta="))?.split("=")[1] ?? args[args.indexOf("--porta") + 1] ?? 3917) || 3917;
 const interna = porta + 1;
 const DEV = join(RAIZ, ".dev");
-const EXE_COMPILADO = join(RAIZ, "target", "debug", "blueprint.exe");
+const EXE = process.platform === "win32" ? ".exe" : "";
+const EXE_COMPILADO = join(RAIZ, "target", "debug", `blueprint${EXE}`);
 // o servidor roda de uma cópia: o cargo não consegue regravar um .exe em uso no Windows
-const EXE_EM_USO = join(DEV, "blueprint-dev.exe");
+const EXE_EM_USO = join(DEV, `blueprint-dev${EXE}`);
 const log = (m) => console.log(`\x1b[36m[dev]\x1b[0m ${m}`);
 
 if (args.includes("--limpar")) { rmSync(DEV, { recursive: true, force: true }); log("banco de desenvolvimento apagado"); }
@@ -160,5 +161,9 @@ process.on("SIGTERM", sair);
 process.on("exit", () => servidor?.kill());
 
 await reconstruir("primeira compilação");
-if (args.includes("--abrir") && servidor) spawn("cmd", ["/c", "start", "", `http://127.0.0.1:${porta}`], { windowsHide: true, stdio: "ignore" });
+if (args.includes("--abrir") && servidor) {
+  const url = `http://127.0.0.1:${porta}`;
+  const [cmd, ...resto] = { win32: ["cmd", "/c", "start", ""], darwin: ["open"] }[process.platform] ?? ["xdg-open"];
+  spawn(cmd, [...resto, url], { windowsHide: true, stdio: "ignore", detached: true }).unref();
+}
 log("pronto: edite web/, kit/, src/… e salve; Ctrl+C para sair");

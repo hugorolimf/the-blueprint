@@ -10,7 +10,7 @@ use std::path::Path;
 
 pub(crate) const USO: &str = concat!(
     "uso:\n",
-    "  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam em %APPDATA%\\Blueprint\n",
+    "  blueprint                                 abre o app (janela, bandeja e servidor); os dados ficam na pasta do app (%APPDATA%\\Blueprint no Windows, ~/.local/share/Blueprint nos outros)\n",
     "  blueprint blueprint://convite?u=<endereço>&s=<segredo>  o link de convite da equipe, entregue pelo navegador (o instalador registra o protocolo)\n",
     "  blueprint dev                            o app para desenvolver: interface lida da pasta do projeto, F12 e recarga ao salvar (feche o app antes)\n",
     "  blueprint serve                          liga o servidor (HOST, PORT, BLUEPRINT_DB, DADOS_ARQ, PROTOTIPOS_DIR, MCP_REDE)\n",
@@ -65,7 +65,6 @@ pub fn executar(args: Vec<String>) -> i32 {
         ["watch"] => return crate::watch::executar(),
         ["doctor"] => return doctor::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
-        #[cfg(windows)]
         ["atualizando", ..] => return crate::janela::atualizando::executar(&args[1..]), // interno: a janela de progresso que o app abre ao atualizar
         ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),
         ["restaurar"] | ["restaurar", _] => return restaurar::executar(a.get(1).copied()),
@@ -121,16 +120,9 @@ pub fn executar(args: Vec<String>) -> i32 {
     }
 }
 
-/// Sem argumentos: o app com janela (Windows).
-#[cfg(windows)]
+/// Sem argumentos: o app com janela.
 fn abrir_janela(dev: bool, link: Option<String>) -> i32 {
     crate::janela::abrir(dev, link)
-}
-
-#[cfg(not(windows))]
-fn abrir_janela(_dev: bool, _link: Option<String>) -> i32 {
-    eprintln!("{USO}");
-    2
 }
 
 /// Liga o servidor e fica atendendo até o processo ser encerrado.

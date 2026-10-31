@@ -6,6 +6,14 @@ Um levantamento, não uma promessa: o que custaria rodar o The Blueprint fora do
 A decisão de apoiar Linux ou macOS (ou não) é do mantenedor; nenhuma implementação começa sem ela.
 Código lido em `f65fb76` (versão 0.3.0); fontes da web consultadas em 2026-10-27.
 
+## Situação (2026-10-31)
+
+A janela agora roda no Linux (conferido no Wayland): a pasta de dados (`$XDG_DATA_HOME` ou `~/.local/share`), o dia local, a trava de instância única (`flock`),
+o ícone (o mesmo `icone.ico`), o WebView dentro da caixa GTK da janela e o lançador de terminal (`xdg-terminal-exec`) têm um ramo para Linux, e o código da janela
+deixou de ser `cfg(windows)`. A janela com WebKitGTK, porém, não é rápida o bastante (15 fps com `WEBKIT_DISABLE_DMABUF_RENDERER=1`, que o app define no Linux porque a NVIDIA
+no Wayland fecha a janela com "Error 71"; 60 fps no máximo sem ele), então o caminho é a interface nativa de `ui/` (egui, o mesmo código no Windows, no Linux, no navegador
+e depois no macOS). Continuam só no Windows: o terminal do app (ConPTY), o atualizador e o instalador, e o túnel de compartilhamento.
+
 ## O que já funciona fora do Windows (medido)
 
 - O job de CI `rust (ubuntu-latest)` roda `cargo test --lib --locked` e passa (execução 40504789617, commit `f65fb76`, 2026-10-27).

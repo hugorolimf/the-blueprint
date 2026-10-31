@@ -32,7 +32,7 @@ impl Item {
 pub struct Ambiente {
     /// BLUEPRINT_URL ou http://127.0.0.1:3000 (onde o agente procura o app)
     pub base: String,
-    /// %APPDATA%\Blueprint
+    /// a pasta do app (`pasta_do_app`, sem renomear a antiga)
     pub pasta_app: PathBuf,
     /// CLAUDE_CONFIG_DIR ou ~/.claude
     pub claude: PathBuf,
@@ -55,15 +55,12 @@ impl Ambiente {
         let config = var("CLAUDE_CONFIG_DIR");
         Ambiente {
             base: crate::mcp::stdio::base(),
-            pasta_app: var("APPDATA").map_or_else(|| PathBuf::from("."), |a| a.join("Blueprint")),
+            pasta_app: crate::http::config::pasta_de_dados().map_or_else(|| PathBuf::from("."), |a| a.join("Blueprint")),
             claude_json: config.as_ref().map_or_else(|| home.join(".claude.json"), |c| c.join(".claude.json")),
             claude: config.unwrap_or_else(|| home.join(".claude")),
             codex: var("CODEX_HOME").unwrap_or_else(|| home.join(".codex")),
             cwd: std::env::current_dir().unwrap_or_default(),
-            #[cfg(windows)]
             instancia: crate::janela::instancia::aberta(),
-            #[cfg(not(windows))]
-            instancia: false,
         }
     }
 }

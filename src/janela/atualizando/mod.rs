@@ -38,9 +38,9 @@ pub fn lancar(instalador: &Path, args: &[String]) -> Result<(), String> {
     std::fs::create_dir_all(&pasta).map_err(|e| e.to_string())?;
     let copia = pasta.join("blueprint-atualizando.exe");
     std::fs::copy(&exe, &copia).map_err(|e| e.to_string())?;
-    use std::os::windows::process::CommandExt;
     use std::process::Stdio;
-    Command::new(&copia)
+    let mut comando = Command::new(&copia);
+    comando
         .arg("atualizando")
         .arg(instalador)
         .arg(&exe)
@@ -48,11 +48,13 @@ pub fn lancar(instalador: &Path, args: &[String]) -> Result<(), String> {
         // o app aberto pelo atalho soltou o console (FreeConsole): herdar o stdio passaria handles mortos ou reaproveitados, e o spawn falhava às vezes (erro 50)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .creation_flags(0x0000_0008 | 0x0000_0200) // DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP: sobrevive ao app, que sai logo depois
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| e.to_string())
+        .stderr(Stdio::null());
+    // sobrevive ao app, que sai logo depois: DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP no Windows, grupo de processos próprio nos outros
+    #[cfg(windows)]
+    std::os::windows::process::CommandExt::creation_flags(&mut comando, 0x0000_0008 | 0x0000_0200);
+    #[cfg(not(windows))]
+    std::os::unix::process::CommandExt::process_group(&mut comando, 0);
+    comando.spawn().map(|_| ()).map_err(|e| e.to_string())
 }
 
 /// Apaga as cópias de atualizações anteriores (a corrente fica; as outras já acabaram). Falhar não importa.
@@ -130,7 +132,7 @@ fn abrir(instalador: PathBuf, exe_antigo: PathBuf, args: Vec<String>) -> Resulta
     let pasta = std::env::current_exe().ok().and_then(|e| e.parent().map(Path::to_path_buf)).unwrap_or_else(std::env::temp_dir);
     let mut contexto = WebContext::new(Some(pasta.join("webview"))); // junto da cópia: não compartilha a pasta do app, que ainda pode estar fechando
     let ipc = proxy.clone();
-    let webview = WebViewBuilder::new_with_web_context(&mut contexto)
+    let construtor = WebViewBuilder::new_with_web_context(&mut contexto)
         .with_html(passos::pagina(versao.as_deref()))
         .with_background_color(super::icone::PAPEL)
         .with_ipc_handler(move |req| {
@@ -139,9 +141,8 @@ fn abrir(instalador: PathBuf, exe_antigo: PathBuf, args: Vec<String>) -> Resulta
                 "arrastar" => Evento::Arrastar,
                 _ => Evento::Fechar,
             });
-        })
-        .build(&window)
-        .map_err(|e| falha(&e))?;
+        });
+    let webview = super::montar(construtor, &window).map_err(|e| falha(&e))?;
     let envio = proxy.clone();
     std::thread::spawn(move || trabalhar(instalador, exe_antigo, args, move |e| drop(envio.send_event(e))));
     // o instalador pode acabar antes de a página carregar: os avisos esperam na fila e entram na ordem

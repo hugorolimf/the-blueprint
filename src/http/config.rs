@@ -1,6 +1,6 @@
 //! Configuração do servidor, lida do ambiente com os mesmos nomes do servidor Node (HOST, PORT, MCP_REDE, PROTOTIPOS_DIR).
 use std::env;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -115,11 +115,17 @@ impl Config {
     }
 }
 
-/// %APPDATA%\Blueprint (ou, sem APPDATA, a pasta atual). O app se chamava Roadmap: se só existir a pasta antiga, ela é renomeada junto com o banco.
+/// Onde o sistema guarda dados de aplicativo: %APPDATA% no Windows; $XDG_DATA_HOME (ou ~/.local/share) nos outros.
+pub fn pasta_de_dados() -> Option<PathBuf> {
+    let var = |nome| env::var_os(nome).filter(|v| !v.is_empty()).map(PathBuf::from);
+    if cfg!(windows) { var("APPDATA") } else { var("XDG_DATA_HOME").or_else(|| var("HOME").map(|h| h.join(".local").join("share"))) }
+}
+
+/// <pasta de dados>/Blueprint (ou, sem pasta de dados, a pasta atual). O app se chamava Roadmap: se só existir a pasta antiga, ela é renomeada junto com o banco.
 /// shortcut: se a pasta antiga estiver em uso (servidor antigo rodando), segue nela sem mover nada; o banco antigo é achado em `do_app`.
 pub fn pasta_do_app() -> PathBuf {
-    let Some(appdata) = env::var_os("APPDATA").filter(|v| !v.is_empty()) else { return PathBuf::from(".") };
-    let (nova, antiga) = (Path::new(&appdata).join("Blueprint"), Path::new(&appdata).join("Roadmap"));
+    let Some(dados) = pasta_de_dados() else { return PathBuf::from(".") };
+    let (nova, antiga) = (dados.join("Blueprint"), dados.join("Roadmap"));
     if nova.exists() || !antiga.exists() {
         return nova;
     }

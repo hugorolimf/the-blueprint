@@ -13,7 +13,8 @@ The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interfac
 | `src/mcp/` | fila (lida da memória, guardada no banco), ações do MCP, atividade dos agentes, SSE, `ferramentas.json` e `instrucoes.txt` (a fonte da verdade do MCP) |
 | `src/http/` | servidor HTTP síncrono (`tiny_http`), rotas puras, estáticos com ETag e gzip |
 | `src/janela/` | janela WebView2, bandeja e instância única (só Windows) |
-| `web/`, `blueprint.html` | interface: CSS em `web/css`, scripts clássicos em `web/js` na ordem listada em `blueprint.html` |
+| `ui/` | a interface nativa (egui): um crate que roda como janela no Windows e no Linux e no navegador como WebAssembly; veja [ui/README.md](../../ui/README.md). Substitui o `web/` tela por tela |
+| `web/`, `blueprint.html` | a interface web antiga, até cada tela migrar para `ui/`: CSS em `web/css`, scripts clássicos em `web/js` na ordem listada em `blueprint.html` |
 | `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | kit isométrico (anatomy) e figuras; rodam no navegador |
 | `skills/blueprint-planejamento/` | o guia que o agente lê pelo MCP (`guia_de_planejamento`) |
 | `scripts/` | verificações de ponta a ponta (contrato HTTP, e2e com Edge, mutações, medições, instalador) |
@@ -34,7 +35,7 @@ node scripts/capturas.mjs --comparar
 - Execute testes e compilações somente quando puderem terminar em menos de um minuto; interrompa os que atingirem o limite e informe o que não foi verificado.
 
 - Arquivos de até 350 linhas (teto 500 com motivo no topo). Um arquivo, uma responsabilidade.
-- Poucas dependências; sem framework nem bundler na interface.
+- Poucas dependências. A interface é nativa (`ui/`, egui, o mesmo código em todo sistema); `web/` é legado: nenhuma tela nova ali e sem framework nem bundler nele.
 - Segurança: `/api/mcp/*` só em loopback, `Host` e `Origin` conferidos, todo POST `application/json`; protótipos em `iframe sandbox="allow-scripts"` de origem opaca (nunca `allow-same-origin`). O que o agente envia é proposta; concluir exige evidência.
 - Mudou o MCP? Atualize `src/mcp/ferramentas.json`, `instrucoes.txt` (a regra e os nomes das ferramentas ficam nos primeiros 512 caracteres: o Codex só lê isso), o guia em `skills/` e os testes em `src/mcp/tests.rs`.
 - Não coloque dados reais no repositório: use `data.exemplo.json`.
