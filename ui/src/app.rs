@@ -152,6 +152,7 @@ impl App {
                 d.mover_workspace(&id, delta);
                 Ok(None)
             }),
+            Acao::Marcar(ws, bp, acao, tipo, item) => self.mutar(ctx, |d| if d.marcar_item(&ws, &bp, &acao, tipo, &item) { Ok(None) } else { Err(tr("Não foi possível marcar o item.").to_string()) }),
             Acao::MoverPara(id, para) => self.mutar(ctx, |d| {
                 d.mover_para(&id, para);
                 Ok(None)

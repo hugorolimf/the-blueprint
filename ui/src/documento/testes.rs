@@ -92,3 +92,14 @@ fn arrastar_poe_no_lugar_e_empurra_os_outros() {
     assert!(!d.mover_para(&ids[2], 1), "já está lá");
     assert!(!d.mover_para(&ids[2], 9), "fora do fim");
 }
+
+#[test]
+fn marcar_item_liga_e_desliga_so_o_item() {
+    let mut d = Documento { raw: json!({ "blueprints": [{ "id": "b", "acoes": [{ "id": "a", "planos": [{ "id": "p1", "feito": false }, { "id": "p2", "feito": true }], "checkpoints": [{ "id": "c1" }] }] }] }), versao: 1 };
+    assert!(d.marcar_item(RAIZ, "b", "a", "planos", "p1"));
+    assert!(d.marcar_item(RAIZ, "b", "a", "checkpoints", "c1"));
+    assert!(d.marcar_item(RAIZ, "b", "a", "planos", "p2"));
+    let a = &d.raw["blueprints"][0]["acoes"][0];
+    assert_eq!((a["planos"][0]["feito"].clone(), a["planos"][1]["feito"].clone(), a["checkpoints"][0]["feito"].clone()), (json!(true), json!(false), json!(true)));
+    assert!(!d.marcar_item(RAIZ, "b", "a", "planos", "nao-existe"));
+}

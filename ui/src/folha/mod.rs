@@ -1,20 +1,27 @@
 //! A folha do workspace: a lista de blueprints, desenhada como a prancha de plotagem da página (`capa` em web/js/render.js), em coordenadas
 //! do SVG dela. O blueprint aberto (a linha do tempo das ações) ainda é da versão web: o clique no cartão abre lá.
 
+mod blueprint;
 mod cartao;
 mod cena;
+mod controles;
+mod disposicao;
 mod pagina;
+mod regua;
+mod secao;
+
+pub use blueprint::tela as blueprint_aberto;
 
 use crate::documento::{self, Documento, RAIZ};
 use crate::dominio;
 use crate::emblema;
 use crate::fonte::Peso;
 use crate::i18n::{tr, tr_com};
-use crate::planta::{self, botao, Botao, Papel};
+use crate::planta::{self, Papel};
 use crate::telas::{Acao, Tela, Vista};
-use crate::tema::{rgba, BAIXO, MEDIO, TINTA};
+use crate::tema::{rgba, MEDIO, TINTA};
 use cena::{Ancora, Cena};
-use egui::{pos2, vec2, Rect, Sense, Ui};
+use egui::{vec2, Rect, Sense, Ui};
 use pagina::{corta, Carimbo, Medidas, IL};
 
 const TH: f32 = 152.0;
@@ -48,7 +55,11 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
     let (viewport_h, viewport_w) = (ui.available_height(), ui.available_width());
     let mut acao = None;
     let mut abrir_web: Option<String> = None;
-    egui::ScrollArea::both().auto_shrink([false, false]).show(ui, |ui| {
+    let mut area = egui::ScrollArea::both().auto_shrink([false, false]);
+    if let Some(y) = vista.rolagem.take() {
+        area = area.vertical_scroll_offset(y);
+    }
+    area.show(ui, |ui| {
         let w = viewport_w.max(960.0);
         let (l, r) = (IL + 34.0, w - IL - 50.0);
         let min_cartao = if mapa.len() > 1 { 400.0 } else { 320.0 };
@@ -91,7 +102,12 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
             }
             if resposta.clicked() {
-                abrir_web = Some(format!("#/p/{}", texto(p, "id")));
+                // o blueprint com projetos (seções) ainda é da versão web
+                if p.get("projetos").and_then(|v| v.as_array()).is_some_and(|l| !l.is_empty()) {
+                    abrir_web = Some(format!("#/p/{}", texto(p, "id")));
+                } else {
+                    vista.tela = Tela::Blueprint(id.to_string(), texto(p, "id"));
+                }
             }
         }
         // «novo blueprint»: o cartão tracejado depois do último
@@ -120,106 +136,11 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let (feitas, n_acoes) = (todas.iter().filter(|f| f.status == dominio::Situacao::Concluido).count(), todas.len());
         let progresso = if blueprints.is_empty() { 0.0 } else { blueprints.iter().map(dominio::progresso).sum::<f32>() / blueprints.len() as f32 };
         let data = hoje_iso.split('-').rev().collect::<Vec<_>>().join("/");
-        pagina::rodape(&c, &medidas, &tr("Clique num blueprint para abrir o blueprint dele."), &Carimbo { empresa: &empresa, tela: &tr("Lista de blueprints"), data: &data, progresso, folhas: 1 + blueprints.len(), feitas, acoes: n_acoes });
-        controles(ui, vista, &c, w, id, servidor, &mut abrir_web);
+        pagina::rodape(&c, &medidas, &tr("Clique num blueprint para abrir o blueprint dele."), &Carimbo { empresa: &empresa, tela: &tr("Lista de blueprints"), data: &data, progresso, folha: 1, folhas: 1 + blueprints.len(), legenda: true, feitas, acoes: n_acoes });
+        controles::lista(ui, vista, &c, w, id, &mut abrir_web);
     });
     if let Some(destino) = abrir_web {
         ui.ctx().open_url(egui::OpenUrl::new_tab(format!("{servidor}/{destino}")));
     }
     acao.take()
-}
-
-/// Os botões e a busca do canto de cima, que na página são HTML por cima do SVG.
-fn controles(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, _servidor: &str, abrir_web: &mut Option<String>) {
-    let p = ui.painter().clone();
-    let direita = c.o.x + w - 64.0;
-    let y = c.o.y + 44.0;
-    let nomes = [("← Workspaces", 0), ("✦ Planejar", 1), ("Compartilhar", 2), ("Terminal", 3)];
-    let larguras: Vec<f32> = nomes.iter().map(|(n, _)| Botao::barra(tr_botao(n)).largura(&p)).collect();
-    // da direita para a esquerda: Terminal, Compartilhar, Planejar, o foco e a tela cheia (34 px cada), e Workspaces
-    let x_terminal = direita - larguras[3];
-    let x_comp = x_terminal - 8.0 - larguras[2];
-    let x_plan = x_comp - 8.0 - larguras[1];
-    let x_foco = x_plan - 8.0 - 34.0;
-    let x_tela = x_foco - 8.0 - 34.0;
-    let x_ws = x_tela - 8.0 - larguras[0];
-    if botao(ui, pos2(x_ws, y), &Botao::barra(tr_botao("← Workspaces"))).clicked() {
-        vista.tela = Tela::Entrada;
-    }
-    for (x, rotulo, destino) in [(x_plan, "✦ Planejar", format!("#/c/{id}")), (x_comp, "Compartilhar", format!("#/c/{id}")), (x_terminal, "Terminal", format!("#/c/{id}"))] {
-        let resposta = botao(ui, pos2(x, y), &Botao::barra(tr_botao(rotulo)));
-        if rotulo.starts_with('✦') {
-            estrela(&p, pos2(x + 1.0 + 15.0 + 3.85, y + 17.0), resposta.hovered() || resposta.has_focus());
-        }
-        if resposta.clicked() {
-            *abrir_web = Some(destino);
-        }
-    }
-    if icone(ui, pos2(x_tela, y), true).clicked() {
-        let cheia = ui.input(|i| i.viewport().fullscreen.unwrap_or(false));
-        ui.ctx().send_viewport_cmd(egui::ViewportCommand::Fullscreen(!cheia));
-    }
-    icone(ui, pos2(x_foco, y), false);
-    // a busca
-    let campo = Rect::from_min_size(pos2(direita - 380.0, y + 42.0), vec2(380.0, 35.0));
-    p.rect_filled(campo, 0, rgba(0x0c3a78, 0xcc));
-    planta::borda(&p, campo, MEDIO);
-    let editor = egui::TextEdit::singleline(&mut vista.consulta)
-        .frame(egui::Frame::NONE)
-        .font(egui::FontId::new(11.0, crate::fonte::familia(Peso::Normal)))
-        .text_color(TINTA)
-        .hint_text(egui::RichText::new(tr("Pesquisar blueprints, ações, planos")).size(11.0).color(BAIXO))
-        .desired_width(campo.width() - 24.0)
-        .align(egui::Align2::LEFT_CENTER);
-    ui.put(campo.shrink2(vec2(12.0, 1.0)), editor);
-}
-
-/// A estrela de quatro pontas do «✦ Planejar» (a fonte não tem esse glifo).
-fn estrela(p: &egui::Painter, c: egui::Pos2, invertido: bool) {
-    let (fora, dentro) = (5.0, 1.4);
-    let pts = (0..8).map(|i| {
-        let ang = std::f32::consts::FRAC_PI_4 * i as f32 - std::f32::consts::FRAC_PI_2;
-        let r = if i % 2 == 0 { fora } else { dentro };
-        c + vec2(ang.cos(), ang.sin()) * r
-    }).collect();
-    p.add(egui::Shape::convex_polygon(pts, if invertido { crate::tema::PAPEL } else { TINTA }, egui::Stroke::NONE));
-}
-
-fn tr_botao(rotulo: &str) -> &'static str {
-    match rotulo {
-        "← Workspaces" => "← Workspaces",
-        "✦ Planejar" => "  Planejar",
-        "Compartilhar" => tr("Compartilhar"),
-        _ => tr("Terminal"),
-    }
-}
-
-/// Os botões quadrados de 34 px: a tela cheia (quatro cantos) e o foco (mira).
-fn icone(ui: &mut Ui, pos: egui::Pos2, tela_cheia: bool) -> egui::Response {
-    let p = ui.painter().clone();
-    let r = Rect::from_min_size(pos, vec2(34.0, 34.0));
-    let resposta = ui.interact(r, ui.scope_id().with(("icone", tela_cheia)), Sense::click());
-    let invertido = resposta.hovered() || resposta.has_focus();
-    p.rect_filled(r, 0, if invertido { TINTA } else { rgba(0x0c3a78, 0xcc) });
-    planta::borda(&p, r, MEDIO);
-    let cor = if invertido { crate::tema::PAPEL } else { TINTA };
-    let (cx, cy) = (r.center().x, r.center().y);
-    let traco = egui::Stroke::new(1.5, cor);
-    if tela_cheia {
-        for (sx, sy) in [(-1.0f32, -1.0f32), (1.0, -1.0), (-1.0, 1.0), (1.0, 1.0)] {
-            let (px, py) = (cx + sx * 7.0, cy + sy * 7.0);
-            p.line_segment([pos2(px, py), pos2(px - sx * 4.0, py)], traco);
-            p.line_segment([pos2(px, py), pos2(px, py - sy * 4.0)], traco);
-        }
-    } else {
-        p.circle_stroke(pos2(cx, cy), 5.0, traco);
-        p.circle_filled(pos2(cx, cy), 1.5, cor);
-        for (dx, dy) in [(0.0f32, -1.0f32), (0.0, 1.0), (-1.0, 0.0), (1.0, 0.0)] {
-            p.line_segment([pos2(cx + dx * 5.0, cy + dy * 5.0), pos2(cx + dx * 9.0, cy + dy * 9.0)], traco);
-        }
-    }
-    if resposta.hovered() {
-        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
-    }
-    resposta
 }

@@ -37,6 +37,24 @@ impl Roteiro {
             "exemplo" => Some(Acao::AbrirExemplo),
             "excluir" => doc.workspaces().into_iter().find(|w| w.nome == arg).map(|w| Acao::Excluir(w.id)),
             "mover" => doc.workspaces().into_iter().find(|w| w.nome == arg).map(|w| Acao::Mover(w.id, -1)),
+            "blueprint" => {
+                let (ws, bp) = arg.split_once('/').unwrap_or(("sm", arg));
+                vista.tela = crate::telas::Tela::Blueprint(ws.into(), bp.into());
+                None
+            }
+            "marcar" => {
+                // marcar:workspace/blueprint/ação/planos|checkpoints/item
+                let p: Vec<&str> = arg.split('/').collect();
+                match p.as_slice() {
+                    [ws, bp, acao, "planos", item] => Some(Acao::Marcar((*ws).into(), (*bp).into(), (*acao).into(), "planos", (*item).into())),
+                    [ws, bp, acao, "checkpoints", item] => Some(Acao::Marcar((*ws).into(), (*bp).into(), (*acao).into(), "checkpoints", (*item).into())),
+                    _ => None,
+                }
+            }
+            "rolar" => {
+                vista.rolagem = arg.parse().ok();
+                None
+            }
             "abrir" => {
                 vista.tela = crate::telas::Tela::Workspace(arg.into());
                 None

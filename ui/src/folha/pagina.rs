@@ -51,7 +51,11 @@ pub struct Carimbo<'a> {
     pub tela: &'a str,
     pub data: &'a str,
     pub progresso: f32,
+    /// «folha/total»: a lista é a 1; o blueprint `n` é a folha `n + 2`
+    pub folha: usize,
     pub folhas: usize,
+    /// a legenda das barras só existe na lista
+    pub legenda: bool,
     pub feitas: usize,
     pub acoes: usize,
 }
@@ -66,6 +70,7 @@ pub fn rodape(c: &Cena, m: &Medidas, dica: &str, k: &Carimbo) {
     c.fio(TINTA, 1.0, (l, y_faixa - 8.0), (r, y_faixa - 8.0));
     // a legenda: a barra é a ação; cheio é feito, vazio é o que falta
     let y = ly + 60.0;
+    if k.legenda {
     c.texto(&tr("BARRA = AÇÃO · PREENCHIDO = FEITO · VAZIO = FALTA"), l, y, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     c.retangulo(l + 270.0, y - 8.0, 22.0, 8.0, None, Some((TINTA, 1.0)));
     c.hachura(l + 271.0, y - 7.0, 20.0, 6.0);
@@ -75,6 +80,7 @@ pub fn rodape(c: &Cena, m: &Medidas, dica: &str, k: &Carimbo) {
     c.texto(&tr("EM ANDAMENTO"), l + 388.0, y, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     c.moldura(l + 470.0, y - 8.0, 22.0, 8.0, MEDIO, 1.0, true);
     c.texto(&tr("A FAZER"), l + 498.0, y, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
+    }
     c.texto(dica, l, ly + 100.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
     // o carimbo
     c.retangulo(cx, cy, cw, ch, None, Some((TINTA, 1.6)));
@@ -83,7 +89,7 @@ pub fn rodape(c: &Cena, m: &Medidas, dica: &str, k: &Carimbo) {
     c.texto(&corta(k.empresa, 28), cx + 8.0, cy + 28.0, 16.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
     c.texto(&tr("Tela"), cx + 8.0, cy + 47.0, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     c.texto(&corta(k.tela, 38), cx + 8.0, cy + 61.0, 12.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
-    let celulas = [(tr("Data"), k.data.to_string(), 0.0), (tr("Progresso"), format!("{}%", (k.progresso * 100.0).round() as i32), 150.0), (tr("Folha"), format!("1/{}", k.folhas), 250.0), (tr("Ações"), format!("{}/{}", k.feitas, k.acoes), 340.0)];
+    let celulas = [(tr("Data"), k.data.to_string(), 0.0), (tr("Progresso"), format!("{}%", (k.progresso * 100.0).round() as i32), 150.0), (tr("Folha"), format!("{}/{}", k.folha, k.folhas), 250.0), (tr("Ações"), format!("{}/{}", k.feitas, k.acoes), 340.0)];
     for (rotulo, valor, desloca) in celulas {
         c.texto(rotulo, cx + desloca + 8.0, cy + 77.0, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
         c.texto(&valor, cx + desloca + 8.0, cy + 91.0, 12.0, Peso::Negrito, TINTA, Ancora::Inicio, false);

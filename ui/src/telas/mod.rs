@@ -13,6 +13,8 @@ pub use novo::Novo;
 pub enum Tela {
     Entrada,
     Workspace(String),
+    /// um blueprint aberto: (workspace, blueprint)
+    Blueprint(String, String),
 }
 
 /// O que a tela pede que mude nos dados.
@@ -26,6 +28,8 @@ pub enum Acao {
     AbrirExemplo,
     /// o modelo de exemplo chegou do servidor: vira um workspace novo (só o `app` manda esta)
     ExemploPronto(Box<serde_json::Value>),
+    /// marcar ou desmarcar um plano ou checkpoint: (workspace, blueprint, ação, `planos`/`checkpoints`, item)
+    Marcar(String, String, String, &'static str, String),
     Atualizar,
 }
 
@@ -45,11 +49,13 @@ pub struct Vista {
     pub erro: String,
     /// a busca da lista de blueprints
     pub consulta: String,
+    /// só nos testes: o quanto rolar a folha ao abrir (`BLUEPRINT_UI_ROLAR`)
+    pub rolagem: Option<f32>,
 }
 
 impl Vista {
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None }
     }
 }
 
@@ -71,6 +77,10 @@ pub fn desenhar(ui: &mut egui::Ui, vista: &mut Vista, doc: &Documento, servidor:
         Tela::Workspace(ref id) => {
             let id = id.clone();
             crate::folha::lista(ui, vista, doc, &id, servidor)
+        }
+        Tela::Blueprint(ref id, ref bp) => {
+            let (id, bp) = (id.clone(), bp.clone());
+            crate::folha::blueprint_aberto(ui, vista, doc, &id, &bp, servidor)
         }
     }
 }

@@ -131,6 +131,19 @@ impl Documento {
         self.workspaces().into_iter().find(|w| w.exemplo)
     }
 
+    /// Liga ou desliga o `feito` de um plano (`tipo` «planos») ou checkpoint (`tipo` «checkpoints») de uma ação. `false` se não achou.
+    pub fn marcar_item(&mut self, workspace: &str, blueprint: &str, acao: &str, tipo: &str, item: &str) -> bool {
+        let ws = if workspace == RAIZ { Some(&mut self.raw) } else { self.raw.get_mut("workspaces").and_then(Value::as_array_mut).and_then(|l| l.iter_mut().find(|w| texto(w, "id") == workspace)) };
+        let alvo = ws
+            .and_then(|w| w.get_mut("blueprints")?.as_array_mut()?.iter_mut().find(|b| texto(b, "id") == blueprint))
+            .and_then(|b| b.get_mut("acoes")?.as_array_mut()?.iter_mut().find(|a| texto(a, "id") == acao))
+            .and_then(|a| a.get_mut(tipo)?.as_array_mut()?.iter_mut().find(|i| texto(i, "id") == item));
+        let Some(Value::Object(i)) = alvo else { return false };
+        let feito = i.get("feito").and_then(Value::as_bool) == Some(true);
+        i.insert("feito".into(), json!(!feito));
+        true
+    }
+
     /// O workspace `id` como JSON: a raiz é o próprio arquivo.
     pub fn workspace(&self, id: &str) -> Option<&Value> {
         if id == RAIZ {

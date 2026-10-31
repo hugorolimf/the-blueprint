@@ -12,13 +12,25 @@ pub enum Situacao {
 }
 
 pub struct Checkpoint {
+    pub id: String,
+    pub nome: String,
     /// dias desde 1970
     pub data: Option<i64>,
     pub feito: bool,
 }
 
+pub struct Plano {
+    pub id: String,
+    pub texto: String,
+    pub feito: bool,
+}
+
 /// Uma ação com a situação já calculada (`acoesDe` da página).
 pub struct Acao {
+    pub id: String,
+    pub nome: String,
+    /// a posição na lista de ações do blueprint (conta também as sem data): é o número da ação, `1.2`
+    pub idx: usize,
     /// primeiro e último dia (desde 1970)
     pub a: i64,
     pub b: i64,
@@ -27,6 +39,7 @@ pub struct Acao {
     /// itens (planos e checkpoints) feitos e total
     pub itens: (usize, usize),
     pub horas: f32,
+    pub planos: Vec<Plano>,
     pub checkpoints: Vec<Checkpoint>,
 }
 
@@ -78,12 +91,13 @@ fn efetiva(f: &Value) -> (Situacao, f32, (usize, usize)) {
 
 /// As ações do blueprint `p` com datas válidas, na ordem do arquivo (`acoesDe`).
 pub fn acoes_de(p: &Value) -> Vec<Acao> {
-    lista(p, "acoes").iter().filter_map(|f| {
+    lista(p, "acoes").iter().enumerate().filter_map(|(idx, f)| {
         let (a, b) = (dia(texto(f, "inicio"))?, dia(texto(f, "fim"))?);
         let (status, pct, itens) = efetiva(f);
         let horas = lista(f, "planos").iter().map(|x| x.get("horas").and_then(Value::as_f64).unwrap_or(0.0) as f32).sum();
-        let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { data: dia(texto(m, "data")), feito: feito(m) }).collect();
-        Some(Acao { a, b: b.max(a), status, pct, itens, horas, checkpoints })
+        let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { id: texto(m, "id").into(), nome: texto(m, "nome").into(), data: dia(texto(m, "data")), feito: feito(m) }).collect();
+        let planos = lista(f, "planos").iter().map(|t| Plano { id: texto(t, "id").into(), texto: texto(t, "texto").into(), feito: feito(t) }).collect();
+        Some(Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), idx, a, b: b.max(a), status, pct, itens, horas, planos, checkpoints })
     }).collect()
 }
 
