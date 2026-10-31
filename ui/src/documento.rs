@@ -60,7 +60,7 @@ pub fn novo_id() -> String {
 }
 
 /// Dias desde 1970 de uma data `aaaa-mm-dd` (algoritmo de Howard Hinnant); `None` se não for uma data nesse formato.
-fn dia(iso: &str) -> Option<i64> {
+pub(crate) fn dia(iso: &str) -> Option<i64> {
     let b = iso.as_bytes();
     if b.len() != 10 || b[4] != b'-' || b[7] != b'-' || !iso.bytes().enumerate().all(|(i, c)| i == 4 || i == 7 || c.is_ascii_digit()) {
         return None;
@@ -73,7 +73,7 @@ fn dia(iso: &str) -> Option<i64> {
     Some(era * 146_097 + ya * 365 + ya / 4 - ya / 100 + doa - 719_468)
 }
 
-fn iso_do_dia(dias: i64) -> String {
+pub(crate) fn iso_do_dia(dias: i64) -> String {
     let z = dias + 719_468;
     let era = z.div_euclid(146_097);
     let doe = z - era * 146_097;

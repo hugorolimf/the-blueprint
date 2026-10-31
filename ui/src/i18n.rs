@@ -14,7 +14,9 @@ const LOCAIS: &[(&str, &str)] = &[
     ("Carregando…", "Loading…"),
     ("Excluir workspace…", "Delete workspace…"),
     ("Os dados mudaram em outra janela. Atualizei: tente de novo.", "The data changed in another window. I refreshed: try again."),
+    ("Pesquisar blueprints, ações, planos", "Search blueprints, actions, plans"),
     ("sem blueprints", "no blueprints"),
+    ("{pct}% CONSTRUÍDA", "{pct}% BUILT"),
     ("Tentar de novo", "Try again"),
 ];
 

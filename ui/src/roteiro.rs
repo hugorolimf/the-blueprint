@@ -37,6 +37,10 @@ impl Roteiro {
             "exemplo" => Some(Acao::AbrirExemplo),
             "excluir" => doc.workspaces().into_iter().find(|w| w.nome == arg).map(|w| Acao::Excluir(w.id)),
             "mover" => doc.workspaces().into_iter().find(|w| w.nome == arg).map(|w| Acao::Mover(w.id, -1)),
+            "abrir" => {
+                vista.tela = crate::telas::Tela::Workspace(arg.into());
+                None
+            }
             "voltar" => {
                 vista.tela = crate::telas::Tela::Entrada;
                 None

@@ -5,7 +5,6 @@ mod entrada;
 mod excluir;
 mod nome;
 mod novo;
-mod workspace;
 
 use crate::documento::Documento;
 
@@ -44,11 +43,13 @@ pub struct Vista {
     pub depois: Option<Tela>,
     pub aviso: String,
     pub erro: String,
+    /// a busca da lista de blueprints
+    pub consulta: String,
 }
 
 impl Vista {
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new() }
     }
 }
 
@@ -69,7 +70,7 @@ pub fn desenhar(ui: &mut egui::Ui, vista: &mut Vista, doc: &Documento, servidor:
         Tela::Entrada => entrada::tela(ui, vista, doc, servidor, ocupado),
         Tela::Workspace(ref id) => {
             let id = id.clone();
-            workspace::tela(ui, vista, doc, &id, servidor)
+            crate::folha::lista(ui, vista, doc, &id, servidor)
         }
     }
 }

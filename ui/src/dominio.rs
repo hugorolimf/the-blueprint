@@ -1,0 +1,186 @@
+//! As regras de negócio da folha, as mesmas de `web/js/dados.js`: a situação de uma ação vem dos planos e checkpoints marcados, o progresso
+//! de um blueprint pesa as ações pela duração e a janela de meses cobre as datas com uma semana de folga.
+
+use crate::documento::{dia, iso_do_dia};
+use serde_json::Value;
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Situacao {
+    Concluido,
+    Andamento,
+    Planejado,
+}
+
+pub struct Checkpoint {
+    /// dias desde 1970
+    pub data: Option<i64>,
+    pub feito: bool,
+}
+
+/// Uma ação com a situação já calculada (`acoesDe` da página).
+pub struct Acao {
+    /// primeiro e último dia (desde 1970)
+    pub a: i64,
+    pub b: i64,
+    pub status: Situacao,
+    pub pct: f32,
+    /// itens (planos e checkpoints) feitos e total
+    pub itens: (usize, usize),
+    pub horas: f32,
+    pub checkpoints: Vec<Checkpoint>,
+}
+
+fn lista<'a>(v: &'a Value, campo: &str) -> &'a [Value] {
+    v.get(campo).and_then(Value::as_array).map_or(&[], Vec::as_slice)
+}
+
+fn feito(v: &Value) -> bool {
+    v.get("feito").and_then(Value::as_bool) == Some(true)
+}
+
+fn texto<'a>(v: &'a Value, campo: &str) -> &'a str {
+    v.get(campo).and_then(Value::as_str).unwrap_or("")
+}
+
+/// A situação e o progresso: só concluída quando TODOS os itens estão feitos; o status guardado só vale para ação sem item (`efetiva`).
+fn efetiva(f: &Value) -> (Situacao, f32, (usize, usize)) {
+    let (planos, marcos) = (lista(f, "planos"), lista(f, "checkpoints"));
+    let (total, feitos) = (planos.len() + marcos.len(), planos.iter().chain(marcos).filter(|x| feito(x)).count());
+    let guardado = texto(f, "status");
+    let numero = f.get("progresso").and_then(Value::as_f64).unwrap_or(0.0) as f32;
+    let mut pct = match guardado {
+        "concluido" => 1.0,
+        "andamento" => numero.clamp(0.0, 1.0),
+        _ => 0.0,
+    };
+    let mut status = match guardado {
+        "concluido" => Situacao::Concluido,
+        "andamento" => Situacao::Andamento,
+        _ => Situacao::Planejado,
+    };
+    if total > 0 {
+        pct = feitos as f32 / total as f32;
+        status = if pct >= 1.0 {
+            Situacao::Concluido
+        } else if pct > 0.0 || guardado == "andamento" {
+            Situacao::Andamento
+        } else {
+            Situacao::Planejado
+        };
+    } else if status == Situacao::Andamento && pct >= 1.0 {
+        status = Situacao::Concluido;
+    }
+    if status == Situacao::Concluido {
+        pct = 1.0;
+    }
+    (status, pct, (feitos, total))
+}
+
+/// As ações do blueprint `p` com datas válidas, na ordem do arquivo (`acoesDe`).
+pub fn acoes_de(p: &Value) -> Vec<Acao> {
+    lista(p, "acoes").iter().filter_map(|f| {
+        let (a, b) = (dia(texto(f, "inicio"))?, dia(texto(f, "fim"))?);
+        let (status, pct, itens) = efetiva(f);
+        let horas = lista(f, "planos").iter().map(|x| x.get("horas").and_then(Value::as_f64).unwrap_or(0.0) as f32).sum();
+        let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { data: dia(texto(m, "data")), feito: feito(m) }).collect();
+        Some(Acao { a, b: b.max(a), status, pct, itens, horas, checkpoints })
+    }).collect()
+}
+
+/// O blueprint está concluído: tem ações e todas concluídas (o status efetivo, mesmo das que não têm datas).
+pub fn concluido(p: &Value) -> bool {
+    let fs = lista(p, "acoes");
+    !fs.is_empty() && fs.iter().all(|f| efetiva(f).0 == Situacao::Concluido)
+}
+
+pub struct Resumo {
+    /// 0 a 1; só chega a 1 quando toda ação está concluída
+    pub geral: f32,
+    pub concl: usize,
+    pub horas: f32,
+    /// todas as ações ainda planejadas
+    pub futuro: bool,
+}
+
+pub fn resumo(fs: &[Acao]) -> Resumo {
+    let duracao: i64 = fs.iter().map(|f| f.b - f.a + 1).sum();
+    let todas = !fs.is_empty() && fs.iter().all(|f| f.status == Situacao::Concluido);
+    let media = if duracao > 0 { fs.iter().map(|f| (f.b - f.a + 1) as f32 * f.pct).sum::<f32>() / duracao as f32 } else { 0.0 };
+    Resumo { geral: if todas { 1.0 } else { media.min(0.99) }, concl: fs.iter().filter(|f| f.status == Situacao::Concluido).count(), horas: fs.iter().map(|f| f.horas).sum(), futuro: !fs.is_empty() && fs.iter().all(|f| f.status == Situacao::Planejado) }
+}
+
+/// O progresso de um blueprint (`progressoDe`): 1 se concluído, senão o geral.
+pub fn progresso(p: &Value) -> f32 {
+    if concluido(p) { 1.0 } else { resumo(&acoes_de(p)).geral }
+}
+
+/// Itens que ainda faltam nas ações (a soma de `it[1] - it[0]`).
+pub fn faltam(fs: &[Acao]) -> usize {
+    fs.iter().map(|f| f.itens.1 - f.itens.0).sum()
+}
+
+pub fn indice_mes(iso: &str) -> i64 {
+    iso[..4].parse::<i64>().unwrap_or(0) * 12 + iso[5..7].parse::<i64>().unwrap_or(1) - 1
+}
+
+pub fn mes_iso(n: i64) -> String {
+    format!("{}-{:02}", n.div_euclid(12), n.rem_euclid(12) + 1)
+}
+
+/// A janela de meses da folha: das datas das ações com uma semana de folga, em meses inteiros (`janelaPeriodo` sem período escolhido).
+pub struct Janela {
+    pub inicio: i64,
+    pub fim: i64,
+    pub t0: i64,
+    pub t1: i64,
+}
+
+pub fn janela(fs: &[Acao], hoje: i64) -> Janela {
+    let (a, b) = if fs.is_empty() { (hoje - 7, hoje + 7) } else { (fs.iter().map(|f| f.a).min().unwrap_or(hoje) - 7, fs.iter().map(|f| f.b).max().unwrap_or(hoje) + 7) };
+    let (inicio, fim) = (indice_mes(&iso_do_dia(a)), indice_mes(&iso_do_dia(b)));
+    Janela { inicio, fim, t0: dia(&format!("{}-01", mes_iso(inicio))).unwrap_or(0), t1: dia(&format!("{}-01", mes_iso(fim + 1))).unwrap_or(0) }
+}
+
+#[cfg(test)]
+mod testes {
+    use super::*;
+
+    fn exemplo() -> Value {
+        serde_json::from_str(include_str!("../../data.exemplo.json")).unwrap()
+    }
+
+    /// Os números que a página mostra para o exemplo (conferidos na tela web): o primeiro blueprint tem 1/3 ações, 35%, 8 itens faltando e 22 h.
+    #[test]
+    fn exemplo_bate_com_a_pagina() {
+        let d = exemplo();
+        let p = &d["blueprints"][0];
+        let fs = acoes_de(p);
+        let r = resumo(&fs);
+        assert_eq!((r.concl, fs.len(), (r.geral * 100.0).round() as i32, faltam(&fs), r.horas), (1, 3, 35, 8, 22.0));
+        let q = &d["blueprints"][1];
+        let (fq, rq) = (acoes_de(q), resumo(&acoes_de(q)));
+        assert_eq!((rq.concl, fq.len(), (rq.geral * 100.0).round() as i32, faltam(&fq), rq.horas), (0, 2, 15, 5, 8.5));
+        // o carimbo da folha: média dos blueprints (25%)
+        let media = d["blueprints"].as_array().unwrap().iter().map(progresso).sum::<f32>() / 2.0;
+        assert_eq!((media * 100.0).round() as i32, 25);
+    }
+
+    #[test]
+    fn so_conclui_com_todos_os_itens_feitos() {
+        let f = serde_json::json!({ "status": "andamento", "progresso": 0.4, "planos": [{ "feito": true }, { "feito": false }], "checkpoints": [] });
+        assert_eq!(efetiva(&f).0, Situacao::Andamento);
+        let g = serde_json::json!({ "status": "planejado", "planos": [{ "feito": true }], "checkpoints": [{ "feito": true }] });
+        assert_eq!(efetiva(&g).0, Situacao::Concluido);
+        let h = serde_json::json!({ "status": "andamento", "progresso": 1 });
+        assert_eq!(efetiva(&h).0, Situacao::Concluido);
+    }
+
+    #[test]
+    fn janela_cobre_as_datas_com_folga() {
+        let fs = acoes_de(&exemplo()["blueprints"][0]);
+        let j = janela(&fs, dia("2026-10-31").unwrap());
+        assert!(j.t0 <= fs.iter().map(|f| f.a).min().unwrap() - 7 + 31);
+        assert_eq!(mes_iso(indice_mes("2026-10-05")), "2026-10");
+        assert_eq!(mes_iso(j.fim + 1).len(), 7);
+    }
+}

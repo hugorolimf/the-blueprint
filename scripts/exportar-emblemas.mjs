@@ -78,7 +78,7 @@ mkdirSync(destino, { recursive: true });
 const css = readFileSync(join(raiz, "web", "css", "marca.css"), "utf8");
 const variaveis = Object.fromEntries([...css.match(/\.emblema\{([^}]*)\}/)[1].matchAll(/(--anatomy-[\w-]+):([^;]+)/g)].map((m) => [m[1], m[2].trim()]));
 const regras = [...css.matchAll(/^(\.emblema [^{]+)\{([^}]*)\}$/gm)]
-  .filter((m) => !m[1].includes(":has") && !m[1].includes("fantasma") && !m[2].includes("non-scaling"))
+  .filter((m) => !m[1].includes(":has") && !m[2].includes("non-scaling"))
   .map((m) => `${m[1].replace(/\.emblema /g, "")}{${m[2].replace(/var\((--anatomy-[\w-]+)\)/g, (_, v) => variaveis[v]).replace(/transform:[^;]+;?/g, "")}}`)
   .join("\n");
 
@@ -93,4 +93,16 @@ for (const [nome, pecas] of Object.entries(marcas)) {
     writeFileSync(join(destino, `${nome}-${sufixo}.svg`), svg);
   }
 }
-console.log(`${Object.keys(marcas).length * Object.keys(tamanhos).length} emblemas em ${destino}`);
+// o emblema «em construção» dos cartões da lista: as peças sólidas seguem o progresso, então vai em 11 passos (0, 10 … 100%), no tamanho máximo do cartão (116x100)
+for (let passo = 0; passo <= 10; passo++) {
+  const e = emb.desenhaEmblema(emb.CONSTRUCAO, { largura: 116, altura: 100, pad: 2, progresso: passo / 10, sombra: false });
+  const corpo = e.svg.replace(/<text([^>]*)>([^<]*)<\/text>/g, (_, attrs, t) => textoEmCaminho(attrs, t));
+  writeFileSync(join(destino, `construcao-${String(passo * 10).padStart(3, "0")}.svg`), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${e.largura} ${e.altura}" width="${e.largura}" height="${e.altura}"><style>${regras}</style>${corpo}</svg>\n`);
+}
+// a marca-d'água da lista: a marca do workspace «construída» conforme o progresso, em 11 passos (só a padrão; as outras vão inteiras, `-previa`), no formato 1,4:1 da página
+for (let passo = 0; passo <= 10; passo++) {
+  const e = emb.desenhaEmblema(emb.BLUEPRINT, { largura: 700, altura: 500, progresso: passo / 10, sombra: false });
+  const corpo = e.svg.replace(/<text([^>]*)>([^<]*)<\/text>/g, (_, attrs, t) => textoEmCaminho(attrs, t));
+  writeFileSync(join(destino, `fundo-${String(passo * 10).padStart(3, "0")}.svg`), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${e.largura} ${e.altura}" width="${e.largura}" height="${e.altura}"><style>${regras}</style>${corpo}</svg>\n`);
+}
+console.log(`${Object.keys(marcas).length * Object.keys(tamanhos).length + 22} emblemas em ${destino}`);
