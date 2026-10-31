@@ -1,6 +1,7 @@
 //! O blueprint aberto: a folha `n` do workspace, com a régua de meses e as seções (`folhaBlueprint` em web/js/render.js). Sem projetos há uma
 //! seção, a do blueprint, que nasce aberta; com projetos há uma seção por projeto (e o Geral), que nascem recolhidas.
 
+use super::acoes;
 use super::cena::{Ancora, Cena};
 use super::disposicao::{self, FOLGA};
 use super::pagina::{self, corta, Carimbo, Medidas, BAIXO_FAIXA, IL};
@@ -9,9 +10,11 @@ use super::secao::{self, Secao};
 use crate::documento::{self, Documento, RAIZ};
 use crate::dominio::{self, Acao as AcaoDom};
 use crate::fonte::Peso;
-use crate::i18n::{tr, tr_com};
+use crate::i18n::{tr, tr_com, trn};
+use crate::pesquisa;
 use crate::planta::{self, Papel};
-use crate::telas::{Acao, Tela, Vista};
+use super::controles::Periodo;
+use crate::telas::{self, Acao, Tela, Vista};
 use crate::tema::{MEDIO, TINTA};
 use egui::{vec2, Sense, Ui};
 use serde_json::Value;
@@ -70,11 +73,36 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
     let hoje_iso = documento::hoje();
     let hoje = documento::dia(&hoje_iso).unwrap_or(0);
     let acoes = dominio::acoes_de(p);
-    let janela = dominio::janela(&acoes, hoje);
+    // o filtro «Pendentes» muda o que a folha desenha; o resumo e as datas das seções continuam sobre tudo
+    let pendentes = vista.pendentes.contains(bp);
+    let visiveis = if pendentes { dominio::so_pendentes(&acoes) } else { acoes.clone() };
+    let escolhido = vista.periodos.get(bp).and_then(|q| if q.aguardando { q.anterior.clone() } else { Some((q.inicio.clone(), q.fim.clone())) });
+    let janela = dominio::janela_com(&visiveis, hoje, escolhido.as_ref().map(|(a, b)| (a.as_str(), b.as_str())));
+    vista.janelas.insert(bp.to_string(), (dominio::mes_iso(janela.inicio), dominio::mes_iso(janela.fim)));
     let nm = (janela.fim - janela.inicio + 1) as usize;
-    let modelos = modelos(vista, p, pi, &acoes);
+    // a pesquisa: o que casou (só nas ações que a folha mostra) e as seções que precisam estar abertas para o achado aparecer
+    let termos = pesquisa::termos(&vista.consulta);
+    let ids_visiveis: Vec<&str> = visiveis.iter().map(|f| f.id.as_str()).collect();
+    let res = pesquisa::blueprint(p, &termos, Some(&ids_visiveis));
+    let mut modelos = modelos(vista, p, pi, &acoes);
+    if !termos.is_empty() {
+        for m in &mut modelos {
+            if m.idxs.iter().any(|k| res.acoes.iter().any(|a| a.id == acoes[*k].id)) {
+                m.aberto = true;
+            }
+        }
+    }
+    let contador = (!termos.is_empty()).then(|| if res.total() == 0 { tr("nenhum resultado").to_string() } else { trn(res.total(), "{n} resultado", "{n} resultados") });
+    if pendentes {
+        // com filtro, a seção sem nada a mostrar some (só quando há projetos: o blueprint inteiro continua com a mensagem)
+        let tem_projetos = !modelos.iter().any(|m| m.principal);
+        let ids: std::collections::HashSet<&str> = visiveis.iter().map(|f| f.id.as_str()).collect();
+        if tem_projetos {
+            modelos.retain(|m| m.idxs.iter().any(|k| ids.contains(acoes[*k].id.as_str())));
+        }
+    }
     let (viewport_h, viewport_w) = (ui.available_height(), ui.available_width());
-    let (mut pedido, mut alternar, mut comando) = (None, None::<String>, None);
+    let (mut pedido, mut alternar, mut comando, mut periodo, mut mes_clicado) = (None, None::<String>, None, None, None);
     let mut area = egui::ScrollArea::both().auto_shrink([false, false]);
     if let Some(y) = vista.rolagem.take() {
         area = area.vertical_scroll_offset(y);
@@ -85,7 +113,10 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         let colw = (((r - l - 30.0) / 2.0).floor()).clamp(240.0, 430.0);
         let y0 = Y_REGUA + 90.0;
         // mede cada seção e empilha: a próxima começa depois da altura da anterior (sem a folga) e do vão
-        let subconjuntos: Vec<Vec<&AcaoDom>> = modelos.iter().map(|m| m.idxs.iter().map(|k| &acoes[*k]).collect()).collect();
+        let subconjuntos: Vec<Vec<&AcaoDom>> = modelos.iter().map(|m| {
+            let ids: std::collections::HashSet<&str> = m.idxs.iter().map(|k| acoes[*k].id.as_str()).collect();
+            visiveis.iter().filter(|f| ids.contains(f.id.as_str())).collect()
+        }).collect();
         let mut disps = Vec::new();
         let mut ys = Vec::new();
         let mut y = y0;
@@ -108,15 +139,16 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         c.texto(&titulo, l, IL + 36.0, 18.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
         let sub = tr_com("Folha {n} de {total} · Blueprint {bp} · {nome}", &[("n", &(pi + 2).to_string()), ("total", &(1 + blueprints.len()).to_string()), ("bp", &format!("{:02}", pi + 1)), ("nome", &corta(&texto(p, "nome"), 60))]);
         c.texto(&sub, l, IL + 56.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
-        regua::desenhar(&c, &regua);
+        let aguardando = vista.periodos.get(bp).filter(|q| q.aguardando).map(|q| q.inicio.clone());
+        mes_clicado = regua::desenhar(&c, ui, &regua, aguardando.as_deref());
         for (k, m) in modelos.iter().enumerate() {
             let refs = &subconjuntos[k];
-            let total = if m.principal { p.get("acoes").and_then(Value::as_array).map_or(0, Vec::len) } else { refs.len() };
-            let s = Secao { ws: id, p, acoes: refs, numero: m.numero.clone(), nome: m.nome.clone(), descricao: m.descricao.clone(), total, ok: m.principal && dominio::concluido(p), aberto: m.aberto, principal: m.principal, resumo: dominio::resumo(refs.iter().copied()), disp: &disps[k], regua: &regua, y: ys[k], colw, r, l };
+            let total = if m.principal { p.get("acoes").and_then(Value::as_array).map_or(0, Vec::len) } else { m.idxs.len() };
+            let s = Secao { ws: id, p, acoes: refs, numero: m.numero.clone(), nome: m.nome.clone(), descricao: m.descricao.clone(), total, ok: m.principal && dominio::concluido(p), aberto: m.aberto, principal: m.principal, resumo: dominio::resumo(m.idxs.iter().map(|k| &acoes[*k])), pendentes, pesq: (!termos.is_empty()).then_some((&res, termos.as_slice())), disp: &disps[k], regua: &regua, y: ys[k], colw, r, l };
             if secao::cabecalho(&c, ui, &s) {
                 alternar = Some(m.chave.clone());
             }
-            if let Some(a) = secao::acoes(&c, ui, &s, hoje) {
+            if let Some(a) = acoes::desenhar(&c, ui, &s, hoje) {
                 pedido = Some(a);
             }
         }
@@ -129,7 +161,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         let titulo_fim = l + crate::planta::Texto::novo(titulo.to_uppercase(), 18.0).peso(Peso::Negrito).trilha(0.06).largura(&painter);
         let sub_fim = l + crate::planta::Texto::novo(sub.to_uppercase(), 11.0).trilha(0.06).largura(&painter);
         let mut abrir_web = None;
-        comando = super::controles::blueprint(ui, vista, &c, w, id, titulo_fim.max(sub_fim) + 24.0 - c.o.x, &mut abrir_web);
+        (comando, periodo) = super::controles::blueprint(ui, vista, &c, w, id, titulo_fim.max(sub_fim) + 24.0 - c.o.x, pendentes, contador.clone(), &mut abrir_web);
         if let Some(destino) = abrir_web {
             ui.ctx().open_url(egui::OpenUrl::new_tab(format!("{servidor}/{destino}")));
         }
@@ -138,6 +170,27 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         let aberto = modelos.iter().find(|m| m.chave == chave).is_some_and(|m| m.aberto);
         vista.abertas.insert(chave, !aberto);
     }
+    // o período: o mês clicado na régua e os botões «Todo o blueprint», «Hoje» e «Pendentes»
+    if let Some(mes) = mes_clicado {
+        selecionar_mes(vista, bp, mes);
+    }
+    match periodo {
+        Some(Periodo::Todo) => {
+            vista.periodos.remove(bp);
+            vista.pendentes.remove(bp);
+        }
+        Some(Periodo::Hoje) => {
+            let mes = hoje_iso[..7].to_string();
+            vista.periodos.insert(bp.to_string(), telas::Periodo { inicio: mes.clone(), fim: mes, aguardando: false, anterior: None });
+        }
+        Some(Periodo::Pendentes) => {
+            if !vista.pendentes.remove(bp) {
+                vista.pendentes.insert(bp.to_string());
+            }
+            vista.periodos.remove(bp);
+        }
+        None => {}
+    }
     // «expandir tudo» e «recolher tudo»
     if let Some(c) = comando {
         for m in &modelos {
@@ -145,4 +198,16 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         }
     }
     pedido
+}
+
+/// O 1º clique num mês marca o início e espera; o 2º fecha o período, em qualquer ordem (`selecionarMes` de dados.js).
+fn selecionar_mes(vista: &mut Vista, bp: &str, mes: String) {
+    let novo = match vista.periodos.get(bp) {
+        Some(q) if q.aguardando => {
+            let (a, b) = if q.inicio <= mes { (q.inicio.clone(), mes) } else { (mes, q.inicio.clone()) };
+            telas::Periodo { inicio: a, fim: b, aguardando: false, anterior: None }
+        }
+        _ => telas::Periodo { inicio: mes.clone(), fim: mes, aguardando: true, anterior: vista.janelas.get(bp).cloned() },
+    };
+    vista.periodos.insert(bp.to_string(), novo);
 }

@@ -65,7 +65,7 @@ pub struct Medidas {
 }
 
 /// Desenha o cartão `p` em `m`. `realce`: o mouse está em cima (`.alvo:hover .moldura`). Devolve a largura da arte (para o chamador pintar a imagem).
-pub fn desenhar(c: &Cena, m: &Medidas, p: &serde_json::Value, hoje: i64, realce: bool) -> ArteCartao {
+pub fn desenhar(c: &Cena, m: &Medidas, p: &serde_json::Value, hoje: i64, realce: bool, achou: Option<(&str, &[String])>) -> ArteCartao {
     let (tx, ty, tw, th) = (m.x, m.y, m.w, m.h);
     let ok = dominio::concluido(p);
     let fs = dominio::acoes_de(p);
@@ -92,9 +92,17 @@ pub fn desenhar(c: &Cena, m: &Medidas, p: &serde_json::Value, hoje: i64, realce:
     if r.horas > 0.0 {
         info += &format!(" · {} H", r.horas);
     }
+    // pesquisando: o trecho achado no nome e na descrição ganha o realce e, no lugar do andamento, vai onde a consulta casou
+    if let Some((_, termos)) = achou {
+        c.realce(&nome, texto_x, ty + 44.0, 15.0, Peso::Negrito, 0.06, true, &crate::pesquisa::trechos(&nome, termos));
+        c.realce(&descricao, texto_x, ty + 70.0, 11.0, Peso::Normal, 0.06, true, &crate::pesquisa::trechos(&descricao, termos));
+    }
     c.texto(&nome, texto_x, ty + 44.0, 15.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
     c.texto(&descricao, texto_x, ty + 70.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
-    c.texto(&corta(&info, (texto_w / 7.0).floor() as usize), texto_x, ty + 95.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
+    match achou {
+        Some((onde, _)) => c.texto(&corta(onde, (texto_w / 7.0).floor() as usize), texto_x, ty + 95.0, 10.0, Peso::Normal, egui::Color32::WHITE, Ancora::Inicio, false),
+        None => c.texto(&corta(&info, (texto_w / 7.0).floor() as usize), texto_x, ty + 95.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, false),
+    };
     if !fs.is_empty() {
         barra(c, &fs.iter().collect::<Vec<_>>(), texto_x, tx + tw - 16.0, ty, hoje);
     }

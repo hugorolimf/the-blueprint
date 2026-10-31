@@ -60,8 +60,8 @@ fn fileira(ui: &mut Ui, itens: &[Item], direita: f32, y: f32) -> (Option<&'stati
     (clique, x + 8.0)
 }
 
-/// A busca: caixa de 380 x 35 com o texto de exemplo; devolve nada, só edita `vista.consulta`.
-fn busca(ui: &mut Ui, vista: &mut Vista, x: f32, y: f32, dica: &str) {
+/// A busca: caixa de 380 x 35 com o texto de exemplo e o contador de resultados à direita; edita `vista.consulta`.
+fn busca(ui: &mut Ui, vista: &mut Vista, x: f32, y: f32, dica: &str, resultado: Option<String>) -> Response {
     let p = ui.painter().clone();
     let campo = Rect::from_min_size(pos2(x, y), vec2(380.0, 35.0));
     p.rect_filled(campo, 0, rgba(0x0c3a78, 0xcc));
@@ -73,48 +73,103 @@ fn busca(ui: &mut Ui, vista: &mut Vista, x: f32, y: f32, dica: &str) {
         .hint_text(egui::RichText::new(dica).size(11.0).color(BAIXO))
         .desired_width(campo.width() - 24.0)
         .align(egui::Align2::LEFT_CENTER);
-    ui.put(campo.shrink2(vec2(12.0, 1.0)), editor);
+    let resposta = ui.put(campo.shrink2(vec2(12.0, 1.0)), editor);
+    if std::mem::take(&mut vista.focar_busca) {
+        resposta.request_focus();
+    }
+    // o contador de resultados (`busca-n`) à direita do campo, em caixa alta e espaçado
+    if let Some(n) = resultado {
+        crate::planta::Texto::novo(n.to_uppercase(), 10.0).cor(MEDIO).trilha(0.12).na_linha_dir(&p, campo.max.x - 10.0, campo.min.y, campo.height());
+    }
+    resposta
+}
+
+/// Na barra compacta a busca é uma lupa que abre o campo por cima dos ícones; devolve `true` se o campo está aberto (e então os ícones não aparecem).
+fn busca_compacta(ui: &mut Ui, vista: &mut Vista, direita: f32, y: f32, dica: &str, contador: Option<String>) -> bool {
+    if !(vista.busca_aberta || !vista.consulta.is_empty()) {
+        return false;
+    }
+    let r = busca(ui, vista, direita - 380.0, y, dica, contador);
+    // vazia e sem foco: volta a ser a lupa
+    if r.lost_focus() && vista.consulta.is_empty() {
+        vista.busca_aberta = false;
+    }
+    true
 }
 
 /// A lista de blueprints do workspace.
-pub fn lista(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, abrir_web: &mut Option<String>) {
+pub fn lista(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, n_resultados: usize, pesquisando: bool, abrir_web: &mut Option<String>) {
     let (direita, y) = (c.o.x + w - 64.0, c.o.y + 44.0);
-    let itens = [Item::Texto("voltar"), Item::Icone("tela"), Item::Icone("foco"), Item::Texto("planejar"), Item::Texto("compartilhar"), Item::Texto("terminal")];
-    match fileira(ui, &itens, direita, y).0 {
-        Some("voltar") => vista.tela = Tela::Entrada,
+    let contador = pesquisando.then(|| if n_resultados == 0 { tr("nenhum resultado").to_string() } else { crate::i18n::trn(n_resultados, "{n} resultado", "{n} resultados") });
+    let compacta = (w - 64.0) - cabecalho_fim < BARRA_CHEIA;
+    if compacta && busca_compacta(ui, vista, direita, y, tr("Pesquisar blueprints, ações, planos"), contador.clone()) {
+        return;
+    }
+    let itens_cheia = [Item::Texto("voltar"), Item::Icone("tela"), Item::Icone("foco"), Item::Texto("planejar"), Item::Texto("compartilhar"), Item::Texto("terminal")];
+    let itens_compacta = [Item::Icone("buscar"), Item::Icone("voltar"), Item::Icone("tela"), Item::Icone("foco"), Item::Icone("planejar"), Item::Icone("compartilhar"), Item::Icone("terminal")];
+    let itens: &[Item] = if compacta { &itens_compacta } else { &itens_cheia };
+    match fileira(ui, itens, direita, y).0 {
+        Some("buscar") => {
+            vista.busca_aberta = true;
+            vista.focar_busca = true;
+        }
+        Some("voltar") => {
+            vista.tela = Tela::Entrada;
+            vista.consulta.clear();
+        }
         Some("tela") => tela_cheia(ui),
         Some("planejar" | "compartilhar" | "terminal") => *abrir_web = Some(format!("#/c/{id}")),
         _ => {}
     }
-    busca(ui, vista, direita - 380.0, y + 42.0, tr("Pesquisar blueprints, ações, planos"));
+    if !compacta {
+        busca(ui, vista, direita - 380.0, y + 42.0, tr("Pesquisar blueprints, ações, planos"), contador);
+    }
 }
 
 /// O blueprint aberto. `cabecalho_fim`: o x onde termina o título/subtítulo (já com os 24 px de respiro) para decidir entre a barra cheia e a de ícones.
-pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, abrir_web: &mut Option<String>) -> Option<&'static str> {
+pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, pendentes: bool, contador: Option<String>, abrir_web: &mut Option<String>) -> (Option<&'static str>, Option<Periodo>) {
     let (direita, y) = (c.o.x + w - 64.0, c.o.y + 44.0);
     let compacta = (w - 64.0) - cabecalho_fim < BARRA_CHEIA;
     let comum = [Item::Icone("expandir"), Item::Icone("recolher"), Item::Icone("tela"), Item::Icone("foco")];
+    if compacta && busca_compacta(ui, vista, direita, y, tr("Pesquisar ações, planos e checkpoints"), contador.clone()) {
+        return (None, periodo(ui, c, pendentes));
+    }
     let clique = if compacta {
         let itens = [Item::Icone("buscar"), Item::Icone("voltar-bp"), comum[0], comum[1], comum[2], comum[3], Item::Icone("planejar"), Item::Icone("compartilhar"), Item::Icone("apresentar"), Item::Icone("terminal")];
         fileira(ui, &itens, direita, y).0
     } else {
         let itens = [Item::Texto("voltar-bp"), comum[0], comum[1], comum[2], comum[3], Item::Texto("planejar"), Item::Texto("compartilhar"), Item::Texto("apresentar"), Item::Texto("terminal")];
         let (clique, _) = fileira(ui, &itens, direita, y);
-        busca(ui, vista, direita - 380.0, y + 42.0, tr("Pesquisar ações, planos e checkpoints"));
+        busca(ui, vista, direita - 380.0, y + 42.0, tr("Pesquisar ações, planos e checkpoints"), contador);
         clique
     };
     match clique {
-        Some("voltar-bp") => vista.tela = Tela::Workspace(id.to_string()),
+        Some("buscar") => {
+            vista.busca_aberta = true;
+            vista.focar_busca = true;
+        }
+        Some("voltar-bp") => {
+            vista.tela = Tela::Workspace(id.to_string());
+            vista.consulta.clear();
+        }
         Some("tela") => tela_cheia(ui),
         Some("planejar" | "compartilhar" | "apresentar" | "terminal") => *abrir_web = Some(format!("#/c/{id}")),
         _ => {}
     }
-    período(ui, c);
-    clique.filter(|n| matches!(*n, "expandir" | "recolher"))
+    (clique.filter(|n| matches!(*n, "expandir" | "recolher")), periodo(ui, c, pendentes))
 }
 
-/// O período (Dias | Horas e os filtros): os botões existem, o filtro ainda não.
-fn período(ui: &mut Ui, c: &Cena) {
+/// O que os botões de período pedem.
+#[derive(Clone, Copy, PartialEq)]
+pub enum Periodo {
+    Todo,
+    Hoje,
+    Pendentes,
+}
+
+/// O período (Dias | Horas e os filtros). «Horas» e «Em andamento» (que depende dos agentes) ainda não filtram. `pendentes`: o filtro está ligado.
+fn periodo(ui: &mut Ui, c: &Cena, pendentes: bool) -> Option<Periodo> {
+    let mut comando = None;
     let p = ui.painter().clone();
     let (mut x, y) = (c.o.x + 70.0, c.o.y + 124.0);
     for (i, rotulo) in ["Dias", "Horas"].iter().enumerate() {
@@ -125,11 +180,19 @@ fn período(ui: &mut Ui, c: &Cena) {
     }
     for rotulo in ["Todo o blueprint", "Hoje", "Pendentes", "Em andamento"] {
         let r = if rotulo == "Em andamento" { format!("{} · 0", tr(rotulo)) } else { tr(rotulo).to_string() };
-        let b = Botao { texto: &r, tam: 10.0, cheio: false, ativo: true, altura: 27.0, pad_x: 12.0 };
+        let b = Botao { texto: &r, tam: 10.0, cheio: rotulo == "Pendentes" && pendentes, ativo: true, altura: 27.0, pad_x: 12.0 };
         let largura = b.largura(&p);
-        botao(ui, pos2(x, y), &b);
+        if botao(ui, pos2(x, y), &b).clicked() {
+            comando = match rotulo {
+                "Todo o blueprint" => Some(Periodo::Todo),
+                "Hoje" => Some(Periodo::Hoje),
+                "Pendentes" => Some(Periodo::Pendentes),
+                _ => None,
+            };
+        }
         x += largura + 14.0;
     }
+    comando
 }
 
 fn tela_cheia(ui: &Ui) {

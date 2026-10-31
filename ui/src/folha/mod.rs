@@ -1,6 +1,7 @@
 //! A folha do workspace: a lista de blueprints, desenhada como a prancha de plotagem da página (`capa` em web/js/render.js), em coordenadas
 //! do SVG dela. O blueprint aberto (a linha do tempo das ações) ainda é da versão web: o clique no cartão abre lá.
 
+mod acoes;
 mod blueprint;
 mod cartao;
 mod cena;
@@ -16,7 +17,8 @@ use crate::documento::{self, Documento, RAIZ};
 use crate::dominio;
 use crate::emblema;
 use crate::fonte::Peso;
-use crate::i18n::{tr, tr_com};
+use crate::i18n::{tr, tr_com, trn};
+use crate::pesquisa;
 use crate::planta::{self, Papel};
 use crate::telas::{Acao, Tela, Vista};
 use crate::tema::{rgba, MEDIO, TINTA};
@@ -32,11 +34,6 @@ fn texto(v: &serde_json::Value, campo: &str) -> String {
     v.get(campo).and_then(|v| v.as_str()).unwrap_or("").to_string()
 }
 
-/// Sem acentos nem maiúsculas, para a busca.
-fn simples(s: &str) -> String {
-    s.to_lowercase().chars().map(|c| match c { 'á' | 'à' | 'â' | 'ã' => 'a', 'é' | 'ê' => 'e', 'í' => 'i', 'ó' | 'ô' | 'õ' => 'o', 'ú' | 'ü' => 'u', 'ç' => 'c', c => c }).collect()
-}
-
 pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor: &str) -> Option<Acao> {
     let Some(ws) = doc.workspace(id) else {
         vista.tela = Tela::Entrada;
@@ -49,8 +46,31 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
     let todas: Vec<dominio::Acao> = blueprints.iter().flat_map(dominio::acoes_de).collect();
     let janela = dominio::janela(&todas, hoje);
     let nm = (janela.fim - janela.inicio + 1) as usize;
-    let consulta = simples(vista.consulta.trim());
-    let mapa: Vec<&serde_json::Value> = blueprints.iter().filter(|p| consulta.is_empty() || simples(&texto(p, "nome")).contains(&consulta) || simples(&texto(p, "descricao")).contains(&consulta)).collect();
+    let termos = pesquisa::termos(&vista.consulta);
+    // com consulta, só os blueprints que casam, cada um com o texto de onde casou (`pesqLista`)
+    let achados: Vec<(&serde_json::Value, Option<String>)> = blueprints.iter().filter_map(|p| {
+        if termos.is_empty() {
+            return Some((p, None));
+        }
+        let r = pesquisa::blueprint(p, &termos, None);
+        if !r.casa() {
+            return None;
+        }
+        let mut partes = Vec::new();
+        if r.proprio && r.total() == 0 {
+            partes.push(tr("nome ou descrição").to_string());
+        }
+        for (n, um, varios) in [(r.n_acoes, "{n} ação", "{n} ações"), (r.n_planos, "{n} plano", "{n} planos"), (r.n_checkpoints, "{n} checkpoint", "{n} checkpoints")] {
+            if n > 0 {
+                partes.push(trn(n, um, varios));
+            }
+        }
+        if r.proprio && r.total() > 0 {
+            partes.insert(0, tr("nome ou descrição").to_string());
+        }
+        Some((p, Some(tr_com("ACHOU: {onde}", &[("onde", &partes.join(" · ").to_uppercase())]))))
+    }).collect();
+    let mapa: Vec<&serde_json::Value> = achados.iter().map(|(p, _)| *p).collect();
 
     let (viewport_h, viewport_w) = (ui.available_height(), ui.available_width());
     let mut acao = None;
@@ -96,7 +116,8 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
             let m = cartao::Medidas { x: l + col as f32 * (tw + GAP), y: Y_MAPA + 48.0 + linha as f32 * (TH + GAP), w: tw, h: TH };
             let area = Rect::from_min_size(c.pt(m.x, m.y), vec2(m.w, m.h));
             let resposta = ui.interact(area, ui.scope_id().with(("bp", texto(p, "id"))), Sense::click());
-            let arte = cartao::desenhar(&c, &m, p, hoje, resposta.hovered() || resposta.has_focus());
+            let onde = achados.get(i).and_then(|(_, o)| o.as_deref());
+            let arte = cartao::desenhar(&c, &m, p, hoje, resposta.hovered() || resposta.has_focus(), onde.map(|o| (o, termos.as_slice())));
             emblema::pintar_construcao(ui, Rect::from_min_size(c.pt(arte.x, arte.y), vec2(arte.w, arte.h)), arte.progresso);
             if resposta.hovered() {
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
@@ -132,7 +153,9 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let progresso = if blueprints.is_empty() { 0.0 } else { blueprints.iter().map(dominio::progresso).sum::<f32>() / blueprints.len() as f32 };
         let data = hoje_iso.split('-').rev().collect::<Vec<_>>().join("/");
         pagina::rodape(&c, &medidas, &tr("Clique num blueprint para abrir o blueprint dele."), &Carimbo { empresa: &empresa, tela: &tr("Lista de blueprints"), data: &data, progresso, folha: 1, folhas: 1 + blueprints.len(), legenda: true, feitas, acoes: n_acoes });
-        controles::lista(ui, vista, &c, w, id, &mut abrir_web);
+        let titulo_fim = l + planta::Texto::novo(format!("{empresa} · {titulo}").to_uppercase(), 18.0).peso(Peso::Negrito).trilha(0.06).largura(&p);
+        let sub_fim = l + planta::Texto::novo(tr("Blueprints · cada um abre o seu próprio blueprint").to_uppercase(), 11.0).trilha(0.06).largura(&p);
+        controles::lista(ui, vista, &c, w, id, titulo_fim.max(sub_fim) + 24.0 - c.o.x, mapa.len(), !termos.is_empty(), &mut abrir_web);
     });
     if let Some(destino) = abrir_web {
         ui.ctx().open_url(egui::OpenUrl::new_tab(format!("{servidor}/{destino}")));

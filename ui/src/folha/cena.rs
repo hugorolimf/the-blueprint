@@ -147,6 +147,20 @@ impl Cena<'_> {
         t.em(self.p, self.pt(x - largura / 2.0, y - SUBIDA * tam));
     }
 
+    /// O retângulo de `.pesq-realce` atrás dos trechos achados de um texto: `trechos` em letras do original; `cap` se o texto aparece em caixa alta;
+    /// `trilha` é o `letter-spacing` em múltiplos do tamanho. O texto é escrito depois, por cima.
+    pub fn realce(&self, s: &str, x: f32, y: f32, tam: f32, peso: Peso, trilha: f32, cap: bool, trechos: &[(usize, usize)]) {
+        let letras: Vec<char> = if cap { s.to_uppercase().chars().collect() } else { s.chars().collect() };
+        let largura = |de: usize, ate: usize| -> f32 {
+            let parte: String = letras[de.min(letras.len())..ate.min(letras.len())].iter().collect();
+            if parte.is_empty() { 0.0 } else { Texto::novo(parte, tam).peso(peso).trilha(trilha).largura(self.p) }
+        };
+        for &(a, b) in trechos {
+            let (x0, w) = (x + largura(0, a), largura(a, b));
+            self.retangulo(x0, y - SUBIDA * tam, w, 1.32 * tam, Some(BAIXO.gamma_multiply(0.7)), None);
+        }
+    }
+
     /// O hachurado de `pattern#hach`: linhas a 45° espaçadas de 6 px, em `#9cc4ee` com 1,5 px.
     pub fn hachura(&self, x: f32, y: f32, w: f32, h: f32) {
         let r = Rect::from_min_size(self.pt(x, y), vec2(w, h));

@@ -56,6 +56,22 @@ impl Roteiro {
                 vista.abertas.insert(arg.into(), true);
                 None
             }
+            "pendentes" => {
+                vista.pendentes.insert(arg.into());
+                None
+            }
+            "periodo" => {
+                // periodo:blueprint/aaaa-mm/aaaa-mm
+                let p: Vec<&str> = arg.split('/').collect();
+                if let [bp, a, b] = p.as_slice() {
+                    vista.periodos.insert((*bp).into(), crate::telas::Periodo { inicio: (*a).into(), fim: (*b).into(), aguardando: false, anterior: None });
+                }
+                None
+            }
+            "buscar" => {
+                vista.consulta = arg.into();
+                None
+            }
             "rolar" => {
                 vista.rolagem = arg.parse().ok();
                 None

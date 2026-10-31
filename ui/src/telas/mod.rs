@@ -17,6 +17,16 @@ pub enum Tela {
     Blueprint(String, String),
 }
 
+/// O período escolhido na régua de um blueprint (`periodos` de dados.js): `aguardando` é o 1º clique, que só marca o mês inicial.
+#[derive(Clone)]
+pub struct Periodo {
+    pub inicio: String,
+    pub fim: String,
+    pub aguardando: bool,
+    /// a janela que estava na tela antes do 1º clique (enquanto se espera o 2º)
+    pub anterior: Option<(String, String)>,
+}
+
 /// O que a tela pede que mude nos dados.
 pub enum Acao {
     DefinirNome(String),
@@ -51,13 +61,21 @@ pub struct Vista {
     pub consulta: String,
     /// só nos testes: o quanto rolar a folha ao abrir (`BLUEPRINT_UI_ROLAR`)
     pub rolagem: Option<f32>,
+    /// a busca da barra compacta: aberta por cima dos ícones (clique na lupa) e se ela deve pegar o foco agora
+    pub busca_aberta: bool,
+    pub focar_busca: bool,
     /// as seções abertas ou recolhidas (`blueprint|projeto`); sem entrada vale o padrão: o blueprint sem projetos nasce aberto, o projeto nasce fechado
     pub abertas: std::collections::HashMap<String, bool>,
+    /// o período escolhido por blueprint e os que estão no filtro «Pendentes»
+    pub periodos: std::collections::HashMap<String, Periodo>,
+    pub pendentes: std::collections::HashSet<String>,
+    /// a janela de meses desenhada por último em cada blueprint (`janelasRenderizadas`)
+    pub janelas: std::collections::HashMap<String, (String, String)>,
 }
 
 impl Vista {
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, abertas: std::collections::HashMap::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new() }
     }
 }
 

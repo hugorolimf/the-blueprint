@@ -11,6 +11,7 @@ pub enum Situacao {
     Planejado,
 }
 
+#[derive(Clone)]
 pub struct Checkpoint {
     pub id: String,
     pub nome: String,
@@ -19,6 +20,7 @@ pub struct Checkpoint {
     pub feito: bool,
 }
 
+#[derive(Clone)]
 pub struct Plano {
     pub id: String,
     pub texto: String,
@@ -26,6 +28,7 @@ pub struct Plano {
 }
 
 /// Uma ação com a situação já calculada (`acoesDe` da página).
+#[derive(Clone)]
 pub struct Acao {
     pub id: String,
     pub nome: String,
@@ -204,8 +207,26 @@ pub struct Janela {
 }
 
 pub fn janela(fs: &[Acao], hoje: i64) -> Janela {
+    janela_com(fs, hoje, None)
+}
+
+/// O mês `aaaa-mm` é válido (`mesValido`).
+pub fn mes_valido(s: &str) -> bool {
+    s.len() == 7 && s.as_bytes()[4] == b'-' && s[..4].bytes().all(|c| c.is_ascii_digit()) && matches!(s[5..].parse::<u32>(), Ok(1..=12))
+}
+
+/// Só as ações que ainda falta fazer e, nelas, só os planos e checkpoints pendentes (o filtro «Pendentes» de `acoesVisiveis`).
+pub fn so_pendentes(fs: &[Acao]) -> Vec<Acao> {
+    fs.iter().filter(|f| f.status != Situacao::Concluido).map(|f| Acao { planos: f.planos.iter().filter(|t| !t.feito).cloned().collect(), checkpoints: f.checkpoints.iter().filter(|m| !m.feito).cloned().collect(), ..f.clone() }).collect()
+}
+
+/// A janela de meses, ou o período escolhido (`inicio`, `fim` em `aaaa-mm`, em qualquer ordem) se for válido (`janelaPeriodo`).
+pub fn janela_com(fs: &[Acao], hoje: i64, escolhido: Option<(&str, &str)>) -> Janela {
     let (a, b) = if fs.is_empty() { (hoje - 7, hoje + 7) } else { (fs.iter().map(|f| f.a).min().unwrap_or(hoje) - 7, fs.iter().map(|f| f.b).max().unwrap_or(hoje) + 7) };
-    let (inicio, fim) = (indice_mes(&iso_do_dia(a)), indice_mes(&iso_do_dia(b)));
+    let (mut inicio, mut fim) = (indice_mes(&iso_do_dia(a)), indice_mes(&iso_do_dia(b)));
+    if let Some((x, y)) = escolhido.filter(|(x, y)| mes_valido(x) && mes_valido(y)) {
+        (inicio, fim) = (indice_mes(x).min(indice_mes(y)), indice_mes(x).max(indice_mes(y)));
+    }
     Janela { inicio, fim, t0: dia(&format!("{}-01", mes_iso(inicio))).unwrap_or(0), t1: dia(&format!("{}-01", mes_iso(fim + 1))).unwrap_or(0) }
 }
 
@@ -249,6 +270,26 @@ mod testes {
         assert_eq!(numero_da_acao(&p, &fs[1], 0, &fs), "1.2");
         assert_eq!(numero_da_acao(&p, &fs[3], 0, &fs), "3.1");
         assert!(grupos(&serde_json::json!({ "acoes": [] }), &[]).is_none());
+    }
+
+    #[test]
+    fn pendentes_tira_o_que_esta_feito_e_o_periodo_escolhido_manda_na_janela() {
+        let d = exemplo();
+        let fs = acoes_de(&d["blueprints"][0]);
+        let pend = so_pendentes(&fs);
+        // a ação concluída sai; na API só restam os 3 planos e o checkpoint por fazer, e no entregador tudo
+        assert_eq!(pend.len(), 2);
+        assert_eq!(pend[0].planos.len(), 3);
+        assert!(pend.iter().all(|f| f.planos.iter().all(|t| !t.feito) && f.checkpoints.iter().all(|m| !m.feito)));
+        let hoje = dia("2026-10-31").unwrap();
+        let auto = janela(&fs, hoje);
+        let outubro = janela_com(&fs, hoje, Some(("2026-10", "2026-10")));
+        assert_eq!((mes_iso(outubro.inicio), mes_iso(outubro.fim)), ("2026-10".to_string(), "2026-10".to_string()));
+        assert!(auto.t1 - auto.t0 > outubro.t1 - outubro.t0);
+        // período invertido e inválido
+        assert_eq!(janela_com(&fs, hoje, Some(("2026-11", "2026-09"))).inicio, indice_mes("2026-09"));
+        assert_eq!(janela_com(&fs, hoje, Some(("lixo", "2026-10"))).inicio, auto.inicio);
+        assert!(mes_valido("2026-12") && !mes_valido("2026-13") && !mes_valido("2026-1"));
     }
 
     #[test]

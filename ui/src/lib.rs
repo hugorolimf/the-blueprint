@@ -13,6 +13,7 @@ mod fonte;
 mod i18n;
 #[cfg(target_arch = "wasm32")]
 pub mod navegador;
+mod pesquisa;
 mod planta;
 pub mod rede;
 #[cfg(not(target_arch = "wasm32"))]

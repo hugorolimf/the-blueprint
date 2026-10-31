@@ -3,10 +3,11 @@
 
 use super::cena::{Ancora, Cena};
 use crate::documento::{dia, iso_do_dia};
-use crate::dominio::{indice_mes, mes_iso, Janela};
+use crate::dominio::{mes_iso, Janela};
 use crate::fonte::Peso;
 use crate::i18n::tr;
-use crate::tema::{MEDIO, PAPEL, TENUE, TINTA};
+use crate::tema::{rgba, MEDIO, PAPEL, TENUE, TINTA};
+use egui::{vec2, Rect, Sense, Ui};
 
 pub struct Regua<'a> {
     pub janela: &'a Janela,
@@ -34,7 +35,9 @@ impl Regua<'_> {
     }
 }
 
-pub fn desenhar(c: &Cena, g: &Regua) {
+/// Desenha a régua. Os nomes dos meses são clicáveis (`.lk`): devolve o mês `aaaa-mm` clicado. `aguardando`: o mês inicial já marcado, aguardando o fim.
+pub fn desenhar(c: &Cena, ui: &mut Ui, g: &Regua, aguardando: Option<&str>) -> Option<String> {
+    let mut clicado = None;
     let j = g.janela;
     let nm = (j.fim - j.inicio + 1) as usize;
     let meses: Vec<&str> = tr("JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ").split('|').collect();
@@ -47,7 +50,19 @@ pub fn desenhar(c: &Cena, g: &Regua) {
         if m < nm {
             let meio = (x + g.mes(m + 1)) / 2.0;
             let nome = meses.get(((mes_inicial + m as i64) % 12) as usize).copied().unwrap_or("");
-            c.texto_sublinhado(nome, meio, g.y - 16.0, 11.0, Peso::Normal, TINTA, Ancora::Meio, false);
+            let iso = mes_iso(j.inicio + m as i64);
+            let area = Rect::from_min_size(c.pt(x, g.y - 32.0), vec2(g.mes(m + 1) - x, 30.0));
+            let resposta = ui.interact(area, ui.scope_id().with(("mes", iso.as_str())), Sense::click());
+            if aguardando == Some(iso.as_str()) {
+                c.retangulo(x, g.y - 32.0, g.mes(m + 1) - x, 30.0, Some(rgba(0xffffff, 0x33)), None);
+            }
+            if resposta.hovered() {
+                ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+            }
+            if resposta.clicked() {
+                clicado = Some(iso);
+            }
+            c.texto_sublinhado(nome, meio, g.y - 16.0, 11.0, if resposta.hovered() { Peso::Negrito } else { Peso::Normal }, TINTA, Ancora::Meio, false);
             if m == 0 || (mes_inicial + m as i64) % 12 == 0 {
                 c.texto(&(ymin + (mes_inicial + m as i64).div_euclid(12)).to_string(), x + 3.0, g.y - 34.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
             }
@@ -66,5 +81,5 @@ pub fn desenhar(c: &Cena, g: &Regua) {
         let iso = iso_do_dia(g.hoje);
         c.texto_liso(&format!("{} {}/{}", tr("HOJE"), &iso[8..10], &iso[5..7]), xt, g.y + 22.0, 11.0, Peso::Negrito, PAPEL, Ancora::Meio);
     }
-    let _ = indice_mes;
+    clicado
 }
