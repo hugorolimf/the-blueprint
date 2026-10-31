@@ -1,0 +1,16 @@
+# A interface no navegador. Rodar de dentro de ui/ (precisa do servidor do Blueprint no ar, `cargo run -- serve` na raiz):
+#   trunk serve --release
+[build]
+target = "index.html"
+dist = "target/web/dist"
+
+[serve]
+addresses = ["127.0.0.1"]
+port = 8088
+
+# A página fala com a mesma origem: o `/api` passa para o servidor, sem CORS.
+[[proxy]]
+backend = "http://127.0.0.1:3000/api"
+
+[watch]
+watch = ["src", "index.html", "Cargo.toml"]

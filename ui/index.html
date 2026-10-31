@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>The Blueprint (beta)</title>
+  <link data-trunk rel="rust" href="Cargo.toml" data-bin="blueprint-ui" data-cargo-profile="web" data-wasm-opt="2">
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #061d42; }
+    canvas { position: absolute; inset: 0; width: 100%; height: 100%; outline: none; }
+    #carregando { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; text-align: center; color: #9cc4ee; font: 13px ui-monospace, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <canvas id="blueprint"></canvas>
+  <div id="carregando">Carregando o The Blueprint…</div>
+</body>
+</html>
