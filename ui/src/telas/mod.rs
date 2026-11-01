@@ -13,6 +13,7 @@ use crate::documento::Documento;
 
 pub use novo::Novo;
 
+#[derive(Debug)]
 pub enum Tela {
     Entrada,
     Workspace(String),
@@ -21,7 +22,7 @@ pub enum Tela {
 }
 
 /// O período escolhido na régua de um blueprint (`periodos` de dados.js): `aguardando` é o 1º clique, que só marca o mês inicial.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Periodo {
     pub inicio: String,
     pub fim: String,

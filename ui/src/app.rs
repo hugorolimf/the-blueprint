@@ -29,6 +29,8 @@ pub struct App {
     recebe: Receiver<Msg>,
     /// alguém pediu a janela à frente (`Mostrar`)
     mostrar: Arc<AtomicBool>,
+    /// só para o registro de testes (`BLUEPRINT_UI_LOG`)
+    ultima_tela: String,
     /// o clique de teste em curso: posição e se já é a hora de soltar
     clique: Option<(egui::Pos2, bool)>,
     /// a última busca de agentes (a cada poucos segundos, só com a janela aberta)
@@ -59,6 +61,7 @@ impl App {
             envio,
             recebe,
             mostrar,
+            ultima_tela: String::new(),
             clique: None,
             agentes_em: None,
             #[cfg(not(target_arch = "wasm32"))]
@@ -250,6 +253,17 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
         self.receber(&ctx);
+        #[cfg(not(target_arch = "wasm32"))]
+        if std::env::var_os("BLUEPRINT_UI_LOG").is_some() {
+            let tela = format!("{:?}", self.vista.tela);
+            if self.ultima_tela != tela {
+                eprintln!("tela: {tela} (janela {:.0}x{:.0}, zoom {:.2})", ctx.content_rect().width(), ctx.content_rect().height(), ctx.zoom_factor());
+                self.ultima_tela = tela;
+            }
+            if let Some(p) = ctx.input(|i| i.pointer.press_origin()) {
+                eprintln!("clique em {:.0},{:.0}", p.x, p.y);
+            }
+        }
         const INTERVALO: std::time::Duration = std::time::Duration::from_secs(3);
         if matches!(self.estado, Estado::Pronto(_)) && self.agentes_em.is_none_or(|t| t.elapsed() >= INTERVALO) {
             self.agentes_em = Some(web_time::Instant::now());
