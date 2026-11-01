@@ -104,11 +104,20 @@ fn barra(ui: &mut Ui, vista: &mut Vista, o: egui::Pos2, largura: f32, ocupado: b
 /// Um campo de texto no estilo da página: fundo escuro, borda fina, letra de 13 px com 0,03em e em caixa alta quando é de uma linha.
 /// Devolve `true` se a pessoa apertou Enter nele.
 fn campo(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str, multilinha: bool) -> bool {
+    campo_com(ui, r, texto, dica, multilinha, !multilinha)
+}
+
+/// O mesmo campo, de uma linha e como foi digitado (os campos do editor, `#editor input`, não ficam em caixa alta).
+pub(super) fn campo_linha(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str) -> bool {
+    campo_com(ui, r, texto, dica, false, false)
+}
+
+fn campo_com(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str, multilinha: bool, maiusculas: bool) -> bool {
     let p = ui.painter().clone();
     p.rect_filled(r, 0, rgba(0x082b5e, 0xcc));
     planta::borda(&p, r, BAIXO);
     let fonte = egui::FontId::new(13.0, familia(Peso::Normal));
-    let dica = egui::RichText::new(if multilinha { dica.to_string() } else { dica.to_uppercase() }).size(13.0).color(BAIXO);
+    let dica = egui::RichText::new(if maiusculas { dica.to_uppercase() } else { dica.to_string() }).size(13.0).color(BAIXO);
     // o nome aparece em caixa alta, como na página (`text-transform: uppercase`); o valor guardado fica como foi digitado
     let mut maiusculo = |ui: &egui::Ui, t: &dyn egui::TextBuffer, _largura: f32| {
         let mut job = egui::text::LayoutJob::simple(t.as_str().to_uppercase(), egui::FontId::new(13.0, familia(Peso::Normal)), TINTA, f32::INFINITY);
@@ -117,7 +126,7 @@ fn campo(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str, multilinha: bool)
     };
     // 11 px dos lados e 9 em cima e embaixo, mais a borda de 1 px
     let interno = r.shrink2(vec2(12.0, 10.0));
-    let editor = if multilinha { egui::TextEdit::multiline(texto).desired_rows(3) } else { egui::TextEdit::singleline(texto).char_limit(80).layouter(&mut maiusculo) };
+    let editor = if multilinha { egui::TextEdit::multiline(texto).desired_rows(3) } else if maiusculas { egui::TextEdit::singleline(texto).char_limit(80).layouter(&mut maiusculo) } else { egui::TextEdit::singleline(texto) };
     let editor = editor.frame(egui::Frame::NONE).font(fonte).text_color(TINTA).hint_text(dica).desired_width(interno.width()).align(egui::Align2::LEFT_TOP);
     let resposta = ui.put(interno, editor);
     resposta.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter)) && !multilinha

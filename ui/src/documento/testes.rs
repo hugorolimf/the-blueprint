@@ -103,3 +103,17 @@ fn marcar_item_liga_e_desliga_so_o_item() {
     assert_eq!((a["planos"][0]["feito"].clone(), a["planos"][1]["feito"].clone(), a["checkpoints"][0]["feito"].clone()), (json!(true), json!(false), json!(true)));
     assert!(!d.marcar_item(RAIZ, "b", "a", "planos", "nao-existe"));
 }
+
+#[test]
+fn criar_blueprint_vai_para_o_fim_do_workspace() {
+    let mut d = vazio();
+    let ws = d.criar_workspace("Alfa", "", "blueprint").unwrap();
+    assert!(d.criar_blueprint(&ws, "   ", "").is_err(), "sem nome não cria");
+    let a = d.criar_blueprint(&ws, " Portal ", " Para o fornecedor ").unwrap();
+    let b = d.criar_blueprint(RAIZ, "Na raiz", "").unwrap();
+    let bp = &d.workspace(&ws).unwrap()["blueprints"][0];
+    assert_eq!((bp["id"].as_str(), bp["nome"].as_str(), bp["descricao"].as_str()), (Some(a.as_str()), Some("Portal"), Some("Para o fornecedor")));
+    assert_eq!(bp["acoes"], json!([]));
+    assert_eq!(d.raw["blueprints"][0]["id"].as_str(), Some(b.as_str()));
+    assert!(d.criar_blueprint("nao-existe", "X", "").is_err());
+}

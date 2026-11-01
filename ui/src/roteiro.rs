@@ -95,6 +95,11 @@ impl Roteiro {
                 vista.tela = crate::telas::Tela::Entrada;
                 None
             }
+            "criarbp" => arg.split_once('/').map(|(ws, nome)| Acao::CriarBlueprint { workspace: ws.into(), nome: nome.into(), descricao: String::new() }),
+            "novobp" => {
+                vista.novo_bp = Some(crate::telas::NovoBp::em(arg));
+                None
+            }
             "novo" => {
                 vista.novo = Some(Novo::vazio());
                 None

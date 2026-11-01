@@ -162,7 +162,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
         }
         if resposta.clicked() {
-            abrir_web = Some(format!("#/c/{id}"));
+            vista.novo_bp = Some(crate::telas::NovoBp::em(id));
         }
         // o rodapé
         let (feitas, n_acoes) = (todas.iter().filter(|f| f.status == dominio::Situacao::Concluido).count(), todas.len());

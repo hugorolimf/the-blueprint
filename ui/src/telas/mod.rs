@@ -7,11 +7,13 @@ mod excluir;
 mod nome;
 mod nota;
 mod novo;
+mod novo_bp;
 
 use serde_json::Value;
 use crate::documento::Documento;
 
 pub use novo::Novo;
+pub use novo_bp::NovoBp;
 
 #[derive(Debug)]
 pub enum Tela {
@@ -35,6 +37,8 @@ pub struct Periodo {
 pub enum Acao {
     DefinirNome(String),
     CriarWorkspace { nome: String, descricao: String, icone: String },
+    /// «Criar blueprint vazio»: entra no fim do workspace e abre na folha
+    CriarBlueprint { workspace: String, nome: String, descricao: String },
     Excluir(String),
     Mover(String, i32),
     /// arrastado até outro cartão: vai para a posição dele
@@ -59,6 +63,8 @@ pub struct Vista {
     /// «Trocar nome»: mostra a tela de nome mesmo com o nome já salvo
     pub trocando_nome: bool,
     pub novo: Option<Novo>,
+    /// a tela «Novo blueprint» aberta (cartão tracejado da lista)
+    pub novo_bp: Option<NovoBp>,
     /// o id do workspace que o diálogo de exclusão pergunta
     pub excluir: Option<String>,
     /// o que fazer quando a gravação em curso terminar (ir para o workspace que acabou de nascer)
@@ -119,7 +125,7 @@ impl Vista {
     }
 
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None, nota: None, nota_texto: String::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, novo_bp: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None, nota: None, nota_texto: String::new() }
     }
 }
 
@@ -140,6 +146,9 @@ pub fn desenhar(ui: &mut egui::Ui, vista: &mut Vista, doc: &Documento, servidor:
     }
     if vista.novo.is_some() {
         return novo::tela(ui, vista, ocupado);
+    }
+    if vista.novo_bp.is_some() {
+        return novo_bp::tela(ui, vista, ocupado);
     }
     match vista.tela {
         Tela::Entrada => entrada::tela(ui, vista, doc, servidor, ocupado),

@@ -27,7 +27,7 @@ Variáveis de ambiente, para rodar o app sem mouse e comparar com a página:
 | Variável | O que faz |
 | --- | --- |
 | `BLUEPRINT_UI_CAPTURA=<arquivo.png>` | salva uma imagem da janela e fecha (`BLUEPRINT_UI_ESPERA=<s>` muda os 2 s de espera) |
-| `BLUEPRINT_UI_ROTEIRO=nome:Ana,criar:Alfa,exemplo,mover:Alfa,excluir:Alfa,voltar,novo` | roda as ações em ordem |
+| `BLUEPRINT_UI_ROTEIRO=nome:Ana,criar:Alfa,exemplo,mover:Alfa,excluir:Alfa,voltar,novo` | roda as ações em ordem (também `abrir:ws`, `novobp:ws` abre «Novo blueprint», `criarbp:ws/Nome` cria e abre) |
 | `BLUEPRINT_UI_ABRIR=novo` | abre direto a tela «Novo workspace» |
 | `BLUEPRINT_UI_PPP=1` | força a escala (o monitor pode ser 1,25) para comparar pixel a pixel com a página |
 | `BLUEPRINT_UI_APPID=<id>` | muda o `app_id` da janela (para uma regra do compositor mandá-la para outra área) |

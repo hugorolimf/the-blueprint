@@ -9,6 +9,8 @@ use std::sync::OnceLock;
 /// Textos que só a interface nativa tem (os da página já estão no catálogo).
 const LOCAIS: &[(&str, &str)] = &[
     ("Salvar", "Save"),
+    ("Ex.: Portal do fornecedor", "E.g.: Supplier portal"),
+    ("Para que serve", "What it is for"),
     ("Não foi possível salvar.", "Could not save."),
     ("Abrir na versão web", "Open in the web version"),
     ("A folha do blueprint, as ações e os planos ainda abrem na versão web.", "The blueprint sheet, actions and plans still open in the web version."),
