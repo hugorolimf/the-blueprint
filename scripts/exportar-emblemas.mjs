@@ -6,8 +6,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import * as emb from "../emblemas.mjs";
 
-// ---- texto em contornos: o renderizador do egui não tem fontes, então as letras das marcas (o «IA» do chip) viram caminhos da JetBrains Mono Bold ----
-const ttf = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "ui", "assets", "fontes", "JetBrainsMono-Bold.ttf"));
+// ---- texto em contornos: o renderizador do egui não tem fontes, então as letras das marcas (o «IA» do chip) viram caminhos da Cascadia Mono Bold ----
+const ttf = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "ui", "assets", "fontes", "CascadiaMono-Bold.ttf"));
 const tabelas = Object.fromEntries(Array.from({ length: ttf.readUInt16BE(4) }, (_, i) => [ttf.toString("latin1", 12 + i * 16, 16 + i * 16), ttf.readUInt32BE(20 + i * 16)]));
 const upem = ttf.readUInt16BE(tabelas.head + 18), loca32 = ttf.readInt16BE(tabelas.head + 50) === 1;
 function glifoDe(codigo) {

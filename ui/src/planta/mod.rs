@@ -51,7 +51,7 @@ mod testes {
             ctx.run_pass(egui::RawInput::default(), |ctx| {
                 let p = ctx.layer_painter(egui::LayerId::background());
                 for (s, tam, trilha) in [("ROADMAP", 11.0, 0.1), ("TROCAR NOME", 11.0, 0.1), ("Escolha um workspace para continuar.", 14.0, 0.0), ("WORKSPACES", 13.0, 0.2)] {
-                    medidas.push((s, Texto::novo(s, tam).trilha(trilha).largura(&p), s.chars().count() as f32 * (0.6 * tam + trilha * tam)));
+                    medidas.push((s, Texto::novo(s, tam).trilha(trilha).largura(&p), s.chars().count() as f32 * (crate::fonte::AVANCO * tam + trilha * tam)));
                 }
             })
             .textures_delta

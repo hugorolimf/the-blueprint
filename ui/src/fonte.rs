@@ -1,8 +1,16 @@
-//! A fonte: JetBrains Mono (OFL), a mesma que a página usa pela pilha `ui-monospace` neste sistema. Embutida, para a interface ficar igual
-//! em qualquer sistema. Três pesos: o normal (corpo), o médio (500, títulos) e o negrito (700).
+//! A fonte: Cascadia Mono (OFL, da Microsoft), a que a página mostra no Windows pela pilha `ui-monospace, "Cascadia Mono", Consolas…`
+//! (o Edge não conhece `ui-monospace`). Embutida, para a interface ficar igual em qualquer sistema. Três pesos tirados da fonte variável
+//! (como o Windows a desenha): o normal (400, corpo), o médio (500, títulos) e o negrito (700).
 
 use egui::{FontData, FontDefinitions, FontFamily};
 use std::sync::Arc;
+
+/// O avanço de cada letra, em múltiplos do tamanho (1200/2048).
+pub const AVANCO: f32 = 0.585_937_5;
+/// O quanto a linha de base fica abaixo do topo da letra, em múltiplos do tamanho (a subida da fonte, 1900/2048).
+pub const SUBIDA: f32 = 0.927_734_4;
+/// A altura da letra do topo ao pé (subida + descida, 2380/2048): a caixa que o CSS centraliza na linha.
+pub const ALTURA: f32 = 1.162_109_4;
 
 #[derive(Clone, Copy)]
 pub enum Peso {
@@ -22,19 +30,19 @@ pub fn familia(peso: Peso) -> FontFamily {
 pub fn instalar(ctx: &egui::Context) {
     let mut f = FontDefinitions::default();
     let fontes: [(&str, &'static [u8]); 3] = [
-        ("jb", include_bytes!("../assets/fontes/JetBrainsMono-Regular.ttf")),
-        ("jb-medio", include_bytes!("../assets/fontes/JetBrainsMono-Medium.ttf")),
-        ("jb-negrito", include_bytes!("../assets/fontes/JetBrainsMono-Bold.ttf")),
+        ("cascadia", include_bytes!("../assets/fontes/CascadiaMono-Regular.ttf")),
+        ("cascadia-medio", include_bytes!("../assets/fontes/CascadiaMono-Medium.ttf")),
+        ("cascadia-negrito", include_bytes!("../assets/fontes/CascadiaMono-Bold.ttf")),
     ];
     for (nome, bytes) in fontes {
         f.font_data.insert(nome.into(), Arc::new(FontData::from_static(bytes)));
     }
     // a nossa primeiro; as fontes de reserva do egui (símbolos, emojis) vêm depois
     let reserva: Vec<String> = f.families.get(&FontFamily::Monospace).cloned().unwrap_or_default();
-    let com = |nome: &str| std::iter::once(nome.to_string()).chain(["jb".to_string()]).chain(reserva.clone()).collect::<Vec<_>>();
-    f.families.insert(FontFamily::Monospace, com("jb"));
-    f.families.insert(FontFamily::Proportional, com("jb"));
-    f.families.insert(FontFamily::Name("medio".into()), com("jb-medio"));
-    f.families.insert(FontFamily::Name("negrito".into()), com("jb-negrito"));
+    let com = |nome: &str| std::iter::once(nome.to_string()).chain(["cascadia".to_string()]).chain(reserva.clone()).collect::<Vec<_>>();
+    f.families.insert(FontFamily::Monospace, com("cascadia"));
+    f.families.insert(FontFamily::Proportional, com("cascadia"));
+    f.families.insert(FontFamily::Name("medio".into()), com("cascadia-medio"));
+    f.families.insert(FontFamily::Name("negrito".into()), com("cascadia-negrito"));
     ctx.set_fonts(f);
 }

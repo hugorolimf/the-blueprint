@@ -64,14 +64,14 @@ impl<'a> Texto<'a> {
     }
     pub fn galeria(&self, p: &Painter) -> Arc<Galley> {
         let mut job = LayoutJob::default();
-        // o egui encolhe/arredonda o avanço de cada letra e a página não (a JetBrains Mono avança 0,6 do tamanho): a diferença volta no espaçamento
-        let ajuste = 0.6 * self.tam - avanco_real(p, self.tam, self.peso);
+        // o egui encolhe/arredonda o avanço de cada letra e a página não (a fonte avança `AVANCO` do tamanho): a diferença volta no espaçamento
+        let ajuste = crate::fonte::AVANCO * self.tam - avanco_real(p, self.tam, self.peso);
         job.append(&self.s, 0.0, TextFormat { font_id: FontId::new(self.tam, familia(self.peso)), color: self.cor, extra_letter_spacing: self.trilha + ajuste, line_height: self.lh, ..Default::default() });
         if self.centrado {
             job.halign = egui::Align::Center;
         }
         // na página o espaço que fecha a linha fica pendurado; no egui ele conta na largura: soma um avanço para o texto quebrar no mesmo lugar
-        job.wrap.max_width = if self.largura.is_finite() { self.largura + 0.6 * self.tam } else { self.largura };
+        job.wrap.max_width = if self.largura.is_finite() { self.largura + crate::fonte::AVANCO * self.tam } else { self.largura };
         job.wrap.max_rows = self.linhas;
         job.wrap.overflow_character = Some('…');
         p.layout_job(job)

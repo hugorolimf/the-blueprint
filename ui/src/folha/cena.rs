@@ -1,6 +1,7 @@
 //! As peças do desenho da folha, nas coordenadas do SVG da página: o traço é centrado na geometria, o texto tem a linha de base em `y`,
 //! o espaçamento de `.06em` e o contorno de 3 px na cor do papel que o CSS põe atrás das letras (`paint-order: stroke`).
 
+use crate::fonte::{ALTURA, SUBIDA};
 use crate::fonte::Peso;
 use crate::planta::Texto;
 use crate::tema::{BAIXO, MEDIO, PAPEL, TINTA};
@@ -11,8 +12,6 @@ use egui::{pos2, vec2, Color32, Painter, Pos2, Rect, Shape, Stroke, StrokeKind};
 /// A cor `--lo` das linhas leves (`.ln.l`).
 pub const BAIXO_COR: Color32 = BAIXO;
 
-/// O quanto a linha de base fica abaixo do topo da letra, em múltiplos do tamanho (a JetBrains Mono sobe 1,02 do corpo).
-const SUBIDA: f32 = 1.02;
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Ancora {
@@ -128,7 +127,7 @@ impl Cena<'_> {
         };
         let topo = self.pt(esquerda, y - SUBIDA * tam);
         // abrindo a tela: o texto se escreve em três trechos, cada um chegando na sua vez (anima.rs)
-        let escrita = crate::anima::atual(self.p.ctx()).and_then(|a| a.escrita(&s, topo.x, topo.y, topo.y + 1.32 * tam));
+        let escrita = crate::anima::atual(self.p.ctx()).and_then(|a| a.escrita(&s, topo.x, topo.y, topo.y + ALTURA * tam));
         let Some(alfas) = escrita.filter(|a| a.iter().any(|v| *v < 1.0)) else {
             self.pintar(&s, topo, tam, peso, cor, contorno, 1.0);
             return largura;
@@ -178,7 +177,7 @@ impl Cena<'_> {
         };
         for &(a, b) in trechos {
             let (x0, w) = (x + largura(0, a), largura(a, b));
-            self.retangulo(x0, y - SUBIDA * tam, w, 1.32 * tam, Some(BAIXO.gamma_multiply(0.7)), None);
+            self.retangulo(x0, y - SUBIDA * tam, w, ALTURA * tam, Some(BAIXO.gamma_multiply(0.7)), None);
         }
     }
 

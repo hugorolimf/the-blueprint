@@ -15,7 +15,7 @@ cargo test                                         # regras dos dados, larguras 
 
 O desenho segue a página (`web/css/entrada.css`, `primeiro-uso.css`): as medidas são as da tela web, em pixels do CSS.
 
-- **Fonte:** JetBrains Mono (OFL) embutida em `assets/fontes/`; a página usa a monoespaçada do sistema, que aqui é essa.
+- **Fonte:** Cascadia Mono (OFL) embutida em `assets/fontes/`, nos pesos 400, 500 e 700 tirados da fonte variável: é a que a página mostra no Windows (`ui-monospace, "Cascadia Mono", …`).
 - **Emblemas:** SVG exportados do kit com `node scripts/exportar-emblemas.mjs` (as letras viram contornos), em `assets/emblemas/`.
 - **Inglês:** o catálogo da página, exportado com `node scripts/exportar-i18n.mjs` para `assets/i18n-en.json`. O teste `todo_texto_do_app_tem_ingles` falha se um `tr("…")` ficar sem tradução.
 - **Texto:** o egui arredonda o avanço de cada letra; `planta::Texto` devolve a diferença no espaçamento, e o teste `largura_do_texto_bate_com_a_pagina` confere as larguras contra a página.
