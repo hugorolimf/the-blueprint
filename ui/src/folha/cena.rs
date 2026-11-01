@@ -120,24 +120,45 @@ impl Cena<'_> {
     #[allow(clippy::too_many_arguments)]
     fn escrever(&self, s: &str, x: f32, y: f32, tam: f32, peso: Peso, cor: Color32, ancora: Ancora, cap: bool, contorno: bool) -> f32 {
         let s = if cap { s.to_uppercase() } else { s.to_string() };
-        let t = Texto::novo(s.as_str(), tam).peso(peso).trilha(0.06);
-        let largura = t.largura(self.p);
+        let largura = Texto::novo(s.as_str(), tam).peso(peso).trilha(0.06).largura(self.p);
         let esquerda = match ancora {
             Ancora::Inicio => x,
             Ancora::Meio => x - largura / 2.0,
             Ancora::Fim => x - largura,
         };
         let topo = self.pt(esquerda, y - SUBIDA * tam);
+        // abrindo a tela: o texto se escreve em três trechos, cada um chegando na sua vez (anima.rs)
+        let escrita = crate::anima::atual(self.p.ctx()).and_then(|a| a.escrita(&s, topo.x, topo.y, topo.y + 1.32 * tam));
+        let Some(alfas) = escrita.filter(|a| a.iter().any(|v| *v < 1.0)) else {
+            self.pintar(&s, topo, tam, peso, cor, contorno, 1.0);
+            return largura;
+        };
+        let letras: Vec<char> = s.chars().collect();
+        let cortes = crate::anima::tercos(letras.len());
+        for k in 0..3 {
+            let antes: String = letras[..cortes[k]].iter().collect();
+            let parte: String = letras[cortes[k]..cortes[k + 1]].iter().collect();
+            let dx = if antes.is_empty() { 0.0 } else { Texto::novo(antes, tam).peso(peso).trilha(0.06).largura(self.p) };
+            self.pintar(&parte, topo + vec2(dx, 0.0), tam, peso, cor, contorno, alfas[k]);
+        }
+        largura
+    }
+
+    /// Pinta o texto pronto com o canto de cima em `topo`, com o contorno na cor do papel se pedido, na opacidade `alfa`.
+    #[allow(clippy::too_many_arguments)]
+    fn pintar(&self, s: &str, topo: Pos2, tam: f32, peso: Peso, cor: Color32, contorno: bool, alfa: f32) {
+        if alfa <= 0.0 || s.is_empty() {
+            return;
+        }
         // o contorno de 3 px na cor do papel: o texto corta a grade sem apagar o fundo em volta
         if contorno {
-            let halo = Texto::novo(s.as_str(), tam).peso(peso).trilha(0.06).cor(PAPEL);
-            let g = halo.galeria(self.p);
+            let papel = PAPEL.gamma_multiply(alfa);
+            let g = Texto::novo(s, tam).peso(peso).trilha(0.06).cor(papel).galeria(self.p);
             for (dx, dy) in [(-1.5, 0.0), (1.5, 0.0), (0.0, -1.5), (0.0, 1.5), (-1.1, -1.1), (1.1, -1.1), (-1.1, 1.1), (1.1, 1.1)] {
-                self.p.galley(topo + vec2(dx, dy), g.clone(), PAPEL);
+                self.p.galley(topo + vec2(dx, dy), g.clone(), papel);
             }
         }
-        t.cor(cor).em(self.p, topo);
-        largura
+        Texto::novo(s, tam).peso(peso).trilha(0.06).cor(cor.gamma_multiply(alfa)).em(self.p, topo);
     }
 
     /// A legenda da marca-d'água: `legenda-marca` (espaçamento .16em) com a opacidade de `.marca-fundo` (18%), centrada em `x`, sem contorno.

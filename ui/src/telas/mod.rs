@@ -141,6 +141,23 @@ pub fn dialogos(ctx: &egui::Context, vista: &mut Vista, doc: &Documento, ocupado
 
 /// Desenha a tela certa para o estado. `ocupado`: há uma gravação em curso, então nada que grave pode ser pedido agora.
 pub fn desenhar(ui: &mut egui::Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocupado: bool) -> Option<Acao> {
+    // a abertura (anima.rs) recomeça a cada tela nova e só vale para o desenho dela, não para os diálogos por cima
+    let tela = if doc.nome_usuario().is_empty() || vista.trocando_nome {
+        "nome".to_string()
+    } else if vista.novo.is_some() {
+        "novo".to_string()
+    } else if vista.novo_bp.is_some() {
+        "novo-bp".to_string()
+    } else {
+        format!("{:?}", vista.tela)
+    };
+    crate::anima::comecar(ui.ctx(), &tela, ui.clip_rect());
+    let acao = tela_atual(ui, vista, doc, servidor, ocupado);
+    crate::anima::terminar(ui.ctx());
+    acao
+}
+
+fn tela_atual(ui: &mut egui::Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocupado: bool) -> Option<Acao> {
     if doc.nome_usuario().is_empty() || vista.trocando_nome {
         return nome::tela(ui, vista, doc, ocupado);
     }

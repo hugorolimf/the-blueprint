@@ -54,8 +54,8 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocu
         planta::papel(&p, pagina, Papel::Entrada);
         let o = pagina.min;
         cabecalho(ui, vista, doc, servidor, o, largura, &mut acao);
-        Texto::novo(tr("Seus workspaces"), 42.0).peso(Peso::Medio).trilha(-0.04).na_linha(&p, o.x + PAD_X, o.y + 163.0, 67.2);
-        Texto::novo(tr("Escolha um workspace para continuar."), 14.0).cor(MEDIO).na_linha(&p, o.x + PAD_X, o.y + 244.2, 22.4);
+        Texto::novo(tr("Seus workspaces"), 42.0).peso(Peso::Medio).trilha(-0.04).escrita().na_linha(&p, o.x + PAD_X, o.y + 163.0, 67.2);
+        Texto::novo(tr("Escolha um workspace para continuar."), 14.0).cor(MEDIO).escrita().na_linha(&p, o.x + PAD_X, o.y + 244.2, 22.4);
         match &bloco {
             Bloco::Nada => {}
             Bloco::Exemplo(ex) => {
@@ -70,7 +70,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocu
             }
         }
         let (estado, cor) = if !vista.erro.is_empty() { (vista.erro.clone(), ERRO) } else if !vista.aviso.is_empty() { (vista.aviso.clone(), MEDIO) } else { (trn(ws.len(), "{n} workspace · arraste para reordenar (Alt + setas)", "{n} workspaces · arraste para reordenar (Alt + setas)"), MEDIO) };
-        Texto::novo(estado, 14.0).cor(cor).na_linha(&p, o.x + PAD_X, o.y + status_y, 22.4);
+        Texto::novo(estado, 14.0).cor(cor).escrita().na_linha(&p, o.x + PAD_X, o.y + status_y, 22.4);
         grade(ui, vista, &ws, pos2(o.x + PAD_X, o.y + grade_y), colunas, ocupado, &mut acao);
     });
     acao
@@ -145,7 +145,7 @@ fn passos(ui: &mut Ui, pos: Pos2, util: f32, m: &PassosMedidos, ocupado: bool) -
     canto(&p, r);
     let x = r.min.x + 29.0;
     Texto::novo(tr("Primeiros passos").to_uppercase(), 10.0).cor(MEDIO).trilha(0.16).na_linha(&p, x, r.min.y + 25.0, 16.0);
-    Texto::novo(tr("Nenhum blueprint ainda. Por onde começar?"), 20.0).peso(Peso::Medio).trilha(-0.02).na_linha(&p, x, r.min.y + 49.0, 32.0);
+    Texto::novo(tr("Nenhum blueprint ainda. Por onde começar?"), 20.0).peso(Peso::Medio).trilha(-0.02).escrita().na_linha(&p, x, r.min.y + 49.0, 32.0);
     let topo = r.min.y + 101.0;
     let mut abrir = false;
     for (i, (n, titulo, descricao)) in PASSOS.iter().enumerate() {
@@ -158,8 +158,8 @@ fn passos(ui: &mut Ui, pos: Pos2, util: f32, m: &PassosMedidos, ocupado: bool) -
         let ix = c.min.x + 19.0;
         Texto::novo(*n, 11.0).cor(MEDIO).trilha(0.14).na_linha(&p, ix, c.min.y + 19.0, 17.6);
         planta::linha(&p, pos2(ix, c.min.y + 19.0 + 24.6), pos2(c.max.x - 19.0, c.min.y + 19.0 + 24.6), TENUE);
-        Texto::novo(tr(titulo), 17.0).peso(Peso::Medio).na_linha(&p, ix, c.min.y + 52.6, 27.2);
-        Texto::novo(tr(descricao), 12.0).cor(MEDIO).lh(19.2).caixa(m.largura - 38.0).em(&p, pos2(ix, c.min.y + 87.8));
+        Texto::novo(tr(titulo), 17.0).peso(Peso::Medio).escrita().na_linha(&p, ix, c.min.y + 52.6, 27.2);
+        Texto::novo(tr(descricao), 12.0).cor(MEDIO).lh(19.2).caixa(m.largura - 38.0).escrita().em(&p, pos2(ix, c.min.y + 87.8));
         Texto::novo("→", 14.0).cor(MEDIO).na_linha_dir(&p, c.max.x - 19.0, c.max.y - 19.0 - 22.4, 22.4);
         if ativo && resposta.hovered() {
             ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
@@ -240,9 +240,9 @@ fn cartao(ui: &Ui, base: Rect, w: &Resumo, realce: f32, arrastando: bool) {
     let (x, y, util) = (r.min.x + 25.0, r.min.y + 25.0, CARTAO.x - 50.0);
     Texto::novo(tr("Workspace").to_uppercase(), 10.0).cor(opaco(MEDIO)).trilha(0.14).na_linha(&p, x, y, 16.0);
     emblema::pintar(ui, Rect::from_min_size(pos2(x, y + 28.0), vec2(util, 120.0)), &w.icone, emblema::Tamanho::Cartao);
-    Texto::novo(&*w.nome, 19.0).peso(Peso::Medio).cor(opaco(TINTA)).lh(24.7).caixa(util).linhas(2).em(&p, pos2(x, y + 160.0));
+    Texto::novo(&*w.nome, 19.0).peso(Peso::Medio).cor(opaco(TINTA)).lh(24.7).caixa(util).linhas(2).escrita().em(&p, pos2(x, y + 160.0));
     let descricao = if w.descricao.is_empty() { tr("Blueprints e planejamento do workspace").to_string() } else { w.descricao.clone() };
-    Texto::novo(descricao, 12.0).cor(opaco(MEDIO)).lh(19.2).caixa(util).linhas(2).em(&p, pos2(x, y + 222.0));
+    Texto::novo(descricao, 12.0).cor(opaco(MEDIO)).lh(19.2).caixa(util).linhas(2).escrita().em(&p, pos2(x, y + 222.0));
     planta::linha(&p, pos2(x, y + 276.0), pos2(x + util, y + 276.0), opaco(TENUE));
     Texto::novo(trn(w.blueprints, "{n} blueprint", "{n} blueprints"), 11.0).cor(opaco(MEDIO)).na_linha(&p, x, y + 293.0, 17.6);
     Texto::novo(tr("Abrir espaço →"), 11.0).cor(opaco(MEDIO)).na_linha_dir(&p, x + util, y + 293.0, 17.6);
@@ -258,6 +258,6 @@ fn adicionar(ui: &Ui, r: Rect, realce: f32) {
     let caixa = Rect::from_min_size(pos2(cx - 32.0, r.min.y + 98.4), vec2(64.0, 64.0));
     planta::borda(&p, caixa, MEDIO);
     Texto::novo("+", 36.0).centro(&p, caixa.center());
-    Texto::novo(tr("Criar workspace"), 19.0).peso(Peso::Medio).centro(&p, pos2(cx, r.min.y + 174.4 + 15.2));
-    Texto::novo(tr("Um espaço para agrupar blueprints."), 14.0).lh(22.4).caixa(CARTAO.x - 50.0).centrado().centrado_em(&p, cx, r.min.y + 216.8);
+    Texto::novo(tr("Criar workspace"), 19.0).peso(Peso::Medio).escrita().centro(&p, pos2(cx, r.min.y + 174.4 + 15.2));
+    Texto::novo(tr("Um espaço para agrupar blueprints."), 14.0).lh(22.4).caixa(CARTAO.x - 50.0).centrado().escrita().centrado_em(&p, cx, r.min.y + 216.8);
 }

@@ -45,7 +45,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
         let esquerda = (card.width() - 70.0 - 560.0 - 36.0).max(240.0);
         // rótulo + campo, de cima para baixo (as posições vêm da tela web)
         let rotulo = |ui: &Ui, texto: &str, y: f32| {
-            Texto::novo(texto.to_uppercase(), 10.0).cor(MEDIO).trilha(0.14).na_linha(ui.painter(), gx, gy + y, 13.0);
+            Texto::novo(texto.to_uppercase(), 10.0).cor(MEDIO).trilha(0.14).escrita().na_linha(ui.painter(), gx, gy + y, 13.0);
         };
         rotulo(ui, tr("Nome do workspace"), 0.0);
         let nome = Rect::from_min_size(pos2(gx, gy + 21.0), vec2(esquerda, 37.0));

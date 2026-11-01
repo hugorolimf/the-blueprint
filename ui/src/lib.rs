@@ -3,6 +3,7 @@
 //! O programa `blueprint` usa esta biblioteca para abrir a janela fora do Windows; `cargo run` aqui (`main.rs`) abre a mesma janela contra um servidor já ligado.
 
 mod agentes;
+mod anima;
 mod app;
 #[cfg(not(target_arch = "wasm32"))]
 mod captura;

@@ -40,7 +40,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
     let livre = (faixa.width() - 36.0 - 2.0 - largura_criar - 28.0).max(200.0);
     let (w_nome, w_desc) = (livre / 2.5, livre * 1.5 / 2.5);
     let x_desc = x0 + w_nome + 14.0;
-    let rotulo = |t: &str, x: f32| Texto::novo(t.to_uppercase(), 10.0).cor(MEDIO).trilha(0.14).na_linha(&p, x, topo, 13.0);
+    let rotulo = |t: &str, x: f32| Texto::novo(t.to_uppercase(), 10.0).cor(MEDIO).trilha(0.14).escrita().na_linha(&p, x, topo, 13.0);
     rotulo(tr("Nome do blueprint"), x0);
     rotulo(tr("O que ele é? (descrição curta)"), x_desc);
     let y_campo = topo + 13.0 + 8.0;

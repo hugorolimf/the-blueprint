@@ -1,6 +1,7 @@
 //! As ações de uma seção (`secao` em web/js/render.js): recolhidas, só a barra fina; abertas, a barra, a cota de dias, as caixas dos planos e os
 //! losangos dos checkpoints, tudo marcável com o clique. Pesquisando, o que não casou esmaece e o trecho achado ganha o realce.
 
+use super::barra;
 use super::cena::{Ancora, Cena, Fio};
 use super::disposicao::{CHAR, PH};
 use super::pagina::corta;
@@ -57,21 +58,12 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
         if super::secao::clique_nota(c, ui, Rect::from_min_size(c.pt(nx - 3.0, fy - 4.0), vec2(22.0, 22.0)), ("nota-acao", f.id.as_str())) {
             *s.aberta.borrow_mut() = Some(Pedido::AbrirNota(s.ws.into(), texto(s.p, "id"), Some(f.id.clone())));
         }
-        // a barra: cheia de tinta fina (concluída), com o andamento (em andamento) ou tracejada (a fazer)
-        match f.status {
-            Situacao::Planejado => c.moldura(x0, by, w, bh, MEDIO, 1.2, false),
-            Situacao::Andamento => c.retangulo(x0, by, w, bh, Some(PAPEL), Some((TINTA, 1.8))),
-            Situacao::Concluido => c.retangulo(x0, by, w, bh, Some(PAPEL), Some((TINTA, 1.2))),
-        }
-        if f.status == Situacao::Concluido {
-            c.hachura(x0 + 1.0, by + 1.0, w - 2.0, bh - 2.0);
-            if w >= 100.0 {
-                let (cx, cy) = ((x0 + 12.0).max(x1 - 17.0), by + bh / 2.0);
-                c.p.circle(c.pt(cx, cy), 8.0, PAPEL, egui::Stroke::new(1.0, TINTA));
-                c.fios(Fio::Ln, &[(cx - 3.6, cy, cx - 1.0, cy + 3.0), (cx - 1.0, cy + 3.0, cx + 3.6, cy - 3.0)]);
-            }
-        } else if f.status == Situacao::Andamento {
-            c.retangulo(x0 + 1.0, by + 1.0, ((w - 2.0) * f.pct).max(0.0), bh - 2.0, Some(TINTA.gamma_multiply(0.9)), None);
+        // a barra: cheia de tinta fina (concluída), com o andamento (em andamento) ou só o contorno (a fazer); na abertura ela se desenha
+        let vez = barra::Vez::da(c, fy, fy + 112.0);
+        barra::caixa(c, x0, by, w, bh, f.status, vez);
+        barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, bh - 2.0, f.status, f.pct, vez);
+        if f.status == Situacao::Concluido && w >= 100.0 {
+            barra::selo(c, (x0 + 12.0).max(x1 - 17.0), by + bh / 2.0, vez);
         }
         let xp = (x1 + 20.0).min(s.r + 4.0);
         c.texto(&format!("{}%", (f.pct * 100.0).round() as i32), xp, by + 17.0, 12.0, Peso::Negrito, TINTA, Ancora::Inicio, false);
@@ -81,10 +73,12 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
         for m in f.checkpoints.iter().filter(|m| m.data.is_some_and(|d| d >= j.t0 && d < j.t1)) {
             let d = m.data.unwrap_or(0);
             let mx = x0 + ((d as f32 + 0.5 - f.a as f32) / ((f.b + 1 - f.a) as f32)) * (x1 - x0);
-            c.losango_r(mx, by + bh / 2.0, 7.0, m.feito, 1.4);
+            barra::losango(c, x0, x1, mx, by + bh / 2.0, 7.0, m.feito, vez);
         }
-        // a cota de dias: duas hastes, a linha e os traços oblíquos das pontas
+        // a cota de dias: duas hastes, a linha e os traços oblíquos das pontas (abre da esquerda na abertura)
         let cy = fy + 72.0;
+        let pincel_cota = barra::cota(c, x0, x1, by + bh, cy + 24.0, vez);
+        let c = &Cena { p: &pincel_cota, o: c.o };
         c.fios(Fio::Medio, &[(x0, by + bh + 2.0, x0, cy + 6.0), (x1, by + bh + 2.0, x1, cy + 6.0), (x0, cy, x1, cy), (x0 - 4.0, cy + 4.0, x0 + 4.0, cy - 4.0), (x1 - 4.0, cy + 4.0, x1 + 4.0, cy - 4.0)]);
         c.texto(&trn((f.b - f.a + 1) as usize, "{n} DIA", "{n} DIAS"), (x0 + x1) / 2.0, cy - 5.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
         let (ini, fim) = (data_curta(f.a), data_curta(f.b));
@@ -95,7 +89,7 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
             c.texto(&fim, x1, cy + 18.0, 10.0, Peso::Normal, MEDIO, Ancora::Fim, false);
         }
         if !f.planos.is_empty() || !f.checkpoints.is_empty() {
-            if let Some(p) = itens(c, ui, s, pos, f, fy + 112.0, ra) {
+            if let Some(p) = itens(&ce, ui, s, pos, f, fy + 112.0, ra) {
                 pedido = Some(p);
             }
         }
@@ -192,19 +186,12 @@ fn compacta(c: &Cena, s: &Secao, pos: &super::disposicao::Posicao, f: &Acao, _ho
     let (x0, w) = (pos.x0, (pos.x1 - pos.x0).max(6.0));
     let by = s.y + PH - 12.0 + s.disp.linha_y[pos.linha];
     s.ancoras.borrow_mut().insert(Lugar::Barra(f.id.clone()), (x0, by, w, 10.0));
-    match f.status {
-        Situacao::Planejado => c.moldura(x0, by, w, 10.0, MEDIO, 1.2, false),
-        Situacao::Andamento => c.retangulo(x0, by, w, 10.0, Some(PAPEL), Some((TINTA, 1.8))),
-        Situacao::Concluido => c.retangulo(x0, by, w, 10.0, Some(PAPEL), Some((TINTA, 1.2))),
-    }
-    match f.status {
-        Situacao::Concluido => c.hachura(x0 + 1.0, by + 1.0, w - 2.0, 8.0),
-        Situacao::Andamento => c.retangulo(x0 + 1.0, by + 1.0, ((w - 2.0) * f.pct).max(0.0), 8.0, Some(TINTA.gamma_multiply(0.9)), None),
-        Situacao::Planejado => {}
-    }
+    let vez = barra::Vez::da(c, by - 7.0, by + 17.0);
+    barra::caixa(c, x0, by, w, 10.0, f.status, vez);
+    barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, 8.0, f.status, f.pct, vez);
     let j = s.regua.janela;
     for m in f.checkpoints.iter().filter(|m| m.data.is_some_and(|d| d >= j.t0 && d < j.t1)) {
         let mx = s.regua.xf(m.data.unwrap_or(0) as f32 + 0.5).clamp(s.l, s.r);
-        c.losango_r(mx, by + 5.0, 4.5, m.feito, 1.4);
+        barra::losango(c, x0, x0 + w, mx, by + 5.0, 4.5, m.feito, vez);
     }
 }

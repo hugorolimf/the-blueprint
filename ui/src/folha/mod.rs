@@ -2,6 +2,7 @@
 //! do SVG dela. O blueprint aberto (a linha do tempo das ações) ainda é da versão web: o clique no cartão abre lá.
 
 mod acoes;
+mod barra;
 mod blueprint;
 mod cartao;
 mod cena;

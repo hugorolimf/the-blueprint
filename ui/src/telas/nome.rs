@@ -40,9 +40,9 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, ocupado: bool) -> O
     // coluna do formulário
     let (fx, fw) = (dir + 40.0, metade - 80.0);
     Texto::novo(tr("Seu próximo blueprint começa aqui").to_uppercase(), 10.0).cor(MEDIO).trilha(0.16).na_linha(&p, fx, folha.min.y + 59.0, 13.0);
-    Texto::novo(tr("Bom ter você por aqui."), 32.0).peso(Peso::Medio).trilha(-0.04).caixa(fw).na_linha(&p, fx, folha.min.y + 91.4, 41.6);
-    Texto::novo(format!("{}\n{}", tr("Como podemos chamar você?"), tr("Depois, é só escolher seu espaço e continuar.")), 12.0).cor(MEDIO).lh(21.6).caixa(fw).em(&p, pos2(fx, folha.min.y + 149.0));
-    Texto::novo(tr("Seu nome"), 11.0).na_linha(&p, fx, folha.min.y + 225.2, 14.0);
+    Texto::novo(tr("Bom ter você por aqui."), 32.0).peso(Peso::Medio).trilha(-0.04).caixa(fw).escrita().na_linha(&p, fx, folha.min.y + 91.4, 41.6);
+    Texto::novo(format!("{}\n{}", tr("Como podemos chamar você?"), tr("Depois, é só escolher seu espaço e continuar.")), 12.0).cor(MEDIO).lh(21.6).caixa(fw).escrita().em(&p, pos2(fx, folha.min.y + 149.0));
+    Texto::novo(tr("Seu nome"), 11.0).escrita().na_linha(&p, fx, folha.min.y + 225.2, 14.0);
     let campo = Rect::from_min_size(pos2(fx, folha.min.y + 252.6), vec2(fw, 53.0));
     p.rect_filled(campo, 0, rgba(0x0c264b, 0xbb));
     planta::borda(&p, campo, MEDIO);

@@ -42,11 +42,17 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, g: &Regua, aguardando: Option<&str>) -> O
     let nm = (j.fim - j.inicio + 1) as usize;
     let meses: Vec<&str> = tr("JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ").split('|').collect();
     let (ymin, mes_inicial) = (j.inicio.div_euclid(12), j.inicio.rem_euclid(12));
-    c.fio(TINTA, 1.0, (g.l, g.y), (g.r, g.y));
+    // na abertura (barras.js): a linha corre da esquerda, os guias descem um depois do outro, o «hoje» desce e a etiqueta surge por último
+    let ab = crate::anima::atual(ui.ctx());
+    let passo = |atraso: f32, dur: f32| ab.map_or(1.0, |a| a.passo(atraso, dur, crate::anima::BARRA));
+    c.fio(TINTA, 1.0, (g.l, g.y), (g.l + (g.r - g.l) * passo(0.0, 500.0), g.y));
     for m in 0..=nm {
         let x = g.mes(m);
         c.fio(TINTA, 1.0, (x, g.y - 10.0), (x, g.y));
-        c.tracejado(TENUE, 1.0, (x, g.y), (x, g.fundo), &[2.0, 5.0]);
+        let k = passo(150.0 + 350.0 * m as f32 / nm.max(1) as f32, 450.0);
+        if k > 0.0 {
+            Cena { p: &super::barra::opaco(c.p, k), o: c.o }.tracejado(TENUE, 1.0, (x, g.y), (x, g.y + (g.fundo - g.y) * k), &[2.0, 5.0]);
+        }
         if m < nm {
             let meio = (x + g.mes(m + 1)) / 2.0;
             let nome = meses.get(((mes_inicial + m as i64) % 12) as usize).copied().unwrap_or("");
@@ -76,10 +82,14 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, g: &Regua, aguardando: Option<&str>) -> O
     }
     if g.hoje >= j.t0 && g.hoje < j.t1 {
         let xt = g.x(g.hoje);
-        c.tracejado(TINTA, 1.0, (xt, g.y), (xt, g.fundo), &[16.0, 4.0, 2.0, 4.0]);
-        c.retangulo(xt - 46.0, g.y + 8.0, 92.0, 20.0, Some(TINTA), None);
-        let iso = iso_do_dia(g.hoje);
-        c.texto_liso(&format!("{} {}/{}", tr("HOJE"), &iso[8..10], &iso[5..7]), xt, g.y + 22.0, 11.0, Peso::Negrito, PAPEL, Ancora::Meio);
+        c.tracejado(TINTA, 1.0, (xt, g.y), (xt, g.y + (g.fundo - g.y) * passo(650.0, 500.0)), &[16.0, 4.0, 2.0, 4.0]);
+        let k = passo(1000.0, 280.0);
+        if k > 0.0 {
+            let (s, ce) = (0.6 + 0.4 * k, Cena { p: &super::barra::opaco(c.p, k), o: c.o });
+            ce.retangulo(xt - 46.0 * s, g.y + 18.0 - 10.0 * s, 92.0 * s, 20.0 * s, Some(TINTA), None);
+            let iso = iso_do_dia(g.hoje);
+            ce.texto_liso(&format!("{} {}/{}", tr("HOJE"), &iso[8..10], &iso[5..7]), xt, g.y + 22.0, 11.0, Peso::Negrito, PAPEL, Ancora::Meio);
+        }
     }
     clicado
 }
