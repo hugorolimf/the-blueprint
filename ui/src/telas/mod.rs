@@ -1,6 +1,7 @@
 //! As telas da interface nativa. Cada uma desenha com o documento já lido e devolve, no máximo, uma `Acao` que muda os dados;
 //! o que é só da tela (abrir um diálogo, trocar de tela) ela mesma muda em `Vista`. Quem grava no servidor é o `app`.
 
+mod agente;
 mod entrada;
 mod excluir;
 mod nome;
@@ -75,16 +76,28 @@ pub struct Vista {
     pub agentes: Vec<crate::agentes::Agente>,
     pub agentes_vida: i64,
     pub vistos: std::collections::HashSet<String>,
+    /// o agente cuja folhinha está aberta (clicou na figura)
+    pub agente_aberto: Option<String>,
 }
 
 impl Vista {
+    /// O workspace aberto (onde os agentes aparecem); vazio na entrada.
+    pub fn agente_ws(&self) -> String {
+        match &self.tela {
+            Tela::Workspace(id) | Tela::Blueprint(id, _) => id.clone(),
+            Tela::Entrada => String::new(),
+        }
+    }
+
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None }
     }
 }
 
 /// Os diálogos por cima da tela (a exclusão). Devolve o que a pessoa confirmou.
 pub fn dialogos(ctx: &egui::Context, vista: &mut Vista, doc: &Documento, ocupado: bool) -> Option<Acao> {
+    agente::faixa(ctx, vista, doc);
+    agente::folhinha(ctx, vista, doc);
     excluir::dialogo(ctx, vista, doc, ocupado)
 }
 

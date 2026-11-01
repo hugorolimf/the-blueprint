@@ -135,7 +135,9 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         for p in mapa.iter() {
             let bp = texto(p, "id");
             let deste: Vec<_> = ags.iter().filter(|a| a.blueprint_id == bp).cloned().collect();
-            claude::desenhar(&c, ui, &deste, &ancoras, "cartao");
+            if let Some(n) = claude::desenhar(&c, ui, &deste, &ancoras, "cartao") {
+                vista.agente_aberto = Some(n);
+            }
         }
         // «novo blueprint»: o cartão tracejado depois do último
         let (col, linha) = (mapa.len() % colunas, mapa.len() / colunas);

@@ -72,6 +72,10 @@ impl Roteiro {
                 vista.consulta = arg.into();
                 None
             }
+            "agente" => {
+                vista.agente_aberto = Some(arg.into());
+                None
+            }
             "rolar" => {
                 vista.rolagem = arg.parse().ok();
                 None

@@ -29,9 +29,10 @@ fn svg(nome: &str) -> Option<Arc<[u8]>> {
 }
 
 /// Desenha o destaque dos planos e as figuras dos agentes do blueprint. `tipo_cab`: `cab` (cabeçalho do blueprint) ou `cartao` (cartão da lista).
-pub fn desenhar(c: &Cena, ui: &Ui, ags: &[Agente], ancoras: &Ancoras, tipo_cab: &str) {
+pub fn desenhar(c: &Cena, ui: &Ui, ags: &[Agente], ancoras: &Ancoras, tipo_cab: &str) -> Option<String> {
+    let mut clicado = None;
     if ags.is_empty() {
-        return;
+        return None;
     }
     let mapa = ancoras.borrow();
     let itens = agentes::itens(ags, |id| mapa.contains_key(&Lugar::Plano(id.into())), |id| mapa.contains_key(&Lugar::Barra(id.into())), |_| None);
@@ -70,8 +71,16 @@ pub fn desenhar(c: &Cena, ui: &Ui, ags: &[Agente], ancoras: &Ancoras, tipo_cab: 
             // a sombra da página (`drop-shadow(0 2px 3px)`): a própria figura, escura, 2 px abaixo
             imagem.clone().tint(egui::Color32::from_rgba_unmultiplied(0x02, 0x13, 0x2e, 0x99)).paint_at(ui, r.translate(vec2(0.0, 2.0)));
             imagem.paint_at(ui, r);
+            let resposta = ui.interact(r, ui.scope_id().with(("claude", &it.agente.agente)), egui::Sense::click());
+            if resposta.hovered() {
+                ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+            }
+            if resposta.clicked() {
+                clicado = Some(it.agente.agente.clone());
+            }
         }
     }
+    clicado
 }
 
 /// O quadro da pose neste instante: cada figura anda no ritmo da sua pose, defasada pelo nome (como o relógio por figura da página). Marca o próximo quadro.
