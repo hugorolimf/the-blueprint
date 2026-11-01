@@ -2,6 +2,7 @@
 //! da lista), e o destaque tracejado em volta da linha do plano. As figuras são os SVGs exportados de `agentes-claude.mjs` (primeiro quadro de cada pose).
 
 use super::cena::Cena;
+use super::figuras::{FIGURAS, SEQUENCIAS};
 use crate::agentes::{self, Agente, Lugar, ALTURA, LARGURA};
 use crate::tema::{ERRO, TINTA};
 use egui::{vec2, Image, Rect, Ui};
@@ -12,33 +13,6 @@ use std::sync::{Arc, Mutex, OnceLock};
 
 /// Onde cada lugar da folha está desenhado, em coordenadas da página `(x, y, w, h)`: as seções e o cartão preenchem enquanto desenham.
 pub type Ancoras = RefCell<HashMap<Lugar, (f32, f32, f32, f32)>>;
-
-const FIGURAS: &[(&str, &[u8])] = &[
-    ("principal-parado", include_bytes!("../../assets/claude/principal-parado.svg.gz")),
-    ("principal-andando", include_bytes!("../../assets/claude/principal-andando.svg.gz")),
-    ("principal-trabalhando", include_bytes!("../../assets/claude/principal-trabalhando.svg.gz")),
-    ("principal-esperando", include_bytes!("../../assets/claude/principal-esperando.svg.gz")),
-    ("principal-bloqueado", include_bytes!("../../assets/claude/principal-bloqueado.svg.gz")),
-    ("principal-concluido", include_bytes!("../../assets/claude/principal-concluido.svg.gz")),
-    ("explorador-parado", include_bytes!("../../assets/claude/explorador-parado.svg.gz")),
-    ("explorador-andando", include_bytes!("../../assets/claude/explorador-andando.svg.gz")),
-    ("explorador-trabalhando", include_bytes!("../../assets/claude/explorador-trabalhando.svg.gz")),
-    ("explorador-esperando", include_bytes!("../../assets/claude/explorador-esperando.svg.gz")),
-    ("explorador-bloqueado", include_bytes!("../../assets/claude/explorador-bloqueado.svg.gz")),
-    ("explorador-concluido", include_bytes!("../../assets/claude/explorador-concluido.svg.gz")),
-    ("construtor-parado", include_bytes!("../../assets/claude/construtor-parado.svg.gz")),
-    ("construtor-andando", include_bytes!("../../assets/claude/construtor-andando.svg.gz")),
-    ("construtor-trabalhando", include_bytes!("../../assets/claude/construtor-trabalhando.svg.gz")),
-    ("construtor-esperando", include_bytes!("../../assets/claude/construtor-esperando.svg.gz")),
-    ("construtor-bloqueado", include_bytes!("../../assets/claude/construtor-bloqueado.svg.gz")),
-    ("construtor-concluido", include_bytes!("../../assets/claude/construtor-concluido.svg.gz")),
-    ("revisor-parado", include_bytes!("../../assets/claude/revisor-parado.svg.gz")),
-    ("revisor-andando", include_bytes!("../../assets/claude/revisor-andando.svg.gz")),
-    ("revisor-trabalhando", include_bytes!("../../assets/claude/revisor-trabalhando.svg.gz")),
-    ("revisor-esperando", include_bytes!("../../assets/claude/revisor-esperando.svg.gz")),
-    ("revisor-bloqueado", include_bytes!("../../assets/claude/revisor-bloqueado.svg.gz")),
-    ("revisor-concluido", include_bytes!("../../assets/claude/revisor-concluido.svg.gz")),
-];
 
 fn svg(nome: &str) -> Option<Arc<[u8]>> {
     static CACHE: OnceLock<Mutex<HashMap<String, Arc<[u8]>>>> = OnceLock::new();
@@ -88,10 +62,24 @@ pub fn desenhar(c: &Cena, ui: &Ui, ags: &[Agente], ancoras: &Ancoras, tipo_cab: 
             _ => tipo_cab,
         };
         let (x, y) = agentes::posicao(tipo, ancora, it.indice, &larguras[&it.lugar]);
-        let nome = format!("{}-{}", it.papel.unwrap_or("principal"), agentes::pose(agentes::estado(&it.agente)));
+        let pose = agentes::pose(agentes::estado(&it.agente));
+        let nome = format!("{}-{pose}-{}", it.papel.unwrap_or("principal"), quadro(ui, pose, &it.agente.agente));
         if let Some(bytes) = svg(&nome) {
             let r = Rect::from_min_size(c.pt(x, y), vec2(LARGURA, ALTURA));
-            Image::from_bytes(format!("bytes://claude-{nome}.svg"), egui::load::Bytes::Shared(bytes)).fit_to_exact_size(r.size()).paint_at(ui, r);
+            let imagem = Image::from_bytes(format!("bytes://claude-{nome}.svg"), egui::load::Bytes::Shared(bytes)).fit_to_exact_size(r.size());
+            // a sombra da página (`drop-shadow(0 2px 3px)`): a própria figura, escura, 2 px abaixo
+            imagem.clone().tint(egui::Color32::from_rgba_unmultiplied(0x02, 0x13, 0x2e, 0x99)).paint_at(ui, r.translate(vec2(0.0, 2.0)));
+            imagem.paint_at(ui, r);
         }
     }
+}
+
+/// O quadro da pose neste instante: cada figura anda no ritmo da sua pose, defasada pelo nome (como o relógio por figura da página). Marca o próximo quadro.
+fn quadro(ui: &Ui, pose: &str, nome: &str) -> u8 {
+    let Some((_, seq, ritmo)) = SEQUENCIAS.iter().find(|(p, _, _)| *p == pose) else { return 0 };
+    let agora = crate::agentes::agora_ms().max(0) as u64;
+    let defasagem = nome.bytes().fold(0u64, |a, b| a.wrapping_mul(31).wrapping_add(u64::from(b))) % (ritmo * seq.len() as u64);
+    let passo = (agora + defasagem) / ritmo;
+    ui.ctx().request_repaint_after(std::time::Duration::from_millis(ritmo - (agora + defasagem) % ritmo));
+    seq[(passo % seq.len() as u64) as usize]
 }

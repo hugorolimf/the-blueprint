@@ -8,6 +8,7 @@ mod cena;
 pub(crate) mod claude;
 mod controles;
 mod disposicao;
+mod figuras;
 mod pagina;
 mod regua;
 mod secao;
