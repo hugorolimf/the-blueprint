@@ -27,6 +27,8 @@ pub struct App {
     recebe: Receiver<Msg>,
     /// alguém pediu a janela à frente (`Mostrar`)
     mostrar: Arc<AtomicBool>,
+    /// a última busca de agentes (a cada poucos segundos, só com a janela aberta)
+    agentes_em: Option<web_time::Instant>,
     #[cfg(not(target_arch = "wasm32"))]
     captura: Option<crate::captura::Captura>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -53,6 +55,7 @@ impl App {
             envio,
             recebe,
             mostrar,
+            agentes_em: None,
             #[cfg(not(target_arch = "wasm32"))]
             captura: crate::captura::do_ambiente(),
             #[cfg(not(target_arch = "wasm32"))]
@@ -106,6 +109,10 @@ impl App {
                 }
                 Msg::Exemplo(Ok(modelo)) => self.aplicar(ctx, Acao::ExemploPronto(Box::new(modelo))),
                 Msg::Exemplo(Err(motivo)) => self.vista.erro = motivo,
+                Msg::Agentes(lista, vida) => {
+                    self.vista.agentes = lista;
+                    self.vista.agentes_vida = vida;
+                }
             }
         }
     }
@@ -181,6 +188,12 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
         self.receber(&ctx);
+        const INTERVALO: std::time::Duration = std::time::Duration::from_secs(3);
+        if matches!(self.estado, Estado::Pronto(_)) && self.agentes_em.is_none_or(|t| t.elapsed() >= INTERVALO) {
+            self.agentes_em = Some(web_time::Instant::now());
+            rede::agentes(&self.servidor, &ctx, self.envio.clone());
+        }
+        ctx.request_repaint_after(INTERVALO);
         let mut pedida = None;
         let ocupado = self.gravando.is_some();
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| match &self.estado {

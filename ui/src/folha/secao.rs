@@ -31,6 +31,8 @@ pub struct Secao<'a> {
     pub pendentes: bool,
     /// a consulta e o que casou (só pesquisando): o que não casou esmaece
     pub pesq: Option<(&'a ResBlueprint, &'a [String])>,
+    /// onde ficam as linhas dos planos e as barras (a camada do Claude as procura)
+    pub ancoras: &'a super::claude::Ancoras,
     pub disp: &'a Disposicao,
     pub regua: &'a Regua<'a>,
     /// o topo da seção (`y0`)

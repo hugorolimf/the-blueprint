@@ -171,6 +171,7 @@ dependencies = [
  "egui",
  "egui_extras",
  "ehttp",
+ "flate2",
  "image",
  "log",
  "serde",

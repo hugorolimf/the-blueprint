@@ -117,6 +117,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
             let ids: std::collections::HashSet<&str> = m.idxs.iter().map(|k| acoes[*k].id.as_str()).collect();
             visiveis.iter().filter(|f| ids.contains(f.id.as_str())).collect()
         }).collect();
+        let ancoras: super::claude::Ancoras = Default::default();
         let mut disps = Vec::new();
         let mut ys = Vec::new();
         let mut y = y0;
@@ -144,7 +145,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         for (k, m) in modelos.iter().enumerate() {
             let refs = &subconjuntos[k];
             let total = if m.principal { p.get("acoes").and_then(Value::as_array).map_or(0, Vec::len) } else { m.idxs.len() };
-            let s = Secao { ws: id, p, acoes: refs, numero: m.numero.clone(), nome: m.nome.clone(), descricao: m.descricao.clone(), total, ok: m.principal && dominio::concluido(p), aberto: m.aberto, principal: m.principal, resumo: dominio::resumo(m.idxs.iter().map(|k| &acoes[*k])), pendentes, pesq: (!termos.is_empty()).then_some((&res, termos.as_slice())), disp: &disps[k], regua: &regua, y: ys[k], colw, r, l };
+            let s = Secao { ws: id, p, acoes: refs, numero: m.numero.clone(), nome: m.nome.clone(), descricao: m.descricao.clone(), total, ok: m.principal && dominio::concluido(p), aberto: m.aberto, principal: m.principal, resumo: dominio::resumo(m.idxs.iter().map(|k| &acoes[*k])), pendentes, ancoras: &ancoras, pesq: (!termos.is_empty()).then_some((&res, termos.as_slice())), disp: &disps[k], regua: &regua, y: ys[k], colw, r, l };
             if secao::cabecalho(&c, ui, &s) {
                 alternar = Some(m.chave.clone());
             }
@@ -152,6 +153,10 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
                 pedido = Some(a);
             }
         }
+        // o Claude: o cabeçalho do blueprint é o da primeira seção; as figuras vão por cima de tudo
+        ancoras.borrow_mut().insert(crate::agentes::Lugar::Cab(bp.to_string()), (l, y0 - 8.0, r - l, 86.0));
+        let ags: Vec<_> = crate::agentes::ativos(&vista.agentes, id, crate::agentes::agora_ms(), vista.agentes_vida, &vista.vistos).into_iter().filter(|a| a.blueprint_id == bp).collect();
+        super::claude::desenhar(&c, ui, &ags, &ancoras, "cab");
         let (feitas, total) = (acoes.iter().filter(|f| f.status == dominio::Situacao::Concluido).count(), acoes.len());
         let data = hoje_iso.split('-').rev().collect::<Vec<_>>().join("/");
         let nome = texto(p, "nome");

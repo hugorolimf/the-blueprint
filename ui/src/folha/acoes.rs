@@ -5,6 +5,7 @@ use super::cena::{Ancora, Cena, Fio};
 use super::disposicao::{CHAR, PH};
 use super::pagina::corta;
 use super::secao::Secao;
+use crate::agentes::Lugar;
 use crate::dominio::{Acao, Situacao};
 use crate::fonte::Peso;
 use crate::i18n::{tr, trn};
@@ -44,6 +45,7 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
         let (x0, x1, w) = (pos.bx0, pos.bx0 + pos.bw, pos.bw);
         let fy = s.y + PH + s.disp.linha_y[pos.linha];
         let (by, bh) = (fy + 20.0, 26.0);
+        s.ancoras.borrow_mut().insert(Lugar::Barra(f.id.clone()), (x0, by, w, bh));
         if let (Some((_, termos)), Some(a)) = (s.pesq, ra) {
             if a.propria.as_ref().is_some_and(|o| o.contains(&"nome")) {
                 c.realce(&pos.rotulo, pos.lx, fy + 12.0, 11.0, Peso::Normal, 0.06, true, &pesquisa::trechos(&pos.rotulo, termos));
@@ -127,6 +129,7 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
             let linhas = &pos.linhas_planos[i];
             let altura = (linhas.len() as f32 * 14.0 + 8.0).max(22.0);
             deslocamento += altura;
+            s.ancoras.borrow_mut().insert(Lugar::Plano(t.id.clone()), (cx0 - 4.0, yy - 15.0, colw - 12.0, altura));
             let (clicou, sobre) = marcar(ui, Rect::from_min_size(c.pt(cx0 - 4.0, yy - 15.0), vec2(colw - 12.0, altura)), &t.id);
             // pesquisando: o item que casou fica inteiro e branco; os outros de uma ação «que só tem» itens achados esmaecem
             let achou = ra.and_then(|a| a.planos.iter().find(|(i, _)| *i == t.id));
@@ -184,6 +187,7 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
 fn compacta(c: &Cena, s: &Secao, pos: &super::disposicao::Posicao, f: &Acao, _hoje: i64) {
     let (x0, w) = (pos.x0, (pos.x1 - pos.x0).max(6.0));
     let by = s.y + PH - 12.0 + s.disp.linha_y[pos.linha];
+    s.ancoras.borrow_mut().insert(Lugar::Barra(f.id.clone()), (x0, by, w, 10.0));
     match f.status {
         Situacao::Planejado => c.moldura(x0, by, w, 10.0, MEDIO, 1.2, false),
         Situacao::Andamento => c.retangulo(x0, by, w, 10.0, Some(PAPEL), Some((TINTA, 1.8))),

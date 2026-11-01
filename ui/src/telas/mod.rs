@@ -71,11 +71,15 @@ pub struct Vista {
     pub pendentes: std::collections::HashSet<String>,
     /// a janela de meses desenhada por último em cada blueprint (`janelasRenderizadas`)
     pub janelas: std::collections::HashMap<String, (String, String)>,
+    /// os agentes que o servidor conhece e quanto tempo sem aviso leva ao repouso; os que o usuário já viu (`concluidosVistos`)
+    pub agentes: Vec<crate::agentes::Agente>,
+    pub agentes_vida: i64,
+    pub vistos: std::collections::HashSet<String>,
 }
 
 impl Vista {
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new() }
     }
 }
 

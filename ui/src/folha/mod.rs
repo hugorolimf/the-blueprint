@@ -5,6 +5,7 @@ mod acoes;
 mod blueprint;
 mod cartao;
 mod cena;
+pub(crate) mod claude;
 mod controles;
 mod disposicao;
 mod pagina;
@@ -111,9 +112,11 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         c.texto(&format!("{empresa} · {titulo}"), l, IL + 36.0, 18.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
         c.texto(&tr("Blueprints · cada um abre o seu próprio blueprint"), l, IL + 56.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
         c.texto(&tr("Clique para abrir o blueprint · segure e arraste para reordenar"), l, Y_MAPA + 6.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
+        let ancoras: claude::Ancoras = Default::default();
         for (i, p) in mapa.iter().enumerate() {
             let (col, linha) = (i % colunas, i / colunas);
             let m = cartao::Medidas { x: l + col as f32 * (tw + GAP), y: Y_MAPA + 48.0 + linha as f32 * (TH + GAP), w: tw, h: TH };
+            ancoras.borrow_mut().insert(crate::agentes::Lugar::Cab(texto(p, "id")), (m.x, m.y, m.w, m.h));
             let area = Rect::from_min_size(c.pt(m.x, m.y), vec2(m.w, m.h));
             let resposta = ui.interact(area, ui.scope_id().with(("bp", texto(p, "id"))), Sense::click());
             let onde = achados.get(i).and_then(|(_, o)| o.as_deref());
@@ -125,6 +128,13 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
             if resposta.clicked() {
                 vista.tela = Tela::Blueprint(id.to_string(), texto(p, "id"));
             }
+        }
+        // o Claude: uma figura por agente no canto de cima do cartão do blueprint em que ele trabalha
+        let ags = crate::agentes::ativos(&vista.agentes, id, crate::agentes::agora_ms(), vista.agentes_vida, &vista.vistos);
+        for p in mapa.iter() {
+            let bp = texto(p, "id");
+            let deste: Vec<_> = ags.iter().filter(|a| a.blueprint_id == bp).cloned().collect();
+            claude::desenhar(&c, ui, &deste, &ancoras, "cartao");
         }
         // «novo blueprint»: o cartão tracejado depois do último
         let (col, linha) = (mapa.len() % colunas, mapa.len() / colunas);

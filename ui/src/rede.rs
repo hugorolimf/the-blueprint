@@ -16,6 +16,8 @@ pub enum Msg {
     Dados(Result<Documento, String>),
     Gravado(Result<u64, Falha>),
     Exemplo(Result<Value, String>),
+    /// os agentes ativos e a vida deles em ms
+    Agentes(Vec<crate::agentes::Agente>, i64),
 }
 
 /// O endereço do servidor: no navegador, a própria origem da página (`/api` passa pelo mesmo servidor, sem CORS); no desktop,
@@ -83,5 +85,16 @@ pub fn exemplo(base: &str, ctx: &egui::Context, envio: Sender<Msg>) {
             Ok(r) => serde_json::from_slice(&r.bytes).map_err(|e| e.to_string()),
         };
         entregar(&ctx, &envio, Msg::Exemplo(resultado));
+    });
+}
+
+/// `GET /api/mcp/agentes`: quem está trabalhando. Falha em silêncio (servidor sem a lista: sem figuras).
+pub fn agentes(base: &str, ctx: &egui::Context, envio: Sender<Msg>) {
+    let (ctx, base) = (ctx.clone(), base.to_string());
+    ehttp::fetch(ehttp::Request::get(format!("{base}/api/mcp/agentes")), move |resposta| {
+        let Ok(r) = resposta else { return };
+        let Ok(j) = serde_json::from_slice::<Value>(&r.bytes) else { return };
+        let lista = serde_json::from_value(j.get("agentes").cloned().unwrap_or_default()).unwrap_or_default();
+        entregar(&ctx, &envio, Msg::Agentes(lista, j.get("vidaMs").and_then(Value::as_i64).unwrap_or(600_000)));
     });
 }
