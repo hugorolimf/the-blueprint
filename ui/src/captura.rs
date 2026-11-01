@@ -38,3 +38,20 @@ impl Captura {
 fn espera() -> Duration {
     Duration::from_secs_f32(std::env::var("BLUEPRINT_UI_ESPERA").ok().and_then(|v| v.parse().ok()).unwrap_or(2.0))
 }
+
+/// Só nos testes (`BLUEPRINT_UI_TEMPO=1`): diz no stderr quanto o quadro levou para desenhar, para achar o que deixa a janela pesada.
+pub struct Tempo(Option<std::time::Instant>);
+
+impl Tempo {
+    pub fn novo() -> Tempo {
+        Tempo(std::env::var_os("BLUEPRINT_UI_TEMPO").map(|_| std::time::Instant::now()))
+    }
+}
+
+impl Drop for Tempo {
+    fn drop(&mut self) {
+        if let Some(t) = self.0 {
+            eprintln!("quadro: {:.1} ms", t.elapsed().as_secs_f32() * 1000.0);
+        }
+    }
+}

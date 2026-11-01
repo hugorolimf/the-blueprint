@@ -18,7 +18,7 @@ name = "blueprint-ui"
 path = "src/main.rs"
 
 [dependencies]
-eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts"] }
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts", "persistence"] }
 egui = { version = "0.37.0", default-features = false, features = ["default_fonts"] }
 egui_extras = { version = "0.37.0", default-features = false, features = ["svg"] }
 ehttp = "0.7"
@@ -33,7 +33,7 @@ image = { version = "0.25.10", default-features = false, features = ["png"] }
 
 # No Linux o eframe precisa dizer quais servidores de janela usa.
 [target.'cfg(target_os = "linux")'.dependencies]
-eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts", "wayland", "x11"] }
+eframe = { version = "0.37.0", default-features = false, features = ["glow", "default_fonts", "persistence", "wayland", "x11"] }
 
 # No navegador: o canvas da página e o log no console.
 [target.'cfg(target_arch = "wasm32")'.dependencies]

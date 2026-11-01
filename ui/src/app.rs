@@ -17,6 +17,8 @@ enum Estado {
     Pronto(Documento),
 }
 
+const CHAVE_VISTA: &str = "vista";
+
 pub struct App {
     servidor: String,
     estado: Estado,
@@ -27,6 +29,8 @@ pub struct App {
     recebe: Receiver<Msg>,
     /// alguém pediu a janela à frente (`Mostrar`)
     mostrar: Arc<AtomicBool>,
+    /// o clique de teste em curso: posição e se já é a hora de soltar
+    clique: Option<(egui::Pos2, bool)>,
     /// a última busca de agentes (a cada poucos segundos, só com a janela aberta)
     agentes_em: Option<web_time::Instant>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -55,6 +59,7 @@ impl App {
             envio,
             recebe,
             mostrar,
+            clique: None,
             agentes_em: None,
             #[cfg(not(target_arch = "wasm32"))]
             captura: crate::captura::do_ambiente(),
@@ -63,11 +68,24 @@ impl App {
         };
         #[cfg(not(target_arch = "wasm32"))]
         crate::roteiro::abrir(&mut app.vista);
+        if !app.em_teste() {
+            if let Some(salvo) = cc.storage.and_then(|s| s.get_string(CHAVE_VISTA)).and_then(|t| serde_json::from_str::<Value>(&t).ok()) {
+                app.vista.restaurar(&salvo);
+            }
+        }
         fonte::instalar(&cc.egui_ctx);
         egui_extras::install_image_loaders(&cc.egui_ctx);
         tema::aplicar(&cc.egui_ctx);
         rede::buscar(&app.servidor, &cc.egui_ctx, app.envio.clone());
         app
+    }
+
+    /// Rodando um roteiro ou uma captura de teste: nada é lido nem guardado, para o teste não herdar nem sujar o que o usuário deixou.
+    fn em_teste(&self) -> bool {
+        #[cfg(not(target_arch = "wasm32"))]
+        return self.captura.is_some() || self.roteiro.is_some();
+        #[cfg(target_arch = "wasm32")]
+        false
     }
 
     fn recarregar(&mut self, ctx: &egui::Context) {
@@ -175,7 +193,37 @@ impl App {
 }
 
 impl eframe::App for App {
+    /// Guarda o que o usuário espera achar como deixou: as seções abertas e os agentes que ele já viu (`concluidosVistos` da página).
+    fn save(&mut self, storage: &mut dyn eframe::Storage) {
+        if self.em_teste() {
+            return;
+        }
+        if let Ok(t) = serde_json::to_string(&self.vista.para_guardar()) {
+            storage.set_string(CHAVE_VISTA, t);
+        }
+    }
+
+    /// Só nos testes: transforma o passo `clicar:x/y` do roteiro num clique de ponteiro de verdade (mover, apertar; no quadro seguinte, soltar).
+    fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        if let Some((pos, solta)) = self.clique.take() {
+            if solta {
+                raw.events.push(egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() });
+            } else {
+                raw.events.push(egui::Event::PointerMoved(pos));
+                raw.events.push(egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: true, modifiers: Default::default() });
+                self.clique = Some((pos, true));
+                ctx.request_repaint();
+            }
+        } else if let Some(pos) = self.vista.clique_pedido.take() {
+            raw.events.push(egui::Event::PointerMoved(pos));
+            self.clique = Some((pos, false));
+            ctx.request_repaint();
+        }
+    }
+
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        #[cfg(not(target_arch = "wasm32"))]
+        let _tempo = crate::captura::Tempo::novo();
         let ctx = ui.ctx().clone();
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(captura) = &mut self.captura {

@@ -7,6 +7,7 @@ mod excluir;
 mod nome;
 mod novo;
 
+use serde_json::Value;
 use crate::documento::Documento;
 
 pub use novo::Novo;
@@ -78,9 +79,28 @@ pub struct Vista {
     pub vistos: std::collections::HashSet<String>,
     /// o agente cuja folhinha está aberta (clicou na figura)
     pub agente_aberto: Option<String>,
+    /// só nos testes: um clique de ponteiro de verdade a injetar (roteiro `clicar:x,y`)
+    pub clique_pedido: Option<egui::Pos2>,
 }
 
 impl Vista {
+    /// O que vale guardar entre sessões: as seções abertas e os últimos 200 agentes vistos.
+    pub fn para_guardar(&self) -> Value {
+        let mut vistos: Vec<&String> = self.vistos.iter().collect();
+        vistos.sort();
+        let vistos: Vec<&&String> = vistos.iter().rev().take(200).collect();
+        serde_json::json!({ "abertas": self.abertas, "vistos": vistos })
+    }
+
+    pub fn restaurar(&mut self, salvo: &Value) {
+        if let Some(m) = salvo.get("abertas").and_then(Value::as_object) {
+            self.abertas = m.iter().filter_map(|(k, v)| v.as_bool().map(|b| (k.clone(), b))).collect();
+        }
+        if let Some(l) = salvo.get("vistos").and_then(Value::as_array) {
+            self.vistos = l.iter().filter_map(|v| v.as_str().map(str::to_string)).collect();
+        }
+    }
+
     /// O workspace aberto (onde os agentes aparecem); vazio na entrada.
     pub fn agente_ws(&self) -> String {
         match &self.tela {
@@ -90,7 +110,7 @@ impl Vista {
     }
 
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None }
     }
 }
 

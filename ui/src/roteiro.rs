@@ -72,6 +72,13 @@ impl Roteiro {
                 vista.consulta = arg.into();
                 None
             }
+            "clicar" => {
+                // clicar:x,y não serve (a vírgula separa os passos): clicar:x/y
+                if let Some((x, y)) = arg.split_once('/') {
+                    vista.clique_pedido = x.parse().ok().zip(y.parse().ok()).map(|(x, y)| egui::pos2(x, y));
+                }
+                None
+            }
             "agente" => {
                 vista.agente_aberto = Some(arg.into());
                 None

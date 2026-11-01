@@ -156,7 +156,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
         // o Claude: o cabeçalho do blueprint é o da primeira seção; as figuras vão por cima de tudo
         ancoras.borrow_mut().insert(crate::agentes::Lugar::Cab(bp.to_string()), (l, y0 - 8.0, r - l, 86.0));
         let ags: Vec<_> = crate::agentes::ativos(&vista.agentes, id, crate::agentes::agora_ms(), vista.agentes_vida, &vista.vistos).into_iter().filter(|a| a.blueprint_id == bp).collect();
-        if let Some(n) = super::claude::desenhar(&c, ui, &ags, &ancoras, "cab") {
+        if let Some(n) = super::claude::desenhar(&c, ui, bp, bp, &ags, &ancoras, "cab") {
             vista.agente_aberto = Some(n);
         }
         let (feitas, total) = (acoes.iter().filter(|f| f.status == dominio::Situacao::Concluido).count(), acoes.len());
