@@ -147,10 +147,14 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
             let refs = &subconjuntos[k];
             let total = if m.principal { p.get("acoes").and_then(Value::as_array).map_or(0, Vec::len) } else { m.idxs.len() };
             let s = Secao { ws: id, p, acoes: refs, numero: m.numero.clone(), nome: m.nome.clone(), descricao: m.descricao.clone(), total, ok: m.principal && dominio::concluido(p), aberto: m.aberto, principal: m.principal, resumo: dominio::resumo(m.idxs.iter().map(|k| &acoes[*k])), pendentes, ancoras: &ancoras, aberta: &aberta, pesq: (!termos.is_empty()).then_some((&res, termos.as_slice())), disp: &disps[k], regua: &regua, y: ys[k], colw, r, l };
-            if secao::cabecalho(&c, ui, &s) {
+            // a seção anda até o lugar novo quando outra acima abre ou fecha; a que surge (filtro) aparece aos poucos
+            let (v, nasce) = crate::anima::deslize(ui.ctx(), ("secao", m.chave.as_str()), &[ys[k]]);
+            let pincel = super::barra::opaco(&painter, nasce);
+            let cs = Cena { p: &pincel, o: c.o + vec2(0.0, v[0] - ys[k]) };
+            if secao::cabecalho(&cs, ui, &s) {
                 alternar = Some(m.chave.clone());
             }
-            if let Some(a) = acoes::desenhar(&c, ui, &s, hoje) {
+            if let Some(a) = acoes::desenhar(&cs, ui, &s) {
                 pedido = Some(a);
             }
         }
@@ -177,6 +181,15 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
             ui.ctx().open_url(egui::OpenUrl::new_tab(format!("{servidor}/{destino}")));
         }
     });
+    // o que mexe na folha anda em vez de pular (anima::mexer); trocar o período também reescreve a folha
+    if alternar.is_some() || comando.is_some() || matches!(pedido, Some(Acao::Marcar(..))) {
+        crate::anima::mexer(ui.ctx(), 350.0);
+    }
+    let fecha_periodo = mes_clicado.is_some() && vista.periodos.get(bp).is_some_and(|q| q.aguardando);
+    if periodo.is_some() || fecha_periodo {
+        crate::anima::reiniciar(ui.ctx());
+        crate::anima::mexer(ui.ctx(), 650.0);
+    }
     if let Some(chave) = alternar {
         let aberto = modelos.iter().find(|m| m.chave == chave).is_some_and(|m| m.aberto);
         vista.abertas.insert(chave, !aberto);

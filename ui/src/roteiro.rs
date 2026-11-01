@@ -5,11 +5,12 @@ use crate::documento::Documento;
 use crate::telas::{Acao, Novo, Vista};
 use std::collections::VecDeque;
 
-pub struct Roteiro(VecDeque<String>);
+/// Os passos que faltam e, durante um `pausa:ms`, até quando esperar (para ver uma animação no meio).
+pub struct Roteiro(VecDeque<String>, Option<std::time::Instant>);
 
 pub fn do_ambiente() -> Option<Roteiro> {
     let texto = std::env::var("BLUEPRINT_UI_ROTEIRO").ok().filter(|v| !v.is_empty())?;
-    Some(Roteiro(texto.split(',').map(str::to_string).collect()))
+    Some(Roteiro(texto.split(',').map(str::to_string).collect(), None))
 }
 
 /// `BLUEPRINT_UI_PPP=1`: força a escala a cada quadro (a do monitor, 1,25 neste notebook, muda o tamanho em pontos); a comparação com a web é a 1.
@@ -29,6 +30,12 @@ pub fn abrir(vista: &mut Vista) {
 impl Roteiro {
     /// O próximo passo, se houver. `excluir:Nome` procura o workspace pelo nome.
     pub fn proximo(&mut self, doc: &Documento, vista: &mut Vista) -> Option<Acao> {
+        if let Some(ate) = self.1 {
+            if std::time::Instant::now() < ate {
+                return None;
+            }
+            self.1 = None;
+        }
         let passo = self.0.pop_front()?;
         let (verbo, arg) = passo.split_once(':').unwrap_or((passo.as_str(), ""));
         match verbo {
@@ -98,6 +105,11 @@ impl Roteiro {
             "criarbp" => arg.split_once('/').map(|(ws, nome)| Acao::CriarBlueprint { workspace: ws.into(), nome: nome.into(), descricao: String::new() }),
             "novobp" => {
                 vista.novo_bp = Some(crate::telas::NovoBp::em(arg));
+                None
+            }
+            "pausa" => {
+                // pausa:ms espera antes do próximo passo
+                self.1 = arg.parse().ok().map(|ms| std::time::Instant::now() + std::time::Duration::from_millis(ms));
                 None
             }
             "novo" => {

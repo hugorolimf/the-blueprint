@@ -67,6 +67,60 @@ fn desligada() -> bool {
     false
 }
 
+/// Recomeça a abertura da tela atual (trocar o período reescreve a folha, como `desenrolar` depois do filtro em dados.js).
+pub fn reiniciar(ctx: &Context) {
+    ctx.data_mut(|d| d.remove::<(String, f64, u64)>(chave_estado()));
+}
+
+/// O que o usuário acabou de fazer mexe na folha: pelos próximos instantes, o que mudar de lugar anda até o novo em `dur` ms
+/// (`organizarFolha` de barras.js) e o que nasce aparece aos poucos (`revelarEntrada` de expandir.js). Fora disso, tudo muda na hora.
+pub fn mexer(ctx: &Context, dur: f32) {
+    let agora = ctx.input(|i| i.time);
+    ctx.data_mut(|d| d.insert_temp(Id::unique("anima-mexer"), (agora + 0.3, dur)));
+    ctx.request_repaint();
+}
+
+#[derive(Clone)]
+struct Trilho {
+    de: Vec<f32>,
+    para: Vec<f32>,
+    inicio: f64,
+    dur: f32,
+    /// quando nasceu durante uma mudança (aparece aos poucos)
+    nasceu: Option<f64>,
+    /// o último quadro em que foi desenhado: quem sumiu e voltou é novo, não anda do lugar antigo
+    quadro: u64,
+}
+
+/// Os valores de `chave` (posição, largura…) neste quadro: iguais ao `alvo`, ou a caminho dele se o alvo mudou logo depois de um
+/// [`mexer`]. Devolve também a opacidade de quem nasceu numa mudança (220 ms).
+pub fn deslize(ctx: &Context, chave: impl Hash + std::fmt::Debug, alvo: &[f32]) -> (Vec<f32>, f32) {
+    let (agora, id) = (ctx.input(|i| i.time), Id::unique(("anima-deslize", chave)));
+    let mexendo: Option<(f64, f32)> = ctx.data(|d| d.get_temp(Id::unique("anima-mexer"))).filter(|(ate, _)| agora <= *ate);
+    let quadro = ctx.cumulative_frame_nr();
+    let antes: Option<Trilho> = ctx.data(|d| d.get_temp::<Trilho>(id)).filter(|t| t.quadro + 1 >= quadro);
+    let posicao = |t: &Trilho| -> Vec<f32> {
+        let k = curva(BARRA, ((agora - t.inicio) as f32 * 1000.0) / t.dur.max(1.0));
+        t.de.iter().zip(&t.para).map(|(a, b)| a + (b - a) * k).collect()
+    };
+    let trilho = match antes {
+        None => Trilho { de: alvo.to_vec(), para: alvo.to_vec(), inicio: 0.0, dur: 1.0, nasceu: mexendo.map(|_| agora), quadro },
+        Some(t) if t.para.len() == alvo.len() && t.para.iter().zip(alvo).all(|(a, b)| (a - b).abs() < 0.5) => t,
+        Some(t) => match mexendo {
+            Some((_, dur)) if t.para.len() == alvo.len() => Trilho { de: posicao(&t), para: alvo.to_vec(), inicio: agora, dur, nasceu: t.nasceu, quadro },
+            _ => Trilho { de: alvo.to_vec(), para: alvo.to_vec(), inicio: 0.0, dur: 1.0, nasceu: None, quadro },
+        },
+    };
+    let trilho = Trilho { quadro, ..trilho };
+    let valores = posicao(&trilho);
+    let alfa = trilho.nasceu.map_or(1.0, |n| curva(CHEGA, ((agora - n) as f32 * 1000.0) / 220.0));
+    if alfa < 1.0 || ((agora - trilho.inicio) as f32 * 1000.0) < trilho.dur {
+        ctx.request_repaint();
+    }
+    ctx.data_mut(|d| d.insert_temp(id, trilho));
+    (valores, alfa)
+}
+
 /// A curva `cubic-bezier(x1, y1, x2, y2)` do CSS no instante `x` (0 a 1).
 pub fn curva(c: [f32; 4], x: f32) -> f32 {
     if x <= 0.0 {
@@ -157,5 +211,28 @@ mod testes {
         assert_eq!(a(1990.0).escrita("BLUEPRINTS", 70.0, 990.0, 1002.0), Some([1.0; 3]));
         assert!(a(0.0).escrita("FORA", 0.0, 1200.0, 1210.0).is_none(), "fora da janela aparece pronto");
         assert_eq!(tercos(10), [0, 3, 7, 10]);
+    }
+    #[test]
+    fn o_que_muda_depois_de_mexer_anda_e_o_resto_pula() {
+        let ctx = Context::default();
+        let quadro = |t: f64, alvo: f32, mexe: bool| {
+            let mut v = 0.0;
+            let saida = ctx.run_pass(egui::RawInput { time: Some(t), ..Default::default() }, |c| {
+                if mexe {
+                    mexer(c, 300.0);
+                }
+                v = deslize(c, "a", &[alvo]).0[0];
+            });
+            saida.drop_without_applying_deltas();
+            v
+        };
+        assert_eq!(quadro(0.0, 0.0, false), 0.0);
+        assert_eq!(quadro(0.1, 50.0, false), 50.0, "sem mexer, pula");
+        quadro(0.2, 50.0, true);
+        let meio = quadro(0.35, 150.0, false);
+        assert!(meio == 50.0, "o trilho começa no quadro em que o alvo muda: {meio}");
+        let meio = quadro(0.45, 150.0, false);
+        assert!(meio > 50.0 && meio < 150.0, "no meio do caminho: {meio}");
+        assert_eq!(quadro(0.8, 150.0, false), 150.0);
     }
 }

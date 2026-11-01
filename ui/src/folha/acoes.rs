@@ -21,7 +21,7 @@ fn texto(v: &Value, campo: &str) -> String {
 }
 
 /// As ações abertas, com as caixas marcáveis. Devolve o pedido de marcar, se houve clique.
-pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
+pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao) -> Option<Pedido> {
     let mut pedido = None;
     let j = s.regua.janela;
     if s.total == 0 {
@@ -35,16 +35,19 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
         let f = s.acoes[pos.i];
         // pesquisando: a ação que não casou esmaece (18%); a que casou fica inteira
         let ra: Option<&ResAcao> = s.pesq.and_then(|(r, _)| r.acoes.iter().find(|a| a.id == f.id));
-        let mut fraco = c.p.clone();
-        fraco.set_opacity(0.16);
-        let ce = Cena { p: if s.pesq.is_some() && ra.is_none() { &fraco } else { c.p }, o: c.o };
+        // abrir, recolher ou trocar o período: a ação anda até o lugar novo, a barra muda de largura e o andamento cresce (anima::deslize)
+        let (topo, bx, bw) = if s.aberto { (PH + s.disp.linha_y[pos.linha], pos.bx0, pos.bw) } else { (PH - 12.0 + s.disp.linha_y[pos.linha], pos.x0, (pos.x1 - pos.x0).max(6.0)) };
+        let (v, nasce) = crate::anima::deslize(ui.ctx(), ("acao", f.id.as_str()), &[topo, bx, bw, f.pct]);
+        let fraco = barra::opaco(c.p, if s.pesq.is_some() && ra.is_none() { 0.16 * nasce } else { nasce });
+        let ce = Cena { p: &fraco, o: c.o };
         let c = &ce;
         if !s.aberto {
-            compacta(c, s, pos, f, hoje);
+            compacta(c, s, f, s.y + v[0], v[1], v[2], v[3]);
             continue;
         }
-        let (x0, x1, w) = (pos.bx0, pos.bx0 + pos.bw, pos.bw);
-        let fy = s.y + PH + s.disp.linha_y[pos.linha];
+        let (x0, w, pct) = (v[1], v[2], v[3]);
+        let x1 = x0 + w;
+        let fy = s.y + v[0];
         let (by, bh) = (fy + 20.0, 26.0);
         s.ancoras.borrow_mut().insert(Lugar::Barra(f.id.clone()), (x0, by, w, bh));
         if let (Some((_, termos)), Some(a)) = (s.pesq, ra) {
@@ -61,7 +64,7 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
         // a barra: cheia de tinta fina (concluída), com o andamento (em andamento) ou só o contorno (a fazer); na abertura ela se desenha
         let vez = barra::Vez::da(c, fy, fy + 112.0);
         barra::caixa(c, x0, by, w, bh, f.status, vez);
-        barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, bh - 2.0, f.status, f.pct, vez);
+        barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, bh - 2.0, f.status, pct, vez);
         if f.status == Situacao::Concluido && w >= 100.0 {
             barra::selo(c, (x0 + 12.0).max(x1 - 17.0), by + bh / 2.0, vez);
         }
@@ -182,13 +185,12 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
 }
 
 /// A ação da seção recolhida: só a barra fina na linha dela, com o hachurado ou o andamento e os checkpoints (`!s.aberto` em render.js).
-fn compacta(c: &Cena, s: &Secao, pos: &super::disposicao::Posicao, f: &Acao, _hoje: i64) {
-    let (x0, w) = (pos.x0, (pos.x1 - pos.x0).max(6.0));
-    let by = s.y + PH - 12.0 + s.disp.linha_y[pos.linha];
+#[allow(clippy::too_many_arguments)]
+fn compacta(c: &Cena, s: &Secao, f: &Acao, by: f32, x0: f32, w: f32, pct: f32) {
     s.ancoras.borrow_mut().insert(Lugar::Barra(f.id.clone()), (x0, by, w, 10.0));
     let vez = barra::Vez::da(c, by - 7.0, by + 17.0);
     barra::caixa(c, x0, by, w, 10.0, f.status, vez);
-    barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, 8.0, f.status, f.pct, vez);
+    barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, 8.0, f.status, pct, vez);
     let j = s.regua.janela;
     for m in f.checkpoints.iter().filter(|m| m.data.is_some_and(|d| d >= j.t0 && d < j.t1)) {
         let mx = s.regua.xf(m.data.unwrap_or(0) as f32 + 0.5).clamp(s.l, s.r);
