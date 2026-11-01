@@ -58,7 +58,7 @@ fn res_do_ico(ico: &[u8]) -> Vec<u8> {
 fn main() {
     let raiz = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR"));
     let mut arquivos: Vec<PathBuf> = vec![raiz.join("blueprint.html"), raiz.join("emblemas.mjs"), raiz.join("agentes-figura.mjs"), raiz.join("agentes-claude.mjs")];
-    coletar(&raiz.join("web"), &["css", "js"], &mut arquivos);
+    coletar(&raiz.join("web"), &["css", "js", "woff2"], &mut arquivos);
     coletar(&raiz.join("kit"), &["mjs"], &mut arquivos);
     let mut codigo = String::from("pub static ASSETS: &[(&str, &[u8])] = &[\n");
     for a in &arquivos {

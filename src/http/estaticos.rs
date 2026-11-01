@@ -1,5 +1,6 @@
 //! A interface e o kit do anatomy como arquivos estáticos: vêm embutidos no binário (`build.rs`) ou, em desenvolvimento, de uma pasta.
-//! Só sai o que a lista permite (a página, `emblemas.mjs`, `web/*.css|js` e `kit/**/*.mjs`); nada mais fica exposto. Com ETag e gzip.
+//! Só sai o que a lista permite (a página, `emblemas.mjs`, `web/*.css|js|woff2` e `kit/**/*.mjs`); nada mais fica exposto. Com ETag e gzip
+//! (menos na fonte, que já vem comprimida).
 use super::pedido::{Pedido, Resposta};
 use flate2::{write::GzEncoder, Compression};
 use std::borrow::Cow;
@@ -28,12 +29,12 @@ fn segmento_valido(s: &str) -> bool {
     !s.is_empty() && s.bytes().all(|c| c.is_ascii_alphanumeric() || c == b'_' || c == b'-')
 }
 
-/// A lista do servidor Node: /blueprint.html, /emblemas.mjs, /web/**/*.css|js e /kit/**/*.mjs, sem ".." possível.
+/// A lista do servidor Node: /blueprint.html, /emblemas.mjs, /web/**/*.css|js|woff2 (a fonte) e /kit/**/*.mjs, sem ".." possível.
 pub fn permitido(caminho: &str) -> bool {
     if matches!(caminho, "/blueprint.html" | "/emblemas.mjs" | "/agentes-figura.mjs" | "/agentes-claude.mjs") {
         return true;
     }
-    let (prefixo, extensoes): (&str, &[&str]) = if caminho.starts_with("/web/") { ("/web/", &["css", "js"]) } else if caminho.starts_with("/kit/") { ("/kit/", &["mjs"]) } else { return false };
+    let (prefixo, extensoes): (&str, &[&str]) = if caminho.starts_with("/web/") { ("/web/", &["css", "js", "woff2"]) } else if caminho.starts_with("/kit/") { ("/kit/", &["mjs"]) } else { return false };
     let resto = &caminho[prefixo.len()..];
     let Some((sem_extensao, extensao)) = resto.rsplit_once('.') else { return false };
     extensoes.contains(&extensao) && sem_extensao.split('/').all(segmento_valido)
@@ -43,6 +44,7 @@ fn tipo_de(caminho: &str) -> &'static str {
     match caminho.rsplit('.').next() {
         Some("html") => "text/html",
         Some("css") => "text/css",
+        Some("woff2") => "font/woff2",
         _ => "text/javascript",
     }
 }
@@ -79,7 +81,7 @@ impl Assets {
 
     /// ETag e gzip de cada arquivo embutido são feitos uma vez; da pasta (desenvolvimento), a cada pedido.
     fn preparar(&self, caminho: &str, bytes: &[u8]) -> Arc<Pronto> {
-        let calcular = || Arc::new(Pronto { etag: etag_de(bytes), gzip: (bytes.len() >= MIN_GZIP).then(|| comprimir(bytes)).flatten().map(Arc::new) });
+        let calcular = || Arc::new(Pronto { etag: etag_de(bytes), gzip: (bytes.len() >= MIN_GZIP && !caminho.ends_with(".woff2")).then(|| comprimir(bytes)).flatten().map(Arc::new) });
         if self.pasta.is_some() {
             return calcular();
         }

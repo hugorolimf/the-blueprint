@@ -15,7 +15,7 @@ body.ap-aberto{overflow:hidden}
 .ap-previa>.ap-pagina{max-width:1040px;margin:0 auto 26px;box-shadow:0 10px 36px #05112599}
 
 /* a página */
-.ap-pagina{--paper:#113360;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
+.ap-pagina{--paper:#113360;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:"Blueprint Mono",ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;
   container-type:size;position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;color:var(--ink);font-family:var(--mono);break-after:page;break-inside:avoid;border:1px solid var(--lo);
   background:linear-gradient(#ffffff14 1px,transparent 1px) 0 0/5cqw 5cqw,linear-gradient(90deg,#ffffff14 1px,transparent 1px) 0 0/5cqw 5cqw,radial-gradient(ellipse at 50% 20%,#194680 0,#113360 70%,#0c264b 100%)}
 .ap-int{position:absolute;inset:0;padding:4.6cqw 6cqw 5.4cqw;display:flex;flex-direction:column;gap:1.3cqw;font-size:1.3cqw;line-height:1.5}

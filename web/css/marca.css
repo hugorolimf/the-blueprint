@@ -23,7 +23,7 @@
 .emblema .iso-dots[data-tone="hi"] circle{opacity:.85}
 .emblema .iso-dots[data-tone="mid"] circle{opacity:.45}
 .emblema .iso-dots[data-tone="lo"] circle{opacity:.22}
-.emblema .iso-face-text{fill:var(--anatomy-mid);font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;font-weight:700;letter-spacing:.04em}
+.emblema .iso-face-text{fill:var(--anatomy-mid);font-family:var(--mono);font-weight:700;letter-spacing:.04em}
 .emblema .iso-face-text[data-tone="hi"]{fill:var(--anatomy-hi)}
 .emblema .iso-face-text[data-tone="lo"]{fill:var(--anatomy-lo)}
 .emblema .iso-face-text[data-tone="faint"]{fill:var(--anatomy-faint)}
