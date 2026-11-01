@@ -5,6 +5,7 @@ mod agente;
 mod entrada;
 mod excluir;
 mod nome;
+mod nota;
 mod novo;
 
 use serde_json::Value;
@@ -42,6 +43,10 @@ pub enum Acao {
     ExemploPronto(Box<serde_json::Value>),
     /// marcar ou desmarcar um plano ou checkpoint: (workspace, blueprint, ação, `planos`/`checkpoints`, item)
     Marcar(String, String, String, &'static str, String),
+    /// abrir a folha de observações do blueprint (sem ação) ou da ação: (workspace, blueprint, ação)
+    AbrirNota(String, String, Option<String>),
+    /// gravar o texto dessa folha
+    SalvarObs(String, String, Option<String>, String),
     Atualizar,
 }
 
@@ -81,6 +86,9 @@ pub struct Vista {
     pub agente_aberto: Option<String>,
     /// só nos testes: um clique de ponteiro de verdade a injetar (roteiro `clicar:x,y`)
     pub clique_pedido: Option<egui::Pos2>,
+    /// a folha de observações aberta e o texto que está sendo editado
+    pub nota: Option<(String, String, Option<String>)>,
+    pub nota_texto: String,
 }
 
 impl Vista {
@@ -110,7 +118,7 @@ impl Vista {
     }
 
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, excluir: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None, nota: None, nota_texto: String::new() }
     }
 }
 
@@ -118,6 +126,9 @@ impl Vista {
 pub fn dialogos(ctx: &egui::Context, vista: &mut Vista, doc: &Documento, ocupado: bool) -> Option<Acao> {
     agente::faixa(ctx, vista, doc);
     agente::folhinha(ctx, vista, doc);
+    if let Some(a) = nota::folha(ctx, vista, doc, ocupado) {
+        return Some(a);
+    }
     excluir::dialogo(ctx, vista, doc, ocupado)
 }
 

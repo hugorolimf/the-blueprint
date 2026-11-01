@@ -159,6 +159,13 @@ impl App {
             return;
         }
         match acao {
+            Acao::AbrirNota(ws, bp, acao) => {
+                if let Estado::Pronto(doc) = &self.estado {
+                    self.vista.nota_texto = doc.obs(&ws, &bp, acao.as_deref());
+                }
+                self.vista.nota = Some((ws, bp, acao));
+            }
+            Acao::SalvarObs(ws, bp, acao, novo) => self.mutar(ctx, |d| if d.definir_obs(&ws, &bp, acao.as_deref(), &novo) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) }),
             Acao::Atualizar => self.recarregar(ctx),
             Acao::DefinirNome(nome) => self.mutar(ctx, |d| {
                 d.definir_usuario(&nome);
@@ -224,6 +231,10 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         #[cfg(not(target_arch = "wasm32"))]
         let _tempo = crate::captura::Tempo::novo();
+        #[cfg(not(target_arch = "wasm32"))]
+        if std::env::var_os("BLUEPRINT_UI_CAUSAS").is_some() {
+            eprintln!("causas: {:?}", ui.ctx().repaint_causes().iter().map(|c| format!("{}:{}", c.file, c.line)).collect::<Vec<_>>());
+        }
         let ctx = ui.ctx().clone();
         #[cfg(not(target_arch = "wasm32"))]
         if let Some(captura) = &mut self.captura {

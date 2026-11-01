@@ -33,6 +33,8 @@ pub struct Secao<'a> {
     pub pesq: Option<(&'a ResBlueprint, &'a [String])>,
     /// onde ficam as linhas dos planos e as barras (a camada do Claude as procura)
     pub ancoras: &'a super::claude::Ancoras,
+    /// o pedido de abrir a folha de observações (clique no ícone de nota)
+    pub aberta: &'a std::cell::RefCell<Option<crate::telas::Acao>>,
     pub disp: &'a Disposicao,
     pub regua: &'a Regua<'a>,
     /// o topo da seção (`y0`)
@@ -64,7 +66,11 @@ pub fn cabecalho(c: &Cena, ui: &mut Ui, s: &Secao) -> bool {
     c.texto(&nome, l + 40.0, yb + 19.0, 17.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
     c.texto(&descricao, l + 40.0, yb + 38.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     if obs {
-        c.nota(l + 40.0 + nome.chars().count() as f32 * 11.6 + 10.0, yb + 3.0, false);
+        let nx = l + 40.0 + nome.chars().count() as f32 * 11.6 + 10.0;
+        c.nota(nx, yb + 3.0, false);
+        if clique_nota(c, ui, Rect::from_min_size(c.pt(nx - 3.0, yb), vec2(22.0, 22.0)), ("nota", s.numero.as_str())) {
+            *s.aberta.borrow_mut() = Some(crate::telas::Acao::AbrirNota(s.ws.into(), texto(s.p, "id"), None));
+        }
     }
     let (resumo, total, ok) = (&s.resumo, s.total, s.ok);
     let px = (l + 40.0 + (nome.chars().count() as f32 * 11.6 + if obs { 30.0 } else { 0.0 }).max(descricao.chars().count() as f32 * 7.2) + 64.0).min(r - 330.0);
@@ -139,4 +145,14 @@ fn links(c: &Cena, ui: &mut Ui, s: &Secao, px: f32) {
     if livres > 0 {
         c.texto(&trn(livres, "+{n} LINK · VEJA EM EDITAR", "+{n} LINKS · VEJA EM EDITAR"), s.r - 6.0, s.y + 55.0, 10.0, Peso::Normal, MEDIO, Ancora::Fim, false);
     }
+}
+
+/// O ícone de nota é clicável (a mãozinha e o retorno do clique).
+pub fn clique_nota(c: &Cena, ui: &mut Ui, area: Rect, id: (&str, &str)) -> bool {
+    let r = ui.interact(area, ui.scope_id().with(id), Sense::click());
+    if r.hovered() {
+        ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
+        c.fio(TINTA, 1.0, (area.min.x - c.o.x + 3.0, area.max.y - c.o.y), (area.max.x - c.o.x - 3.0, area.max.y - c.o.y));
+    }
+    r.clicked()
 }

@@ -144,6 +144,30 @@ impl Documento {
         true
     }
 
+    /// O texto das observações do blueprint (`acao` vazia) ou da ação.
+    pub fn obs(&self, workspace: &str, blueprint: &str, acao: Option<&str>) -> String {
+        let bp = lista(self.workspace(workspace).unwrap_or(&Value::Null), "blueprints").iter().find(|b| texto(b, "id") == blueprint);
+        let alvo = match acao {
+            None => bp,
+            Some(a) => bp.and_then(|b| lista(b, "acoes").iter().find(|x| texto(x, "id") == a)),
+        };
+        alvo.map(|v| texto(v, "obs").to_string()).unwrap_or_default()
+    }
+
+    /// Grava as observações (vazias apagam o campo). `false` se o blueprint ou a ação não existem.
+    pub fn definir_obs(&mut self, workspace: &str, blueprint: &str, acao: Option<&str>, novo: &str) -> bool {
+        let ws = if workspace == RAIZ { Some(&mut self.raw) } else { self.raw.get_mut("workspaces").and_then(Value::as_array_mut).and_then(|l| l.iter_mut().find(|w| texto(w, "id") == workspace)) };
+        let bp = ws.and_then(|w| w.get_mut("blueprints")?.as_array_mut()?.iter_mut().find(|b| texto(b, "id") == blueprint));
+        let alvo = match (bp, acao) {
+            (Some(b), None) => Some(b),
+            (Some(b), Some(a)) => b.get_mut("acoes").and_then(Value::as_array_mut).and_then(|l| l.iter_mut().find(|x| texto(x, "id") == a)),
+            _ => None,
+        };
+        let Some(Value::Object(o)) = alvo else { return false };
+        if novo.trim().is_empty() { o.remove("obs"); } else { o.insert("obs".into(), json!(novo)); }
+        true
+    }
+
     /// O workspace `id` como JSON: a raiz é o próprio arquivo.
     pub fn workspace(&self, id: &str) -> Option<&Value> {
         if id == RAIZ {

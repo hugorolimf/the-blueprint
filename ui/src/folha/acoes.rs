@@ -52,7 +52,11 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao, hoje: i64) -> Option<Pedido> {
             }
         }
         c.texto(&pos.rotulo, pos.lx, fy + 12.0, 11.0, Peso::Normal, if ra.is_some_and(|a| a.propria.is_some()) { egui::Color32::WHITE } else { TINTA }, Ancora::Inicio, true);
-        c.nota(pos.lx + pos.rotulo.chars().count() as f32 * (CHAR + 0.35) + 16.0, fy - 1.0, false);
+        let nx = pos.lx + pos.rotulo.chars().count() as f32 * (CHAR + 0.35) + 16.0;
+        c.nota(nx, fy - 1.0, false);
+        if super::secao::clique_nota(c, ui, Rect::from_min_size(c.pt(nx - 3.0, fy - 4.0), vec2(22.0, 22.0)), ("nota-acao", f.id.as_str())) {
+            *s.aberta.borrow_mut() = Some(Pedido::AbrirNota(s.ws.into(), texto(s.p, "id"), Some(f.id.clone())));
+        }
         // a barra: cheia de tinta fina (concluída), com o andamento (em andamento) ou tracejada (a fazer)
         match f.status {
             Situacao::Planejado => c.moldura(x0, by, w, bh, MEDIO, 1.2, false),
