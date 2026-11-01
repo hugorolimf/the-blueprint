@@ -1,7 +1,7 @@
 /* aplicar sozinho (web/js/auto-aplicar*.js): o interruptor no Planejar, o aviso com Desfazer e a lista "Aplicado sozinho" */
 #ag-auto[hidden]{display:none}
 #ag-auto[aria-pressed=true]{background:var(--ink);color:var(--paper)}
-#auto-aviso{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:70;display:flex;align-items:center;gap:12px;max-width:min(92vw,760px);padding:10px 14px;color:var(--ink);font:12px var(--mono);background:#082b5ef2;border:1px solid var(--mid);box-shadow:0 8px 28px #02132e99}
+#auto-aviso{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:70;display:flex;align-items:center;gap:12px;max-width:min(92vw,760px);padding:10px 14px;color:var(--ink);font:12px var(--mono);background:#0c264bf2;border:1px solid var(--mid);box-shadow:0 8px 28px #05112599}
 #auto-aviso[hidden],#auto-aviso .btn[hidden]{display:none}
 #auto-aviso .aa-rot{flex:none;font-size:10px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
 #auto-aviso .aa-texto{min-width:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}

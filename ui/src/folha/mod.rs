@@ -146,7 +146,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let area = Rect::from_min_size(c.pt(nx, ny), vec2(tw, TH));
         let resposta = ui.interact(area, ui.scope_id().with("novo-bp"), Sense::click());
         let realce = resposta.hovered() || resposta.has_focus();
-        c.retangulo(nx, ny, tw, TH, Some(if realce { rgba(0x17539f, 0x66) } else { rgba(0x0c3a78, 0x40) }), None);
+        c.retangulo(nx, ny, tw, TH, Some(if realce { rgba(0x1d4880, 0x66) } else { rgba(0x113360, 0x40) }), None);
         c.moldura(nx, ny, tw, TH, if realce { TINTA } else { crate::tema::BAIXO }, 1.0, true);
         let (art_w, art_x) = ((tw * 0.24).round().clamp(76.0, 108.0), nx + 12.0);
         emblema::pintar_construcao(ui, Rect::from_min_size(c.pt(art_x, ny + 26.0), vec2(art_w, TH - 52.0)), 1.0);
@@ -154,7 +154,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let texto_w = mais_x - 12.0 - texto_x;
         c.texto(&corta(&tr("NOVO BLUEPRINT"), (texto_w / 7.2).floor() as usize), texto_x, ny + 68.0, 12.0, Peso::Normal, TINTA, Ancora::Inicio, true);
         c.texto(&corta(&tr("ADICIONAR BLUEPRINT"), (texto_w / 6.0).floor() as usize), texto_x, ny + 94.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
-        c.retangulo(mais_x, ny + TH / 2.0 - 18.0, 36.0, 36.0, Some(if realce { rgba(0x17539f, 0xff) } else { rgba(0x0c3a78, 0x40) }), Some((if realce { TINTA } else { crate::tema::BAIXO }, 1.0)));
+        c.retangulo(mais_x, ny + TH / 2.0 - 18.0, 36.0, 36.0, Some(if realce { rgba(0x1d4880, 0xff) } else { rgba(0x113360, 0x40) }), Some((if realce { TINTA } else { crate::tema::BAIXO }, 1.0)));
         let cm = ny + TH / 2.0;
         c.fio(MEDIO, 2.0, (mais_x + 18.0, cm - 9.0), (mais_x + 18.0, cm + 9.0));
         c.fio(MEDIO, 2.0, (mais_x + 9.0, cm), (mais_x + 27.0, cm));

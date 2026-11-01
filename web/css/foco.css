@@ -6,7 +6,7 @@
     linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,
     linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
     linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,
-    radial-gradient(ellipse at 50% 30%,#1250a0 0,#0c3a78 62%,#082b5e 100%)}
+    radial-gradient(ellipse at 50% 30%,#194680 0,#113360 62%,#0c264b 100%)}
 #foco-vista .ed-topo{position:sticky;top:0;z-index:2}
 #foco-vista .foco-conta{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);white-space:nowrap}
 #foco-vista .foco-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:16px;padding:24px;align-items:start}
@@ -16,12 +16,12 @@
 #foco-vista .foco-vazio .dica{font-size:11px;color:var(--mid)}
 
 /* o cartão de um agente: a figura do Claude na pose do estado e, ao lado, quem é, onde trabalha e o que disse */
-.foco-cartao{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px;border:1px solid var(--mid);background:#082b5ecc;min-width:0;cursor:pointer}
+.foco-cartao{display:grid;grid-template-columns:auto 1fr;gap:14px;padding:14px;border:1px solid var(--mid);background:#0c264bcc;min-width:0;cursor:pointer}
 .foco-cartao:hover{border-color:var(--ink)}
 .foco-cartao.principal{border-color:var(--ink)}
-.foco-cartao.em-foco{box-shadow:0 0 0 1px var(--ink),0 6px 24px #02132e99}
+.foco-cartao.em-foco{box-shadow:0 0 0 1px var(--ink),0 6px 24px #05112599}
 .foco-cartao.est-bloqueado{border-color:var(--erro)}
-.foco-cartao.est-ocioso,.foco-cartao.est-concluido{background:#082b5e99}
+.foco-cartao.est-ocioso,.foco-cartao.est-concluido{background:#0c264b99}
 .foco-cartao.grande{cursor:default;grid-template-columns:auto 1fr;gap:22px;padding:22px;border-color:var(--ink)}
 .foco-cartao.grande:hover{border-color:var(--ink)}
 .foco-fig{display:block;width:84px;flex:none}

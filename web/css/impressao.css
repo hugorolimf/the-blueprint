@@ -10,8 +10,8 @@
 /* o arquivo exportado (body.ap-solo) na tela: o fluxo vira folhas A4 sobre fundo neutro; o slide fica na largura da tela */
 @media screen{
   body.ap-solo{margin:0;padding:24px 0;background:#d4e0ef}
-  body.ap-solo .ap-pagina:not(.ap-slide){width:210mm;min-height:297mm;margin:0 auto 24px;padding:14mm 14mm 18mm;background:#fff;color:#0b2a55;box-shadow:0 6px 28px #02132e55}
-  body.ap-solo .ap-slide{width:min(1040px,calc(100vw - 32px));margin:0 auto 24px;box-shadow:0 6px 28px #02132e55}
+  body.ap-solo .ap-pagina:not(.ap-slide){width:210mm;min-height:297mm;margin:0 auto 24px;padding:14mm 14mm 18mm;background:#fff;color:#0b2a55;box-shadow:0 6px 28px #05112555}
+  body.ap-solo .ap-slide{width:min(1040px,calc(100vw - 32px));margin:0 auto 24px;box-shadow:0 6px 28px #05112555}
 }
 
 @media print{
@@ -32,20 +32,20 @@
     display:block;position:static;width:auto;min-height:0;margin:0;padding:0;background:none;box-shadow:none;color:#0b2a55;
     font:11px/1.45 ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace;break-inside:auto;
 
-    .ap-titulo{margin:0 0 6mm;padding-bottom:2mm;border-bottom:1.2px solid #0c3a78;color:#0b2a55;font-size:18px;letter-spacing:.06em;text-transform:uppercase;break-after:avoid}
+    .ap-titulo{margin:0 0 6mm;padding-bottom:2mm;border-bottom:1.2px solid #113360;color:#0b2a55;font-size:18px;letter-spacing:.06em;text-transform:uppercase;break-after:avoid}
     h2,h3,h4{color:#0b2a55;break-after:avoid}
     p{orphans:3;widows:3}
 
     /* a capa ocupa a página inteira (297 - 14 - 18 = 265 mm de área útil; 1 mm de folga evita uma página em branco) */
-    .ap-capa{display:flex;flex-direction:column;justify-content:center;gap:8mm;height:264mm;padding:0 10mm;border:1.5px solid #0c3a78;break-inside:avoid;
-      background:linear-gradient(#0c3a7814 1px,transparent 1px) 0 0/10mm 10mm,linear-gradient(90deg,#0c3a7814 1px,transparent 1px) 0 0/10mm 10mm}
+    .ap-capa{display:flex;flex-direction:column;justify-content:center;gap:8mm;height:264mm;padding:0 10mm;border:1.5px solid #113360;break-inside:avoid;
+      background:linear-gradient(#11336014 1px,transparent 1px) 0 0/10mm 10mm,linear-gradient(90deg,#11336014 1px,transparent 1px) 0 0/10mm 10mm}
     .ap-capa .ap-titulo{border:0;font-size:30px;line-height:1.15}
 
     /* nada de plano, checkpoint, linha de tabela ou figura cortado ao meio */
     li,tr,figure,[class*="ap-plano"],[class*="ap-check"],[class*="ap-linha"]{break-inside:avoid;page-break-inside:avoid}
     thead{display:table-header-group}
 
-    .ap-figura{--paper:#0c3a78;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;margin:4mm 0;padding:3mm;background:#0c3a78;color:#eaf4ff;border-radius:2px}
+    .ap-figura{--paper:#113360;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;margin:4mm 0;padding:3mm;background:#113360;color:#eaf4ff;border-radius:2px}
     .ap-figura figcaption{color:#9cc4ee;font-size:9px}
     svg,img{max-width:100%;height:auto}
   }

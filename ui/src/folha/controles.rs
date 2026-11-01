@@ -64,7 +64,7 @@ fn fileira(ui: &mut Ui, itens: &[Item], direita: f32, y: f32) -> (Option<&'stati
 fn busca(ui: &mut Ui, vista: &mut Vista, x: f32, y: f32, dica: &str, resultado: Option<String>) -> Response {
     let p = ui.painter().clone();
     let campo = Rect::from_min_size(pos2(x, y), vec2(380.0, 35.0));
-    p.rect_filled(campo, 0, rgba(0x0c3a78, 0xcc));
+    p.rect_filled(campo, 0, rgba(0x113360, 0xcc));
     planta::borda(&p, campo, MEDIO);
     let editor = egui::TextEdit::singleline(&mut vista.consulta)
         .frame(egui::Frame::NONE)
@@ -216,7 +216,7 @@ fn icone(ui: &mut Ui, pos: Pos2, nome: &str) -> Response {
     let r = Rect::from_min_size(pos, vec2(34.0, 34.0));
     let resposta = ui.interact(r, ui.scope_id().with(("icone", nome)), Sense::click());
     let invertido = resposta.hovered() || resposta.has_focus();
-    p.rect_filled(r, 0, if invertido { TINTA } else { rgba(0x0c3a78, 0xcc) });
+    p.rect_filled(r, 0, if invertido { TINTA } else { rgba(0x113360, 0xcc) });
     planta::borda(&p, r, MEDIO);
     let cor = if invertido { PAPEL } else { TINTA };
     let (cx, cy) = (r.center().x, r.center().y);

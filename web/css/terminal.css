@@ -1,5 +1,5 @@
 /* o painel do terminal do app (web/js/terminal.js): preso embaixo, no papel azul do blueprint, com abas por sessão */
-.term-painel{position:fixed;left:0;right:0;bottom:0;height:42vh;min-height:220px;z-index:30;display:flex;flex-direction:column;background:#082b5e;border-top:1.5px solid var(--ink);box-shadow:0 -10px 30px #02132e99;color:var(--ink);font:12px var(--mono)}
+.term-painel{position:fixed;left:0;right:0;bottom:0;height:42vh;min-height:220px;z-index:30;display:flex;flex-direction:column;background:#0c264b;border-top:1.5px solid var(--ink);box-shadow:0 -10px 30px #05112599;color:var(--ink);font:12px var(--mono)}
 .term-painel[hidden]{display:none}
 .term-painel.max{height:calc(100vh - 40px)}
 body.com-terminal #blueprint-layout{padding-bottom:42vh}

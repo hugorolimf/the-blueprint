@@ -143,7 +143,7 @@ function render() {
     }
     for (let d = t0 + 7; d < t1; d += 7) out.push(`<path class="ln m" d="M${X(d)} ${yRuler - 4}V${yRuler}"/>`);
     if (hojeD >= t0 && hojeD < t1) out.push(`<path class="eixo" d="M${xt} ${yRuler}V${yBand - 20}"/>`);
-    if (hojeD >= t0 && hojeD < t1) out.push(`<g class="hoje-chip"><rect x="${xt - 46}" y="${yRuler + 8}" width="92" height="20" fill="#eaf4ff"/><text x="${xt}" y="${yRuler + 22}" font-size="11" font-weight="700" text-anchor="middle" class="hoje-t" style="fill:#0c3a78">${tr("HOJE")} ${fmt(hoje)}</text></g>`);
+    if (hojeD >= t0 && hojeD < t1) out.push(`<g class="hoje-chip"><rect x="${xt - 46}" y="${yRuler + 8}" width="92" height="20" fill="#eaf4ff"/><text x="${xt}" y="${yRuler + 22}" font-size="11" font-weight="700" text-anchor="middle" class="hoje-t" style="fill:#113360">${tr("HOJE")} ${fmt(hoje)}</text></g>`);
     out.push(`</g>`);
   };
   const rodape = (out, H, folha, desenho) => {
@@ -303,7 +303,7 @@ function render() {
         if (f.status === "concluido") {
           const cx = Math.max(g.x0 + 12, g.x1 - 17), cy = by + bh / 2;
           out.push(`<rect ${anima(nf, "surge", "hach")} x="${g.x0 + 1}" y="${by + 1}" width="${w - 2}" height="${bh - 2}"/>`);
-          if (w >= 100) out.push(`<g class="selo"><circle cx="${cx}" cy="${cy}" r="8" fill="#0c3a78" stroke="#eaf4ff"/><path class="ln" d="M${cx - 3.6} ${cy}l2.6 3l4.6-6"/></g>`);
+          if (w >= 100) out.push(`<g class="selo"><circle cx="${cx}" cy="${cy}" r="8" fill="#113360" stroke="#eaf4ff"/><path class="ln" d="M${cx - 3.6} ${cy}l2.6 3l4.6-6"/></g>`);
         } else if (f.status === "andamento") {
           out.push(`<rect ${anima(nf, "surge", "prog")} x="${g.x0 + 1}" y="${by + 1}" width="${Math.max(0, (w - 2) * f.pct)}" height="${bh - 2}"/>`);
         }

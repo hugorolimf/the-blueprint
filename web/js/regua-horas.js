@@ -26,7 +26,7 @@ function horasAtualiza() {
   const yRegua = 204, yFim = H - 166, inicio = dia(diaHoras) * 24, agora = horaLocal(Date.now());
   const X = (h) => L + (h - inicio) / 24 * largura;
   const marcas = marcasDeHoras(inicio, inicio + 24).map((m) => `<g class="horas-marca"><path class="ln m" d="M${X(m.hora)} ${yRegua - 6}V${yRegua}"/><text class="mid" x="${X(m.hora)}" y="${yRegua - 13}" font-size="9" text-anchor="middle">${String(m.horaDoDia).padStart(2, "0")}</text></g>`).join("");
-  const agoraSvg = agora >= inicio && agora < inicio + 24 ? `<path class="eixo horas-agora" d="M${X(agora)} ${yRegua}V${yFim}"/><g class="hoje-chip"><rect x="${X(agora) - 46}" y="${yRegua + 8}" width="92" height="20" fill="#eaf4ff"/><text x="${X(agora)}" y="${yRegua + 22}" font-size="11" font-weight="700" text-anchor="middle" style="fill:#0c3a78">${tr("AGORA")}</text></g>` : "";
+  const agoraSvg = agora >= inicio && agora < inicio + 24 ? `<path class="eixo horas-agora" d="M${X(agora)} ${yRegua}V${yFim}"/><g class="hoje-chip"><rect x="${X(agora) - 46}" y="${yRegua + 8}" width="92" height="20" fill="#eaf4ff"/><text x="${X(agora)}" y="${yRegua + 22}" font-size="11" font-weight="700" text-anchor="middle" style="fill:#113360">${tr("AGORA")}</text></g>` : "";
   regua.insertAdjacentHTML("afterend", `<g class="horas-regua"><path class="ln" d="M${L} ${yRegua}H${R}"/><text class="mid" x="${L}" y="${yRegua - 32}" font-size="11">${esc(fmt(diaHoras))}</text>${marcas}${agoraSvg}</g>`);
   const originais = new Map(p.acoes.map((a) => [a.id, a]));
   const visiveis = new Map(acoesVisiveis(p).map((a) => [a.id, a]));

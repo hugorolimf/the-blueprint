@@ -4,7 +4,7 @@
 // As cores do app (web/css/tokens.css) viram o tema do xterm. A paleta ANSI é clara de propósito: o fundo é o azul do blueprint, e o
 // `minimumContrastRatio` do xterm ainda clareia o que o Claude pintar com pouco contraste (WCAG AA, 4,5:1).
 function termTema(c = {}) {
-  const papel = c.paper || "#0c3a78", tinta = c.ink || "#eaf4ff", meio = c.mid || "#9cc4ee", baixo = c.lo || "#5b93d0", erro = c.erro || "#ffb4a8";
+  const papel = c.paper || "#113360", tinta = c.ink || "#eaf4ff", meio = c.mid || "#9cc4ee", baixo = c.lo || "#5b93d0", erro = c.erro || "#ffb4a8";
   return {
     background: papel, foreground: tinta, cursor: tinta, cursorAccent: papel, selectionBackground: "rgba(156,196,238,0.38)", selectionInactiveBackground: "rgba(156,196,238,0.22)",
     black: "#0a2a58", red: erro, green: "#9fe3b4", yellow: "#ffd98a", blue: meio, magenta: "#e2b6ff", cyan: "#8de8f0", white: "#dbe9fb",

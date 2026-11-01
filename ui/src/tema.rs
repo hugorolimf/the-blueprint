@@ -7,14 +7,14 @@ const fn rgb(c: u32) -> Color32 {
     Color32::from_rgb((c >> 16) as u8, (c >> 8) as u8, c as u8)
 }
 
-pub const PAPEL: Color32 = rgb(0x0c3a78);
+pub const PAPEL: Color32 = rgb(0x113360);
 pub const TINTA: Color32 = rgb(0xeaf4ff);
 pub const MEDIO: Color32 = rgb(0x9cc4ee);
 pub const BAIXO: Color32 = rgb(0x5b93d0);
 pub const TENUE: Color32 = rgb(0x2f66aa);
 pub const ERRO: Color32 = rgb(0xffb4a8);
 
-/// Uma cor `#rrggbb` com transparência `aa` (0 a 255), como o `#0a3069dd` do CSS.
+/// Uma cor `#rrggbb` com transparência `aa` (0 a 255), como o `#0f2b54dd` do CSS.
 pub fn rgba(c: u32, aa: u8) -> Color32 {
     Color32::from_rgba_unmultiplied((c >> 16) as u8, (c >> 8) as u8, c as u8, aa)
 }
@@ -24,9 +24,9 @@ pub fn aplicar(ctx: &egui::Context) {
     let mut v = Visuals::dark();
     // o Chromium desenha o texto claro sobre fundo escuro com traço mais fino que o padrão escuro do egui
     v.text_options.color_transfer_function = egui::epaint::FontColorTransferFunction::Off;
-    v.panel_fill = rgb(0x0b3268);
-    v.window_fill = rgb(0x082b5e);
-    v.extreme_bg_color = rgba(0x082b5e, 0xcc);
+    v.panel_fill = rgb(0x0f2c53);
+    v.window_fill = rgb(0x0c264b);
+    v.extreme_bg_color = rgba(0x0c264b, 0xcc);
     v.override_text_color = Some(TINTA);
     v.hyperlink_color = MEDIO;
     v.selection.bg_fill = TENUE;
@@ -34,14 +34,14 @@ pub fn aplicar(ctx: &egui::Context) {
     v.window_stroke = Stroke::new(1.0, MEDIO);
     v.window_corner_radius = 0.into();
     v.menu_corner_radius = 0.into();
-    v.window_shadow = egui::Shadow { offset: [0, 20], blur: 56, spread: 0, color: rgba(0x02132e, 0xe6) };
+    v.window_shadow = egui::Shadow { offset: [0, 20], blur: 56, spread: 0, color: rgba(0x051125, 0xe6) };
     for w in [&mut v.widgets.noninteractive, &mut v.widgets.inactive, &mut v.widgets.hovered, &mut v.widgets.active, &mut v.widgets.open] {
         w.corner_radius = 0.into();
         w.bg_stroke = Stroke::new(1.0, MEDIO);
         w.fg_stroke = Stroke::new(1.0, TINTA);
     }
     v.widgets.noninteractive.bg_stroke = Stroke::new(1.0, TENUE);
-    v.widgets.inactive.weak_bg_fill = rgba(0x0c3a78, 0xcc);
+    v.widgets.inactive.weak_bg_fill = rgba(0x113360, 0xcc);
     v.widgets.hovered.weak_bg_fill = TINTA;
     v.widgets.active.weak_bg_fill = TINTA;
     ctx.set_visuals(v);

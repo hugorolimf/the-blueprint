@@ -7,9 +7,9 @@
 .barra .btn.ic,.barra.compacta .btn{font-size:0;letter-spacing:0;padding:0;width:34px;min-height:33px}
 .barra .btn.ic::before,.barra.compacta .btn::before{content:""}
 .barra.compacta .busca{position:absolute;top:0;right:0;width:min(380px,100%);z-index:1}
-.barra.compacta .busca input{background:#0c3a78}
+.barra.compacta .busca input{background:#113360}
 .barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))){position:relative;order:-1;flex:none;width:34px}
-.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) input{width:34px;min-height:33px;padding:0;cursor:pointer;background:#0c3a78cc}
+.barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) input{width:34px;min-height:33px;padding:0;cursor:pointer;background:#113360cc}
 .barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) input::placeholder{color:transparent}
 .barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown))) span{display:none}
 .barra.compacta .busca:not(:focus-within):not(:has(input:not(:placeholder-shown)))::before{content:"";position:absolute;inset:0;margin:auto;width:16px;height:16px;background:var(--ink);pointer-events:none;-webkit-mask:var(--lupa) center/contain no-repeat;mask:var(--lupa) center/contain no-repeat}

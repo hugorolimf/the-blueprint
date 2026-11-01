@@ -56,7 +56,7 @@ pub fn botao_com_largura(ui: &mut Ui, pos: Pos2, largura: f32, b: &Botao) -> Res
     let r = Rect::from_min_size(pos, vec2(largura, b.altura));
     let resposta = ui.interact(r, ui.scope_id().with(("btn", b.texto, pos.x as i32, pos.y as i32)), if b.ativo { Sense::click() } else { Sense::hover() });
     let invertido = b.ativo && (resposta.hovered() || resposta.has_focus());
-    let (fundo, cor) = if b.cheio && invertido { (Color32::WHITE, PAPEL) } else if b.cheio || invertido { (TINTA, PAPEL) } else { (rgba(0x0c3a78, 0xcc), TINTA) };
+    let (fundo, cor) = if b.cheio && invertido { (Color32::WHITE, PAPEL) } else if b.cheio || invertido { (TINTA, PAPEL) } else { (rgba(0x113360, 0xcc), TINTA) };
     let opaco = |c: Color32| if b.ativo { c } else { c.gamma_multiply(0.45) };
     p.rect_filled(r, 0, opaco(fundo));
     borda(&p, r, opaco(MEDIO));

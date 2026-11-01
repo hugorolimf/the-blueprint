@@ -111,7 +111,7 @@ fn cabecalho(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, o:
 fn faixa_do_exemplo(ui: &mut Ui, _vista: &Vista, ex: &Resumo, pos: Pos2, util: f32, ocupado: bool) -> bool {
     let p = ui.painter().clone();
     let r = Rect::from_min_size(pos, vec2(util, 72.0));
-    p.rect_filled(r, 0, rgba(0x082b5e, 0x99));
+    p.rect_filled(r, 0, rgba(0x0c264b, 0x99));
     planta::tracejado(&p, r, BAIXO);
     canto(&p, r);
     let frase = tr_com("O workspace «{nome}» é o exemplo: dados fictícios, separados dos seus.", &[("nome", &ex.nome)]);
@@ -140,7 +140,7 @@ fn passos(ui: &mut Ui, pos: Pos2, util: f32, m: &PassosMedidos, ocupado: bool) -
     let p = ui.painter().clone();
     let altura = 24.0 + 1.0 + 16.0 + 8.0 + 32.0 + 20.0 + m.altura_cartao + 31.2 + 20.0 + 1.0;
     let r = Rect::from_min_size(pos, vec2(util, altura));
-    p.rect_filled(r, 0, rgba(0x082b5e, 0x99));
+    p.rect_filled(r, 0, rgba(0x0c264b, 0x99));
     planta::tracejado(&p, r, BAIXO);
     canto(&p, r);
     let x = r.min.x + 29.0;
@@ -153,7 +153,7 @@ fn passos(ui: &mut Ui, pos: Pos2, util: f32, m: &PassosMedidos, ocupado: bool) -
         let ativo = i == 0 && !ocupado;
         let resposta = ui.interact(c, ui.scope_id().with(("passo", i)), if ativo { Sense::click() } else { Sense::hover() });
         let realce = ativo && (resposta.hovered() || resposta.has_focus());
-        p.rect_filled(c, 0, if realce { rgba(0x124482, 0xff) } else { rgba(0x0a3069, 0xdd) });
+        p.rect_filled(c, 0, if realce { rgba(0x173b69, 0xff) } else { rgba(0x0f2b54, 0xdd) });
         planta::borda(&p, c, if realce { TINTA } else { BAIXO });
         let ix = c.min.x + 19.0;
         Texto::novo(*n, 11.0).cor(MEDIO).trilha(0.14).na_linha(&p, ix, c.min.y + 19.0, 17.6);
@@ -234,7 +234,7 @@ fn cartao(ui: &Ui, base: Rect, w: &Resumo, realce: f32, arrastando: bool) {
     let p = ui.painter().clone();
     let r = if arrastando { base } else { base.translate(vec2(0.0, -3.0 * realce)) };
     let opaco = |c: egui::Color32| if arrastando { c.gamma_multiply(0.5) } else { c };
-    p.rect_filled(r, 0, opaco(rgba(0x0a3069, 0xdd).lerp_to_gamma(rgba(0x124482, 0xff), realce)));
+    p.rect_filled(r, 0, opaco(rgba(0x0f2b54, 0xdd).lerp_to_gamma(rgba(0x173b69, 0xff), realce)));
     planta::borda(&p, r, opaco(BAIXO.lerp_to_gamma(TINTA, realce)));
     canto(&p, r);
     let (x, y, util) = (r.min.x + 25.0, r.min.y + 25.0, CARTAO.x - 50.0);
@@ -251,7 +251,7 @@ fn cartao(ui: &Ui, base: Rect, w: &Resumo, realce: f32, arrastando: bool) {
 fn adicionar(ui: &Ui, r: Rect, realce: f32) {
     let p = ui.painter().clone();
     let r = r.translate(vec2(0.0, -3.0 * realce));
-    p.rect_filled(r, 0, rgba(0x0c3a78, 0x66).lerp_to_gamma(rgba(0x124482, 0xff), realce));
+    p.rect_filled(r, 0, rgba(0x113360, 0x66).lerp_to_gamma(rgba(0x173b69, 0xff), realce));
     planta::tracejado(&p, r, BAIXO.lerp_to_gamma(TINTA, realce));
     canto(&p, r);
     let cx = r.center().x;

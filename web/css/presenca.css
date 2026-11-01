@@ -8,6 +8,6 @@
 #presenca-camada{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
 .pres-contorno{position:absolute;border:1.5px dashed var(--c);border-radius:4px}
 .pres-contorno span{position:absolute;right:-1px;top:-17px;padding:1px 6px;background:var(--c);color:var(--paper);font:600 10px/14px var(--mono);border-radius:3px 3px 0 0;white-space:nowrap}
-#sinc-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 32px));padding:10px 14px;border:1px solid var(--lo);background:var(--paper);color:var(--ink);font-size:13px;box-shadow:0 6px 18px #02132ecc}
+#sinc-aviso{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100vw - 32px));padding:10px 14px;border:1px solid var(--lo);background:var(--paper);color:var(--ink);font-size:13px;box-shadow:0 6px 18px #051125cc}
 #sinc-aviso[hidden]{display:none}
 @media (prefers-reduced-motion:no-preference){#sinc-aviso{animation:sinc-entra .18s ease-out}@keyframes sinc-entra{from{opacity:0;translate:0 6px}}}

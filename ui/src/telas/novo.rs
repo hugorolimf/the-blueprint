@@ -39,7 +39,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
         let Some(novo) = vista.novo.as_mut() else { return };
         // o cartão do formulário
         let card = Rect::from_min_size(pos2(o.x + 24.0, o.y + topo_card), vec2(largura - 48.0, altura_card));
-        p.rect_filled(card, 0, rgba(0x0c3a78, 0x70));
+        p.rect_filled(card, 0, rgba(0x113360, 0x70));
         planta::borda(&p, card, BAIXO);
         let (gx, gy) = (card.min.x + 35.0, card.min.y + 31.0);
         let esquerda = (card.width() - 70.0 - 560.0 - 36.0).max(240.0);
@@ -58,7 +58,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
         seletor(ui, Rect::from_min_size(pos2(gx, gy + 296.0), vec2(esquerda, 39.0)), "marca", &MARCAS.iter().map(|(_, t)| (tr(t).to_string(), true)).collect::<Vec<_>>(), &mut novo.icone);
         // a prévia
         let previa = Rect::from_min_size(pos2(gx + esquerda + 36.0, gy), vec2(560.0, 448.4));
-        p.rect_filled(previa, 0, rgba(0x082b5e, 0x99));
+        p.rect_filled(previa, 0, rgba(0x0c264b, 0x99));
         planta::tracejado(&p, previa, BAIXO);
         emblema::pintar(ui, Rect::from_min_size(previa.min + vec2(23.0, 23.0), vec2(514.0, 375.6)), MARCAS[novo.icone].0, Tamanho::Previa);
         Texto::novo(tr("Prévia da arte").to_uppercase(), 10.0).cor(MEDIO).trilha(0.14).centro(&p, pos2(previa.center().x, previa.max.y - 30.0));
@@ -84,7 +84,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
 fn barra(ui: &mut Ui, vista: &mut Vista, o: egui::Pos2, largura: f32, ocupado: bool) {
     let p = ui.painter().clone();
     let r = Rect::from_min_size(o, vec2(largura, 64.0));
-    p.rect_filled(r, 0, rgba(0x082b5e, 0xe8));
+    p.rect_filled(r, 0, rgba(0x0c264b, 0xe8));
     p.rect_filled(Rect::from_min_size(pos2(o.x, o.y + 62.0), vec2(largura, 2.0)), 0, TINTA);
     if botao(ui, pos2(o.x + 24.0, o.y + 14.0), &Botao::barra(&format!("← {}", tr("Workspaces")))).clicked() {
         vista.novo = None;
@@ -114,7 +114,7 @@ pub(super) fn campo_linha(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str) 
 
 fn campo_com(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str, multilinha: bool, maiusculas: bool) -> bool {
     let p = ui.painter().clone();
-    p.rect_filled(r, 0, rgba(0x082b5e, 0xcc));
+    p.rect_filled(r, 0, rgba(0x0c264b, 0xcc));
     planta::borda(&p, r, BAIXO);
     let fonte = egui::FontId::new(13.0, familia(Peso::Normal));
     let dica = egui::RichText::new(if maiusculas { dica.to_uppercase() } else { dica.to_string() }).size(13.0).color(BAIXO);
@@ -136,7 +136,7 @@ fn campo_com(ui: &mut Ui, r: Rect, texto: &mut String, dica: &str, multilinha: b
 fn seletor(ui: &mut Ui, r: Rect, id: &str, itens: &[(String, bool)], atual: &mut usize) {
     let p = ui.painter().clone();
     let resposta = ui.interact(r, ui.scope_id().with(id), Sense::click());
-    p.rect_filled(r, 0, rgba(0x082b5e, 0xcc));
+    p.rect_filled(r, 0, rgba(0x0c264b, 0xcc));
     planta::borda(&p, r, BAIXO);
     Texto::novo(itens.get(*atual).map_or("", |i| i.0.as_str()), 13.0).na_linha(&p, r.min.x + 16.0, r.min.y, r.height());
     let c = pos2(r.max.x - 20.0, r.center().y);
