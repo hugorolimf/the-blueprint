@@ -18,8 +18,8 @@ const NOME = "The Blueprint - Planejar (plano e protótipo)";
 /** O Obsidian encerra o bloco de HTML numa linha em branco: nenhuma pode sobrar. */
 const semLinhaEmBranco = (s) => s.split("\n").filter((l) => l.trim() !== "").join("\n");
 
-const html = painel();
-const css = readFileSync(join(AQUI, "bp.css"), "utf8");
+const html = await painel();
+const css = ["bp.css", "bp-janela.css"].map((f) => readFileSync(join(AQUI, f), "utf8")).join("\n");
 const base = `body{margin:0;padding:24px;background:#0b1830;color:#c9d6e8;font:14px system-ui,sans-serif;--text-muted:#8ea4c2;--background-modifier-border:#2f4a70;--font-ui-smaller:12px}.painel{max-width:1100px;margin:0 auto}.painel-rotulo{font:11px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;color:#9cc4ee;margin:28px 0 8px}.painel-capa-estado{font-size:24px;color:#eaf4ff}td,th{padding:5px 8px;border-bottom:1px solid #2f4a70;text-align:left;vertical-align:top}table{border-collapse:collapse}`;
 const pagina = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>The Blueprint · Planejar</title><style>${base}${css}</style></head><body>${html}</body></html>`;
 writeFileSync(join(AQUI, "planejar.html"), pagina);
@@ -28,7 +28,7 @@ console.log("planejar.html", `${(pagina.length / 1024).toFixed(0)} KB`);
 if ((process.argv.includes("--cofre") || outra) && existsSync(COFRE)) {
   mkdirSync(join(COFRE, PASTA, "Painéis"), { recursive: true });
   const caminhoTela = `${PASTA}/Painéis/Tela ${NOME}.md`;
-  writeFileSync(join(COFRE, caminhoTela), `<!-- Tela da nota «${NOME}», GERADA por design/planejar/build.mjs (repositório the-blueprint): não editar à mão. CSS: design/planejar/bp.css (classes bp-*) -->\n${semLinhaEmBranco(html)}\n`);
+  writeFileSync(join(COFRE, caminhoTela), `<!-- Tela da nota «${NOME}», GERADA por design/planejar/build.mjs (repositório the-blueprint): não editar à mão. CSS: design/planejar/bp.css e bp-janela.css (classes bp-*) -->\n${semLinhaEmBranco(html)}\n`);
   const nota = join(COFRE, PASTA, `${NOME}.md`);
   const minhas = existsSync(nota) ? readFileSync(nota, "utf8").split("## Minhas notas")[1] ?? "\n" : "\n";
   writeFileSync(nota, `---\ncssclasses: [painel-tela]\ntags: [blueprint, prototipo, planejar]\nligadas:\n  - "[[${PASTA}/The Blueprint - interface nativa]]"\n---\n![[${PASTA}/Painéis/Tela ${NOME}]]\n\n## Minhas notas${minhas}`);
