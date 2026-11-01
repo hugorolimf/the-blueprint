@@ -43,7 +43,7 @@ pub fn executar(servidor: String, ao_abrir: impl FnOnce(Mostrar) + 'static) -> R
         .with_title("The Blueprint (beta)")
         .with_app_id(std::env::var("BLUEPRINT_UI_APPID").unwrap_or_else(|_| "blueprint-ui".into()))
         .with_inner_size([1280.0, 800.0])
-        .with_min_inner_size([800.0, 500.0]);
+        .with_min_inner_size([360.0, 400.0]);
     let janela = match icone() {
         Some(i) => janela.with_icon(i),
         None => janela,

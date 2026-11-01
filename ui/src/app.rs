@@ -242,6 +242,9 @@ impl eframe::App for App {
         }
         #[cfg(not(target_arch = "wasm32"))]
         crate::roteiro::escala(&ctx);
+        if !self.em_teste() || std::env::var_os("BLUEPRINT_UI_AJUSTAR").is_some() {
+            ajustar_a_largura(&ctx);
+        }
         if self.mostrar.swap(false, Ordering::SeqCst) {
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
@@ -282,5 +285,17 @@ impl eframe::App for App {
         if let Some(acao) = pedida {
             self.aplicar(&ctx, acao);
         }
+    }
+}
+
+/// A folha foi desenhada para 960 pontos de largura ou mais. Numa janela mais estreita (o gerenciador de janelas divide a tela em colunas), em vez de cortar e rolar de lado,
+/// a interface inteira encolhe para caber, como «ajustar à largura»: tudo continua à vista e clicável.
+fn ajustar_a_largura(ctx: &egui::Context) {
+    const LARGURA_MINIMA: f32 = 960.0;
+    let zoom = ctx.zoom_factor();
+    let fisica = ctx.content_rect().width() * zoom;
+    let alvo = (fisica / LARGURA_MINIMA).clamp(0.45, 1.0);
+    if (alvo - zoom).abs() > 0.01 {
+        ctx.set_zoom_factor(alvo);
     }
 }
