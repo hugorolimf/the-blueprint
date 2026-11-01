@@ -1,0 +1,7 @@
+/* bp-*: a nota «The Blueprint - Planejar (plano e protótipo)», gerada por design/planejar/build.mjs (repositório the-blueprint) */
+.painel .bp-quadro { margin: 10px 0 6px; border: 1px solid var(--background-modifier-border); border-radius: 6px; overflow: hidden; background: #0c264b; }
+.painel .bp-quadro svg { display: block; width: 100%; height: auto; }
+.painel .bp-leg { margin: 4px 0 20px; font-size: var(--font-ui-smaller); color: var(--text-muted); line-height: 1.5; }
+.painel .bp-cinco li, .painel .bp-etapas li, .painel .bp-legenda li { margin: 4px 0; line-height: 1.5; }
+.painel.bp-nota table { width: 100%; margin: 6px 0 18px; }
+.painel.bp-nota td:first-child { white-space: nowrap; }
