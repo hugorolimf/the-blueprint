@@ -1,8 +1,5 @@
 // Inglês: o que sobrou das outras telas (cartão do carimbo, pastas, projetos, arte, protótipos, agentes, markdown, avisos pequenos). Chave = texto-fonte em português (web/js/i18n.js).
 Object.assign(I18N.catalogos.en, {
-  "Dias": "Days", "Horas": "Hours", "Dia": "Day", "AGORA": "NOW", "Desvio": "Difference",
-  "Escala de tempo": "Time scale", "Alternar Dias e Horas (Alt+H)": "Toggle Days and Hours (Alt+H)",
-  "Previsto: {horas} h": "Estimated: {horas} h", "Real: {horas} h": "Elapsed: {horas} h", "Em andamento: {horas} h": "In progress: {horas} h",
   // folha
   "Data": "Date", "Progresso": "Progress", "Folha": "Sheet", "Ações": "Actions", "Planejar este blueprint": "Plan this blueprint",
   "Ver o que {agente} está fazendo": "See what {agente} is doing", "o agente": "the agent",

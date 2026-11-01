@@ -361,7 +361,6 @@ function render() {
   };
 
   host.innerHTML = bloco ? folhaBlueprint(bloco) : capa();
-  horasAtualiza();
   posicionaMarca();
   requestAnimationFrame(barraAjusta); // barra-topo.js: a barra começa depois do título (no quadro seguinte: medir aqui no meio dispararia as transições da folha)
   const alvo = [...host.querySelectorAll(".acao")].find((g) => g.getAttribute("aria-label") === selecionada);

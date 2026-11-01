@@ -16,6 +16,7 @@ function termBotaoBarra() {
     b.setAttribute("aria-controls", "terminal-painel");
     b.addEventListener("click", () => terminalAlternar());
     document.querySelector("#folha .barra")?.append(b);
+    b.style.display = "none"; // o botão sai por enquanto (01/11); o painel continua no Ctrl+` e no «Terminal do app»
   }
   const vivas = termEstado.sessoes.filter((s) => s.viva).length;
   b.textContent = vivas ? tr("Terminal · {n}", { n: vivas }) : tr("Terminal");
