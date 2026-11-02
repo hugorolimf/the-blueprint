@@ -1,3 +1,4 @@
+//! Passa de 300 linhas (já tinha 315 antes do Planejar, que só extraiu `montar_comando`): 130 são os testes no fim, e o corte natural é levá-los para `claude_tests.rs`, como em `completar_tests.rs`.
 use serde_json::{json, Value};
 use std::ffi::OsString;
 use std::fs;
@@ -32,47 +33,44 @@ fn argumentos_da_equipe(extras: &[String]) -> Vec<OsString> {
     ["--name", "The Blueprint"].into_iter().map(OsString::from).chain(extras.iter().map(OsString::from)).collect()
 }
 
-pub(super) fn executar(extras: &[String]) -> i32 {
+/// O comando do Claude, pronto para rodar (o plugin já gravado). `Err` é o código de saída; a mensagem já saiu. O invólucro do Planejar (`agente_plano`) usa isto com `spawn`, para poder matar o filho.
+pub(super) fn montar_comando(extras: &[String]) -> Result<Command, i32> {
     let (equipe, extras) = separa_equipe(extras);
     let (canal, extras) = separa_canal(&extras);
     let extras = extras.as_slice();
     let Some(cli) = crate::registrar::procurar("claude") else {
         eprintln!("erro: Claude Code não encontrado no PATH");
-        return 1;
+        return Err(1);
     };
     if equipe {
-        return match Command::new(cli).args(argumentos_da_equipe(extras)).status() {
-            Ok(status) => status.code().unwrap_or(1),
-            Err(e) => {
-                eprintln!("erro: não consegui iniciar Claude Code: {e}");
-                1
-            }
-        };
+        let mut comando = Command::new(cli);
+        comando.args(argumentos_da_equipe(extras));
+        return Ok(comando);
     }
     let exe = match std::env::current_exe() {
         Ok(e) => e,
         Err(e) => {
             eprintln!("erro: não sei onde este programa está: {e}");
-            return 1;
+            return Err(1);
         }
     };
     let cwd = match std::env::current_dir() {
         Ok(p) => p,
         Err(e) => {
             eprintln!("erro: não consegui ler a pasta atual: {e}");
-            return 1;
+            return Err(1);
         }
     };
     let (pasta, exe) = match plugin_e_exe(&crate::http::config::pasta_do_app(), &exe) {
         Ok(par) => par,
         Err(e) => {
             eprintln!("erro: não consegui preparar o plugin: {e}");
-            return 1;
+            return Err(1);
         }
     };
     if let Err(e) = crate::registrar::plugin::gravar(&pasta, &exe) {
         eprintln!("erro: não consegui preparar o plugin: {e}");
-        return 1;
+        return Err(1);
     }
     let ligado = blueprint_ligado(&cwd);
     if !ligado {
@@ -84,6 +82,14 @@ pub(super) fn executar(extras: &[String]) -> i32 {
     if canal {
         comando.env("BLUEPRINT_CHANNEL", "1");
     }
+    Ok(comando)
+}
+
+pub(super) fn executar(extras: &[String]) -> i32 {
+    let mut comando = match montar_comando(extras) {
+        Ok(comando) => comando,
+        Err(codigo) => return codigo,
+    };
     match comando.status() {
         Ok(status) => status.code().unwrap_or(1),
         Err(e) => {

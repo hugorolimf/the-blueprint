@@ -1,0 +1,96 @@
+{
+  "formato": "blueprint.plano/1",
+  "blueprint": "Monitor de consumo",
+  "resumo": "Painel que mostra o consumo de energia do escritório por sala.",
+  "projetos": [
+    {
+      "acoes": [
+        {
+          "id": "1.1",
+          "nome": "Coleta dos medidores",
+          "de": "2026-11-02",
+          "ate": "2026-11-09",
+          "planos": [
+            {
+              "id": "1.1.1",
+              "texto": "Ler os medidores pela rede local",
+              "area": "coleta"
+            },
+            {
+              "id": "1.1.2",
+              "texto": "Guardar as leituras",
+              "area": "banco",
+              "depende_de": [
+                "1.1.1"
+              ]
+            }
+          ],
+          "checkpoints": [
+            {
+              "texto": "Primeira semana de dados",
+              "data": "2026-11-09"
+            }
+          ]
+        },
+        {
+          "id": "1.2",
+          "nome": "Painel por sala",
+          "de": "2026-11-10",
+          "ate": "2026-11-17",
+          "texto": "O consumo de cada sala, por dia e por semana, a partir das leituras guardadas na 1.1.",
+          "planos": [
+            {
+              "id": "1.2.1",
+              "texto": "Somar as leituras",
+              "area": "painel/dados",
+              "depende_de": [
+                "1.1.2"
+              ]
+            },
+            {
+              "id": "1.2.2",
+              "texto": "Uma barra por sala no painel",
+              "area": "painel/tela",
+              "depende_de": [
+                "1.2.1"
+              ]
+            },
+            {
+              "id": "1.2.4",
+              "texto": "Exportar para planilha",
+              "area": "painel/tela"
+            }
+          ],
+          "checkpoints": [
+            {
+              "texto": "Painel no ar",
+              "data": "2026-11-20"
+            }
+          ],
+          "detalhes": [
+            {
+              "id": "01",
+              "titulo": "O painel por sala",
+              "legenda": "Uma barra por sala, da que mais consome para a que menos consome.",
+              "figura": "figuras/painel.svg",
+              "pede_aprovacao": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "decisoes": [
+    {
+      "id": "banco",
+      "rotulo": "Banco local",
+      "texto": "As leituras ficam num banco local; nada sai do escritório.",
+      "data": "2026-10-30",
+      "acoes": [
+        "1.1",
+        "1.2"
+      ],
+      "pede_aprovacao": true
+    }
+  ]
+}

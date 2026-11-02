@@ -1,9 +1,10 @@
 //! O MCP do The Blueprint: a fila que o agente do usuário alimenta (lida da memória, com cópia durável no banco), as rotas /api/mcp (porte de mcp.mjs)
-//! e o modo `--mcp` por stdio (porte de mcp-roadmap.mjs). Aqui nada grava nos dados do blueprint: a página aplica o que chega e só então algo muda.
+//! e o modo `--mcp` por stdio (porte de mcp-roadmap.mjs). A fila não grava nos dados do blueprint (a página aplica o que chega); quem grava é o Planejar (`planejar/`): fechamento, gestos e execução viva.
 pub mod acoes;
 mod ajuste;
 mod apresentacao;
 mod ferr_apresentacao;
+mod ferr_plano;
 mod argumentos;
 pub mod atividade;
 pub(crate) mod cliente;
@@ -22,6 +23,7 @@ mod lembrete;
 mod linha_do_tempo;
 mod membro;
 pub(crate) mod pasta_local;
+pub mod planejar;
 mod perfil;
 mod registro;
 pub(crate) mod pedido_apresentacao;
@@ -93,6 +95,7 @@ use serde_json::{Map, Value};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, SyncSender, TrySendError};
+use std::sync::atomic::{AtomicBool, AtomicU64};
 use std::sync::Mutex;
 
 pub struct Mcp {
@@ -118,6 +121,14 @@ pub struct Mcp {
     sem_registro: Mutex<lembrete::Pendentes>,
     /// a conversa de cada ação com o agente (só memória; ver `conversa`)
     conversas: Mutex<conversa::Conversas>,
+    /// o token do gesto do usuário (32 hex, novo a cada abertura): só sai por `ligar_janela`, nunca por env, arquivo, GET ou log (D7)
+    gesto: String,
+    /// a janela nativa pediu o token: daí em diante as escritas da árvore e o que abre processo exigem o gesto
+    tem_janela: AtomicBool,
+    /// sobe a cada mudança fora da árvore (`plano_versoes`, revisões, execuções, recados, orquestrador, config); a interface compara em `planejar/pulso` (D5)
+    revisao_planejar: AtomicU64,
+    /// a versão dos dados, copiada por `rota_estado` antes de cada chamada, porque `planejar::rota` não recebe o `Estado` (D5)
+    pub versao_espelho: AtomicU64,
 }
 
 /// Quantas sessões lembrar; passou disso, esquece todas (cada hook seguinte volta a achar a pasta no banco).
@@ -125,7 +136,7 @@ const MAX_SESSOES: usize = 64;
 
 impl Mcp {
     pub fn novo(host: &str, rede: bool, arquivo: &str, url: &str, prototipos: PathBuf) -> Mcp {
-        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()), conversas: Default::default() }
+        Mcp { host: host.into(), rede, arquivo: arquivo.into(), url: url.into(), prototipos, fila: Mutex::new(Fila::default()), atividade: Mutex::new(Atividade::default()), assinantes: Mutex::new(Vec::new()), pastas_avisadas: Mutex::new(HashSet::new()), sessoes: Mutex::new(HashMap::new()), abertas: Default::default(), canais: Default::default(), sem_registro: Mutex::new(HashMap::new()), conversas: Default::default(), gesto: planejar::novo_gesto(), tem_janela: AtomicBool::new(false), revisao_planejar: AtomicU64::new(0), versao_espelho: AtomicU64::new(0) }
     }
 
     /// Liga a fila ao banco: relê o que ficou de antes (propostas, registros e marcações não aplicados) e passa a gravar cada mudança.

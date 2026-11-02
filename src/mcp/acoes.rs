@@ -1,5 +1,6 @@
 //! O que o agente pode fazer pelo MCP (porte das funções de mcp.mjs): listar, ler, propor, avisar o andamento e anexar protótipo.
 //! Lê os dados (`dados` é o data.json inteiro) e põe itens na fila; nada aqui altera o banco.
+//! Passa de 300 linhas (teto 500) porque listar, ler, propor e avisar dividem os mesmos auxiliares; o corte natural é `evento` e `declaracao` num módulo próprio.
 use super::Mcp;
 use crate::http::pedido::{falha, ErroHttp};
 use crate::blueprint::{contexto_acao, estrutura_lida, mover_acoes, resumo_blueprint, validar_proposta};
@@ -69,7 +70,9 @@ fn workspace_dos<'a>(dados: &'a Value, id: &str) -> Option<Workspace<'a>> {
 
 fn workspaces_de(dados: &Value) -> Vec<Workspace<'_>> {
     let workspaces = lista(dados.get("workspaces")).iter().filter_map(|c| c.get("id").and_then(Value::as_str)).filter_map(|id| workspace_dos(dados, id));
-    workspace_dos(dados, "sm").into_iter().chain(workspaces).collect()
+    // a raiz excluída fica vazia e fora da lista; o agente ainda pode pedir por ela, e um blueprint novo a traz de volta
+    let raiz_excluida = dados.get("raizExcluida").and_then(Value::as_bool) == Some(true) && lista(dados.get("blueprints")).is_empty();
+    workspace_dos(dados, "sm").filter(|_| !raiz_excluida).into_iter().chain(workspaces).collect()
 }
 
 /// `workspace_id` é obrigatório; `blueprint_id` vazio = blueprint que ainda não existe.
@@ -191,7 +194,22 @@ fn declaracao(corpo: &Value) -> R<(Option<String>, Map<String, Value>)> {
     Ok((agente, extras))
 }
 
+/// O caminho antigo: valida, avisa a presença e põe na fila.
 pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
+    Ok(mcp.empurra(evento_sem_fila(mcp, dados, corpo)?))
+}
+
+/// Toda a validação e a presença, sem a fila; quem tem execução viva grava no servidor (D8) em vez de empurrar.
+pub fn evento_sem_fila(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Map<String, Value>> {
+    evento_validado(mcp, dados, corpo, false)
+}
+
+/// O mesmo, para `nao-concluida` e `checkpoint-nao-feito` de quem tem a execução: desfazer só faz sentido no que já está feito.
+pub fn evento_desfazendo(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Map<String, Value>> {
+    evento_validado(mcp, dados, corpo, true)
+}
+
+fn evento_validado(mcp: &Mcp, dados: &Value, corpo: &Value, desfazendo: bool) -> R<Map<String, Value>> {
     let tipo = corpo.get("tipo").and_then(Value::as_str).filter(|t| TIPOS_EVENTO.contains(t)).ok_or_else(|| falha(400, crate::tr!("invalid event type", "tipo de evento inválido")).codigo("tipo-invalido"))?;
     let texto = corta(&texto_js(corpo.get("texto")), 2000).trim().to_string();
     if texto.is_empty() {
@@ -214,7 +232,7 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
         let acao = acao_de(p);
         let checkpoint = acao.as_ref().zip(corpo.get("checkpointId")).and_then(|(f, id)| por_id(lista(f.get("checkpoints")), id));
         let (Some(acao), Some(checkpoint)) = (acao.as_ref(), checkpoint) else { return Err(falha(404, crate::tr!("Action or checkpoint not found (see ler_blueprint).", "Ação ou checkpoint não encontrado (veja ler_blueprint).")).codigo("checkpoint-nao-encontrado")) };
-        if verdade(checkpoint.get("feito")) {
+        if verdade(checkpoint.get("feito")) && !desfazendo {
             return Err(falha(409, crate::tr!("This checkpoint is already done.", "Este checkpoint já está concluído.")).codigo("checkpoint-ja-feito"));
         }
         for (k, v) in [("acaoId", acao["id"].clone()), ("checkpointId", checkpoint["id"].clone()), ("checkpoint", json!(str_de(checkpoint, "nome")))] {
@@ -226,7 +244,7 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
         let acao = acao_de(p);
         let plano = acao.as_ref().zip(corpo.get("planoId")).and_then(|(f, id)| por_id(lista(f.get("planos")), id));
         let (Some(acao), Some(plano)) = (acao.as_ref(), plano) else { return Err(falha(404, crate::tr!("Action or plan not found (see ler_blueprint).", "Ação ou plano não encontrada (veja ler_blueprint).")).codigo("plano-nao-encontrado")) };
-        if marca && verdade(plano.get("feito")) {
+        if marca && verdade(plano.get("feito")) && !desfazendo {
             return Err(falha(409, crate::tr!("This plan is already done.", "Este plano já está concluído.")).codigo("plano-ja-feito"));
         }
         for (k, v) in [("acaoId", acao["id"].clone()), ("planoId", plano["id"].clone()), ("plano", json!(str_de(plano, "texto")))] {
@@ -254,7 +272,7 @@ pub fn evento(mcp: &Mcp, dados: &Value, corpo: &Value) -> R<Value> {
     } else if tipo == "concluir" {
         mcp.concluir_plano(&blueprint_id, item.get("planoId").and_then(Value::as_str).unwrap_or(""), &item["texto"]);
     }
-    Ok(mcp.empurra(item))
+    Ok(item)
 }
 
 /// 16 hexadecimais aleatórios (o `randomBytes(8)` do Node). Não é segredo: só evita colisão de nome de arquivo.

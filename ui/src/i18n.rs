@@ -9,6 +9,11 @@ use std::sync::OnceLock;
 /// Textos que só a interface nativa tem (os da página já estão no catálogo).
 const LOCAIS: &[(&str, &str)] = &[
     ("Salvar", "Save"),
+    ("Como vai se chamar?", "What will it be called?"),
+    ("Para que serve? (opcional)", "What is it for? (optional)"),
+    ("Esc para voltar", "Esc to go back"),
+    ("Enter", "Enter"),
+    ("Sem nome", "Unnamed"),
     ("Ex.: Portal do fornecedor", "E.g.: Supplier portal"),
     ("Para que serve", "What it is for"),
     ("Não foi possível salvar.", "Could not save."),
@@ -17,6 +22,8 @@ const LOCAIS: &[(&str, &str)] = &[
     ("Breve descrição do workspace", "Short description of the workspace"),
     ("Carregando…", "Loading…"),
     ("Excluir workspace…", "Delete workspace…"),
+    ("Excluir blueprint…", "Delete blueprint…"),
+    ("Marcar como planejada", "Mark as planned"),
     ("Os dados mudaram em outra janela. Atualizei: tente de novo.", "The data changed in another window. I refreshed: try again."),
     ("Pesquisar ações, planos e checkpoints", "Search actions, plans and checkpoints"),
     ("Pesquisar blueprints, ações, planos", "Search blueprints, actions, plans"),
@@ -51,7 +58,12 @@ pub fn tr(pt: &'static str) -> &'static str {
     if !ingles() {
         return pt;
     }
-    LOCAIS.iter().find(|(chave, _)| *chave == pt).map(|(_, en)| *en).or_else(|| catalogo().get(pt).and_then(Value::as_str)).unwrap_or(pt)
+    em_ingles(pt).unwrap_or(pt)
+}
+
+/// O inglês de `pt`: os textos locais, os do Planejar (cada arquivo de `plano/` traz os seus) e o catálogo da página.
+fn em_ingles(pt: &str) -> Option<&'static str> {
+    LOCAIS.iter().chain(crate::plano::textos::TODOS.iter().flat_map(|t| t.iter())).find(|(chave, _)| *chave == pt).map(|(_, en)| *en).or_else(|| catalogo().get(pt).and_then(Value::as_str))
 }
 
 /// `tr` com os `{nome}` do texto trocados pelos valores.
@@ -103,8 +115,20 @@ mod testes {
     fn todo_texto_do_app_tem_ingles() {
         let mut achadas = Vec::new();
         chaves(&Path::new(env!("CARGO_MANIFEST_DIR")).join("src"), &mut achadas);
-        let sem: Vec<_> = achadas.iter().filter(|c| !c.is_empty() && !LOCAIS.iter().any(|(k, _)| k == c) && !catalogo().contains_key(c.as_str())).collect();
-        assert!(sem.is_empty(), "sem inglês (acrescente em LOCAIS ou no catálogo da página): {sem:#?}");
+        let sem: Vec<_> = achadas.iter().filter(|c| !c.is_empty() && em_ingles(c).is_none() && !catalogo().contains_key(c.as_str())).collect();
+        assert!(sem.is_empty(), "sem inglês (acrescente em LOCAIS, no TEXTOS do arquivo em plano/ ou no catálogo da página): {sem:#?}");
+    }
+
+    #[test]
+    fn textos_do_planejar_entram_na_busca() {
+        let textos = crate::plano::textos::TODOS;
+        assert!(textos.iter().any(|t| !t.is_empty()), "o plano/ tem textos próprios");
+        for (pt, en) in textos.iter().flat_map(|t| t.iter()) {
+            assert!(!en.trim().is_empty(), "sem inglês: {pt}");
+            let esperado = LOCAIS.iter().find(|(k, _)| k == pt).map_or(*en, |(_, e)| *e);
+            assert_eq!(em_ingles(pt), Some(esperado), "{pt}");
+        }
+        assert_eq!(em_ingles("Texto que ninguém traduziu"), None);
     }
 
     #[test]

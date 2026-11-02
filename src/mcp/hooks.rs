@@ -1,11 +1,14 @@
 //! O que os hooks do Claude Code usam: ligar uma pasta a um blueprint, dizer ao agente em que blueprint a sessão está e registrar as edições
 //! como progresso. Só indicador: nada aqui marca plano como concluído (isso exige evidência) nem escreve nos dados do blueprint.
+//! Passa de 300 linhas (teto 500) porque contexto, identidade e os três hooks de progresso dividem os mesmos auxiliares; o corte natural é a identidade num módulo próprio.
 use super::status::{acao_atual, lista};
 use super::{acoes, Mcp};
 use crate::blueprint::numeros_das_acoes;
 use crate::contexto::Contexto;
+use crate::dados::planejar::ExecucaoLinha;
 use crate::dados::Dados;
 use crate::http::pedido::{falha, ErroHttp};
+use crate::plano::ids::nome_agente;
 use serde_json::{json, Value};
 use std::sync::Mutex;
 
@@ -38,6 +41,9 @@ pub(super) fn alvo(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Option<(
 fn alvo_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Option<(String, String)>> {
     if !ctx.local {
         return Ok(super::membro::alvo(corpo, ctx));
+    }
+    if let Some(x) = execucao_do_cwd(dados, corpo, ctx)? {
+        return Ok(Some((x.workspace_id, x.blueprint_id)));
     }
     let cwd = texto(corpo, "cwd");
     if caminho_valido(cwd) {
@@ -126,6 +132,9 @@ pub fn sessao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto)
         mcp.lembrar_sessao(texto(corpo, "session_id"), &ws, &bp);
         mcp.abrir_sessao(texto(corpo, "session_id"), texto(corpo, "cwd"), &ws, &bp);
     }
+    if let Some(x) = execucao_do_cwd(dados, corpo, ctx)? {
+        return Ok(json!({"vinculado": true, "workspaceId": ws, "blueprintId": bp, "contexto": format!("You are the agent of plan {}", x.plano_ref)}));
+    }
     let mut d = travado(dados);
     let tudo = d.ler_tudo(&Contexto::local())?;
     let n = acoes::numero_do_blueprint(tudo, &ws, &bp);
@@ -168,10 +177,37 @@ pub(super) fn identidade(corpo: &Value) -> (String, &'static str, bool) {
     }
 }
 
-/// O mesmo, com o nome do membro quando o hook vem de um convidado (`membro.rs`).
-fn identidade_de(corpo: &Value, ctx: &Contexto) -> (String, &'static str, bool) {
+/// O mesmo, com o nome do membro quando o hook vem de um convidado (`membro.rs`). Na cópia de um plano, a sessão principal é o agente dele (D9).
+fn identidade_de(corpo: &Value, ctx: &Contexto, execucao: Option<&ExecucaoLinha>) -> (String, &'static str, bool) {
     let (nome, papel, sub) = identidade(corpo);
-    (super::membro::com_membro(&nome, ctx), papel, sub)
+    match execucao.filter(|_| !sub) {
+        Some(x) => (nome_agente(&x.plano_ref), papel, false),
+        None => (super::membro::com_membro(&nome, ctx), papel, sub),
+    }
+}
+
+/// A execução viva cuja cópia contém o `cwd` (D9). Pasta sem ramo não entra: a sessão comum do usuário nela segue sendo "Claude".
+fn execucao_do_cwd(dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Option<ExecucaoLinha>> {
+    let cwd = texto(corpo, "cwd");
+    if !ctx.local || !caminho_valido(cwd) {
+        return Ok(None);
+    }
+    Ok(travado(dados).execucao_por_pasta(cwd)?)
+}
+
+/// Nome e papel de quem chamou o hook no app local, com a execução da pasta, se houver (para `hook/estado`).
+pub(super) fn identidade_local(dados: &Mutex<Dados>, corpo: &Value) -> R<(String, &'static str, Option<ExecucaoLinha>)> {
+    let ctx = Contexto::local();
+    let execucao = execucao_do_cwd(dados, corpo, &ctx)?;
+    let (nome, papel, _) = identidade_de(corpo, &ctx, execucao.as_ref());
+    Ok((nome, papel, execucao))
+}
+
+/// O evento de quem trabalha numa execução fica no plano dela, a sessão principal e os subagentes.
+pub(super) fn no_plano(evento: &mut Value, execucao: Option<&ExecucaoLinha>) {
+    if let Some(x) = execucao {
+        (evento["acaoId"], evento["planoId"]) = (json!(x.acao_id), json!(x.plano_id));
+    }
 }
 
 /// O tipo do subagente como nome: sem controle nem ';' (o Windows Terminal o lê como separador), até 30 caracteres; vazio vira "subagente".
@@ -230,8 +266,10 @@ pub fn edicao(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
 pub fn edicao_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Value> {
     let Some((ws, bp)) = alvo_de(mcp, dados, corpo, ctx)? else { return Ok(json!({})) };
     let Some(arquivo) = arquivo_editado(&corpo["tool_input"]).and_then(|f| onde(f, texto(corpo, "cwd"))) else { return Ok(json!({})) };
-    let (nome, papel, _) = identidade_de(corpo, ctx);
+    let execucao = execucao_do_cwd(dados, corpo, ctx)?;
+    let (nome, papel, _) = identidade_de(corpo, ctx, execucao.as_ref());
     let mut evento = evento_de_membro(mcp, ctx, &nome, papel, &ws, &bp, &crate::tr!("Editing {arquivo}", "Editando {arquivo}"), "escrevendo");
+    no_plano(&mut evento, execucao.as_ref());
     evento["onde"] = json!([arquivo]);
     if evento.get("planoId").is_none() {
         super::lembrete::editou_sem_plano(mcp, texto(corpo, "session_id"), &ws, &bp);
@@ -250,7 +288,8 @@ pub fn subagente(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
 }
 
 pub fn subagente_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contexto) -> R<Value> {
-    let (nome, papel, sub) = identidade_de(corpo, ctx);
+    let execucao = execucao_do_cwd(dados, corpo, ctx)?;
+    let (nome, papel, sub) = identidade_de(corpo, ctx, execucao.as_ref());
     let fim = match texto(corpo, "hook_event_name") {
         "SubagentStart" => false,
         "SubagentStop" => true,
@@ -263,12 +302,17 @@ pub fn subagente_de(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value, ctx: &Contex
     } else {
         (if mensagem.is_empty() { crate::tr!("{nome} finished", "{nome} terminou") } else { mensagem.to_string() }, "concluido")
     };
-    let evento = evento_de_membro(mcp, ctx, &nome, papel, &ws, &bp, &frase, estado);
+    let mut evento = evento_de_membro(mcp, ctx, &nome, papel, &ws, &bp, &frase, estado);
+    no_plano(&mut evento, execucao.as_ref());
     super::linha_do_tempo::evento(mcp, dados, &evento)?;
     if fim {
         return Ok(json!({}));
     }
-    Ok(match contexto_do_subagente(dados, &ws, &bp)? {
+    let contexto = match &execucao {
+        Some(x) => Some(format!("You are a subagent of the agent of plan {}: do not mark plans done; report with registrar_progresso only if asked.", x.plano_ref)),
+        None => contexto_do_subagente(dados, &ws, &bp)?,
+    };
+    Ok(match contexto {
         Some(c) => json!({"hookSpecificOutput": {"hookEventName": "SubagentStart", "additionalContext": c}}),
         None => json!({}),
     })

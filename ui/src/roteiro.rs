@@ -82,7 +82,48 @@ impl Roteiro {
             "clicar" => {
                 // clicar:x,y não serve (a vírgula separa os passos): clicar:x/y
                 if let Some((x, y)) = arg.split_once('/') {
-                    vista.clique_pedido = x.parse().ok().zip(y.parse().ok()).map(|(x, y)| egui::pos2(x, y));
+                    vista.clique_pedido = x.parse().ok().zip(y.parse().ok()).map(|(x, y)| (egui::pos2(x, y), egui::PointerButton::Primary));
+                }
+                None
+            }
+            "direito" => {
+                // direito:x/y clica com o botão direito (abre o menu)
+                if let Some((x, y)) = arg.split_once('/') {
+                    vista.clique_pedido = x.parse().ok().zip(y.parse().ok()).map(|(x, y)| (egui::pos2(x, y), egui::PointerButton::Secondary));
+                }
+                None
+            }
+            "abrir-acao" => {
+                // abrir-acao:ref abre a ação na folha nova
+                vista.plano.tela = crate::plano::Sub::Folha;
+                vista.plano.aberta = Some(arg.into());
+                None
+            }
+            "abrir-detalhe" => {
+                // abrir-detalhe:ref-da-ação/id-do-detalhe abre a ação e a prévia do detalhe na folha
+                if let Some((acao, det)) = arg.split_once('/') {
+                    vista.plano.pedir_detalhe = Some((acao.into(), det.into()));
+                }
+                None
+            }
+            "marcar-plano" => {
+                // marcar-plano:id-ou-ref é o clique na caixinha (`gesto/marcar`): sai quando a folha chegar
+                vista.marcar_pedido = Some(arg.into());
+                None
+            }
+            "agentes" => {
+                vista.plano.tela = crate::plano::Sub::Agentes;
+                None
+            }
+            "chegou" => {
+                vista.plano.tela = crate::plano::Sub::Chegou;
+                None
+            }
+            "demo-escrita" => {
+                // demo-escrita:etapa/minutos-parada põe a escrita ao vivo na folha (só com BLUEPRINT_UI_DEMO; nunca grava)
+                let (etapa, parada) = arg.split_once('/').unwrap_or((arg, "0"));
+                if let (Some(f), true) = (vista.plano.folha.as_mut(), crate::plano::agentes::demo::ativo("escrita")) {
+                    crate::plano::agentes::demo::escrita(f, etapa.parse().unwrap_or(0), parada.parse().unwrap_or(0));
                 }
                 None
             }
@@ -113,7 +154,7 @@ impl Roteiro {
                 None
             }
             "novo" => {
-                vista.novo = Some(Novo::vazio());
+                vista.novo = Some(Novo::com_nome(arg));
                 None
             }
             _ => None,

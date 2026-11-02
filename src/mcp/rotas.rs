@@ -14,7 +14,8 @@ use std::sync::atomic::Ordering;
 
 /// Serializa as gravações de tempo com a versão e a cópia HTTP dos dados.
 pub fn rota_estado(estado: &crate::http::Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
-    if pedido.metodo != "POST" || !matches!(pedido.caminho.as_str(), "/api/mcp/evento" | "/api/mcp/hook/edicao" | "/api/mcp/hook/subagente" | "/api/mcp/hook/subagentes") {
+    estado.mcp.versao_espelho.store(estado.versao_dados.load(Ordering::SeqCst), Ordering::SeqCst);
+    if pedido.metodo != "POST" || !matches!(pedido.caminho.as_str(), "/api/mcp/evento" | "/api/mcp/hook/edicao" | "/api/mcp/hook/subagente" | "/api/mcp/hook/subagentes" | "/api/mcp/plano/abrir" | "/api/mcp/plano/fechar" | "/api/mcp/gesto/revisar" | "/api/mcp/gesto/colocar") {
         return rota_com(&estado.mcp, &estado.dados, pedido, ctx);
     }
     let mut cache = estado.dados_json.lock().unwrap_or_else(|e| e.into_inner());
@@ -43,11 +44,19 @@ pub fn rota(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido) -> Resposta {
 pub fn rota_com(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     let recurso = pedido.caminho.trim_start_matches("/api/mcp/");
     if ctx.local {
+        // o gesto nunca sai desta máquina, e a recusa é sempre a mesma
+        if recurso.starts_with("gesto/") && !so_loopback(mcp, pedido) {
+            return super::planejar::gesto_negado();
+        }
         if !permitido(mcp, pedido) {
             return Resposta::texto(403, "text/plain", crate::tr!("The Blueprint MCP only works on this machine (MCP_REDE=1 opens it to the network)", "o MCP do The Blueprint só funciona nesta máquina (MCP_REDE=1 libera a rede)"));
         }
-        if (matches!(recurso, "iniciar" | "apresentar" | "apresentacao/pedido") || recurso.starts_with("conversa")) && !so_loopback(mcp, pedido) {
+        if (matches!(recurso, "iniciar" | "apresentar" | "apresentacao/pedido") || recurso.starts_with("conversa") || super::planejar::eh_rota(recurso)) && !so_loopback(mcp, pedido) {
             return Resposta::texto(403, "text/plain", crate::tr!("starting an action only works on this machine (not even MCP_REDE=1 opens it)", "iniciar uma ação só funciona nesta máquina (nem MCP_REDE=1 libera)"));
+        }
+        // com a janela nativa aberta, o que abre processo ou fala com uma sessão só sai de um gesto do usuário (D7; `conversa/resposta` fica de fora: é o agente respondendo pela ferramenta, sem token nenhum)
+        if pedido.metodo == "POST" && (matches!(recurso, "iniciar" | "apresentar" | "conversa")) && mcp.tem_janela() && !super::planejar::gesto_ok(mcp, pedido) {
+            return super::planejar::gesto_negado();
         }
     } else if let Err(e) = exige_hospedado(dados, pedido, recurso, ctx) {
         return e.resposta();
@@ -80,6 +89,9 @@ fn com_dados<T>(dados: &Mutex<Dados>, ctx: &Contexto, f: impl FnOnce(&Value) -> 
 
 fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx: &Contexto) -> Result<Resposta, ErroHttp> {
     if pedido.metodo == "GET" {
+        if super::planejar::eh_rota(recurso) {
+            return Ok(super::planejar::rota(mcp, dados, pedido, recurso, ctx));
+        }
         return Ok(match recurso {
             "blueprints" => Resposta::json(200, &com_dados(dados, ctx, |d| Ok(acoes::blueprints(d)))?),
             "blueprint" => {
@@ -141,6 +153,9 @@ fn executar(mcp: &Mcp, dados: &Mutex<Dados>, pedido: &Pedido, recurso: &str, ctx
     let corpo = super::membro::do_membro(corpo, recurso, ctx); // de um membro: o agente com o nome dele, a sessão separada (membro.rs)
     if recurso.starts_with("hook/") {
         mcp.sinal_sessao(hooks::texto(&corpo, "session_id")); // qualquer hook da sessão prova que ela está viva (expiração em sessoes.rs)
+    }
+    if super::planejar::eh_rota(recurso) {
+        return Ok(super::planejar::rota(mcp, dados, pedido, recurso, ctx));
     }
     Ok(match recurso {
         "proposta" => {

@@ -91,13 +91,46 @@ pub fn registrar_porta(porta: u16) {
     let _ = std::fs::write(arquivo_da_porta(), porta.to_string());
 }
 
+/// A porta que a primeira instância anotou. Sempre relê: o app pode ter reaberto em outra porta.
+pub fn porta_registrada() -> Option<u16> {
+    std::fs::read_to_string(arquivo_da_porta()).ok().and_then(|t| t.trim().parse().ok())
+}
+
+/// Onde achar o app: `BLUEPRINT_URL`, se definida; senão, a porta anotada. `arquivo` é o conteúdo do arquivo `porta`.
+pub fn url_de(env: Option<&str>, arquivo: Option<&str>) -> Option<String> {
+    if let Some(url) = env.map(str::trim).filter(|u| !u.is_empty()) {
+        return Some(url.trim_end_matches('/').to_string());
+    }
+    arquivo.and_then(|t| t.trim().parse::<u16>().ok()).map(|porta| format!("http://127.0.0.1:{porta}"))
+}
+
+/// A URL do app agora; `None` se não há `BLUEPRINT_URL` nem porta anotada. Relê a cada chamada.
+pub fn url_do_app() -> Option<String> {
+    url_de(std::env::var("BLUEPRINT_URL").ok().as_deref(), std::fs::read_to_string(arquivo_da_porta()).ok().as_deref())
+}
+
 /// Pede à instância aberta que mostre a janela (ou, com `link`, o `blueprint://convite…` que o navegador entregou). Devolve se ela respondeu.
 pub fn pedir_que_mostre(link: Option<&str>) -> bool {
-    let Some(porta) = std::fs::read_to_string(arquivo_da_porta()).ok().and_then(|t| t.trim().parse::<u16>().ok()) else { return false };
+    let Some(porta) = porta_registrada() else { return false };
     // esta execução acabou de ser lançada pelo usuário; sem isto o Windows deixa a janela da primeira instância atrás do navegador
     // SAFETY: sem ponteiros; só concede à primeira instância o direito de ir para a frente.
     #[cfg(windows)]
     unsafe { windows_sys::Win32::UI::WindowsAndMessaging::AllowSetForegroundWindow(windows_sys::Win32::UI::WindowsAndMessaging::ASFW_ANY) };
     let corpo = serde_json::json!({ "url": link }).to_string();
     requisitar_em(&format!("http://127.0.0.1:{porta}"), "POST", "/api/app/mostrar", Some(&corpo)).is_ok_and(|(status, _)| status == 200)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::url_de;
+
+    #[test]
+    fn url_de_le_a_porta() {
+        assert_eq!(url_de(None, Some("4123\n")).as_deref(), Some("http://127.0.0.1:4123"));
+        assert_eq!(url_de(Some("http://127.0.0.1:5000/"), Some("4123")).as_deref(), Some("http://127.0.0.1:5000"), "BLUEPRINT_URL vence");
+        assert_eq!(url_de(Some("  "), Some("4123")).as_deref(), Some("http://127.0.0.1:4123"), "vazia é como ausente");
+        assert_eq!(url_de(None, Some("não é porta")), None);
+        assert_eq!(url_de(None, Some("70000")), None);
+        assert_eq!(url_de(None, None), None);
+    }
 }

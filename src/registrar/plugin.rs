@@ -11,6 +11,7 @@ use std::path::Path;
 pub const MARKETPLACE: &str = "blueprint-local";
 const PLUGIN: &str = "blueprint@blueprint-local";
 const PLUGIN_TERMINAL: &str = "blueprint-terminal@blueprint-local";
+const URL_PADRAO: &str = "http://127.0.0.1:3000";
 
 const ARQUIVOS: &[(&str, &str)] = &[
     (".claude-plugin/marketplace.json", include_str!("../../claude-plugin/.claude-plugin/marketplace.json")),
@@ -21,6 +22,7 @@ const ARQUIVOS: &[(&str, &str)] = &[
     ("plugins/blueprint/agents/blueprint-reviewer.md", include_str!("../../claude-plugin/plugins/blueprint/agents/blueprint-reviewer.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/SKILL.md", include_str!("../../skills/blueprint-planejamento/SKILL.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/planejar.md", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
+    ("plugins/blueprint/skills/blueprint-planejamento/topicos/plano.md", include_str!("../../skills/blueprint-planejamento/topicos/plano.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/editar.md", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/executar.md", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
     ("plugins/blueprint/skills/blueprint-planejamento/topicos/prototipos.md", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
@@ -62,9 +64,10 @@ pub fn gravar(pasta: &Path, exe: &Path) -> io::Result<()> {
     }
     super::subagentes::gravar(pasta, exe)?; // settings.json do plugin: o subagentStatusLine
     let exe = exe.display().to_string();
+    let url = crate::instancia::url_do_app().unwrap_or_else(|| URL_PADRAO.to_string());
     let mcp = json!({ "mcpServers": { NOME: { "command": exe, "args": ["--mcp"] } } });
     gravar_se_mudou(&pasta.join("plugins/blueprint/.mcp.json"), &(serde_json::to_string_pretty(&mcp).expect("json") + "\n"))?;
-    gravar_se_mudou(&pasta.join("plugins/blueprint/hooks/hooks.json"), &(serde_json::to_string_pretty(&hooks(&exe)).expect("json") + "\n"))?;
+    gravar_se_mudou(&pasta.join("plugins/blueprint/hooks/hooks.json"), &(serde_json::to_string_pretty(&hooks(&exe, &url)).expect("json") + "\n"))?;
     let monitor = json!([{ "name": "blueprint", "command": format!("\"{}\" watch", exe.replace('\\', "/")), "description": "Avisos do blueprint desta pasta", "when": "always" }]);
     gravar_se_mudou(&pasta.join("plugins/blueprint/monitors/monitors.json"), &(serde_json::to_string_pretty(&monitor).expect("json") + "\n"))?;
     gravar_se_mudou(&pasta.join("plugins/blueprint/skills/status/SKILL.md"), &skill_status(&exe))?;
@@ -107,9 +110,10 @@ const SKILL_APRESENTAR: &str = "---\nname: apresentar\ndescription: Conduz a con
 /// Estado do agente: PermissionRequest, PermissionDenied, StopFailure, PreCompact e PostCompact vão todos a `hook/estado` (nomes conferidos em
 /// https://code.claude.com/docs/en/hooks.md); a rota responde sempre `{}`, então nenhum deles decide permissão nem segura o Claude Code.
 /// `PostToolUseFailure` fica de fora: ferramenta que falha é rotina e só faria ruído.
-/// shortcut: a porta é a 3000 (a padrão do app); com o app em outra porta o hook falha em silêncio, sem atrapalhar o agente.
-fn hooks(exe: &str) -> serde_json::Value {
-    let estado = || json!([{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/estado", "timeout": 5 }] }]);
+/// `url` é onde o app está ao gravar o plugin (`instancia::url_do_app`, ou a porta padrão com o app fechado).
+fn hooks(exe: &str, url: &str) -> serde_json::Value {
+    let http = |rota: &str| json!({ "type": "http", "url": format!("{url}/api/mcp/hook/{rota}"), "timeout": 5 });
+    let estado = || json!([{ "hooks": [http("estado")] }]);
     json!({ "hooks": {
         "PermissionRequest": estado(),
         "PermissionDenied": estado(),
@@ -117,12 +121,12 @@ fn hooks(exe: &str) -> serde_json::Value {
         "PreCompact": estado(),
         "PostCompact": estado(),
         "SessionStart": [{ "matcher": "startup|resume|clear", "hooks": [{ "type": "command", "command": exe, "args": ["hook", "sessao"], "timeout": 5 }] }],
-        "SessionEnd": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/fim", "timeout": 5 }] }],
-        "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/edicao", "timeout": 5 }] }],
-        "SubagentStart": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/subagente", "timeout": 5 }] }],
-        "SubagentStop": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/subagente", "timeout": 5 }] }],
+        "SessionEnd": [{ "hooks": [http("fim")] }],
+        "PostToolUse": [{ "matcher": "Edit|Write", "hooks": [http("edicao")] }],
+        "SubagentStart": [{ "hooks": [http("subagente")] }],
+        "SubagentStop": [{ "hooks": [http("subagente")] }],
         "Notification": [{ "hooks": [{ "type": "command", "command": exe, "args": ["hook", "notificacao"], "timeout": 5 }] }],
-        "Stop": [{ "hooks": [{ "type": "http", "url": "http://127.0.0.1:3000/api/mcp/hook/parada", "timeout": 5 }] }],
+        "Stop": [{ "hooks": [http("parada")] }],
     } })
 }
 
@@ -159,4 +163,27 @@ pub fn remover(cli: &Path) {
     let _ = rodar(cli, &args(&["plugin", "uninstall", PLUGIN, "--scope", "user"]));
     let _ = rodar(cli, &args(&["plugin", "uninstall", PLUGIN_TERMINAL, "--scope", "user"]));
     let _ = rodar(cli, &args(&["plugin", "marketplace", "remove", MARKETPLACE]));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::hooks;
+
+    #[test]
+    fn hooks_usam_a_porta() {
+        let h = hooks("/x/blueprint", "http://127.0.0.1:4123");
+        let texto = h.to_string();
+        assert!(!texto.contains(":3000"), "{texto}");
+        let mut vistos = 0;
+        for (evento, grupos) in h["hooks"].as_object().unwrap() {
+            for gancho in grupos[0]["hooks"].as_array().unwrap() {
+                if gancho["type"] == "http" {
+                    vistos += 1;
+                    assert!(gancho["url"].as_str().unwrap().starts_with("http://127.0.0.1:4123/api/mcp/hook/"), "{evento}");
+                }
+            }
+        }
+        assert_eq!(vistos, 10, "os dez hooks http levam a porta real");
+        assert_eq!(h["hooks"]["Stop"][0]["hooks"][0]["url"], "http://127.0.0.1:4123/api/mcp/hook/parada");
+    }
 }

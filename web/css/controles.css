@@ -4,32 +4,32 @@
 #rolagem .trilho{position:absolute;left:14px;top:0;bottom:0;width:2px;background:var(--lo);opacity:.8}
 #rolagem .trilho::before,#rolagem .trilho::after{content:"";position:absolute;left:-6px;width:14px;height:2px;background:var(--ink)}
 #rolagem .trilho::before{top:-1px}#rolagem .trilho::after{bottom:-1px}
-#rolagem .polegar{position:absolute;left:4px;width:22px;top:0;border:1.5px solid var(--ink);background:repeating-linear-gradient(135deg,#9cc4ee55 0 2px,transparent 2px 6px),#113360;cursor:grab;box-shadow:0 4px 14px #05112599}
-#rolagem .polegar:hover,#rolagem.arrastando-rol .polegar{background:repeating-linear-gradient(135deg,#11336099 0 2px,transparent 2px 6px),var(--ink)}
+#rolagem .polegar{position:absolute;left:4px;width:22px;top:0;border:1.5px solid var(--ink);background:repeating-linear-gradient(135deg,#9cc4ee55 0 2px,transparent 2px 6px),#0c3a78;cursor:grab;box-shadow:0 4px 14px #02132e99}
+#rolagem .polegar:hover,#rolagem.arrastando-rol .polegar{background:repeating-linear-gradient(135deg,#0c3a7899 0 2px,transparent 2px 6px),var(--ink)}
 #rolagem.arrastando-rol .polegar{cursor:grabbing}
 #rolagem:focus-visible .polegar{outline:2px solid var(--ink);outline-offset:3px}
-#rolagem .rotulo{position:absolute;right:34px;top:0;white-space:nowrap;font-size:10px;letter-spacing:.1em;color:var(--ink);background:#113360;border:1px solid var(--mid);padding:3px 7px;pointer-events:none}
+#rolagem .rotulo{position:absolute;right:34px;top:0;white-space:nowrap;font-size:10px;letter-spacing:.1em;color:var(--ink);background:#0c3a78;border:1px solid var(--mid);padding:3px 7px;pointer-events:none}
 /* dica única de tela cheia */
-.dica-f11{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;padding:12px 16px;color:var(--ink);font:12px var(--mono);background:#0c264bf5;border:1px solid var(--ink);box-shadow:0 12px 36px #051125cc}
+.dica-f11{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:14px;padding:12px 16px;color:var(--ink);font:12px var(--mono);background:#082b5ef5;border:1px solid var(--ink);box-shadow:0 12px 36px #02132ecc}
 .dica-f11[hidden]{display:none}
 .dica-f11 b{padding:3px 8px;border:1px solid var(--ink);letter-spacing:.1em}
 .dica-f11 .fecha{font:18px/1 var(--mono);color:var(--mid);background:none;border:1px solid transparent;cursor:pointer;padding:2px 8px}
 .dica-f11 .fecha:hover,.dica-f11 .fecha:focus-visible{border-color:var(--mid);outline:none}
 /* arrastar com clique e segurar */
 .arrastando,.arrastando *{cursor:grabbing!important;user-select:none!important}
-.fantasma{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--paper);font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;box-shadow:0 6px 24px #05112599;transform:translate(14px,12px);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fantasma{position:fixed;z-index:20;pointer-events:none;background:var(--ink);color:var(--paper);font:700 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:7px 12px;box-shadow:0 6px 24px #02132e99;transform:translate(14px,12px);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* controles sobre a folha */
 .barra{position:absolute;top:44px;right:64px;display:flex;gap:8px;z-index:3}
 body:not(.em-blueprint) .so-blueprint{display:none}
 /* o campo de pesquisa (.busca) mora na barra: estilo em pesquisa.css */
-.btn{font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:#113360cc;border:1px solid var(--mid);padding:8px 14px;cursor:pointer}
+.btn{font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:#0c3a78cc;border:1px solid var(--mid);padding:8px 14px;cursor:pointer}
 .btn:hover,.btn:focus-visible{background:var(--ink);color:var(--paper);outline:none}
 .btn.mini{padding:5px 9px;font-size:10px}
-select.btn option{background:#113360;color:var(--ink)}
+select.btn option{background:#0c3a78;color:var(--ink)}
 .btn.perigo{border-color:var(--erro);color:var(--erro)}
 .btn.perigo:hover,.btn.perigo:focus-visible{background:var(--erro);color:#5a1208}
-.confirmar{width:min(440px,92vw);padding:0;border:1px solid var(--erro);background:#0f2c5a;color:var(--ink)}
-.confirmar::backdrop{background:#07172ecc}
+.confirmar{width:min(440px,92vw);padding:0;border:1px solid var(--erro);background:#0a3270;color:var(--ink)}
+.confirmar::backdrop{background:#041a3acc}
 .confirmar .cu-corpo{margin:0;padding:6px 18px 18px;line-height:1.5}
 .confirmar-acoes{display:flex;justify-content:flex-end;gap:10px;padding:0 18px 18px}
 .btn[aria-pressed=true]{background:var(--ink);color:var(--paper)}

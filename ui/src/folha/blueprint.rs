@@ -92,6 +92,13 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
             }
         }
     }
+    // «Ir para esta ação»: a seção dela abre, para a ação não ficar compacta (`irPara`)
+    if let Some(alvo) = vista.ir_para.clone() {
+        if let Some(m) = modelos.iter_mut().find(|m| m.idxs.iter().any(|k| acoes[*k].id == alvo)) {
+            m.aberto = true;
+            vista.abertas.insert(m.chave.clone(), true);
+        }
+    }
     let contador = (!termos.is_empty()).then(|| if res.total() == 0 { tr("nenhum resultado").to_string() } else { trn(res.total(), "{n} resultado", "{n} resultados") });
     if pendentes {
         // com filtro, a seção sem nada a mostrar some (só quando há projetos: o blueprint inteiro continua com a mensagem)
@@ -128,13 +135,23 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
             y += d.alto - FOLGA + GAP_SECAO;
             disps.push(d);
         }
+        // rola até a ação no próximo quadro, com ela a pouco mais de um quinto da altura da janela (`rolarParaAcao`)
+        if let Some(alvo) = vista.ir_para.take() {
+            for (k, (d, refs)) in disps.iter().zip(&subconjuntos).enumerate() {
+                if let Some(pos) = d.posicoes.iter().find(|q| refs[q.i].id == alvo) {
+                    vista.rolagem = Some((ys[k] + disposicao::PH + d.linha_y[pos.linha] - viewport_h * 0.22).max(0.0));
+                    crate::anima::mexer(ui.ctx(), 350.0);
+                }
+            }
+        }
         let alto = if modelos.is_empty() { disposicao::PH + 36.0 + FOLGA } else { y - y0 - GAP_SECAO + FOLGA };
         let h = viewport_h.max(560.0).max(y0 + alto + 40.0 + BAIXO_FAIXA + IL);
         let (pagina_r, _) = ui.allocate_exact_size(vec2(w, h), Sense::hover());
         let painter = ui.painter().clone();
         planta::papel(&painter, pagina_r, Papel::Entrada);
+        crate::menu::marcar(ui, pagina_r, || crate::menu::Alvo::Folha { ws: id.to_string(), bp: bp.to_string(), nome: texto(p, "nome"), chaves: modelos.iter().map(|m| m.chave.clone()).collect(), aberto: modelos.iter().any(|m| m.aberto) });
         let c = Cena { p: &painter, o: pagina_r.min };
-        let regua = Regua { janela: &janela, l, r, y: Y_REGUA, fundo: h - IL - BAIXO_FAIXA - 20.0, hoje };
+        let regua = Regua { janela: &janela, l, r, y: Y_REGUA, fundo: h - IL - BAIXO_FAIXA - 20.0, hoje, sem_eixo: None };
         let medidas = Medidas { w, h, l, r, meses: (0..=nm).map(|m| regua.mes(m)).collect() };
         pagina::moldura(&c, &medidas);
         let titulo = format!("{empresa} · {}", texto(ws, "titulo"));
@@ -225,7 +242,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, bp: &str,
 }
 
 /// O 1º clique num mês marca o início e espera; o 2º fecha o período, em qualquer ordem (`selecionarMes` de dados.js).
-fn selecionar_mes(vista: &mut Vista, bp: &str, mes: String) {
+pub(crate) fn selecionar_mes(vista: &mut Vista, bp: &str, mes: String) {
     let novo = match vista.periodos.get(bp) {
         Some(q) if q.aguardando => {
             let (a, b) = if q.inicio <= mes { (q.inicio.clone(), mes) } else { (mes, q.inicio.clone()) };

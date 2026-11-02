@@ -25,7 +25,7 @@
 /* a camada das figuras na folha (claude-camada.js): sobre o desenho, sem pegar o mouse; só a figura é clicável. Cada figura é movida por transform. */
 #claude-camada{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
 .claude-fig{position:absolute;left:0;top:0;will-change:transform}
-.claude-fig{pointer-events:auto;cursor:pointer;line-height:0;filter:drop-shadow(0 2px 3px #051125cc)}
+.claude-fig{pointer-events:auto;cursor:pointer;line-height:0;filter:drop-shadow(0 2px 3px #02132ecc)}
 .claude-fig svg{display:block}.claude-fig span{display:block}.claude-fig span[hidden]{display:none}
 /* os quadros da animação ficam empilhados no mesmo lugar, cada um na sua camada composta, e o relógio só troca a classe `on` (opacity não é herdada e não repinta: com display:none ou
    visibility cada quadro custava reestilizar e refazer o layout/pintura dos ~1500 nós do SVG) */

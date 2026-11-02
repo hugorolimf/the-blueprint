@@ -91,7 +91,8 @@ let D = { empresa: "", titulo: "", rev: "A", exemplo: false, blueprints: [] };
 let arquivo = D;
 // O documento raiz continua sendo a SM; os outros espaços guardam seus próprios blueprints.
 const workspacesDe = (a) => {
-  const todas = [{ id: "sm", nome: String(a.empresa || "Meu workspace"), icone: a.icone || "blueprint", dados: a }, ...(a.workspaces || []).map((c) => ({ id: c.id, nome: c.nome, icone: c.icone || "blueprint", dados: c }))];
+  const raizExcluida = a.raizExcluida === true && !(a.blueprints || []).length; // excluída: a raiz fica vazia e fora da lista até um agente pôr um blueprint nela
+  const todas = [...(raizExcluida ? [] : [{ id: "sm", nome: String(a.empresa || "Meu workspace"), icone: a.icone || "blueprint", dados: a }]), ...(a.workspaces || []).map((c) => ({ id: c.id, nome: c.nome, icone: c.icone || "blueprint", dados: c }))];
   const posicoes = new Map((Array.isArray(a.ordemWorkspaces) ? a.ordemWorkspaces : []).map((id, i) => [id, i]));
   return todas.sort((x, y) => (posicoes.get(x.id) ?? Infinity) - (posicoes.get(y.id) ?? Infinity));
 };

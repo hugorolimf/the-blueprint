@@ -33,6 +33,7 @@ Workspace
 | Situation | `topico` |
 | --- | --- |
 | Create a blueprint or new actions, detail plans and checkpoints | `planejar` |
+| Write a plan piece by piece or from a folder: `abrir_plano`, `escrever_acao`, `fechar_plano`, `salvar_plano` | `plano` |
 | Change the deadline, scope or order of something that exists | `editar` |
 | Start working in the folder: link the folder to the blueprint, register and tick | `executar` |
 | Show an idea for an action (a screen, a figure) | `prototipos` |
@@ -46,7 +47,7 @@ Workspace
 0. **Only plan what has not been done yet.** Whatever was already done outside the plan goes to `registrar_trabalho` (a record, not a proposal), and you ask the user whether they want to add it to the blueprint.
 1. **Understand before proposing.** `listar_blueprints` and `ler_blueprint`. If the proposal depends on the code, explore the folder (read only) and cite only files you have seen. If the request is ambiguous, ask **up to 3 objective questions** and wait for the answer. Do not ask what you can find out by reading.
 2. **Skeleton first.** For a new or large blueprint, think about the actions (3 to 6) and the dates before the details.
-3. **Propose with `propor_blueprint`.** Fix the returned errors until it passes. Then tell the user, in a few lines, what you proposed, what you assumed and what is left open.
+3. **Propose as the server instructions say:** `abrir_plano` where they name it (topic `plano`), otherwise `propor_blueprint`. Fix the returned errors until it passes. Then tell the user, in a few lines, what you proposed, what you assumed and what is left open.
 4. **Iterate.** For adjustments, send again only what changes (topic `editar`).
 
 New blueprint: the proposal carries the session folder and the app only links it when the user applies it. A folder without a link: choose from the notice in the app; the Project folder field lets the user change or remove it.

@@ -1,8 +1,38 @@
-/* bp-*: a nota «The Blueprint - Planejar (plano e protótipo)», gerada por design/planejar/build.mjs (repositório the-blueprint) */
-.painel .bp-quadro { margin: 10px 0 6px; border: 1px solid var(--background-modifier-border); border-radius: 6px; overflow: hidden; background: #0c264b; }
+/* bp-*: a nota «The Blueprint - Planejar (plano e protótipo)», gerada por design/planejar/build.mjs (repositório the-blueprint). A nota inteira usa o tema do app. */
+.painel.bp-nota { --bp-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, monospace; max-width: none; padding: 26px 26px 34px; color: #c9dcf3; font: 13px/1.6 var(--bp-mono); border: 1px solid #2f66aa;
+  background-color: #0c3a78; background-image: linear-gradient(rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.1) 1px, transparent 1px), linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px);
+  background-size: 60px 60px, 60px 60px, 12px 12px, 12px 12px; }
+.bp-nota b, .bp-nota strong { color: #eaf4ff; font-weight: 700; }
+.bp-nota code { font: inherit; color: #eaf4ff; background: #081d3c; padding: 1px 5px; border: 0; }
+.bp-capa { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 210px; border: 1.5px solid #eaf4ff; background: #082b5e; }
+.bp-capa-texto { padding: 24px 26px 26px; }
+.bp-capa-rot { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: #9cc4ee; }
+.bp-capa h1, .bp-nota .bp-capa-tit { margin: 12px 0 12px; font: 700 25px/1.25 var(--bp-mono); letter-spacing: -.01em; color: #eaf4ff; }
+.bp-capa p { margin: 0; max-width: 74ch; }
+.bp-selo { display: grid; grid-auto-rows: 1fr; border-left: 1px solid #9cc4ee; }
+.bp-selo div { padding: 10px 14px; border-top: 1px solid #5b93d0; }
+.bp-selo div:first-child { border-top: 0; }
+.bp-selo small { display: block; font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: #9cc4ee; }
+.bp-selo b { display: block; font-size: 15px; line-height: 1.35; }
+.bp-sec { display: flex; align-items: baseline; gap: 12px; margin: 40px 0 12px; padding-bottom: 7px; border-bottom: 1px solid #eaf4ff; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #eaf4ff; }
+.bp-sec i { font-style: normal; font-weight: 400; color: #9cc4ee; }
+.bp-nota .bp-cinco { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin: 0 !important; padding: 0 !important; list-style: none; counter-reset: bp; }
+.bp-cinco li { position: relative; margin: 0; padding: 14px 16px 15px; counter-increment: bp; background: #082b5e; border: 1px solid #5b93d0; line-height: 1.5; font-size: 12px; }
+.bp-cinco li::before { content: ""; position: absolute; left: -1px; top: -1px; width: 18px; height: 18px; border: solid #eaf4ff; border-width: 2px 0 0 2px; }
+.bp-cinco b { display: block; margin-bottom: 5px; font-size: 13px; }
+.painel .bp-quadro { margin: 10px 0 8px; border: 0; overflow: hidden; background: #082b5e; }
 .painel .bp-quadro svg { display: block; width: 100%; height: auto; }
-.painel .bp-leg { margin: 4px 0 20px; font-size: var(--font-ui-smaller); color: var(--text-muted); line-height: 1.5; }
-.painel .bp-cinco li, .painel .bp-etapas li, .painel .bp-legenda li { margin: 4px 0; line-height: 1.5; }
-.painel.bp-nota table { width: 100%; margin: 6px 0 18px; }
-.painel.bp-nota td:first-child { white-space: nowrap; }
-.painel .bp-imagem img { display: block; width: 100%; height: auto; }
+.painel .bp-leg { margin: 0 0 8px; max-width: 92ch; font-size: 12px; line-height: 1.55; color: #9cc4ee; }
+.bp-nota table { width: 100%; margin: 8px 0 14px; border-collapse: collapse; font-size: 12px !important; line-height: 1.5; background: rgba(12,38,75,.72); }
+.bp-nota th { padding: 7px 10px; border: 0; border-bottom: 1px solid #eaf4ff; text-align: left; font-size: 10px; font-weight: 400; letter-spacing: .12em; text-transform: uppercase; color: #9cc4ee; background: none; }
+.bp-nota td { font-size: 12px !important; padding: 7px 10px; border: 0; border-bottom: 1px solid rgba(91,147,208,.45); vertical-align: top; color: #c9dcf3; background: none; }
+.bp-nota td:first-child { color: #eaf4ff; }
+.bp-nota tr:last-child td { border-bottom: 0; }
+.bp-nota .bp-etapas { display: grid; gap: 0; margin: 0 !important; padding: 0 !important; list-style: none; counter-reset: et; }
+.bp-etapas li { display: grid; grid-template-columns: 34px 170px minmax(0, 1fr); gap: 10px; align-items: baseline; padding: 9px 10px; counter-increment: et; border-bottom: 1px solid rgba(91,147,208,.45); font-size: 12px; }
+.bp-etapas li::before { content: counter(et, decimal-leading-zero); color: #9cc4ee; }
+.painel .bp-duas { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; margin: 8px 0 14px; }
+.painel .bp-rot { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: #9cc4ee; margin-bottom: 5px; }
+.painel .bp-codigo { margin: 0; padding: 12px 14px; background: #081d3c; color: #eaf4ff; border: 1px solid #5b93d0; border-radius: 0; font: 12px/1.55 var(--bp-mono); white-space: pre; overflow-x: auto; }
+.bp-tema svg text { font-family: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, monospace; }
+@media (max-width: 760px) { .bp-capa { grid-template-columns: minmax(0, 1fr); } .bp-selo { grid-template-columns: repeat(3, 1fr); border-left: 0; border-top: 1px solid #9cc4ee; } .bp-selo div { border-top: 0; border-left: 1px solid #5b93d0; } .bp-selo div:first-child { border-left: 0; } .bp-etapas li { grid-template-columns: 30px minmax(0, 1fr); } .bp-etapas li span { grid-column: 2; } .painel.bp-nota { padding: 14px; } }

@@ -73,6 +73,10 @@ pub fn so_local(caminho: &str) -> bool {
         || mcp.starts_with("conversa")
         || mcp.starts_with("hook/")
         || mcp.starts_with("pasta/")
+        || mcp.starts_with("plano/")
+        || mcp.starts_with("planejar/")
+        || mcp.starts_with("gesto/")
+        || mcp.starts_with("execucao/")
 }
 
 /// Os hooks do Claude Code que o Claude de um membro manda pelo `blueprint hook <evento> --equipe` (progresso, subagentes, lembrete do Stop).

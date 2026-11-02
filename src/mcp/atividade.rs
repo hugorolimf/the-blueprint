@@ -1,7 +1,7 @@
 //! Quem está trabalhando agora: a presença dos agentes do usuário (Claude Code, Codex e seus subagentes), só em memória.
 //! É presença, não histórico: some ao reiniciar (o histórico fica nos comentários do plano). O agente NÃO sai por falta de sinal: a página o põe em
 //! repouso (parado no cabeçalho do blueprint) depois de `VIDA_MS` e ele só deixa a lista quando o limite de `MAX_AGENTES` o substitui.
-//! O app não abre, não conversa e não executa agentes: isto só guarda o que eles mesmos reportam pelo MCP.
+//! Esta lista não abre nem executa agentes (quem lança o agente de um plano é `planejar::motor`): só guarda o que eles mesmos reportam pelo MCP.
 use serde_json::{Map, Value};
 
 /// Sem sinal por tanto tempo, a página considera o agente em repouso (ele continua na lista).

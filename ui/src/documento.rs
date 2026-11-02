@@ -116,7 +116,7 @@ impl Documento {
             exemplo: v.get("exemplo").and_then(Value::as_bool) == Some(true) && id != RAIZ,
         };
         let nome_raiz = if texto(&self.raw, "empresa").is_empty() { "Meu workspace" } else { texto(&self.raw, "empresa") };
-        let mut todos = vec![resumo(RAIZ, nome_raiz, texto(&self.raw, "icone"), &self.raw)];
+        let mut todos = if self.raiz_excluida() { Vec::new() } else { vec![resumo(RAIZ, nome_raiz, texto(&self.raw, "icone"), &self.raw)] };
         todos.extend(lista(&self.raw, "workspaces").iter().map(|w| resumo(texto(w, "id"), texto(w, "nome"), texto(w, "icone"), w)));
         let ordem: Vec<&str> = lista(&self.raw, "ordemWorkspaces").iter().filter_map(Value::as_str).collect();
         todos.sort_by_key(|w| ordem.iter().position(|id| *id == w.id).unwrap_or(usize::MAX));
@@ -161,12 +161,24 @@ impl Documento {
         Ok(id)
     }
 
-    /// Apaga o workspace; a raiz é o próprio arquivo e não se remove.
+    /// A raiz é o próprio arquivo, então não some dos dados: excluída, fica vazia e fora da lista. Se um agente puser um blueprint nela, ela volta a aparecer.
+    fn raiz_excluida(&self) -> bool {
+        self.raw.get("raizExcluida").and_then(Value::as_bool) == Some(true) && lista(&self.raw, "blueprints").is_empty()
+    }
+
+    /// Apaga o workspace com o que está dentro.
     pub fn excluir_workspace(&mut self, id: &str) -> bool {
-        if id == RAIZ || self.workspace(id).is_none() {
+        if self.workspace(id).is_none() || !self.workspaces().iter().any(|w| w.id == id) {
             return false;
         }
         let raiz = self.raiz_mut();
+        if id == RAIZ {
+            for campo in ["empresa", "titulo", "descricao", "icone", "emblema"] {
+                raiz.remove(campo);
+            }
+            raiz.insert("blueprints".into(), json!([]));
+            raiz.insert("raizExcluida".into(), json!(true));
+        }
         if let Some(l) = raiz.get_mut("workspaces").and_then(Value::as_array_mut) {
             l.retain(|w| texto(w, "id") != id);
         }

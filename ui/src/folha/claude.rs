@@ -69,6 +69,7 @@ pub fn desenhar(c: &Cena, ui: &Ui, escopo: &str, tela: &str, ags: &[Agente], anc
         imagem.tint(alfa(1.0)).paint_at(ui, r);
         if d.vivo {
             let resposta = ui.interact(cheio, ui.scope_id().with(("claude", &d.agente)), egui::Sense::click());
+            crate::menu::marcar(ui, cheio, || crate::menu::Alvo::Figura(d.agente.clone()));
             if resposta.hovered() {
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
             }

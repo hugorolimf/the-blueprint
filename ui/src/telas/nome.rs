@@ -24,8 +24,8 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, ocupado: bool) -> O
     // a folha: 1000 de largura (menos que isso, a janela inteira) e 488,6 de altura, no meio da tela
     let (largura, altura) = ((pagina.width() - 48.0).min(1000.0), 488.6);
     let folha = Rect::from_center_size(pagina.center(), vec2(largura, altura)).translate(vec2(0.0, 0.0));
-    p.add(egui::epaint::Shadow { offset: [0, 28], blur: 90, spread: 0, color: rgba(0x051125, 0x66) }.as_shape(folha, 0));
-    p.rect_filled(folha, 0, rgba(0x113360, 0x77));
+    p.add(egui::epaint::Shadow { offset: [0, 28], blur: 90, spread: 0, color: rgba(0x02132e, 0x66) }.as_shape(folha, 0));
+    p.rect_filled(folha, 0, rgba(0x0c3a78, 0x77));
     planta::borda(&p, folha, MEDIO);
     Texto::novo("+", 25.0).cor(MEDIO).na_linha(&p, folha.min.x - 9.0, folha.min.y - 14.0, 25.0);
     Texto::novo("+", 25.0).cor(MEDIO).na_linha(&p, folha.max.x + 9.0 - 15.0, folha.max.y + 12.0 - 25.0, 25.0);
@@ -44,7 +44,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, ocupado: bool) -> O
     Texto::novo(format!("{}\n{}", tr("Como podemos chamar você?"), tr("Depois, é só escolher seu espaço e continuar.")), 12.0).cor(MEDIO).lh(21.6).caixa(fw).escrita().em(&p, pos2(fx, folha.min.y + 149.0));
     Texto::novo(tr("Seu nome"), 11.0).escrita().na_linha(&p, fx, folha.min.y + 225.2, 14.0);
     let campo = Rect::from_min_size(pos2(fx, folha.min.y + 252.6), vec2(fw, 53.0));
-    p.rect_filled(campo, 0, rgba(0x0c264b, 0xbb));
+    p.rect_filled(campo, 0, rgba(0x082b5e, 0xbb));
     planta::borda(&p, campo, MEDIO);
     // o texto fica 16 px dentro da borda, como o `padding: 15px` + borda da página
     let interno = campo.shrink2(vec2(16.0, 1.0));

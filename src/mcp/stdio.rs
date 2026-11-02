@@ -1,19 +1,23 @@
 //! `blueprint --mcp`: o servidor MCP por stdio (JSON-RPC 2.0, uma mensagem por linha) que o agente do usuário registra
+//! Passa de 300 linhas (teto 500): a tabela de ferramentas de `chamar` e o protocolo JSON-RPC estão juntos; o corte natural é separar os dois (já estava acima antes do Planejar).
 //! (`claude mcp add blueprint -- blueprint.exe --mcp`). Porte de mcp-roadmap.mjs: mesmas ferramentas e instruções. Não tem dados próprios: cada ferramenta
 //! chama as rotas /api/mcp do servidor local. Tudo aqui é texto para o AGENTE, então é inglês (o agente responde ao usuário no idioma dele); o
 //! servidor também responde em inglês porque o cliente manda `Accept-Language: en` (ver `crate::idioma`).
-use super::argumentos::{alvo, checkpoint, com, com_atividade, estruturado, opcional, plano, plano_se_houver, texto};
+use super::argumentos::{alvo, ambiente, checkpoint, com, com_atividade, com_execucao, estruturado, opcional, plano, plano_se_houver, texto};
 use super::cliente::{codificar, requisitar};
 use serde_json::{json, Map, Value};
 use std::io::{BufRead, Write};
 use std::sync::atomic::{AtomicBool, Ordering};
 
-const INSTRUCOES: &str = include_str!("instrucoes.txt"); // os primeiros 512 caracteres são autossuficientes: é o que o Codex lê
+// Nos dois textos os primeiros 512 caracteres são autossuficientes: é o que o Codex lê. D14: o Planejar só existe com `--mcp` fora do Windows.
+const INSTRUCOES: &str = include_str!("instrucoes.txt");
+const INSTRUCOES_PLANEJAR: &str = include_str!("instrucoes_planejar.txt");
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
 pub(super) const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
-const TOPICOS: [(&str, &str); 10] = [
+const TOPICOS: [(&str, &str); 11] = [
     ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
+    ("plano", include_str!("../../skills/blueprint-planejamento/topicos/plano.md")),
     ("editar", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("executar", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
     ("prototipos", include_str!("../../skills/blueprint-planejamento/topicos/prototipos.md")),
@@ -24,11 +28,26 @@ const TOPICOS: [(&str, &str); 10] = [
     ("apresentacao_figuras", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_figuras.md")),
     ("apresentacao_ajustar", include_str!("../../skills/blueprint-planejamento/topicos/apresentacao_ajustar.md")),
 ];
-const REGRA: &str = "Keep this blueprint always up to date: plans and plan changes via propor_blueprint; when you start a plan, registrar_progresso; when you finish, marcar_concluido with the evidence; if it did not work, marcar_nao_concluido; if you get stuck, reportar_bloqueio.";
+const REGRA_EXECUTAR: &str = "when you start a plan, registrar_progresso; when you finish, marcar_concluido with the evidence; if it did not work, marcar_nao_concluido; if you get stuck, reportar_bloqueio.";
+
+/// O app com o Planejar: `--mcp` fora do Windows. Por HTTP e no Windows o caminho continua sendo `propor_blueprint` (D11, D14).
+fn tem_planejar(via: Via) -> bool {
+    via.is_none() && !cfg!(windows)
+}
+
+fn instrucoes(via: Via) -> &'static str {
+    if tem_planejar(via) { INSTRUCOES_PLANEJAR } else { INSTRUCOES }
+}
 
 /// só ao criar blueprint: as instruções do servidor já dizem para manter a linha nas sessões seguintes
-fn vinculo(w: &str) -> String {
-    format!("\nWhen the new blueprint is applied, the app links this session's folder automatically. Workspace: {w}. {REGRA}")
+fn vinculo(w: &str, via: Via) -> String {
+    let planos = if tem_planejar(via) { "abrir_plano" } else { "propor_blueprint" };
+    format!("\nWhen the new blueprint is applied, the app links this session's folder automatically. Workspace: {w}. Keep this blueprint always up to date: plans and plan changes via {planos}; {REGRA_EXECUTAR}")
+}
+
+/// D11: fora do Windows a janela nativa não consome a fila; quem chama `propor_blueprint` por lá precisa saber.
+pub(super) fn aviso_sem_consumidor(via: Via) -> &'static str {
+    if tem_planejar(via) { "\nNo app window consumes this queue: use abrir_plano." } else { "" }
 }
 
 type R = Result<String, String>;
@@ -65,7 +84,7 @@ pub(super) fn servidor(via: Via, rota: &str, metodo: &str, corpo: Option<&Value>
     let lista = |chave: &str| dados.get(chave).and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_str).collect::<Vec<_>>().join("\n- ")).unwrap_or_default();
     if dados.get("erros").is_some_and(Value::is_array) {
         let avisos = lista("avisos");
-        let quem = if rota == "registro" { "The record" } else { "The proposal" }; // registro não é proposta
+        let quem = if rota == "registro" { "The record" } else if rota.starts_with("plano/") { "The plan" } else { "The proposal" }; // registro não é proposta
         return Err(format!("{quem} has errors; fix them and send again:\n- {}{}", lista("erros"), if avisos.is_empty() { String::new() } else { format!("\nWarnings:\n- {avisos}") }));
     }
     let motivo = dados.get("erro").and_then(Value::as_str).map(String::from).unwrap_or_else(|| texto.chars().take(200).collect());
@@ -84,7 +103,9 @@ fn guardar_offline(rota: &str, corpo: &Value) -> Result<Value, String> {
 
 const AVISO_OFFLINE: &str = "\n(The Blueprint is closed: the record was saved and enters the app when it opens, without you repeating it. Validation (ids, format) only happens then; if something is refused, the file stays in pendentes/recusados, next to the database.)";
 
-fn evento(via: Via, tipo: &str, texto: String, extra: Map<String, Value>) -> Result<Value, String> {
+fn evento(via: Via, tipo: &str, texto: String, extra: Map<String, Value>, a: &Value) -> Result<Value, String> {
+    // o ambiente é o do agente só no `--mcp`; por HTTP seria o do servidor
+    let extra = if via.is_none() { com_execucao(extra, a, &ambiente) } else { com_execucao(extra, a, &|_| None) };
     servidor(via, "evento", "POST", Some(&Value::Object(com(extra, &[("tipo", json!(tipo)), ("texto", json!(texto))]))))
 }
 
@@ -150,12 +171,12 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
             }
             let r = servidor(via, "proposta", "POST", Some(&Value::Object(corpo)))?;
             if r["offline"] == true {
-                return Ok("Proposal saved: the app is closed. When it opens, the proposal enters the queue for the user to review and apply (ids and format are validated only then).".into());
+                return Ok(format!("Proposal saved: the app is closed. When it opens, the proposal enters the queue for the user to review and apply (ids and format are validated only then).{}", aviso_sem_consumidor(via)));
             }
             let avisos: Vec<&str> = r["avisos"].as_array().map(|l| l.iter().filter_map(Value::as_str).collect()).unwrap_or_default();
             let aviso = if avisos.is_empty() { String::new() } else { format!("\nWarnings (they do not block the submission, but worth fixing):\n- {}", avisos.join("\n- ")) };
-            let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id")) } else { String::new() };
-            Ok(format!("Proposal no. {} is in the app's queue (one at a time; the others in the queue were not touched). The app applies it by itself when automatic application is on (the default in the local app); removals, moved actions and new blueprints still wait for the user's click on the Plan screen. Do not say it entered before ler_blueprint shows it.{aviso}\n{}\nIf the user asks for changes, send `ajustar: {}` with only what changes (the action, plan or checkpoint by the id above); `substituir: {}` replaces the whole proposal.{ligar}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"]))
+            let ligar = if opcional(a, "blueprint_id").is_empty() { vinculo(&opcional(a, "workspace_id"), via) } else { String::new() };
+            Ok(format!("Proposal no. {} is in the app's queue (one at a time; the others in the queue were not touched). The app applies it by itself when automatic application is on (the default in the local app); removals, moved actions and new blueprints still wait for the user's click on the Plan screen. Do not say it entered before ler_blueprint shows it.{aviso}\n{}\nIf the user asks for changes, send `ajustar: {}` with only what changes (the action, plan or checkpoint by the id above); `substituir: {}` replaces the whole proposal.{ligar}{}", r["numero"], ids_provisorios(&r["ids"]), r["numero"], r["numero"], aviso_sem_consumidor(via)))
         }
         "registrar_trabalho" => {
             let mut corpo = alvo(a);
@@ -207,29 +228,30 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
         "ler_apresentacao" => super::ferr_apresentacao::ler(via, a),
         "editar_apresentacao" => super::ferr_apresentacao::editar(via, a),
         "registrar_progresso" => {
-            evento(via, "progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
+            evento(via, "progresso", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a), a)?;
             Ok("Progress recorded.".into())
         }
         "marcar_concluido" => {
-            evento(via, "concluir", texto(a, "evidencia")?, plano(a)?)?;
+            evento(via, "concluir", texto(a, "evidencia")?, plano(a)?, a)?;
             Ok("Plan sent to the app as done, with the evidence.".into())
         }
         "marcar_nao_concluido" => {
-            evento(via, "nao-concluida", texto(a, "motivo")?, plano(a)?)?;
+            evento(via, "nao-concluida", texto(a, "motivo")?, plano(a)?, a)?;
             Ok("Recorded: the plan stays pending.".into())
         }
         "marcar_checkpoint_feito" => {
-            evento(via, "checkpoint-feito", texto(a, "evidencia")?, checkpoint(a)?)?;
+            evento(via, "checkpoint-feito", texto(a, "evidencia")?, checkpoint(a)?, a)?;
             Ok("Checkpoint sent to the app as reached, with the evidence.".into())
         }
         "marcar_checkpoint_nao_feito" => {
-            evento(via, "checkpoint-nao-feito", texto(a, "motivo")?, checkpoint(a)?)?;
+            evento(via, "checkpoint-nao-feito", texto(a, "motivo")?, checkpoint(a)?, a)?;
             Ok("Recorded: the checkpoint stays pending.".into())
         }
         "reportar_bloqueio" => {
-            evento(via, "bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a))?;
+            evento(via, "bloqueio", texto(a, "texto")?, com_atividade(plano_se_houver(a)?, a), a)?;
             Ok("Block recorded; the user was notified.".into())
         }
+        "abrir_plano" | "escrever_acao" | "fechar_plano" | "salvar_plano" | "ler_plano" | "ler_respostas" | "ler_workspace" | "falar_com_voce" => super::ferr_plano::chamar(via, nome, a),
         "responder_conversa" => super::conversa::ferramenta(a, &|rota, metodo, corpo| servidor(via, rota, metodo, corpo)),
         _ => Err(format!("Unknown tool: {nome}")),
     }
@@ -264,18 +286,25 @@ pub(super) fn tratar_com(msg: &Value, via: Via, perfil: super::perfil::Perfil) -
         "initialize" => {
             let pedida = params["protocolVersion"].as_str().unwrap_or("");
             let versao = VERSOES.iter().find(|v| **v == pedida).unwrap_or(&VERSOES[0]);
-            resposta(id, json!({"result": {"protocolVersion": versao, "capabilities": {"tools": {}, "experimental": {"claude/channel": {}}}, "serverInfo": {"name": "blueprint", "version": "2.0.0"}, "instructions": INSTRUCOES}}))
+            resposta(id, json!({"result": {"protocolVersion": versao, "capabilities": {"tools": {}, "experimental": {"claude/channel": {}}}, "serverInfo": {"name": "blueprint", "version": "2.0.0"}, "instructions": instrucoes(via)}}))
         }
         "ping" => resposta(id, json!({"result": {}})),
         "tools/list" => {
             let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
-            resposta(id, json!({"result": {"tools": perfil.filtrar(ferramentas)}}))
+            let mut lista = perfil.filtrar(ferramentas);
+            if let Some(l) = lista.as_array_mut() {
+                l.retain(|f| !super::ferr_plano::escondida(f["name"].as_str().unwrap_or(""), via));
+            }
+            resposta(id, json!({"result": {"tools": lista}}))
         }
         "tools/call" => {
             let nome = params["name"].as_str().unwrap_or("");
             let ferramentas: Value = serde_json::from_str(FERRAMENTAS).unwrap_or_else(|_| json!([]));
             if !ferramentas.as_array().is_some_and(|f| f.iter().any(|x| x["name"] == nome)) {
                 return Some(erro(-32602, format!("Unknown tool: {nome}")));
+            }
+            if super::ferr_plano::escondida(nome, via) {
+                return Some(erro(-32602, format!("Tool {nome}: {}", super::ferr_plano::SO_LOCAL)));
             }
             if !perfil.expoe(nome) {
                 return Some(erro(-32602, format!("Tool {nome} is not in the {} profile (BLUEPRINT_MCP_PERFIL)", perfil.nome())));

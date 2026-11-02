@@ -39,6 +39,8 @@ pub struct Acao {
     /// primeiro e último dia (desde 1970)
     pub a: i64,
     pub b: i64,
+    /// sem data de verdade (`semData`, ou uma das duas faltando): `a` e `b` só guardam um lugar, e a janela de meses não conta com eles
+    pub sem_data: bool,
     pub status: Situacao,
     pub pct: f32,
     /// itens (planos e checkpoints) feitos e total
@@ -94,15 +96,18 @@ fn efetiva(f: &Value) -> (Situacao, f32, (usize, usize)) {
     (status, pct, (feitos, total))
 }
 
-/// As ações do blueprint `p` com datas válidas, na ordem do arquivo (`acoesDe`).
+/// As ações do blueprint `p`, na ordem do arquivo (`acoesDe`). A sem data fica em hoje, com `sem_data`: o plano do agente pode não trazer datas, e ela conta no cartão e no progresso.
 pub fn acoes_de(p: &Value) -> Vec<Acao> {
-    lista(p, "acoes").iter().enumerate().filter_map(|(idx, f)| {
-        let (a, b) = (dia(texto(f, "inicio"))?, dia(texto(f, "fim"))?);
+    lista(p, "acoes").iter().enumerate().map(|(idx, f)| {
+        let (inicio, fim) = (dia(texto(f, "inicio")), dia(texto(f, "fim")));
+        let sem_data = inicio.is_none() || fim.is_none() || f.get("semData").and_then(Value::as_bool) == Some(true);
+        let a = inicio.or(fim).unwrap_or_else(|| dia(&crate::documento::hoje()).unwrap_or(0));
+        let b = fim.unwrap_or(a);
         let (status, pct, itens) = efetiva(f);
         let horas = lista(f, "planos").iter().map(|x| x.get("horas").and_then(Value::as_f64).unwrap_or(0.0) as f32).sum();
         let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { id: texto(m, "id").into(), nome: texto(m, "nome").into(), data: dia(texto(m, "data")), feito: feito(m) }).collect();
         let planos = lista(f, "planos").iter().map(|t| Plano { id: texto(t, "id").into(), texto: texto(t, "texto").into(), feito: feito(t) }).collect();
-        Some(Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), projeto: texto(f, "projetoId").into(), idx, a, b: b.max(a), status, pct, itens, horas, planos, checkpoints })
+        Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), projeto: texto(f, "projetoId").into(), idx, a, b: b.max(a), sem_data, status, pct, itens, horas, planos, checkpoints }
     }).collect()
 }
 
@@ -222,7 +227,8 @@ pub fn so_pendentes(fs: &[Acao]) -> Vec<Acao> {
 
 /// A janela de meses, ou o período escolhido (`inicio`, `fim` em `aaaa-mm`, em qualquer ordem) se for válido (`janelaPeriodo`).
 pub fn janela_com(fs: &[Acao], hoje: i64, escolhido: Option<(&str, &str)>) -> Janela {
-    let (a, b) = if fs.is_empty() { (hoje - 7, hoje + 7) } else { (fs.iter().map(|f| f.a).min().unwrap_or(hoje) - 7, fs.iter().map(|f| f.b).max().unwrap_or(hoje) + 7) };
+    let datadas = || fs.iter().filter(|f| !f.sem_data);
+    let (a, b) = (datadas().map(|f| f.a).min().unwrap_or(hoje) - 7, datadas().map(|f| f.b).max().unwrap_or(hoje) + 7);
     let (mut inicio, mut fim) = (indice_mes(&iso_do_dia(a)), indice_mes(&iso_do_dia(b)));
     if let Some((x, y)) = escolhido.filter(|(x, y)| mes_valido(x) && mes_valido(y)) {
         (inicio, fim) = (indice_mes(x).min(indice_mes(y)), indice_mes(x).max(indice_mes(y)));

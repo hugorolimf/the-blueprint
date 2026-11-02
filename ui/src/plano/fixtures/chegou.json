@@ -1,0 +1,30 @@
+{
+  "agente": "exemplo",
+  "alteradas": [
+    {
+      "nome": "Painel por sala",
+      "ref": "1.2",
+      "resumo": {
+        "alterados": 2,
+        "detalhes": 1,
+        "mais": 1,
+        "menos": 1,
+        "outros": 0
+      }
+    }
+  ],
+  "iguais": 1,
+  "novas": [
+    {
+      "checkpoints": 0,
+      "detalhes": 0,
+      "nome": "Alerta de pico",
+      "planos": 2,
+      "podeColocar": true,
+      "ref": "1.3"
+    }
+  ],
+  "numero": 2,
+  "origem": "salvar",
+  "removidas": []
+}

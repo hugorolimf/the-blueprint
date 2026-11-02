@@ -17,6 +17,8 @@ pub struct Regua<'a> {
     /// o y onde os guias terminam (`yBand - 20`)
     pub fundo: f32,
     pub hoje: i64,
+    /// o trecho `(de, ate)` em y em que o eixo do hoje não passa: a ação aberta, para ele não cortar os textos
+    pub sem_eixo: Option<(f32, f32)>,
 }
 
 impl Regua<'_> {
@@ -82,7 +84,16 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, g: &Regua, aguardando: Option<&str>) -> O
     }
     if g.hoje >= j.t0 && g.hoje < j.t1 {
         let xt = g.x(g.hoje);
-        c.tracejado(TINTA, 1.0, (xt, g.y), (xt, g.y + (g.fundo - g.y) * passo(650.0, 500.0)), &[16.0, 4.0, 2.0, 4.0]);
+        let fim = g.y + (g.fundo - g.y) * passo(650.0, 500.0);
+        match g.sem_eixo {
+            Some((de, ate)) if de < fim => {
+                c.tracejado(TINTA, 1.0, (xt, g.y), (xt, de), &[16.0, 4.0, 2.0, 4.0]);
+                if ate < fim {
+                    c.tracejado(TINTA, 1.0, (xt, ate), (xt, fim), &[16.0, 4.0, 2.0, 4.0]);
+                }
+            }
+            _ => c.tracejado(TINTA, 1.0, (xt, g.y), (xt, fim), &[16.0, 4.0, 2.0, 4.0]),
+        }
         let k = passo(1000.0, 280.0);
         if k > 0.0 {
             let (s, ce) = (0.6 + 0.4 * k, Cena { p: &super::barra::opaco(c.p, k), o: c.o });

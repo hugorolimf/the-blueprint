@@ -58,12 +58,12 @@ pub fn papel(p: &Painter, r: Rect, estilo: Papel) {
     let (maior, menor) = match estilo {
         Papel::Entrada => {
             p.rect_filled(r, 0, PAPEL);
-            radial(p, r, (0.5, 0.4), |t| if t <= 0.62 { mistura(rgb(0x194680), PAPEL, t / 0.62) } else { mistura(PAPEL, rgb(0x0c264b), (t - 0.62) / 0.38) });
+            radial(p, r, (0.5, 0.4), |t| if t <= 0.62 { mistura(rgb(0x1250a0), PAPEL, t / 0.62) } else { mistura(PAPEL, rgb(0x082b5e), (t - 0.62) / 0.38) });
             (rgba(0xffffff, 0x1c), rgba(0xffffff, 0x0c))
         }
         Papel::Login => {
-            p.rect_filled(r, 0, rgb(0x0f2c53));
-            radial(p, r, (0.45, 0.35), |t| rgba(0x1a467d, (0x55 as f32 * (1.0 - t / 0.7)).clamp(0.0, 255.0) as u8));
+            p.rect_filled(r, 0, rgb(0x0b3268));
+            radial(p, r, (0.45, 0.35), |t| rgba(0x14509b, (0x55 as f32 * (1.0 - t / 0.7)).clamp(0.0, 255.0) as u8));
             (rgba(0xffffff, 0x12), rgba(0xffffff, 0x06))
         }
     };

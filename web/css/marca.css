@@ -1,5 +1,5 @@
 /* marca da folha: as regras do kit do anatomy com as cores do blueprint */
-.emblema{--anatomy-paper:#113360;--anatomy-face:#17508f;--anatomy-top:#1a5398;--anatomy-shade-0:#0a2f63;--anatomy-shade-1:#0c346c;--anatomy-shade-2:#0f3a75;--anatomy-shade-3:#13427f;--anatomy-hi:#eaf4ff;--anatomy-mid:#8dbaea;--anatomy-lo:#518ac8;--anatomy-faint:#2d63a6;--anatomy-lit:#fff;--anatomy-lit-top:#2b69b3;--anatomy-lit-shade:#1d5aa3;--anatomy-glow:#cfe6ff;--anatomy-halo:#03142e;--anatomy-dot:#e6f2ff;--anatomy-weight:.6px;pointer-events:none;overflow:visible}
+.emblema{--anatomy-paper:#0c3a78;--anatomy-face:#17508f;--anatomy-top:#1a5398;--anatomy-shade-0:#0a2f63;--anatomy-shade-1:#0c346c;--anatomy-shade-2:#0f3a75;--anatomy-shade-3:#13427f;--anatomy-hi:#eaf4ff;--anatomy-mid:#8dbaea;--anatomy-lo:#518ac8;--anatomy-faint:#2d63a6;--anatomy-lit:#fff;--anatomy-lit-top:#2b69b3;--anatomy-lit-shade:#1d5aa3;--anatomy-glow:#cfe6ff;--anatomy-halo:#03142e;--anatomy-dot:#e6f2ff;--anatomy-weight:.6px;pointer-events:none;overflow:visible}
 .emblema path,.emblema circle{vector-effect:non-scaling-stroke}
 .emblema .iso-fill{fill:var(--anatomy-paper);stroke:none}
 .emblema .iso-shade,.emblema .iso-top{stroke:none}
@@ -32,7 +32,7 @@
 #painel-claude{display:flex;flex-direction:column;gap:16px}
 #painel-claude[hidden]{display:none}
 #painel-claude .cl{flex:1;min-height:0;height:auto}
-.nv{display:grid;grid-template-columns:1fr 1.5fr auto;gap:14px;align-items:end;border:1px solid var(--lo);background:#11336070;padding:16px 18px;flex:none}
+.nv{display:grid;grid-template-columns:1fr 1.5fr auto;gap:14px;align-items:end;border:1px solid var(--lo);background:#0c3a7870;padding:16px 18px;flex:none}
 .nv[hidden]{display:none}
 .modo-novo .ed-lateral{display:none}
 .modo-novo .ed-corpo{grid-template-columns:1fr}
@@ -43,7 +43,7 @@
 .emblema.marca-fundo{opacity:.18}
 .emblema.marca-fundo:hover,.emblema.marca-fundo:focus-visible{opacity:.28}
 .emblema .legenda-marca{letter-spacing:.16em}
-svg.desenho text:not(.iso-face-text):not(.hoje-t):not(.botao-t){paint-order:stroke;stroke:#113360;stroke-width:3px;stroke-linejoin:round}
+svg.desenho text:not(.iso-face-text):not(.hoje-t):not(.botao-t){paint-order:stroke;stroke:#0c3a78;stroke-width:3px;stroke-linejoin:round}
 svg.desenho .lk text{stroke:none}
 .emblema .fantasma-emb{opacity:.6}
 .emblema .fantasma-emb .iso-fill,.emblema .fantasma-emb .iso-shade,.emblema .fantasma-emb .iso-top{fill:none}
@@ -51,21 +51,21 @@ svg.desenho .lk text{stroke:none}
 .emblema .fantasma-emb .iso-face-text{fill:none;stroke:var(--anatomy-mid);stroke-width:.6}
 .emblema .fantasma-emb .iso-halo{display:none}
 /* folha pequena sobre o blueprint */
-.nota-folha{position:absolute;z-index:8;width:min(480px,calc(100vw - 32px));padding:20px 22px 18px;color:var(--ink);overflow:hidden;font:12px/1.6 var(--mono);border:2px solid var(--ink);box-shadow:0 20px 56px #051125e6,0 0 0 6px #0c264b;
-  background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/10px 10px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/10px 10px,#113360}
+.nota-folha{position:absolute;z-index:8;width:min(480px,calc(100vw - 32px));padding:20px 22px 18px;color:var(--ink);overflow:hidden;font:12px/1.6 var(--mono);border:2px solid var(--ink);box-shadow:0 20px 56px #02132ee6,0 0 0 6px #082b5e;
+  background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/40px 40px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/10px 10px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/10px 10px,#0c3a78}
 .nota-folha[hidden]{display:none}
 .nota-folha h4{margin:0 0 4px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid);font-weight:400}
 .nota-folha h3{margin:0 0 14px;font-size:15px;letter-spacing:.05em;text-transform:uppercase}
-.nota-folha .corpo{white-space:pre-wrap;max-height:min(46vh,380px);overflow:auto;padding:14px 16px;border:1px dashed var(--lo);background:#0c264b99;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.nota-folha .corpo{white-space:pre-wrap;max-height:min(46vh,380px);overflow:auto;padding:14px 16px;border:1px dashed var(--lo);background:#082b5e99;scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
 .nota-folha .corpo.vazio{color:var(--mid)}
-.nota-folha textarea{display:block;width:100%;box-sizing:border-box;height:min(46vh,380px);min-height:160px;resize:vertical;padding:14px 16px;border:1px dashed var(--ink);background:#0c264b;color:var(--ink);font:12px/1.6 var(--mono);scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
+.nota-folha textarea{display:block;width:100%;box-sizing:border-box;height:min(46vh,380px);min-height:160px;resize:vertical;padding:14px 16px;border:1px dashed var(--ink);background:#082b5e;color:var(--ink);font:12px/1.6 var(--mono);scrollbar-width:thin;scrollbar-color:var(--lo) transparent}
 .nota-folha textarea:focus{outline:2px solid var(--ink);outline-offset:1px}
 .nota-folha .dica-ed{margin:8px 0 0;font-size:10px;color:var(--mid)}
-#proto-tela{position:fixed;inset:2.5vh 2.5vw;z-index:40;display:flex;flex-direction:column;background:#082044;color:var(--ink);border:2px solid var(--ink);box-shadow:0 0 0 100vmax #051125cc;font:12px/1.5 var(--mono)}
+#proto-tela{position:fixed;inset:2.5vh 2.5vw;z-index:40;display:flex;flex-direction:column;background:#082044;color:var(--ink);border:2px solid var(--ink);box-shadow:0 0 0 100vmax #02132ecc;font:12px/1.5 var(--mono)}
 #proto-tela[hidden]{display:none}
 #proto-tela header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--lo);flex:none}
 #proto-tela .tit{display:grid;gap:2px;min-width:0;flex:1}#proto-tela .tit span{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mid)}#proto-tela .tit b{font-size:14px;letter-spacing:.04em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#proto-tela select{max-width:240px;font:12px var(--mono);color:var(--ink);background:#113360;border:1px solid var(--mid);padding:6px 8px}
+#proto-tela select{max-width:240px;font:12px var(--mono);color:var(--ink);background:#0c3a78;border:1px solid var(--mid);padding:6px 8px}
 #proto-tela a.btn{text-decoration:none}
 #proto-quadro{flex:1;min-height:0;width:100%;border:0;background:#fff}
 @media print{#proto-tela{display:none!important}}

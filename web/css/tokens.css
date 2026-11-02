@@ -1,3 +1,3 @@
 /* a fonte do app em todo sistema: a Cascadia Mono (OFL, Microsoft; web/fontes), variável de 200 a 700 */
 @font-face{font-family:"Blueprint Mono";src:url("/web/fontes/CascadiaMono.woff2") format("woff2");font-weight:200 700;font-display:block}
-:root{--paper:#113360;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:"Blueprint Mono",ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace}
+:root{--paper:#0c3a78;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:"Blueprint Mono",ui-monospace,"Cascadia Mono",Consolas,Menlo,monospace}

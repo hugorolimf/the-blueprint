@@ -1,5 +1,5 @@
 /* O menu do botão direito: cabeçalho com o alvo, itens em grupos separados por linha, ícone à esquerda, "excluir" em tom de alerta. */
-.menu-contextual{position:fixed;z-index:100;display:grid;gap:1px;min-width:240px;max-width:min(360px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;padding:5px;background:#0c264bf5;border:1px solid var(--ink);box-shadow:0 12px 36px #051125cc;color:var(--ink)}
+.menu-contextual{position:fixed;z-index:100;display:grid;gap:1px;min-width:240px;max-width:min(360px,calc(100vw - 16px));max-height:calc(100vh - 16px);overflow:auto;padding:5px;background:#082b5ef5;border:1px solid var(--ink);box-shadow:0 12px 36px #02132ecc;color:var(--ink)}
 .menu-contextual[hidden]{display:none}
 .mc-topo{padding:6px 12px 8px;margin-bottom:3px;border-bottom:1px solid var(--faint);font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mc-sep{height:1px;margin:4px 6px;background:var(--faint)}

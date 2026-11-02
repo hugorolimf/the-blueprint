@@ -1,5 +1,5 @@
 //! O Claude na folha, a parte de interação (`abreNotaRobo` e `#robo-agente` de web/js/robo.js): a folhinha que abre ao clicar na figura, com o que o agente faz agora
-//! (só leitura: o app não manda trabalho a ninguém), e a faixa fixa embaixo com a última fala. «Concluído» dispensa o agente que terminou ou está parado.
+//! (só leitura: daqui não sai trabalho para ninguém; quem inicia um plano é a caixinha do Planejar), e a faixa fixa embaixo com a última fala. «Concluído» dispensa o agente que terminou ou está parado.
 
 use super::{texto, Tela, Vista};
 use crate::agentes::{self, Agente};

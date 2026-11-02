@@ -32,7 +32,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
     let Some(novo) = vista.novo_bp.as_mut() else { return None };
     // a faixa `.nv`: 1fr 1.5fr auto, 14 px entre as colunas, 16 x 18 de respiro, encostada embaixo
     let faixa = Rect::from_min_size(pos2(o.x + 24.0, o.y + 64.0 + 18.0), vec2(largura - 48.0, 92.0));
-    p.rect_filled(faixa, 0, rgba(0x113360, 0x70));
+    p.rect_filled(faixa, 0, rgba(0x0c3a78, 0x70));
     planta::borda(&p, faixa, BAIXO);
     let criar = Botao::barra(tr("Criar blueprint vazio")).ativo(!ocupado);
     let largura_criar = criar.largura(&p);
@@ -63,7 +63,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
 /// A barra de cima (`.ed-topo`): «← VOLTAR AO BLUEPRINT», o rótulo e o nome que vai sendo digitado, o estado e «TELA CHEIA».
 fn barra(ui: &mut Ui, vista: &mut Vista, o: egui::Pos2, largura: f32, ocupado: bool) {
     let p = ui.painter().clone();
-    p.rect_filled(Rect::from_min_size(o, vec2(largura, 64.0)), 0, rgba(0x0c264b, 0xe8));
+    p.rect_filled(Rect::from_min_size(o, vec2(largura, 64.0)), 0, rgba(0x082b5e, 0xe8));
     p.rect_filled(Rect::from_min_size(pos2(o.x, o.y + 62.0), vec2(largura, 2.0)), 0, TINTA);
     let voltar = Botao::barra(tr("← Voltar ao blueprint"));
     if botao(ui, pos2(o.x + 24.0, o.y + 14.0), &voltar).clicked() || ui.input(|i| i.key_pressed(egui::Key::Escape)) {

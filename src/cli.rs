@@ -1,4 +1,5 @@
 //! Linha de comando. A janela nativa (sem argumentos) entra na ação 3.5.
+mod agente_plano;
 mod atualizar;
 pub(crate) mod claude;
 mod completar;
@@ -65,6 +66,7 @@ pub fn executar(args: Vec<String>) -> i32 {
         ["watch"] => return crate::watch::executar(),
         ["doctor"] => return doctor::executar(),
         ["claude", ..] => return claude::executar(&args[1..]),
+        ["agente-plano", id] => return agente_plano::executar(id), // interno: o motor do Planejar abre isto no terminal
         #[cfg(windows)]
         ["atualizando", ..] => return crate::janela::atualizando::executar(&args[1..]), // interno: a janela de progresso que o app abre ao atualizar
         ["atualizar"] | ["atualizar", "--verificar" | "--instalar"] => return atualizar::executar(a.get(1).copied()),

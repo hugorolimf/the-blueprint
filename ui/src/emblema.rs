@@ -23,8 +23,6 @@ pub enum Tamanho {
     Cartao,
     /// 390x280, na folha da tela de nome
     Grande,
-    /// 520x380, na prévia do novo workspace
-    Previa,
 }
 
 impl Tamanho {
@@ -32,7 +30,6 @@ impl Tamanho {
         match self {
             Tamanho::Cartao => "cartao",
             Tamanho::Grande => "grande",
-            Tamanho::Previa => "previa",
         }
     }
 }
@@ -56,28 +53,36 @@ pub fn pintar_construcao(ui: &Ui, r: Rect, progresso: f32) {
     Image::from_bytes(uri, bytes).fit_to_exact_size(r.size()).paint_at(ui, r);
 }
 
+/// A figura do Blueprint em 11 passos: da só no traço (0) à pronta (100).
+const PASSOS_FIGURA: [(&str, &[u8]); 11] = [
+    ("bytes://fundo-000.svg", include_bytes!("../assets/emblemas/fundo-000.svg")),
+    ("bytes://fundo-010.svg", include_bytes!("../assets/emblemas/fundo-010.svg")),
+    ("bytes://fundo-020.svg", include_bytes!("../assets/emblemas/fundo-020.svg")),
+    ("bytes://fundo-030.svg", include_bytes!("../assets/emblemas/fundo-030.svg")),
+    ("bytes://fundo-040.svg", include_bytes!("../assets/emblemas/fundo-040.svg")),
+    ("bytes://fundo-050.svg", include_bytes!("../assets/emblemas/fundo-050.svg")),
+    ("bytes://fundo-060.svg", include_bytes!("../assets/emblemas/fundo-060.svg")),
+    ("bytes://fundo-070.svg", include_bytes!("../assets/emblemas/fundo-070.svg")),
+    ("bytes://fundo-080.svg", include_bytes!("../assets/emblemas/fundo-080.svg")),
+    ("bytes://fundo-090.svg", include_bytes!("../assets/emblemas/fundo-090.svg")),
+    ("bytes://fundo-100.svg", include_bytes!("../assets/emblemas/fundo-100.svg")),
+];
+
 /// A marca-d'água da lista: a marca do workspace «construída» conforme o progresso (só a padrão tem os passos; as outras vão inteiras), bem apagada.
 pub fn pintar_fundo(ui: &Ui, r: Rect, icone: &str, progresso: f32) {
-    const PASSOS: [(&str, &[u8]); 11] = [
-        ("bytes://fundo-000.svg", include_bytes!("../assets/emblemas/fundo-000.svg")),
-        ("bytes://fundo-010.svg", include_bytes!("../assets/emblemas/fundo-010.svg")),
-        ("bytes://fundo-020.svg", include_bytes!("../assets/emblemas/fundo-020.svg")),
-        ("bytes://fundo-030.svg", include_bytes!("../assets/emblemas/fundo-030.svg")),
-        ("bytes://fundo-040.svg", include_bytes!("../assets/emblemas/fundo-040.svg")),
-        ("bytes://fundo-050.svg", include_bytes!("../assets/emblemas/fundo-050.svg")),
-        ("bytes://fundo-060.svg", include_bytes!("../assets/emblemas/fundo-060.svg")),
-        ("bytes://fundo-070.svg", include_bytes!("../assets/emblemas/fundo-070.svg")),
-        ("bytes://fundo-080.svg", include_bytes!("../assets/emblemas/fundo-080.svg")),
-        ("bytes://fundo-090.svg", include_bytes!("../assets/emblemas/fundo-090.svg")),
-        ("bytes://fundo-100.svg", include_bytes!("../assets/emblemas/fundo-100.svg")),
-    ];
     let tom = egui::Color32::from_white_alpha(46);
     if icone == "blueprint" || !EMBLEMAS.iter().any(|(n, _, _)| *n == format!("{icone}-previa")) {
-        let (uri, bytes) = PASSOS[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
+        let (uri, bytes) = PASSOS_FIGURA[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
         Image::from_bytes(uri, bytes).tint(tom).fit_to_exact_size(r.size()).paint_at(ui, r);
     } else if let Some((_, uri, bytes)) = EMBLEMAS.iter().find(|(n, _, _)| *n == format!("{icone}-previa")) {
         Image::from_bytes(*uri, *bytes).tint(tom).fit_to_exact_size(r.size()).paint_at(ui, r);
     }
+}
+
+/// A figura do Blueprint montada até `progresso` (0 a 1), inteira: o palco do «Novo workspace».
+pub fn pintar_passo(ui: &Ui, r: Rect, progresso: f32) {
+    let (uri, bytes) = PASSOS_FIGURA[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
+    Image::from_bytes(uri, bytes).fit_to_exact_size(r.size()).paint_at(ui, r);
 }
 
 /// Pinta o emblema da marca `icone` dentro de `r`, inteiro e centralizado. Marca desconhecida vira a padrão.

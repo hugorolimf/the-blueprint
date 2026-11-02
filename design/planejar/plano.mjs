@@ -1,77 +1,132 @@
-// O texto da nota «The Blueprint - Planejar (plano e protótipo)»: a ideia, como os planos grandes entram, os blocos, figuras e
-// imagens, o MCP, as etapas e as perguntas. As telas vêm de tela-*.mjs e alertas.mjs, e a figura do caminho de fluxo.mjs.
+// O texto da nota «The Blueprint - Planejar (plano e protótipo)»: genérico, sem citar nenhum projeto; o plano aberto nas telas é o que for
+// passado ao gerador. As telas vêm de tela-*.mjs e o caminho de fluxo.mjs.
 
 export const CAPA = {
-  rotulo: "Plano e protótipo · 01/11/2026 · versão 2",
-  titulo: "Planos do tamanho dos do SM PRO, dentro do Blueprint",
-  texto: "O Blueprint vira o seu Obsidian de desenvolvimento. Cada coisa tem uma <b>página</b>: o workspace, cada blueprint e cada ação. A página aguenta um plano inteiro do jeito que você já tem no cofre: dezenas de figuras, telas em tamanho real, recortes, tabelas, decisões, etapas e imagens. O plano do agente (o Planejar) é uma dessas páginas, e chegam junto a <b>Memória</b> e o <b>Grafo</b>. Abaixo, o plano de Alertas do SM PRO aberto dentro da janela do app, com o mesmo conteúdo e no tema dele.",
+  rotulo: "Plano e protótipo · 01/11/2026 · versão 3.5",
+  titulo: "Um formato de plano para qualquer projeto, desenhado pela própria folha",
+  texto: "A folha <b>é</b> o plano. A IA não escreve uma página: o <b>orquestrador</b>, agente mestre do Workspace, preenche um <b>formato já composto</b>, peça por peça, e você acompanha em tempo real. Cada figura, tabela e decisão fica presa à ação a que pertence. Marcar a caixinha de um plano chama um agente, e ele mesmo marca quando conclui. O formato não conhece nenhum projeto: serve para um sistema com centenas de telas, uma biblioteca sem tela nenhuma ou uma reforma, escrito por qualquer agente.",
 };
 
 export const CINCO = [
-  ["A página é feita de blocos", "Os mesmos que os seus planos já usam: capa, seção, texto, rótulo, lista, etapas, tabela, figura, recortes, lado a lado, decidido, nota, caixa, pergunta e imagem. O app desenha cada um no tema dele."],
-  ["Figuras entram como estão", "As telas e os desenhos do anatomy são SVG, como no cofre. O app já desenha SVG sem navegador (é assim que ele mostra os emblemas). As figuras pintam por nome de cor, e o app troca esses nomes pelas cores do tema: o mesmo desenho do SM PRO fica azul no Blueprint."],
-  ["Imagens também", "Prints e fotos ficam guardados junto da página, nos dados do Blueprint, com limite de tamanho por imagem."],
-  ["O mesmo gerador escreve nos dois lugares", "Os <code>design/*/build.mjs</code> do SM PRO ganham <code>--blueprint</code>: o plano sai no cofre e no Blueprint ao mesmo tempo. Os planos que já existem entram por um importador que lê a nota do cofre e separa em blocos."],
-  ["O Planejar, a Memória e o Grafo moram nas páginas", "A proposta do agente é uma página com perguntas e «Aplicar na folha»; a memória e as ligações aparecem do lado de cada página."],
+  ["A folha é o plano", "não há página separada nem coluna de documentos. Abrir o plano é abrir o blueprint."],
+  ["Escrito em tempo real", "as ações aparecem na hora, «Aguardando plano». Depois o plano vai sendo escrito na sua frente: planos, decisões e figuras."],
+  ["Formato já composto", "a IA preenche campos conhecidos; não decide layout, não escreve HTML nem CSS. O resultado é sempre nativo, no tema do app."],
+  ["Genérico de verdade", "só o nome do blueprint e as ações são obrigatórios. O que o projeto não tiver simplesmente não aparece."],
+  ["O check chama o agente", "marcou a caixinha, um agente começa. Quando conclui, ele mesmo marca. Dez planos, dez agentes, sem um pisar no outro."],
+  ["Um orquestrador", "o agente mestre do Workspace: escreve o plano, entrega cada um ao seu agente, acompanha todos e fala com você."],
+  ["Mudança é um git diff", "plano alterado aparece como diferença, dentro do próprio plano. Aprovar, editar ou reprovar, que volta ao original."],
 ];
 
-export const LEGENDA_ALERTAS = [
-  ["O conteúdo", "é o HTML que o <code>design/alertas/nota.mjs</code> do SM PRO gera hoje para o cofre, sem nenhuma mudança. Só ganhou a janela e o tema do app."],
-  ["As figuras", "são as mesmas; o que mudou foram as cores, trocadas pelo nome (a «linha», o «texto», o «vermelho»…) pelas do tema azul. No app nativo é o mesmo truque, feito na hora de desenhar."],
-  ["Na margem", "o tipo de bloco de cada peça (capa, seção, figura, recortes, decidido…), que o app mostraria ao passar o mouse para mover, editar ou apagar."],
-  ["À esquerda", "as páginas do workspace SM PRO e o sumário «Nesta página», que acompanha a rolagem."],
+export const PECAS = [
+  ["blueprint, resumo", "obrigatório o nome", "o título e o cabeçalho da folha"],
+  ["projetos[]", "ao menos um; o nome é opcional", "as seções da folha"],
+  ["acoes[]: id, nome", "obrigatórios; o id liga uma versão à seguinte", "a linha da ação"],
+  ["de, ate", "opcionais", "a barra na régua; sem data, a ação fica «sem data»"],
+  ["texto, checkpoints[]", "opcionais", "a ação aberta"],
+  ["planos[]: id, texto, depende_de[], area, instrucoes", "opcionais; pode ser só o texto", "a caixinha que chama o agente"],
+  ["detalhes[]: id, titulo, legenda, grupo, figura, pede_aprovacao", "opcionais; SVG, PNG, JPG ou WebP", "miniatura na ação e folha de detalhe"],
+  ["tabelas[]: titulo, colunas, linhas", "opcionais", "tabela nativa na ação aberta"],
+  ["decisoes[]: id, rotulo, texto, data, acoes[], pede_aprovacao", "opcionais; ligadas às ações", "na ação aberta"],
+  ["perguntas[]: id, texto, opcoes, recomendada, acoes[]", "opcionais; ligadas às ações", "na ação aberta; a resposta volta ao agente"],
+  ["estilo, tema", "opcionais", "as cores próprias das figuras e a qual cor do tema cada uma corresponde"],
 ];
 
-export const BLOCOS = [
-  ["Capa", "rótulo, título e resumo; o estado da página (esperando você, aplicada)", "estudo-capa"],
-  ["Seção", "título numerado com a linha embaixo; vira item do sumário", "aprende-h2"],
-  ["Texto e rótulo", "parágrafo, com negrito, código, ligação e marca (etapa 2, suposição)", "p · estudo-rotulo · data-marca"],
-  ["Lista e etapas", "lista simples e a linha de etapas numerada", "estudo-lista · estudo-etapas"],
-  ["Tabela", "linhas e colunas", "estudo-tabela"],
-  ["Figura", "um SVG grande com a legenda embaixo (telas inteiras, mapas, desenhos do anatomy)", "al-quadro"],
-  ["Recortes e lado a lado", "vários SVG em grade, cada um com o texto em cima", "al-recortes · al-par"],
-  ["Decidido", "o que você decidiu, com a data, em linhas rótulo e texto", "fila-linha"],
-  ["Nota e caixa", "o aviso destacado e o quadro com borda", "estudo-nota · estudo-caixa"],
-  ["Imagem", "print ou foto, guardada com a página", "novo"],
-  ["Pergunta", "Pn, opções e recomendação; a resposta volta ao agente", "novo (Planejar)"],
-  ["Ação proposta", "Nova, Alterada ou Sem mudança, com planos, checkpoint e datas; marcar ou desmarcar", "novo (Planejar)"],
-  ["Linha do tempo", "a régua e as barras desenhadas como a folha", "novo (o app desenha)"],
+export const APROVACAO = [
+  ["Onde se decide", "Só dentro do plano: na ação aberta e na folha de detalhe. A visão geral (tela 4) só mostra o que chegou."],
+  ["Como aparece", "Um controle de três partes na própria linha da peça, e uma margem colorida que diz a situação à distância. Depois de decidir, o controle vira um carimbo."],
+  ["Aprovar", "Vale a versão nova; a peça ganha o carimbo. Dá para desfazer."],
+  ["Revisar", "Abre o campo ali mesmo, só nessa hora, para dizer o que mudar. A peça volta ao agente com o seu recado."],
+  ["Editar", "Num plano alterado, você corrige o texto ali mesmo, em vez de pedir ao agente."],
+  ["Reprovar", "Num plano alterado, volta ao estado original. Numa decisão ou num detalhe, a peça sai e o agente é avisado."],
+  ["Quem decide", "Só você. O estado não existe no <code>plano.json</code>: fica no banco do Blueprint, e o agente não tem ferramenta para aprovar."],
 ];
 
-export const COMO = [
-  ["Figuras", "SVG guardado com a página, com as cores por nome (as mesmas variáveis dos protótipos do SM PRO: page, card, text, strong, muted, line, faint, red, amber, green, blue…). O app aplica o tema na hora de desenhar e guarda o desenho pronto, para rolar uma página de 80 figuras sem pesar. SVG desenhado assim não roda código nem busca nada fora."],
-  ["Imagens", "PNG, JPG ou WebP guardados no banco do Blueprint, ligados à página; até 4 MB cada. O app reduz para a largura da página na hora de mostrar."],
-  ["Texto", "Blocos com tipo e texto, nunca HTML solto: negrito, código, ligação [[ ]] e marca são as únicas formatações. Por isso o app desenha tudo no tema e nada que o agente escreva roda na janela."],
-  ["Tamanho", "Sem limite de seções; cada figura até 2 MB. O plano de Alertas, o maior que você tem, tem 54 figuras (82 desenhos, contando os de dentro) e cerca de 570 KB."],
+export const DIFF = [
+  ["Plano que já existe", "Salvar de novo compara pelos ids. O que saiu aparece em vermelho, o que entrou em verde, com a palavra exata destacada (<code>comparar.mjs</code>, com testes). Prazo e detalhes novos entram na mesma lista."],
+  ["Plano novo", "Aparece na visão geral como «Novo plano», só com o resumo: quantos planos, detalhes e checkpoints. «Colocar» o põe na folha."],
+  ["Enquanto não revisa", "O plano alterado não pode ser iniciado. O que não mudou segue normal, inclusive os agentes que já estão trabalhando."],
+];
+
+export const AGENTES = [
+  ["O check chama", "Marcar a caixinha de um plano chama um agente só para ele. «Iniciar os N» marca todos. Aprovar não inicia nada: são gestos separados."],
+  ["O agente marca", "Ao concluir, o agente fecha com <code>marcar_concluido</code> e a evidência, e a caixinha fica marcada sozinha. Com todos os planos prontos, a ação está concluída."],
+  ["Sem conflito por área", "O plano diz em que <code>area</code> mexe. Dois planos da mesma área, ou um dentro do outro, nunca rodam juntos: o segundo espera, e a folha diz por quê."],
+  ["Sem conflito no código", "Em projeto com git, cada agente trabalha na própria cópia (<code>worktree</code>), no ramo <code>agente/&lt;plano&gt;</code>. O app já reconhece essas cópias e liga cada uma ao blueprint; falta criá-las ao chamar o agente. Sem git, só a regra da área vale."],
+  ["Dependência", "<code>depende_de</code> faz o plano esperar. Marcar um plano que depende de outro ainda não iniciado mostra o aviso, sem impedir. Se o outro pediu ajuda, ele fica parado."],
+  ["Limite", "No máximo N agentes ao mesmo tempo, que você muda na tela; o resto fica na fila e começa sozinho quando abrir vaga."],
+  ["Qualquer agente", "O que inicia é um comando configurável (<code>claude</code>, <code>codex</code>…), que recebe só o plano, as instruções e as decisões da ação dele."],
+];
+
+export const ORQUESTRADOR = [
+  ["Quem é", "Um por Workspace, acima dos agentes de cada plano. Enxerga todos os blueprints, então a regra da área vale também entre blueprints diferentes."],
+  ["Escreve o plano", "É ele que monta as ações e escreve o plano em tempo real (tela 6), e quem recebe as suas revisões e os seus recados."],
+  ["Entrega o trabalho", "Marcou a caixinha, ele prepara o agente daquele plano: só o plano, as instruções e as decisões que valem para ele, na cópia própria."],
+  ["Acompanha", "Lê o andamento de todos. Se um agente pede ajuda, tenta resolver com o que já está decidido; se a decisão é sua, ele traz para você, na ação certa."],
+  ["Fala com você", "Um lugar só para perguntar «como está?» ou pedir uma mudança, em vez de procurar em dez sessões."],
+  ["O que ele não faz", "Não aprova por você, não marca a caixinha para iniciar e não conclui no lugar de um agente: concluir continua exigindo a evidência de quem fez."],
+  ["Se ele parar", "A fila, as áreas e as dependências são regras do app, não dele. Os agentes continuam, a fila anda e, ao voltar, ele lê a situação e segue."],
+];
+
+export const TEMPO_REAL = [
+  ["Primeiro as ações", "O orquestrador diz quais ações o plano terá. Elas entram na folha na hora, em «Aguardando plano»."],
+  ["Depois peça por peça", "Ele escreve uma ação de cada vez, e cada plano, decisão e figura aparece assim que chega, pelo canal em tempo real que o app já usa."],
+  ["Validação por peça", "Cada peça é validada ao chegar, e o erro volta na hora. O agente não descobre um problema só no fim."],
+  ["Se o agente parar", "A ação fica como está e a folha avisa «Escrita parada há 5 min». Ao voltar, ele continua pelos ids, sem começar de novo."],
+];
+
+export const COMPATIVEL = [
+  ["Qualquer tipo de projeto", "Os exemplos abaixo passam pelo mesmo código: com telas, sem nenhuma figura e sem ser software."],
+  ["Qualquer agente", "O agente só precisa chamar as ferramentas do MCP. Não depende de Claude nem de Anatomy."],
+  ["Qualquer figura", "Figura que usa as cores do tema (<code>var(--forte)</code>, <code>var(--cartao)</code>…) muda com o app. Figura com cores próprias usa o <code>tema</code> para dizer a correspondência; sem isso, mantém as cores originais."],
+  ["Versões futuras", "<code>formato</code> traz a versão. Campo desconhecido é guardado e ignorado, para um plano novo não quebrar num app antigo."],
+  ["Segurança", "Validado na entrada: nada de script, foreignObject, evento, arquivo externo, link simbólico ou caminho fora da pasta; limite de 2 MB por SVG e 4 MB por imagem. Nenhum HTML do agente chega à janela."],
 ];
 
 export const MCP = [
-  ["publicar_pagina", "nova", "a página inteira em blocos, com as figuras; é o que o <code>--blueprint</code> dos geradores chama"],
-  ["anexar_imagem", "nova", "manda um print ou foto para uma página"],
-  ["escrever_proposta · ler_respostas", "nova", "a proposta como página (substitui o formulário de propor_blueprint) e as suas respostas às perguntas"],
-  ["ler_pagina · buscar", "nova", "o agente lê páginas e procura em páginas e memórias"],
-  ["ler_memoria · lembrar · esquecer", "nova", "a memória do blueprint e do workspace"],
-  ["registrar_progresso · marcar_concluido", "fica", "o andamento na folha, como hoje"],
+  ["abrir_plano", "nova", "diz o blueprint e as ações; elas entram na folha em «Aguardando plano»"],
+  ["escrever_acao", "nova", "manda uma peça da ação: planos, checkpoints, decisões, tabelas, perguntas ou um detalhe com a figura; aparece na hora"],
+  ["fechar_plano", "nova", "avisa que terminou; o que mudou em relação à versão anterior vira diff"],
+  ["salvar_plano", "nova", "o plano inteiro de uma vez, a partir de uma pasta (substitui propor_blueprint)"],
+  ["ler_plano · ler_respostas", "nova", "o agente lê o plano atual, as respostas, as aprovações, as revisões e os recados"],
+  ["ler_workspace · falar_com_voce", "nova", "para o orquestrador: a situação de todos os blueprints e agentes, e o recado que aparece na ação certa"],
+  ["registrar_progresso · marcar_concluido · reportar_bloqueio", "fica", "o andamento de cada plano, com <code>plano_id</code>; concluir marca a caixinha"],
+];
+
+export const TESTE = [
+  ["Motor", "resvg 0.45.1, o mesmo da interface nativa, sem navegador"],
+  ["Plano real", "54 figuras, 640 KB na pasta"],
+  ["Resultado", "RESULTADO_TESTE"],
+  ["Cores", "o motor não entende var() nem color-mix(): o Blueprint resolve isso ao carregar o plano (<code>estilo.mjs</code>)"],
+  ["Fontes", "sem fonte definida o motor escolheu uma fonte errada e o texto saiu em letras gregas; com a Cascadia embutida no app, saiu certo. O app precisa sempre entregar a própria fonte ao motor"],
+  ["Memória", "manter todas desenhadas pesa cerca de 170 MB em 1100 px: desenhar só as visíveis e guardar miniaturas"],
+  ["Regras", "<code>agentes.test.mjs</code> e <code>comparar.test.mjs</code> passando: quem pode rodar, área, dependência, ciclo e o git diff"],
 ];
 
 export const ETAPAS = [
-  ["Protótipo", "esta nota. Você aprova ou muda antes de qualquer código."],
-  ["Páginas e blocos", "a tabela de páginas e de imagens no banco, o desenho nativo de cada bloco (texto, seção, tabela, lista, etapas, decidido) e o sumário."],
-  ["Figuras e imagens", "SVG com o tema do app e imagem guardada; rolar uma página de 80 figuras sem travar."],
-  ["Publicar", "publicar_pagina e anexar_imagem no MCP, o <code>blueprint pagina publicar</code> na linha de comando, o <code>--blueprint</code> no gerador de Alertas e o importador das notas do cofre."],
-  ["Planejar novo", "a proposta vira página: ações marcáveis, perguntas com resposta e «Aplicar na folha»."],
-  ["Memória", "ler_memoria e lembrar, e a tela de cartões; o agente passa a ler antes de propor."],
-  ["Grafo e ligações", "as ligações [[ ]], o painel da direita e a tela do grafo."],
-  ["Escrever no app", "você edita bloco a bloco e cria páginas; busca com Ctrl+K."],
+  ["Protótipo", "Esta nota. Você aprova ou muda antes de qualquer código."],
+  ["Formato e validação", "O <code>blueprint.plano/1</code> em Rust, com testes dos três exemplos, a documentação em inglês e o guia do agente."],
+  ["Detalhes na folha", "As tabelas no banco, a folha nova, a ação aberta e a folha de detalhe, com o motor de figuras."],
+  ["Escrita em tempo real", "<code>abrir_plano</code>, <code>escrever_acao</code> e <code>fechar_plano</code>, com os estados «Aguardando plano» e «Escrevendo»."],
+  ["Git diff e revisão", "As versões no banco, a comparação pelos ids, o diff no plano, aprovar, editar, revisar e reprovar, e a visão geral."],
+  ["Agentes por plano", "A caixinha que chama o agente, a cópia própria, a fila, os avisos e a marcação automática ao concluir."],
+  ["Orquestrador", "A sessão do mestre do Workspace, o campo para falar com ele, o diário «Agora» e a entrega do plano a cada agente."],
+  ["Kit para o agente", "As cores do tema no kit Anatomy e o guia em <code>skills/</code>."],
+  ["Planos existentes", "Um adaptador por projeto, fora do Blueprint, para quem já tem planos em outro formato."],
 ];
 
 export const PERGUNTAS = [
-  ["P1", "O formulário de hoje (a proposta campo a campo) some?", "Sim: o Planejar novo substitui. Por um tempo o MCP ainda aceita o formato antigo e o transforma em página."],
-  ["P2", "Quem escreve as páginas: só o agente, ou você também cria do zero, como no Obsidian?", "Os dois. Você edita bloco a bloco, como no plugin Telas, e cria página nova pela coluna da esquerda."],
-  ["P3", "A memória é do blueprint e do workspace, ou também uma sua, que vale para todos os workspaces?", "Blueprint e workspace agora; a sua, global, depois."],
-  ["P4", "Os planos do SM PRO passam a morar no Blueprint, ou continuam no cofre e o Blueprint recebe uma cópia?", "Os dois por um tempo (o gerador grava nos dois); quando o Blueprint estiver bom, o cofre fica só com o link."],
-  ["P5", "As figuras de outro sistema (o SM PRO) aparecem no tema do Blueprint ou nas cores originais?", "No tema do Blueprint, como no exemplo, com um botão por figura para ver as cores originais."],
-  ["P6", "O grafo mostra o código por dentro (arquivos e funções, pelo graphify) ou só as pastas ligadas?", "Só as pastas agora; o código por dentro depois."],
-  ["P7", "Os planos que já estão no cofre (Alertas, Relatórios, WhatsApp, Plano do sistema…) entram todos de uma vez?", "Sim, pelo importador, logo depois da etapa de figuras: são o teste de verdade da página."],
-  ["P8", "O «aplicar sozinho» de hoje continua valendo para a proposta-página?", "Continua, desligado por padrão."],
+  ["P1", "O nome do formato: «plano» confunde com o Plan da folha (a caixinha da ação). Trocar?", "Manter <code>plano.json</code> para a IA e não criar um nome novo na tela."],
+  ["P3", "Texto longo de raciocínio (o «porquê» de um estudo) entra no formato?", "Só o <code>texto</code> curto da ação e as decisões; o resto fica como arquivo anexo. Se fizer falta, vira uma peça na versão 2 do formato."],
+  ["P4", "Memória e grafo entram agora?", "Não: ficam para depois do plano funcionar, para não misturar as duas entregas."],
+  ["P5", "Os nomes dos campos ficam em português, sendo um projeto aberto para o mundo?", "Decisão sua. Eu aceitaria os dois: português como está e sinônimos em inglês no formato."],
+  ["P6", "Reprovar uma decisão ou um detalhe exige escrever o motivo?", "Não: reprovar é só reprovar. Quem quer explicar usa «Revisar»."],
+  ["P8", "Dá para exigir revisão em tudo, mesmo quando o agente não pediu?", "Sim, como opção do blueprint, desligada por padrão: útil em projeto de equipe."],
+  ["P9", "A folha nativa muda para este desenho (a ação e os números à esquerda, a régua à direita, o hoje no começo)?", "Sim: é o que faz a folha aguentar um plano grande. Hoje a régua ocupa a largura toda, com o hoje no meio."],
+  ["P10", "Quantos agentes ao mesmo tempo, por padrão?", "4, ajustável na tela. Cada agente gasta a sua cota."],
+  ["P11", "Plano pronto: o ramo do agente entra sozinho no principal?", "Não: fica pronto com a evidência e você integra com um botão, ou liga «integrar sozinho» se os testes passarem."],
+  ["P12", "O agente de um plano pode chamar subagentes?", "Pode: é um por plano na sua tela, e os subagentes dele aparecem como hoje, ao lado."],
+  ["P13", "«Colocar» um plano novo na folha: é isso que você quis dizer, ou o resumo só aparece, sem botão?", "Com o tempo real, as ações já entram sozinhas. Eu deixaria o «Colocar» só quando o plano novo chega inteiro por <code>salvar_plano</code>."],
+  ["P14", "O orquestrador escreve o plano sozinho, ou pode dividir a escrita com um agente por ação?", "Sozinho, nesta versão: o plano fica coerente. Dividir vira opção depois."],
+  ["P15", "Entendi certo o orquestrador: ele coordena, mas quem inicia é a sua caixinha e quem aprova é você?", "Sim. Ele pode ganhar mais poder depois, como opção, mas começar sem isso protege a sua cota e o seu código."],
+  ["P16", "O orquestrador fica sempre ligado, ou só acorda quando algo acontece?", "Acorda quando algo acontece (plano concluído, pedido de ajuda, recado seu). Sempre ligado gastaria cota à toa, porque a fila já é do app."],
 ];

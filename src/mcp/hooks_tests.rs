@@ -1,4 +1,5 @@
 //! Testes das rotas dos hooks: ligar pasta, contexto da sessão e edição como progresso.
+//! Passa de 300 linhas (teto 500): todos os casos usam a mesma cena de rotas; o corte natural é separar os casos de identidade do plano.
 use super::hooks::{edicao, sessao, subagente, vincular};
 use super::Mcp;
 use crate::contexto::Contexto;
@@ -258,4 +259,60 @@ fn rotas_pastas_preservam_permissoes_e_exigem_json_ao_desvincular() {
     assert_eq!(super::hooks::travado(&d).listar_pastas(&Contexto::local()).unwrap().as_array().unwrap().len(), 1);
     assert_eq!(super::rotas::rota(&m, &d, &pedido("POST", "/api/mcp/pasta/desvincular", "127.0.0.1:3000", "application/json")).status, 200);
     assert!(super::hooks::travado(&d).listar_pastas(&Contexto::local()).unwrap().as_array().unwrap().is_empty());
+}
+
+/// A execução `rodando` do plano t2, com a cópia em `pasta` e, se vier, o ramo.
+fn com_execucao(d: &Mutex<Dados>, pasta: &str, ramo: &str) -> String {
+    use crate::dados::planejar::{Lancamento, NovaExecucao};
+    let mut g = d.lock().unwrap();
+    let id = g.execucao_criar(&NovaExecucao { workspace_id: "sm", blueprint_id: "p1", acao_id: "f2", plano_id: "t2", plano_ref: "1.2", area: "", pasta_principal: "C:/Proj", marcada_em: 1 }).unwrap();
+    assert!(g.execucao_reivindicar(&id).unwrap());
+    assert!(g.execucao_lancar(&id, &Lancamento { pasta_trabalho: pasta, ramo, agora_ms: 1, ..Lancamento::default() }).unwrap());
+    id
+}
+
+#[test]
+fn cwd_da_copia_da_o_nome_do_plano() {
+    let (m, d) = (mcp(), dados());
+    com_execucao(&d, "C:/copias/abc/pt2", "agente/1.2");
+    let r = sessao(&m, &d, &json!({"session_id": "s1", "cwd": "C:/copias/abc/pt2/sub"})).unwrap();
+    assert_eq!(r["contexto"], "You are the agent of plan 1.2", "sem a ação atual: o agente só cuida do plano dele");
+    assert_eq!((r["workspaceId"].as_str(), r["blueprintId"].as_str()), (Some("sm"), Some("p1")));
+    edicao(&m, &d, &json!({"cwd": "C:/copias/abc/pt2", "tool_input": {"file_path": "C:/copias/abc/pt2/a.rs"}})).unwrap();
+    let a = agente_da_lista(&m, "plano 1.2").expect("a edição aparece em nome do agente do plano");
+    assert_eq!((a["acaoId"].as_str(), a["planoId"].as_str()), (Some("f2"), Some("t2")));
+    assert!(agente_da_lista(&m, "Claude").is_none());
+}
+
+#[test]
+fn subagente_herda_da_execucao() {
+    let (m, d) = (mcp(), dados());
+    com_execucao(&d, "C:/copias/abc/pt2", "agente/1.2");
+    let r = subagente(&m, &d, &json!({"hook_event_name": "SubagentStart", "cwd": "C:/copias/abc/pt2", "agent_id": "a1b2c3", "agent_type": "Explore"})).unwrap();
+    let a = agente_da_lista(&m, "Explore a1b2").expect("o subagente segue com nome próprio");
+    assert_eq!((a["acaoId"].as_str(), a["planoId"].as_str()), (Some("f2"), Some("t2")));
+    let contexto = r["hookSpecificOutput"]["additionalContext"].as_str().unwrap();
+    assert!(contexto.contains("plan 1.2") && !contexto.contains("Current action"), "{contexto}");
+}
+
+#[test]
+fn estado_leva_identidade_do_plano() {
+    let (m, d) = (mcp(), dados());
+    com_execucao(&d, "C:/copias/abc/pt2", "agente/1.2");
+    super::hooks_estado::estado(&m, &d, &json!({"hook_event_name": "PermissionRequest", "cwd": "C:/copias/abc/pt2", "tool_name": "Bash"})).unwrap();
+    let a = agente_da_lista(&m, "plano 1.2").expect("o pedido de permissão aparece no agente do plano, não em Claude");
+    assert_eq!((a["estado"].as_str(), a["planoId"].as_str()), (Some("aguardando"), Some("t2")));
+    assert!(agente_da_lista(&m, "Claude").is_none());
+}
+
+#[test]
+fn pasta_sem_ramo_nao_vira_agente() {
+    let (m, d) = (mcp(), dados());
+    ligar(&d, "C:/Proj");
+    com_execucao(&d, "C:/Proj", "");
+    let r = sessao(&m, &d, &json!({"cwd": "C:/Proj"})).unwrap();
+    assert!(r["contexto"].as_str().unwrap().contains("«Portal»"), "a sessão comum do usuário nessa pasta segue com o contexto do blueprint");
+    edicao(&m, &d, &json!({"cwd": "C:/Proj", "tool_input": {"file_path": "C:/Proj/a.rs"}})).unwrap();
+    assert!(agente_da_lista(&m, "Claude").is_some());
+    assert!(agente_da_lista(&m, "plano 1.2").is_none());
 }

@@ -1,6 +1,6 @@
 //! O que muda dentro de um workspace: criar blueprint, marcar plano ou checkpoint e as observações.
 
-use super::{lista, novo_id, texto, Documento, RAIZ};
+use super::{dia, iso_do_dia, lista, novo_id, texto, Documento, RAIZ};
 use serde_json::{json, Value};
 
 impl Documento {
@@ -40,6 +40,45 @@ impl Documento {
         let feito = i.get("feito").and_then(Value::as_bool) == Some(true);
         i.insert("feito".into(), json!(!feito));
         true
+    }
+
+    fn acao_mut(&mut self, workspace: &str, blueprint: &str, acao: &str) -> Option<&mut serde_json::Map<String, Value>> {
+        self.workspace_mut(workspace)?.get_mut("blueprints")?.as_array_mut()?.iter_mut().find(|b| texto(b, "id") == blueprint)?.get_mut("acoes")?.as_array_mut()?.iter_mut().find(|a| texto(a, "id") == acao)?.as_object_mut()
+    }
+
+    /// A situação escolhida no menu (`mudarSituacaoAcao`): concluir enche o progresso, voltar a planejada zera, em andamento mantém.
+    pub fn definir_situacao(&mut self, workspace: &str, blueprint: &str, acao: &str, status: &str) -> bool {
+        let Some(a) = self.acao_mut(workspace, blueprint, acao) else { return false };
+        a.insert("status".into(), json!(status));
+        match status {
+            "concluido" => a.insert("progresso".into(), json!(1)),
+            "planejado" => a.insert("progresso".into(), json!(0)),
+            _ => None,
+        };
+        true
+    }
+
+    /// Empurra o fim da ação (`prorrogarAcao`): só o fim se afasta, e os checkpoints continuam dentro do período. `false` se o fim não é uma data.
+    pub fn prorrogar(&mut self, workspace: &str, blueprint: &str, acao: &str, dias: i64) -> bool {
+        let Some(a) = self.acao_mut(workspace, blueprint, acao) else { return false };
+        let Some(fim) = a.get("fim").and_then(Value::as_str).and_then(dia) else { return false };
+        a.insert("fim".into(), json!(iso_do_dia(fim + dias)));
+        true
+    }
+
+    pub fn excluir_acao(&mut self, workspace: &str, blueprint: &str, acao: &str) -> bool {
+        let lista = self.workspace_mut(workspace).and_then(|w| w.get_mut("blueprints")?.as_array_mut()?.iter_mut().find(|b| texto(b, "id") == blueprint)).and_then(|b| b.get_mut("acoes")?.as_array_mut());
+        let Some(lista) = lista else { return false };
+        let antes = lista.len();
+        lista.retain(|a| texto(a, "id") != acao);
+        lista.len() != antes
+    }
+
+    pub fn excluir_blueprint(&mut self, workspace: &str, blueprint: &str) -> bool {
+        let Some(lista) = self.workspace_mut(workspace).and_then(|w| w.get_mut("blueprints")?.as_array_mut()) else { return false };
+        let antes = lista.len();
+        lista.retain(|b| texto(b, "id") != blueprint);
+        lista.len() != antes
     }
 
     /// O texto das observações do blueprint (`acao` vazia) ou da ação.

@@ -9,6 +9,9 @@ const LIMITE_MUDANCAS: usize = 2 * 1024 * 1024;
 const LIMITE_PROTOTIPO: usize = crate::mcp::acoes::PROTOTIPO_MAX + 64 * 1024;
 /// O conteúdo e as figuras (até 2 MB juntos, contrato das apresentações) mais o que o JSON escapa.
 const LIMITE_APRESENTACAO: usize = crate::apresentacao::validar::TOTAL_MAX + 256 * 1024;
+/// A figura de um plano (4 MiB no máximo) em base64.
+const LIMITE_FIGURA_PLANO: usize = 6 << 20;
+const LIMITE_ESCRITA_PLANO: usize = 2 << 20;
 
 /// Quanto corpo cada rota aceita (o Node decide isto ao ler o corpo; aqui se decide antes de ler).
 pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
@@ -17,6 +20,8 @@ pub fn limite_corpo(metodo: &str, caminho: &str) -> usize {
         ("POST", "/api/mudancas") => LIMITE_MUDANCAS,
         (_, "/api/mcp/prototipo") => LIMITE_PROTOTIPO,
         (_, "/api/mcp/apresentacao" | "/api/mcp/apresentacao/editar" | "/mcp") => LIMITE_APRESENTACAO, // /mcp também leva anexar_prototipo e anexar_apresentacao (o maior dos dois)
+        (_, "/api/mcp/plano/figura") => LIMITE_FIGURA_PLANO,
+        (_, "/api/mcp/plano/abrir" | "/api/mcp/plano/escrever") => LIMITE_ESCRITA_PLANO,
         _ => LIMITE_PADRAO,
     }
 }
@@ -101,6 +106,11 @@ fn rotear(estado: &Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     }
     if caminho == "/api/app/mostrar" {
         return mostrar_janela(estado, pedido);
+    }
+    // a árvore é o plano vigente: com a janela nativa aberta, gravá-la é gesto do usuário (D7)
+    let grava_arvore = (pedido.metodo == "PUT" && caminho == "/api/dados") || (pedido.metodo == "POST" && caminho == "/api/mudancas");
+    if grava_arvore && ctx.local && estado.mcp.tem_janela() && !crate::mcp::planejar::gesto_ok(&estado.mcp, pedido) {
+        return crate::mcp::planejar::gesto_negado();
     }
     if caminho == "/api/dados" {
         return api_dados::rota(estado, pedido, ctx);

@@ -1,34 +1,36 @@
 //! A folha do workspace: a lista de blueprints, desenhada como a prancha de plotagem da página (`capa` em web/js/render.js), em coordenadas
-//! do SVG dela. O blueprint aberto (a linha do tempo das ações) ainda é da versão web: o clique no cartão abre lá.
+//! do SVG dela. O blueprint aberto é o Planejar (`plano/`); `blueprint::tela` é a folha antiga, atrás do botão «Folha antiga», onde ainda ficam período, Pendentes e busca.
 
 mod acoes;
-mod barra;
-mod blueprint;
+pub(crate) mod barra;
+pub(crate) mod blueprint;
 mod cartao;
-mod cena;
+pub(crate) mod cena;
 pub(crate) mod claude;
-mod controles;
+pub(crate) mod controles;
 mod disposicao;
 mod figuras;
 mod movimento;
-mod pagina;
-mod regua;
+pub(crate) mod pagina;
+pub(crate) mod regua;
 mod secao;
 
 pub use blueprint::tela as blueprint_aberto;
+pub(crate) use pagina::corta;
 
 use crate::documento::{self, Documento, RAIZ};
 use crate::dominio;
 use crate::emblema;
 use crate::fonte::Peso;
 use crate::i18n::{tr, tr_com, trn};
+use crate::menu::Alvo;
 use crate::pesquisa;
 use crate::planta::{self, Papel};
 use crate::telas::{Acao, Tela, Vista};
 use crate::tema::{rgba, MEDIO, TINTA};
 use cena::{Ancora, Cena};
 use egui::{vec2, Rect, Sense, Ui};
-use pagina::{corta, Carimbo, Medidas, IL};
+use pagina::{Carimbo, Medidas, IL};
 
 const TH: f32 = 152.0;
 const GAP: f32 = 24.0;
@@ -95,6 +97,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let (pagina_r, _) = ui.allocate_exact_size(vec2(w, h), Sense::hover());
         let p = ui.painter().clone();
         planta::papel(&p, pagina_r, Papel::Entrada);
+        crate::menu::marcar(ui, pagina_r, || Alvo::Lista { ws: id.to_string(), nome: empresa.clone() });
         let c = Cena { p: &p, o: pagina_r.min };
         let x_mes = |m: usize| {
             let t = documento::dia(&format!("{}-01", dominio::mes_iso(janela.inicio + m as i64))).unwrap_or(0);
@@ -122,6 +125,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
             ancoras.borrow_mut().insert(crate::agentes::Lugar::Cab(texto(p, "id")), (m.x, m.y, m.w, m.h));
             let area = Rect::from_min_size(c.pt(m.x, m.y), vec2(m.w, m.h));
             let resposta = ui.interact(area, ui.scope_id().with(("bp", texto(p, "id"))), Sense::click());
+            crate::menu::marcar(ui, area, || Alvo::Cartao { ws: id.to_string(), id: texto(p, "id"), nome: texto(p, "nome") });
             let onde = achados.get(i).and_then(|(_, o)| o.as_deref());
             let arte = cartao::desenhar(&c, &m, p, hoje, resposta.hovered() || resposta.has_focus(), onde.map(|o| (o, termos.as_slice())));
             emblema::pintar_construcao(ui, Rect::from_min_size(c.pt(arte.x, arte.y), vec2(arte.w, arte.h)), arte.progresso);
@@ -147,7 +151,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let area = Rect::from_min_size(c.pt(nx, ny), vec2(tw, TH));
         let resposta = ui.interact(area, ui.scope_id().with("novo-bp"), Sense::click());
         let realce = resposta.hovered() || resposta.has_focus();
-        c.retangulo(nx, ny, tw, TH, Some(if realce { rgba(0x1d4880, 0x66) } else { rgba(0x113360, 0x40) }), None);
+        c.retangulo(nx, ny, tw, TH, Some(if realce { rgba(0x17539f, 0x66) } else { rgba(0x0c3a78, 0x40) }), None);
         c.moldura(nx, ny, tw, TH, if realce { TINTA } else { crate::tema::BAIXO }, 1.0, true);
         let (art_w, art_x) = ((tw * 0.24).round().clamp(76.0, 108.0), nx + 12.0);
         emblema::pintar_construcao(ui, Rect::from_min_size(c.pt(art_x, ny + 26.0), vec2(art_w, TH - 52.0)), 1.0);
@@ -155,7 +159,7 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, doc: &Documento, id: &str, servidor
         let texto_w = mais_x - 12.0 - texto_x;
         c.texto(&corta(&tr("NOVO BLUEPRINT"), (texto_w / 7.2).floor() as usize), texto_x, ny + 68.0, 12.0, Peso::Normal, TINTA, Ancora::Inicio, true);
         c.texto(&corta(&tr("ADICIONAR BLUEPRINT"), (texto_w / 6.0).floor() as usize), texto_x, ny + 94.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
-        c.retangulo(mais_x, ny + TH / 2.0 - 18.0, 36.0, 36.0, Some(if realce { rgba(0x1d4880, 0xff) } else { rgba(0x113360, 0x40) }), Some((if realce { TINTA } else { crate::tema::BAIXO }, 1.0)));
+        c.retangulo(mais_x, ny + TH / 2.0 - 18.0, 36.0, 36.0, Some(if realce { rgba(0x17539f, 0xff) } else { rgba(0x0c3a78, 0x40) }), Some((if realce { TINTA } else { crate::tema::BAIXO }, 1.0)));
         let cm = ny + TH / 2.0;
         c.fio(MEDIO, 2.0, (mais_x + 18.0, cm - 9.0), (mais_x + 18.0, cm + 9.0));
         c.fio(MEDIO, 2.0, (mais_x + 9.0, cm), (mais_x + 27.0, cm));

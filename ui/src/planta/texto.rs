@@ -80,9 +80,6 @@ impl<'a> Texto<'a> {
     pub fn largura(&self, p: &Painter) -> f32 {
         self.galeria(p).size().x + self.trilha
     }
-    pub fn altura(&self, p: &Painter) -> f32 {
-        self.galeria(p).size().y
-    }
     /// Pinta com o canto de cima à esquerda em `pos`.
     pub fn em(&self, p: &Painter, pos: Pos2) -> Rect {
         let g = self.galeria(p);

@@ -21,6 +21,7 @@ pub mod mcp;
 #[cfg(not(windows))]
 pub mod nativa;
 pub mod blueprint;
+pub mod plano;
 pub mod registrar;
 pub mod repositorio;
 pub mod sincronia;

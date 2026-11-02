@@ -3,17 +3,17 @@
 .ap-ed-topo b{text-transform:uppercase;letter-spacing:.08em;font-size:12px}
 .ap-ed-estado{flex:1;min-width:0;font-size:11px;color:var(--mid)}
 .ap-ed-estado[data-estado=erro]{color:var(--erro,#ffb4a8)}
-.ap-ed-avisos:not(:empty){margin:8px 0;padding:8px 10px;border:1px solid var(--lo);background:#11336099;font-size:11px;line-height:1.4}
+.ap-ed-avisos:not(:empty){margin:8px 0;padding:8px 10px;border:1px solid var(--lo);background:#0c3a7899;font-size:11px;line-height:1.4}
 .ap-ed-avisos ul{margin:4px 0 0;padding-left:16px}.ap-ed-avisos .erro{color:var(--erro,#ffb4a8)}
 .ap-ed-sub{margin:10px 0 4px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
-.ap-ed-sec{border:1px solid var(--lo);background:#11336066;margin-bottom:8px}
+.ap-ed-sec{border:1px solid var(--lo);background:#0c3a7866;margin-bottom:8px}
 .ap-ed-sec>summary{cursor:pointer;padding:9px 12px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;display:flex;justify-content:space-between;gap:8px}
-.ap-ed-sec>summary:hover,.ap-ed-sec>summary:focus-visible{background:#1d488066;outline:none}
+.ap-ed-sec>summary:hover,.ap-ed-sec>summary:focus-visible{background:#17539f66;outline:none}
 .ap-ed-n{color:var(--mid)}
 .ap-ed-corpo{padding:8px 12px 12px;display:grid;gap:8px}
 .ap-ed-c{display:grid;gap:3px;font-size:11px;color:var(--mid)}
 .ap-ed-c span{letter-spacing:.06em}
-.ap-ed-sec input,.ap-ed-sec select,.ap-ed-sec textarea,.ap-cv textarea{width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--lo);background:#0c264b;color:var(--ink);font:12px var(--mono)}
+.ap-ed-sec input,.ap-ed-sec select,.ap-ed-sec textarea,.ap-cv textarea{width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid var(--lo);background:#082b5e;color:var(--ink);font:12px var(--mono)}
 .ap-ed-sec textarea,.ap-cv textarea{resize:vertical;line-height:1.4}
 .ap-ed-sec input:focus-visible,.ap-ed-sec select:focus-visible,.ap-ed-sec textarea:focus-visible,.ap-cv textarea:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
 .ap-ed-sec [aria-invalid=true]{border-color:var(--erro,#ffb4a8)}

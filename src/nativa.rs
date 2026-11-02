@@ -46,6 +46,10 @@ fn executar(dev: bool) -> Resultado<()> {
     }
     let servidor = http::iniciar_ou_porta_livre(config)?;
     instancia::registrar_porta(servidor.porta);
+    // só aqui: `blueprint serve` não pega a trava de `instancia::garantir`, e dois motores no mesmo banco lançariam em dobro
+    crate::mcp::planejar::motor::ligar(std::sync::Arc::downgrade(&servidor.estado));
+    // o token do gesto vai à janela por chamada de função, nunca por env nem arquivo; daí em diante as escritas da árvore exigem o cabeçalho (D7)
+    blueprint_ui::rede::definir_gesto(servidor.estado.mcp.ligar_janela());
     let banco = servidor.estado.config.banco.clone();
     std::thread::spawn(move || {
         // no máximo uma cópia por dia; falhar aqui nunca impede o app de abrir

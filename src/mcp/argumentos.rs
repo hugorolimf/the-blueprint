@@ -57,3 +57,24 @@ pub(super) fn plano_se_houver(a: &Value) -> Result<Map<String, Value>, String> {
     if a.get("plano_id").is_some_and(|v| crate::blueprint::verdade(Some(v))) { plano(a) } else { Ok(alvo(a)) }
 }
 
+pub(super) fn ambiente(chave: &str) -> Option<String> {
+    std::env::var(chave).ok()
+}
+
+/// O que o invólucro deixa no ambiente do agente de um plano (`BLUEPRINT_EXECUCAO*`, seção 7) entra em todo evento; `execucao_segredo` é para quem não repassa o ambiente ao MCP, como pode ser o Codex.
+pub(super) fn com_execucao(mut m: Map<String, Value>, a: &Value, env: &dyn Fn(&str) -> Option<String>) -> Map<String, Value> {
+    let de_env = |chave: &str| env(chave).filter(|v| !v.trim().is_empty());
+    let segredo = a.get("execucao_segredo").and_then(Value::as_str).filter(|s| !s.trim().is_empty()).map(String::from).or_else(|| de_env("BLUEPRINT_EXECUCAO_SEGREDO"));
+    if let Some(s) = segredo {
+        m.insert("execucaoSegredo".into(), json!(s));
+    }
+    if let Some(id) = de_env("BLUEPRINT_EXECUCAO") {
+        m.insert("execucaoId".into(), json!(id));
+    }
+    if !m.contains_key("agente") {
+        if let Some(nome) = de_env("BLUEPRINT_AGENTE_NOME") {
+            m.insert("agente".into(), json!(nome));
+        }
+    }
+    m
+}

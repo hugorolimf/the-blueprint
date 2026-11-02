@@ -1,0 +1,118 @@
+{
+  "avisos": [
+    "1.2.2 espera 1.2.1 ficar pronto."
+  ],
+  "limite": 4,
+  "numeros": {
+    "esperando": 1,
+    "fila": 0,
+    "parados": 0,
+    "prontos": 2,
+    "trabalhando": 1
+  },
+  "orquestrador": {
+    "acordado": false,
+    "agora": [
+      "Chamou um agente para 1.2.1",
+      "1.1.1: concluído com evidência",
+      "1.1.2: concluído com evidência"
+    ],
+    "ligado": false
+  },
+  "planos": [
+    {
+      "acaoId": "id-1",
+      "area": "coleta",
+      "blueprintId": "id-2",
+      "blueprintNome": "Monitor de consumo",
+      "causa": "",
+      "dependeDe": [],
+      "destino": "main",
+      "execucaoId": "id-3",
+      "id": "id-4",
+      "motivo": "",
+      "podeCancelar": false,
+      "podeIntegrar": true,
+      "podeRetomar": false,
+      "por": "",
+      "ramo": "agente/1.1.1",
+      "ref": "1.1.1",
+      "semSinal": false,
+      "situacao": "pronto",
+      "subagentes": 0,
+      "texto": "Ler os medidores pela rede local"
+    },
+    {
+      "acaoId": "id-1",
+      "area": "banco",
+      "blueprintId": "id-2",
+      "blueprintNome": "Monitor de consumo",
+      "causa": "",
+      "dependeDe": [
+        "1.1.1"
+      ],
+      "destino": "main",
+      "execucaoId": "id-5",
+      "id": "id-6",
+      "motivo": "",
+      "podeCancelar": false,
+      "podeIntegrar": true,
+      "podeRetomar": false,
+      "por": "",
+      "ramo": "agente/1.1.2",
+      "ref": "1.1.2",
+      "semSinal": false,
+      "situacao": "pronto",
+      "subagentes": 0,
+      "texto": "Guardar as leituras"
+    },
+    {
+      "acaoId": "id-7",
+      "area": "painel/dados",
+      "blueprintId": "id-2",
+      "blueprintNome": "Monitor de consumo",
+      "causa": "",
+      "dependeDe": [
+        "1.1.2"
+      ],
+      "destino": "",
+      "execucaoId": "id-8",
+      "id": "id-9",
+      "motivo": "",
+      "podeCancelar": true,
+      "podeIntegrar": false,
+      "podeRetomar": false,
+      "por": "",
+      "ramo": "agente/1.2.1",
+      "ref": "1.2.1",
+      "semSinal": false,
+      "situacao": "trabalhando",
+      "subagentes": 0,
+      "texto": "Somar as leituras"
+    },
+    {
+      "acaoId": "id-7",
+      "area": "painel/tela",
+      "blueprintId": "id-2",
+      "blueprintNome": "Monitor de consumo",
+      "causa": "",
+      "dependeDe": [
+        "1.2.1"
+      ],
+      "destino": "",
+      "execucaoId": "id-10",
+      "id": "id-11",
+      "motivo": "",
+      "podeCancelar": true,
+      "podeIntegrar": false,
+      "podeRetomar": false,
+      "por": "1.2.1",
+      "ramo": "",
+      "ref": "1.2.2",
+      "semSinal": false,
+      "situacao": "dependencia",
+      "subagentes": 0,
+      "texto": "Uma barra por sala no painel"
+    }
+  ]
+}

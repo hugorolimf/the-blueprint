@@ -2,7 +2,7 @@
 // rótulos em caixa alta com espaçamento, botões contornados e um só botão cheio por tela. Tudo em SVG, porque a nota do Obsidian
 // tira <style>: cada figura leva as cores nos próprios atributos.
 
-export const COR = { papel: "#113360", fundo: "#0c264b", claro: "#194680", tinta: "#eaf4ff", medio: "#9cc4ee", baixo: "#5b93d0", tenue: "#2f66aa", erro: "#ffb4a8", barra: "#0c264b" };
+export const COR = { papel: "#0c3a78", fundo: "#082b5e", claro: "#1250a0", tinta: "#eaf4ff", medio: "#9cc4ee", baixo: "#5b93d0", tenue: "#2f66aa", erro: "#ffb4a8", barra: "#082b5e" };
 export const FONTE = "'Cascadia Mono','Cascadia Code',ui-monospace,Consolas,monospace";
 /** A Cascadia avança 1200/2048 do tamanho por letra. */
 const AVANCO = 0.5859375;
@@ -49,7 +49,7 @@ export function botao(x, y, t, { cheio = false, mini = false, ativo } = {}) {
   const tam = mini ? 10 : 11, px = mini ? 9 : 14, h = mini ? 24 : 32;
   const w = Math.round(largura(t.toUpperCase(), tam, 0.1) + 2 * px);
   const marcado = cheio || ativo;
-  const s = ret(x, y, w, h, { fill: marcado ? "tinta" : "#113360cc", stroke: marcado ? "tinta" : "medio" }) +
+  const s = ret(x, y, w, h, { fill: marcado ? "tinta" : "#0c3a78cc", stroke: marcado ? "tinta" : "medio" }) +
     txt(x + px, y + h / 2 + tam * 0.36, t, { tam, caixa: true, c: marcado ? "papel" : "tinta", peso: cheio ? 700 : 400 });
   return [s, w];
 }
@@ -59,7 +59,7 @@ export const canto = (x, y, l = 22) => `<path d="M${x} ${y + l}V${y}H${x + l}" f
 
 /** Um cartão: fundo um pouco mais escuro, contorno baixo (tracejado se `pontilhado`) e a cantoneira. */
 export const cartao = (x, y, w, h, { pontilhado = false, marcado = false } = {}) =>
-  ret(x, y, w, h, { fill: marcado ? "#1a467d" : "#0c264b", stroke: marcado ? "tinta" : "baixo", dash: pontilhado ? "4 3" : undefined, op: 1 }) + canto(x, y);
+  ret(x, y, w, h, { fill: marcado ? "#14509b" : "#082b5e", stroke: marcado ? "tinta" : "baixo", dash: pontilhado ? "4 3" : undefined, op: 1 }) + canto(x, y);
 
 /** Rótulo de seção: 10 px, caixa alta, médio, e a linha baixa embaixo até `x + w`. */
 export const rotulo = (x, y, t, w) => txt(x, y, t, { tam: 10, caixa: true, c: "medio", trilha: 0.14 }) + (w ? fio(x, y + 7, x + w, y + 7, { c: "baixo", op: 0.8 }) : "");
@@ -81,3 +81,24 @@ export function papel(id, w, h) {
 /** A figura inteira: `corpo` desenhado sobre o papel, com a fonte do app. */
 export const quadro = (id, w, h, corpo, legenda) =>
   `<svg viewBox="0 0 ${w} ${h}" width="100%" role="img" aria-label="${esc(legenda)}" style="display:block;font-family:${FONTE}" font-family="${FONTE}">${papel(id, w, h)}${corpo}</svg>`;
+
+/** Texto em várias linhas: quebra por palavra até `max` de largura; devolve [svg, altura usada]. */
+export function linhas(x, y, t, { tam = 11, passo, max, maxLinhas = 99, ...op } = {}) {
+  const dy = passo ?? Math.round(tam * 1.5), saida = [];
+  let atual = "";
+  for (const p of String(t).split(/\s+/)) {
+    const nova = atual ? `${atual} ${p}` : p;
+    if (largura(nova, tam) > max && atual) { saida.push(atual); atual = p; } else atual = nova;
+  }
+  if (atual) saida.push(atual);
+  const corte = saida.length > maxLinhas;
+  const vis = saida.slice(0, maxLinhas);
+  if (corte) vis[maxLinhas - 1] = vis[maxLinhas - 1].replace(/\s*\S*$/, "") + "…";
+  return [vis.map((l, i) => txt(x, y + i * dy, l, { tam, ...op })).join(""), vis.length * dy];
+}
+
+/** Uma figura do plano dentro de um quadro (x, y, w, h), inteira e centrada; sem SVG, o nome do arquivo. */
+export function figuraEm(d, x, y, w, h) {
+  if (!d.svg) return ret(x, y, w, h, { fill: "#082b5e", stroke: "baixo", dash: "4 3" }) + txt(x + w / 2, y + h / 2 + 4, d.figura ?? d.titulo ?? "", { tam: 10, c: "medio", meio: true, max: w - 16 });
+  return d.svg.replace(/<\?xml[^>]*>/, "").replace(/<svg\b([^>]*)>/, (_, a) => `<svg${a.replace(/\s(xmlns|width|height|x|y|style|role)="[^"]*"/g, "")} x="${x}" y="${y}" width="${Math.max(1, w)}" height="${Math.max(1, h)}">`);
+}

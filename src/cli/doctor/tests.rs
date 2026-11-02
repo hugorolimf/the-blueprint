@@ -13,12 +13,13 @@ pub(super) fn temp(nome: &str) -> PathBuf {
     p
 }
 
-/// Um banco em WAL (como o do app) com a tabela `pastas` da migração real e uma pasta ligada.
+/// Um banco em WAL (como o do app) com a tabela `pastas` das migrações reais (a 009 traz `caminho_real`) e uma pasta ligada.
 pub(super) fn banco_com_pasta(pasta_app: &Path, cwd: &str, ws: &str, bp: &str) -> PathBuf {
     let arquivo = pasta_app.join("blueprint.db");
     let conn = rusqlite::Connection::open(&arquivo).unwrap();
     conn.query_row("PRAGMA journal_mode = WAL", [], |_| Ok(())).unwrap();
     conn.execute_batch(include_str!("../../dados/migracoes/003_pastas.sql")).unwrap();
+    conn.execute_batch(include_str!("../../dados/migracoes/009_planejar.sql")).unwrap();
     crate::dados::pastas::vincular(&conn, cwd, ws, bp).unwrap();
     drop(conn);
     arquivo

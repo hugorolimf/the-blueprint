@@ -1,6 +1,6 @@
 //! Testes do MCP: a fila, o SSE e o servidor stdio (o que não precisa de um servidor HTTP de pé).
 use super::cliente::codificar;
-use super::stdio::tratar;
+use super::stdio::{tratar, tratar_via};
 use super::{FluxoSse, Mcp};
 use crate::idioma::{com, Idioma};
 use serde_json::{json, Map, Value};
@@ -136,6 +136,10 @@ fn encodeuricomponent() {
     assert_eq!(codificar("it's (ok)!~*"), "it's%20(ok)!~*");
 }
 
+fn sem_rede(_: &str, _: &str, _: Option<&str>) -> Result<(u16, String), String> {
+    Err("sem rede".into())
+}
+
 fn rpc(metodo: &str, params: Value) -> Value {
     tratar(&json!({"jsonrpc": "2.0", "id": 7, "method": metodo, "params": params})).unwrap()
 }
@@ -146,22 +150,39 @@ fn o_servidor_stdio_se_apresenta_como_o_de_node() {
     assert_eq!((r["id"].as_i64(), r["result"]["protocolVersion"].as_str()), (Some(7), Some("2025-03-26")));
     assert_eq!(r["result"]["serverInfo"], json!({"name": "blueprint", "version": "2.0.0"}));
     assert_eq!(rpc("initialize", json!({"protocolVersion": "1999"}))["result"]["protocolVersion"], "2025-06-18");
-    // o que o Codex lê: regras e nomes das ferramentas nos primeiros 512 caracteres
-    let inicio: String = r["result"]["instructions"].as_str().unwrap().chars().take(512).collect();
-    for t in ["ALWAYS up to date", "CLAUDE.md", "listar_blueprints", "propor_blueprint", "registrar_progresso", "marcar_concluido", "marcar_checkpoint_feito", "reportar_bloqueio", "registrar_trabalho", "auto-applied"] {
-        assert!(inicio.contains(t), "instruções: {t} nos primeiros 512");
-    }
     assert_eq!(rpc("ping", json!({}))["result"], json!({}));
+}
+
+#[test]
+fn os_dois_textos_dizem_a_regra_nos_primeiros_512() {
+    // o que o Codex lê: regras e nomes das ferramentas nos primeiros 512 caracteres
+    const COMUNS: [&str; 8] = ["ALWAYS up to date", "CLAUDE.md", "listar_blueprints", "registrar_progresso", "marcar_concluido", "marcar_checkpoint_feito", "reportar_bloqueio", "registrar_trabalho"];
+    let inicio_de = |r: Value| -> String { r["result"]["instructions"].as_str().unwrap().chars().take(512).collect() };
+    let http = inicio_de(tratar_via(&json!({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}), Some(&sem_rede)).unwrap());
+    for t in COMUNS.iter().chain(&["propor_blueprint", "auto-applied", "agente, estado, onde"]) {
+        assert!(http.contains(t), "instrucoes.txt: {t} nos primeiros 512");
+    }
+    assert!(!http.contains("abrir_plano"));
+    let planejar: String = include_str!("instrucoes_planejar.txt").chars().take(512).collect();
+    for t in COMUNS.iter().chain(&["abrir_plano", "escrever_acao", "fechar_plano", "salvar_plano", "agente, estado, onde", "execucao_segredo", "guia_de_planejamento", "Only the user approves"]) {
+        assert!(planejar.contains(t), "instrucoes_planejar.txt: {t} nos primeiros 512");
+    }
+    assert!(!include_str!("instrucoes_planejar.txt").contains("propor_blueprint"), "sem consumidor, ela sai do texto (D11)");
+    assert_eq!(inicio_de(rpc("initialize", json!({}))), if cfg!(windows) { http } else { planejar }, "`--mcp`: o Planejar fora do Windows");
 }
 
 #[test]
 fn as_ferramentas_do_mcp() {
     let r = rpc("tools/list", json!({}));
     let nomes: Vec<&str> = r["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect();
-    assert_eq!(
-        nomes,
-        ["listar_blueprints", "guia_de_planejamento", "ler_blueprint", "propor_blueprint", "registrar_trabalho", "anexar_prototipo", "anexar_apresentacao", "ler_apresentacao", "editar_apresentacao", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta", "responder_conversa"]
-    );
+    const ANTES: [&str; 3] = ["listar_blueprints", "guia_de_planejamento", "ler_blueprint"];
+    const DEPOIS: [&str; 14] = ["propor_blueprint", "registrar_trabalho", "anexar_prototipo", "anexar_apresentacao", "ler_apresentacao", "editar_apresentacao", "registrar_progresso", "marcar_concluido", "marcar_nao_concluido", "marcar_checkpoint_feito", "marcar_checkpoint_nao_feito", "reportar_bloqueio", "vincular_pasta", "responder_conversa"];
+    const PLANEJAR: [&str; 8] = ["ler_plano", "ler_respostas", "ler_workspace", "abrir_plano", "escrever_acao", "fechar_plano", "salvar_plano", "falar_com_voce"];
+    let sem_planejar = [&ANTES[..], &DEPOIS[..]].concat();
+    let com_planejar = [&ANTES[..], &PLANEJAR[..], &DEPOIS[..]].concat();
+    assert_eq!(&nomes, if cfg!(windows) { &sem_planejar } else { &com_planejar });
+    let http = tratar_via(&json!({"jsonrpc": "2.0", "id": 7, "method": "tools/list", "params": {}}), Some(&sem_rede)).unwrap();
+    assert_eq!(http["result"]["tools"].as_array().unwrap().iter().map(|t| t["name"].as_str().unwrap()).collect::<Vec<_>>(), sem_planejar);
     let propor = r["result"]["tools"].as_array().unwrap().iter().find(|t| t["name"] == "propor_blueprint").unwrap();
     assert!(propor["inputSchema"]["properties"].get("remover").is_some(), "a ferramenta já conhece mover e apagar");
 }
@@ -177,7 +198,7 @@ fn propor_blueprint_conhece_a_fila_e_o_agente_aprende_a_ajustar() {
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
     let editar = editar["result"]["content"][0]["text"].as_str().unwrap();
     assert!(editar.contains("ajustar: <number>") && editar.contains("+a1.p2") && editar.contains("substituir"), "o guia explica o ajuste");
-    let instrucoes = rpc("initialize", json!({}))["result"]["instructions"].as_str().unwrap().to_string();
+    let instrucoes = tratar_via(&json!({"jsonrpc": "2.0", "id": 7, "method": "initialize", "params": {}}), Some(&sem_rede)).unwrap()["result"]["instructions"].as_str().unwrap().to_string();
     assert!(instrucoes.contains("ajustar: <number>"), "as instruções falam do ajuste");
     let inicio: String = instrucoes.chars().take(512).collect();
     assert!(inicio.contains("propor_blueprint") && inicio.contains("ALWAYS up to date"), "a regra e os nomes continuam nos primeiros 512");
@@ -230,7 +251,7 @@ fn o_guia_vem_por_partes_sem_o_cabecalho() {
     assert!(texto.starts_with("# Plan a blueprint") && !texto.contains("description:"), "{}", &texto[..60.min(texto.len())]);
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
     assert!(editar["result"]["content"][0]["text"].as_str().unwrap().contains("Move"));
-    for topico in ["planejar", "editar", "executar", "prototipos", "importar", "apresentar", "apresentacao_ia", "apresentacao_conteudo", "apresentacao_figuras", "apresentacao_ajustar"] {
+    for topico in ["planejar", "plano", "editar", "executar", "prototipos", "importar", "apresentar", "apresentacao_ia", "apresentacao_conteudo", "apresentacao_figuras", "apresentacao_ajustar"] {
         let r = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": topico}}));
         assert!(r["result"]["content"][0]["text"].as_str().unwrap().chars().count() < 4500, "o tópico {topico} cabe em menos de 4.500 caracteres"); // o guia em inglês é ~5% mais longo que o português (era 4.000)
     }

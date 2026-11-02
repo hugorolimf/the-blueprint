@@ -1,0 +1,107 @@
+{
+  "formato": "blueprint.plano/1",
+  "blueprint": "Biblioteca de datas",
+  "resumo": "Um pacote sem nenhuma tela: o plano é só texto, tabelas e decisões.",
+  "projetos": [
+    {
+      "nome": "Versão 2.0",
+      "acoes": [
+        {
+          "id": "1",
+          "nome": "Nova API de fusos",
+          "de": "2026-11-03",
+          "ate": "2026-11-14",
+          "planos": [
+            {
+              "id": "1.1",
+              "texto": "Separar data de fuso",
+              "area": "src/fusos"
+            },
+            {
+              "id": "1.2",
+              "texto": "Manter a API antiga por uma versão",
+              "area": "src/compat",
+              "depende_de": [
+                "1.1"
+              ]
+            },
+            {
+              "id": "1.3",
+              "texto": "Guia de migração",
+              "area": "docs",
+              "depende_de": [
+                "1.1"
+              ]
+            }
+          ],
+          "checkpoints": [
+            {
+              "texto": "Todos os testes antigos passando",
+              "data": "2026-11-14"
+            }
+          ],
+          "tabelas": [
+            {
+              "titulo": "O que muda na API",
+              "colunas": [
+                "Hoje",
+                "Na 2.0",
+                "Quebra?"
+              ],
+              "larguras": [
+                0.4,
+                0.4,
+                0.2
+              ],
+              "linhas": [
+                [
+                  "parse(txt, fuso)",
+                  "parse(txt).em(fuso)",
+                  "não, com aviso"
+                ],
+                [
+                  "agora()",
+                  "agora(fuso)",
+                  "sim"
+                ]
+              ]
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "nome": "Publicar",
+          "planos": [
+            {
+              "id": "2.1",
+              "texto": "Notas da versão",
+              "area": "docs",
+              "depende_de": [
+                "1.3"
+              ]
+            },
+            {
+              "id": "2.2",
+              "texto": "Publicar o pacote",
+              "area": "publicacao",
+              "depende_de": [
+                "2.1"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "decisoes": [
+    {
+      "id": "semver",
+      "rotulo": "Compatibilidade",
+      "texto": "A API antiga continua por uma versão inteira, com aviso.",
+      "acoes": [
+        "1"
+      ],
+      "pede_aprovacao": true
+    }
+  ]
+}

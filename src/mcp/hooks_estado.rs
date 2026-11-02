@@ -8,7 +8,7 @@
 //! Só presença: grava na atividade do agente (a folha mostra a figura no estado), sem item na fila e sem linha do tempo, porque um pedido de permissão
 //! é comum e encheria o limite de 50 eventos da ação. A resposta é sempre `{}`: sem `decision`, o hook nunca decide permissão nem segura o Claude Code.
 //! Sessão sem blueprint ou evento que não é destes: não faz nada. `PostToolUseFailure` fica de fora de propósito (uma ferramenta que falha é rotina).
-use super::hooks::{alvo, evento_de, identidade, texto};
+use super::hooks::{alvo, evento_de, identidade_local, no_plano, texto};
 use super::Mcp;
 use crate::dados::Dados;
 use crate::http::pedido::ErroHttp;
@@ -52,8 +52,9 @@ fn transicao(corpo: &Value) -> Option<(&'static str, String)> {
 pub fn estado(mcp: &Mcp, dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     let Some((estado, frase)) = transicao(corpo) else { return Ok(json!({})) };
     let Some((ws, bp)) = alvo(mcp, dados, corpo)? else { return Ok(json!({})) };
-    let (nome, papel, _) = identidade(corpo);
-    let evento = evento_de(mcp, &nome, papel, &ws, &bp, &frase, estado);
+    let (nome, papel, execucao) = identidade_local(dados, corpo)?;
+    let mut evento = evento_de(mcp, &nome, papel, &ws, &bp, &frase, estado);
+    no_plano(&mut evento, execucao.as_ref());
     // o mesmo mapa que `acoes::evento` entrega à atividade: o nome vai à parte e o texto é a mensagem
     let mut atividade = evento.as_object().cloned().unwrap_or_default();
     atividade.remove("agente");

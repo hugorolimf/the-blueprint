@@ -1,0 +1,93 @@
+{
+  "formato": "blueprint.plano/1",
+  "blueprint": "Reforma do escritório",
+  "resumo": "Nem é software: a mesma folha, com a planta no lugar de uma tela.",
+  "projetos": [
+    {
+      "acoes": [
+        {
+          "id": "1",
+          "nome": "Abrir a sala",
+          "de": "2026-11-09",
+          "ate": "2026-11-20",
+          "planos": [
+            {
+              "id": "1.1",
+              "texto": "Aprovar a planta",
+              "area": "projeto"
+            },
+            {
+              "id": "1.2",
+              "texto": "Remover a parede",
+              "area": "sala",
+              "depende_de": [
+                "1.1"
+              ]
+            },
+            {
+              "id": "1.3",
+              "texto": "Refazer a elétrica",
+              "area": "eletrica",
+              "depende_de": [
+                "1.2"
+              ]
+            }
+          ],
+          "checkpoints": [
+            {
+              "texto": "Vistoria da elétrica",
+              "data": "2026-11-20"
+            }
+          ],
+          "detalhes": [
+            {
+              "id": "01",
+              "titulo": "A planta nova",
+              "legenda": "A parede tracejada sai; a sala aberta fica com 48 m².",
+              "figura": "figuras/planta.svg",
+              "pede_aprovacao": true
+            }
+          ]
+        },
+        {
+          "id": "2",
+          "nome": "Mudar as equipes",
+          "de": "2026-11-23",
+          "ate": "2026-11-27",
+          "planos": [
+            {
+              "id": "2.1",
+              "texto": "Mudar os computadores",
+              "area": "equipes",
+              "depende_de": [
+                "1.3"
+              ]
+            },
+            {
+              "id": "2.2",
+              "texto": "Testar a rede",
+              "area": "rede",
+              "depende_de": [
+                "1.3"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "perguntas": [
+    {
+      "id": "P1",
+      "texto": "A obra pode ser no fim de semana?",
+      "opcoes": [
+        "Sim",
+        "Não"
+      ],
+      "recomendada": 0,
+      "acoes": [
+        "1"
+      ]
+    }
+  ]
+}

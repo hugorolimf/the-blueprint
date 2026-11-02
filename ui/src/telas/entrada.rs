@@ -2,7 +2,7 @@
 //! Tudo é posicionado em pixels do CSS a partir do canto da página, com as medidas tiradas da própria tela web.
 
 use super::{Acao, Tela, Vista};
-use crate::documento::{Documento, Resumo, RAIZ};
+use crate::documento::{Documento, Resumo};
 use crate::emblema;
 use crate::fonte::Peso;
 use crate::i18n::{tr, tr_com, trn};
@@ -19,14 +19,6 @@ enum Bloco {
     Nada,
     /// a linha «O workspace X é o exemplo»
     Exemplo(Resumo),
-    /// os três caminhos de quem abre o app vazio
-    Passos(PassosMedidos),
-}
-
-/// A altura dos três cartões de primeiros passos depende do quanto o texto quebra na largura da janela.
-struct PassosMedidos {
-    largura: f32,
-    altura_cartao: f32,
 }
 
 pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocupado: bool) -> Option<Acao> {
@@ -37,12 +29,11 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocu
         let util = (largura - 2.0 * PAD_X).max(320.0);
         let ws = doc.workspaces();
         let p = ui.painter().clone();
-        let bloco = if !doc.tem_blueprint() { Bloco::Passos(medir_passos(&p, util)) } else if let Some(ex) = doc.exemplo() { Bloco::Exemplo(ex) } else { Bloco::Nada };
+        let bloco = doc.exemplo().map_or(Bloco::Nada, Bloco::Exemplo);
         // alturas, de cima para baixo (medidas da tela web)
         let (topo_bloco, altura_bloco) = match &bloco {
             Bloco::Nada => (0.0, 0.0),
             Bloco::Exemplo(_) => (322.6, 72.0),
-            Bloco::Passos(m) => (322.6, 24.0 + 1.0 + 16.0 + 8.0 + 32.0 + 20.0 + m.altura_cartao + 31.2 + 20.0 + 1.0),
         };
         let status_y = if matches!(bloco, Bloco::Nada) { 314.6 } else { topo_bloco + altura_bloco + 32.0 };
         let grade_y = status_y + 22.4 + 14.0;
@@ -52,6 +43,7 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocu
         let fim = grade_y + linhas as f32 * CARTAO.y + (linhas - 1) as f32 * FOLGA + 80.0;
         let (pagina, _) = ui.allocate_exact_size(vec2(largura, fim.max(viewport)), Sense::hover());
         planta::papel(&p, pagina, Papel::Entrada);
+        crate::menu::marcar(ui, pagina, || crate::menu::Alvo::Entrada);
         let o = pagina.min;
         cabecalho(ui, vista, doc, servidor, o, largura, &mut acao);
         Texto::novo(tr("Seus workspaces"), 42.0).peso(Peso::Medio).trilha(-0.04).escrita().na_linha(&p, o.x + PAD_X, o.y + 163.0, 67.2);
@@ -61,11 +53,6 @@ pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocu
             Bloco::Exemplo(ex) => {
                 if faixa_do_exemplo(ui, vista, ex, pos2(o.x + PAD_X, o.y + topo_bloco), util, ocupado) {
                     vista.excluir = Some(ex.id.clone());
-                }
-            }
-            Bloco::Passos(m) => {
-                if passos(ui, pos2(o.x + PAD_X, o.y + topo_bloco), util, m, ocupado) {
-                    acao = Some(Acao::AbrirExemplo);
                 }
             }
         }
@@ -111,7 +98,7 @@ fn cabecalho(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, o:
 fn faixa_do_exemplo(ui: &mut Ui, _vista: &Vista, ex: &Resumo, pos: Pos2, util: f32, ocupado: bool) -> bool {
     let p = ui.painter().clone();
     let r = Rect::from_min_size(pos, vec2(util, 72.0));
-    p.rect_filled(r, 0, rgba(0x0c264b, 0x99));
+    p.rect_filled(r, 0, rgba(0x082b5e, 0x99));
     planta::tracejado(&p, r, BAIXO);
     canto(&p, r);
     let frase = tr_com("O workspace «{nome}» é o exemplo: dados fictícios, separados dos seus.", &[("nome", &ex.nome)]);
@@ -119,56 +106,6 @@ fn faixa_do_exemplo(ui: &mut Ui, _vista: &Vista, ex: &Resumo, pos: Pos2, util: f
     t.na_linha(&p, r.min.x + 19.0, r.min.y + 13.0, 46.0);
     let b = Botao::entrada(tr("Remover exemplo")).tam(10.0).ativo(!ocupado);
     botao(ui, pos2(r.min.x + 19.0 + t.largura(&p) + 12.0, r.min.y + 13.0), &b).clicked()
-}
-
-fn medir_passos(p: &egui::Painter, util: f32) -> PassosMedidos {
-    let largura = (util - 2.0 * 29.0 - 2.0 * 16.0) / 3.0;
-    let descricoes = [tr(PASSOS[0].2), tr(PASSOS[1].2), tr(PASSOS[2].2)];
-    let linhas = descricoes.iter().map(|d| Texto::novo(*d, 12.0).lh(19.2).caixa(largura - 38.0).altura(p)).fold(0.0f32, f32::max);
-    // borda 1 + padding 18 + número 24.6 + 8 + título 27.2 + 8 + texto + 8 + seta 22.4 + padding 18 + borda 1
-    PassosMedidos { largura, altura_cartao: 2.0 + 36.0 + 24.6 + 8.0 + 27.2 + 8.0 + linhas + 8.0 + 22.4 }
-}
-
-const PASSOS: [(&str, &str, &str); 3] = [
-    ("01", "Abrir o exemplo", "Um workspace com dois blueprints fictícios, para ver o app cheio. Os seus dados não mudam e ele sai com um clique."),
-    ("02", "Conectar seu agente", "Registre o MCP no Claude Code ou no Codex e peça um plano: a proposta aparece aqui para você aplicar."),
-    ("03", "Criar um blueprint", "Escreva o primeiro blueprint à mão, com ações, planos e checkpoints."),
-];
-
-/// O painel «Primeiros passos». Devolve `true` no clique de «Abrir o exemplo» (os outros dois ainda não existem nesta interface).
-fn passos(ui: &mut Ui, pos: Pos2, util: f32, m: &PassosMedidos, ocupado: bool) -> bool {
-    let p = ui.painter().clone();
-    let altura = 24.0 + 1.0 + 16.0 + 8.0 + 32.0 + 20.0 + m.altura_cartao + 31.2 + 20.0 + 1.0;
-    let r = Rect::from_min_size(pos, vec2(util, altura));
-    p.rect_filled(r, 0, rgba(0x0c264b, 0x99));
-    planta::tracejado(&p, r, BAIXO);
-    canto(&p, r);
-    let x = r.min.x + 29.0;
-    Texto::novo(tr("Primeiros passos").to_uppercase(), 10.0).cor(MEDIO).trilha(0.16).na_linha(&p, x, r.min.y + 25.0, 16.0);
-    Texto::novo(tr("Nenhum blueprint ainda. Por onde começar?"), 20.0).peso(Peso::Medio).trilha(-0.02).escrita().na_linha(&p, x, r.min.y + 49.0, 32.0);
-    let topo = r.min.y + 101.0;
-    let mut abrir = false;
-    for (i, (n, titulo, descricao)) in PASSOS.iter().enumerate() {
-        let c = Rect::from_min_size(pos2(x + i as f32 * (m.largura + 16.0), topo), vec2(m.largura, m.altura_cartao));
-        let ativo = i == 0 && !ocupado;
-        let resposta = ui.interact(c, ui.scope_id().with(("passo", i)), if ativo { Sense::click() } else { Sense::hover() });
-        let realce = ativo && (resposta.hovered() || resposta.has_focus());
-        p.rect_filled(c, 0, if realce { rgba(0x173b69, 0xff) } else { rgba(0x0f2b54, 0xdd) });
-        planta::borda(&p, c, if realce { TINTA } else { BAIXO });
-        let ix = c.min.x + 19.0;
-        Texto::novo(*n, 11.0).cor(MEDIO).trilha(0.14).na_linha(&p, ix, c.min.y + 19.0, 17.6);
-        planta::linha(&p, pos2(ix, c.min.y + 19.0 + 24.6), pos2(c.max.x - 19.0, c.min.y + 19.0 + 24.6), TENUE);
-        Texto::novo(tr(titulo), 17.0).peso(Peso::Medio).escrita().na_linha(&p, ix, c.min.y + 52.6, 27.2);
-        Texto::novo(tr(descricao), 12.0).cor(MEDIO).lh(19.2).caixa(m.largura - 38.0).escrita().em(&p, pos2(ix, c.min.y + 87.8));
-        Texto::novo("→", 14.0).cor(MEDIO).na_linha_dir(&p, c.max.x - 19.0, c.max.y - 19.0 - 22.4, 22.4);
-        if ativo && resposta.hovered() {
-            ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
-        }
-        if ativo && resposta.clicked() {
-            abrir = true;
-        }
-    }
-    abrir
 }
 
 /// Os cartões dos workspaces e o «Criar workspace», em linhas que quebram como o `flex-wrap` da página.
@@ -199,14 +136,7 @@ fn grade(ui: &mut Ui, vista: &mut Vista, ws: &[Resumo], origem: Pos2, colunas: u
                 }
             }
         }
-        if w.id != RAIZ {
-            resposta.context_menu(|ui| {
-                if ui.add_enabled(!ocupado, egui::Button::new(tr("Excluir workspace…"))).clicked() {
-                    vista.excluir = Some(w.id.clone());
-                    ui.close();
-                }
-            });
-        }
+        crate::menu::marcar(ui, r, || crate::menu::Alvo::Workspace { id: w.id.clone(), nome: w.nome.clone() });
         if arrastando {
             if let Some(ponto) = ui.input(|i| i.pointer.hover_pos()) {
                 let fantasma = Texto::novo(format!("↔ {}", w.nome), 12.0);
@@ -234,7 +164,7 @@ fn cartao(ui: &Ui, base: Rect, w: &Resumo, realce: f32, arrastando: bool) {
     let p = ui.painter().clone();
     let r = if arrastando { base } else { base.translate(vec2(0.0, -3.0 * realce)) };
     let opaco = |c: egui::Color32| if arrastando { c.gamma_multiply(0.5) } else { c };
-    p.rect_filled(r, 0, opaco(rgba(0x0f2b54, 0xdd).lerp_to_gamma(rgba(0x173b69, 0xff), realce)));
+    p.rect_filled(r, 0, opaco(rgba(0x0a3069, 0xdd).lerp_to_gamma(rgba(0x124482, 0xff), realce)));
     planta::borda(&p, r, opaco(BAIXO.lerp_to_gamma(TINTA, realce)));
     canto(&p, r);
     let (x, y, util) = (r.min.x + 25.0, r.min.y + 25.0, CARTAO.x - 50.0);
@@ -251,7 +181,7 @@ fn cartao(ui: &Ui, base: Rect, w: &Resumo, realce: f32, arrastando: bool) {
 fn adicionar(ui: &Ui, r: Rect, realce: f32) {
     let p = ui.painter().clone();
     let r = r.translate(vec2(0.0, -3.0 * realce));
-    p.rect_filled(r, 0, rgba(0x113360, 0x66).lerp_to_gamma(rgba(0x173b69, 0xff), realce));
+    p.rect_filled(r, 0, rgba(0x0c3a78, 0x66).lerp_to_gamma(rgba(0x124482, 0xff), realce));
     planta::tracejado(&p, r, BAIXO.lerp_to_gamma(TINTA, realce));
     canto(&p, r);
     let cx = r.center().x;

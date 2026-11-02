@@ -6,7 +6,7 @@ The agent working in the app appears on the sheet as **Claude** itself, drawn wi
 
 ## What it is
 
-- **Only an indicator, with one exception.** It shows what the user's agent said through the MCP; it runs nothing and **has no click that sends work** (no "ask Claude for this"), except the "Start with Claude" button on the action's sheet (section "Starting the action", below), which opens a new session after a confirmed click. Hovering can show the last message; a click can only take the screen to the plan where it is (navigation, like the old robot), never send a task.
+- **Only an indicator, with one exception.** It shows what the user's agent said through the MCP; it runs nothing and **has no click that sends work** (no "ask Claude for this"), except the "Start with Claude" button on the action's sheet (section "Starting the action", below), which opens a new session after a confirmed click, and the plan checkbox of the Planejar sheet (section "Agents of a plan", below). Hovering can show the last message; a click can only take the screen to the plan where it is (navigation, like the old robot), never send a task.
 - **It replaces the sheet's old robot** (`web/js/robo.js`, `web/css/robo.css` and the `#robo-agente` band). The swap was done in the action "Claude walks across the sheet while working": the `#claude-camada` layer (`web/js/claude-camada.js`) and the pure logic in `web/js/claude-logica.js` (`claude-logica.test.mjs`); the separate agents panel was removed.
 - **Zero work at rest.** Each pose is drawn once and the SVG is kept; the app swaps the SVG when the state changes. No animating hundreds of elements; no animation loop idling on the sheet.
 
@@ -52,6 +52,15 @@ Movement by **frames**: each frame is a finished drawing (a list of parts, kept 
 | `concluido` | 3 | 0 1 2 1 0 0 0 0 · 120 ms | a small hop (the body rises up to 2) and a pause; the flag's cloth waves with it |
 
 The subagents' tool follows the hand, so it moves with the arm. Rules (the project's): a figure's clock only runs while the figure is visible on screen and the tab is open; it stops when walking, when the pose changes and when the figure is removed; with `prefers-reduced-motion` it stays on frame 0; with no active agent there is no timer at all. Animated preview without script: `referencias/claude-previa.html`. **Measured cost (2026-10-23, `node scripts/medir-animacoes.mjs`):** idle 0.03% of one core; one animated figure 0.34%; six figures 3.4%; hidden tab, figure off screen and reduced motion 0 clocks. The frames are stacked and the clock only toggles the `on` class (`opacity` on a composited layer, `claude.css`): `display:none` cost ~11% with six figures. Details in `referencias/relatorio-medicao.md`.
+
+## Agents of a plan (Planejar, 2026-11-01)
+
+In the native window, ticking a plan's checkbox on the Planejar sheet starts an agent for that plan: the click creates the execution (`gesto/marcar`, which requires the window's token) and the app's engine launches `blueprint agente-plano <id>` in an external terminal, in its own copy of the repository. See [planejar.md](planejar.md). What changes for the figures described here:
+
+- The figure and its small sheet are still read-only: the checkbox is what sends work, never the figure.
+- The agent appears under the plan's name (`plano <ref>`), recognized by the hooks' `cwd` inside the execution's working copy. A session in a folder without a copy stays `Claude`.
+- With the native window open, `POST /api/mcp/iniciar`, `apresentar` and `conversa` require the window's token, so the buttons of the web page described below only work without the window. `POST /api/mcp/conversa/resposta` does not require it, because it is how the agent answers.
+- A plan's agent does not use the channel. The orchestrator leaves it messages, which it reads with `ler_respostas`.
 
 ## Starting the action (contract, 2026-10-22; reopens "only an indicator")
 

@@ -68,7 +68,9 @@ pub fn cabecalho(c: &Cena, ui: &mut Ui, s: &Secao) -> bool {
     if obs {
         let nx = l + 40.0 + nome.chars().count() as f32 * 11.6 + 10.0;
         c.nota(nx, yb + 3.0, false);
-        if clique_nota(c, ui, Rect::from_min_size(c.pt(nx - 3.0, yb), vec2(22.0, 22.0)), ("nota", s.numero.as_str())) {
+        let area_nota = Rect::from_min_size(c.pt(nx - 3.0, yb), vec2(22.0, 22.0));
+        crate::menu::marcar(ui, area_nota, || crate::menu::Alvo::Nota { ws: s.ws.into(), bp: texto(s.p, "id"), acao: None });
+        if clique_nota(c, ui, area_nota, ("nota", s.numero.as_str())) {
             *s.aberta.borrow_mut() = Some(crate::telas::Acao::AbrirNota(s.ws.into(), texto(s.p, "id"), None));
         }
     }
@@ -132,6 +134,7 @@ fn links(c: &Cena, ui: &mut Ui, s: &Secao, px: f32) {
             let ry = s.y + 2.0 + i as f32 * 20.0;
             let area = Rect::from_min_size(c.pt(x, ry), vec2(*w, 18.0));
             let resposta = ui.interact(area, ui.scope_id().with(("link", url.as_str())), Sense::click());
+            crate::menu::marcar(ui, area, || crate::menu::Alvo::Link(url.clone()));
             c.texto_sublinhado(txt, x + 6.0, ry + 13.0, 11.0, Peso::Normal, TINTA, Ancora::Inicio, true);
             if resposta.hovered() {
                 ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);

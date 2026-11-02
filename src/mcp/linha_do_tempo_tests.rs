@@ -92,3 +92,37 @@ fn o_filtro_corta_o_texto_e_usa_o_checkpoint_como_alvo() {
     assert_eq!((c.alvo.as_deref(), c.texto.as_str()), (Some("c1"), ""));
     assert!(da_fila(&json!({"tipo": "progresso", "texto": "x"})).is_none());
 }
+
+#[test]
+fn o_evento_traduz_o_ref_para_o_id_real() {
+    use crate::contexto::Contexto;
+    let (m, d) = (mcp(), dados());
+    let mut tudo = d.lock().unwrap().ler_tudo(&Contexto::local()).unwrap().clone();
+    tudo["blueprints"][0]["acoes"][1]["ref"] = json!("2");
+    tudo["blueprints"][0]["acoes"][1]["planos"][0]["ref"] = json!("2.1");
+    d.lock().unwrap().gravar_tudo(&Contexto::local(), &tudo).unwrap();
+    let (status, item) = reenviar(&m, &d, "evento", &json!({"tipo": "progresso", "texto": "indo", "workspaceId": "sm", "blueprintId": "p1", "acaoId": "2", "planoId": "2.1"}));
+    assert_eq!(status, 200, "{item}");
+    assert_eq!((item["acaoId"].as_str(), item["planoId"].as_str()), (Some("f2"), Some("t2")));
+    assert_eq!(linha(&m, &d, "f2")["eventos"][0]["alvo"], "t2");
+}
+
+#[test]
+fn com_execucao_a_linha_do_tempo_anota_e_a_fila_fica_vazia() {
+    use crate::dados::planejar::{Lancamento, NovaExecucao};
+    let (m, d) = (mcp(), dados());
+    let id = {
+        let mut g = d.lock().unwrap();
+        let id = g.execucao_criar(&NovaExecucao { workspace_id: "sm", blueprint_id: "p1", acao_id: "f2", plano_id: "t2", plano_ref: "t2", marcada_em: 1, ..NovaExecucao::default() }).unwrap();
+        assert!(g.execucao_reivindicar(&id).unwrap());
+        assert!(g.execucao_lancar(&id, &Lancamento { agora_ms: 1, ..Lancamento::default() }).unwrap());
+        id
+    };
+    let segredo = d.lock().unwrap().execucao_de(&id).unwrap().unwrap().segredo;
+    let (status, r) = reenviar(&m, &d, "evento", &json!({"tipo": "concluir", "texto": "cargo test: 3 passaram", "workspaceId": "sm", "blueprintId": "p1", "acaoId": "f2", "planoId": "t2", "execucaoSegredo": segredo}));
+    assert_eq!(status, 200, "{r}");
+    assert!(r["em"].is_string());
+    assert!(m.itens().is_empty(), "nada vai à fila: a janela nativa não a consome");
+    let eventos = linha(&m, &d, "f2")["eventos"].clone();
+    assert_eq!((eventos[0]["tipo"].as_str(), eventos[0]["texto"].as_str()), (Some("concluir"), Some("")), "a evidência segue fora da linha do tempo");
+}

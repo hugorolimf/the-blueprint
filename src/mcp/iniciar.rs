@@ -1,6 +1,7 @@
 //! `POST /api/mcp/iniciar`: o usuário clicou em "Iniciar com o Claude" numa ação (contrato em docs/claude-na-folha.md). Abre um terminal NOVO na pasta do
 //! blueprint rodando `blueprint claude "<prompt>"`: a sessão nova começa a ação. O prompt vai como argumento separado (nada de linha de comando montada por
 //! texto) e nunca pelo monitor/canal. A rota é só loopback (rotas.rs) e só confirmada pelo usuário na página; aqui nada grava nos dados.
+//! Com a janela nativa aberta ela também pede o token de gesto (`planejar::gesto_ok`). O agente de um plano do Planejar não nasce aqui: é o motor quem lança `blueprint agente-plano` (`planejar/motor.rs`).
 use super::acoes;
 use super::hooks::{texto, travado};
 use super::status::lista;

@@ -20,6 +20,7 @@ pub mod markdown;
 pub mod migracoes;
 pub mod operacoes;
 pub(crate) mod pastas;
+pub mod planejar;
 
 #[cfg(test)]
 mod tests;
@@ -66,6 +67,12 @@ impl Dados {
     }
 
     pub fn revisao_tempos(&self) -> u64 { self.revisao_tempos }
+
+    /// A árvore mudou por fora de `gravar_tudo` numa rota de `rota_estado`: refaz a cópia e sobe a versão dos dados (D4).
+    pub fn tocar_revisao(&mut self) {
+        self.cache = None;
+        self.revisao_tempos += 1;
+    }
 
     /// Os avisos são duráveis mesmo quando nenhuma janela está aberta.
     pub fn registrar_tempo_plano(&mut self, plano_id: &str, tipo: &str, em: &str) -> Resultado<()> {

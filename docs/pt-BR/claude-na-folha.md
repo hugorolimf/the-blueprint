@@ -53,6 +53,15 @@ Movimento por **quadros**: cada quadro é um desenho pronto (lista de peças, gu
 
 A ferramenta dos subagentes acompanha a mão, então mexe junto com o braço. Regras (as do projeto): o relógio de uma figura só roda enquanto ela está visível na tela e a aba está aberta; para ao andar, ao trocar de pose e ao remover a figura; com `prefers-reduced-motion` fica no quadro 0; sem agente ativo não há timer nenhum. Prévia animada sem script: `referencias/claude-previa.html`. **Custo medido (2026-10-23, `node scripts/medir-animacoes.mjs`):** parada 0,03% de um núcleo; uma figura animada 0,34%; seis figuras 3,4%; aba oculta, figura fora da tela e movimento reduzido 0 relógios. Os quadros ficam empilhados e o relógio só troca a classe `on` (`opacity` em camada composta, `claude.css`): `display:none` custava ~11% com seis figuras. Detalhes em `referencias/relatorio-medicao.md`.
 
+## Agentes de um plano (Planejar, 2026-11-01)
+
+Na janela nativa, marcar a caixinha de um plano na folha do Planejar inicia um agente para esse plano: o clique cria a execução (`gesto/marcar`, que exige o token da janela) e o motor do app lança `blueprint agente-plano <id>` num terminal externo, numa cópia própria do repositório. Veja [planejar.md](planejar.md). O que muda para as figuras descritas aqui:
+
+- A figura e a folhinha dela continuam só de leitura: quem manda trabalho é a caixinha, nunca a figura.
+- O agente aparece com o nome do plano (`plano <ref>`), reconhecido pelo `cwd` dos hooks dentro da cópia de trabalho da execução. Uma sessão em pasta sem cópia continua `Claude`.
+- Com a janela nativa aberta, `POST /api/mcp/iniciar`, `apresentar` e `conversa` exigem o token da janela, então os botões da página web descritos abaixo só funcionam sem a janela. `POST /api/mcp/conversa/resposta` não exige, porque é por ela que o agente responde.
+- O agente de um plano não usa o canal. O orquestrador deixa recados, que ele lê com `ler_respostas`.
+
 ## Iniciar a ação (contrato, 2026-10-22; reabre o "só indicador")
 
 A decisão de 2026-10-21 ("o agente é só indicador, sem clique para mandar trabalho") foi **reaberta pelo usuário** em 2026-10-22 num ponto só: o usuário pode, quando quiser, **iniciar uma ação com o Claude** por um botão. O Claude continua sem receber ordens pelo MCP, monitor ou canal; o que muda é que o app pode abrir uma sessão nova do Claude Code por clique confirmado.

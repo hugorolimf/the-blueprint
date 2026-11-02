@@ -10,6 +10,7 @@ use crate::agentes::Lugar;
 use crate::dominio::{Acao, Situacao};
 use crate::fonte::Peso;
 use crate::i18n::{tr, trn};
+use crate::menu::Alvo;
 use crate::pesquisa::{self, ResAcao};
 use crate::telas::Acao as Pedido;
 use crate::tema::{MEDIO, PAPEL, TINTA};
@@ -41,6 +42,14 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao) -> Option<Pedido> {
         let fraco = barra::opaco(c.p, if s.pesq.is_some() && ra.is_none() { 0.16 * nasce } else { nasce });
         let ce = Cena { p: &fraco, o: c.o };
         let c = &ce;
+        let area = if s.aberto {
+            let (x1, fy) = (v[1] + v[2], s.y + v[0]);
+            let (de, ate) = (pos.lx.min(v[1]), (pos.lx + pos.lw).max(x1 + 56.0).max(pos.lx + pos.bloco_w));
+            Rect::from_min_max(c.pt(de, fy - 6.0), c.pt(ate, fy + pos.alt - 20.0))
+        } else {
+            Rect::from_min_size(c.pt(v[1], s.y + v[0] - 7.0), vec2(v[2], 24.0))
+        };
+        crate::menu::marcar(ui, area, || Alvo::Acao { ws: s.ws.into(), bp: texto(s.p, "id"), id: f.id.clone(), rotulo: pos.rotulo.clone(), status: f.status, itens: f.itens });
         if !s.aberto {
             compacta(c, s, f, s.y + v[0], v[1], v[2], v[3]);
             continue;
@@ -58,7 +67,9 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao) -> Option<Pedido> {
         c.texto(&pos.rotulo, pos.lx, fy + 12.0, 11.0, Peso::Normal, if ra.is_some_and(|a| a.propria.is_some()) { egui::Color32::WHITE } else { TINTA }, Ancora::Inicio, true);
         let nx = pos.lx + pos.rotulo.chars().count() as f32 * (CHAR + 0.35) + 16.0;
         c.nota(nx, fy - 1.0, false);
-        if super::secao::clique_nota(c, ui, Rect::from_min_size(c.pt(nx - 3.0, fy - 4.0), vec2(22.0, 22.0)), ("nota-acao", f.id.as_str())) {
+        let area_nota = Rect::from_min_size(c.pt(nx - 3.0, fy - 4.0), vec2(22.0, 22.0));
+        crate::menu::marcar(ui, area_nota, || Alvo::Nota { ws: s.ws.into(), bp: texto(s.p, "id"), acao: Some(f.id.clone()) });
+        if super::secao::clique_nota(c, ui, area_nota, ("nota-acao", f.id.as_str())) {
             *s.aberta.borrow_mut() = Some(Pedido::AbrirNota(s.ws.into(), texto(s.p, "id"), Some(f.id.clone())));
         }
         // a barra: cheia de tinta fina (concluída), com o andamento (em andamento) ou só o contorno (a fazer); na abertura ela se desenha
@@ -131,7 +142,9 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
             let altura = (linhas.len() as f32 * 14.0 + 8.0).max(22.0);
             deslocamento += altura;
             s.ancoras.borrow_mut().insert(Lugar::Plano(t.id.clone()), (cx0 - 4.0, yy - 15.0, colw - 12.0, altura));
-            let (clicou, sobre) = marcar(ui, Rect::from_min_size(c.pt(cx0 - 4.0, yy - 15.0), vec2(colw - 12.0, altura)), &t.id);
+            let area = Rect::from_min_size(c.pt(cx0 - 4.0, yy - 15.0), vec2(colw - 12.0, altura));
+            crate::menu::marcar(ui, area, || Alvo::Item { ws: s.ws.into(), bp: texto(s.p, "id"), acao: f.id.clone(), tipo: "planos", id: t.id.clone(), texto: t.texto.clone(), feito: t.feito });
+            let (clicou, sobre) = marcar(ui, area, &t.id);
             // pesquisando: o item que casou fica inteiro e branco; os outros de uma ação «que só tem» itens achados esmaecem
             let achou = ra.and_then(|a| a.planos.iter().find(|(i, _)| *i == t.id));
             let mut fraco = c.p.clone();
@@ -160,7 +173,9 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
         cabeca(cx0, &tr("Checkpoints"), f.checkpoints.iter().filter(|m| m.feito).count(), f.checkpoints.len());
         for (i, m) in f.checkpoints.iter().enumerate() {
             let yy = base + 30.0 + i as f32 * 22.0;
-            let (clicou, sobre) = marcar(ui, Rect::from_min_size(c.pt(cx0 - 4.0, yy - 15.0), vec2(colw - 12.0, 22.0)), &m.id);
+            let area = Rect::from_min_size(c.pt(cx0 - 4.0, yy - 15.0), vec2(colw - 12.0, 22.0));
+            crate::menu::marcar(ui, area, || Alvo::Item { ws: s.ws.into(), bp: texto(s.p, "id"), acao: f.id.clone(), tipo: "checkpoints", id: m.id.clone(), texto: m.nome.clone(), feito: m.feito });
+            let (clicou, sobre) = marcar(ui, area, &m.id);
             let achou = ra.and_then(|a| a.checkpoints.iter().find(|(i, _)| *i == m.id));
             let mut fraco = c.p.clone();
             fraco.set_opacity(0.16);

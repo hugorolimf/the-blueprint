@@ -1,0 +1,55 @@
+/* A tela «Novo workspace»: tudo em px numa folha de 1280 por 760, que a página escala para caber (no app, as medidas viram as do egui). */
+:root{--paper:#113360;--fundo:#0c264b;--ink:#eaf4ff;--mid:#9cc4ee;--lo:#5b93d0;--faint:#2f66aa;--erro:#ffb4a8;--mono:"Blueprint Mono",ui-monospace,"Cascadia Mono",Consolas,monospace;--ease:cubic-bezier(.32,.72,0,1)}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#0c264b;overflow:hidden}
+#tela{position:absolute;left:0;top:0;width:1280px;height:760px;transform-origin:0 0;overflow:hidden;color:var(--ink);font:13px/1.5 var(--mono);
+  background:linear-gradient(#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(90deg,#ffffff1c 1px,transparent 1px) 0 0/60px 60px,linear-gradient(#ffffff0c 1px,transparent 1px) 0 0/12px 12px,linear-gradient(90deg,#ffffff0c 1px,transparent 1px) 0 0/12px 12px,radial-gradient(ellipse at 66% 44%,#1f5292 0%,var(--paper) 52%,#0c264b 100%)}
+button,input,textarea{font:inherit;color:inherit}
+.rotulo{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.tecla{font-size:10px;letter-spacing:.08em;color:var(--lo)}
+
+.barra{position:absolute;left:64px;width:444px;top:24px;height:32px;display:flex;align-items:center;justify-content:space-between}
+.voltar{background:none;border:0;padding:6px 0;cursor:pointer;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mid);transition:color .2s var(--ease)}
+.voltar span{display:inline-block;transition:transform .2s var(--ease)}
+.voltar:hover{color:var(--ink)}.voltar:hover span{transform:translateX(-3px)}
+
+.coluna{position:absolute;left:64px;top:92px;width:444px;bottom:40px;display:flex;flex-direction:column;justify-content:center}
+.nome{width:100%;margin-top:10px;padding:2px 0 10px;background:none;border:0;border-bottom:1px solid var(--lo);outline:0;font-size:36px;font-weight:600;letter-spacing:-.01em;transition:border-color .2s var(--ease)}
+.nome::placeholder,.descricao::placeholder{color:var(--lo);opacity:1}
+.nome:focus{border-color:var(--ink);box-shadow:0 1px 0 var(--ink)}
+.nome.invalido{border-color:var(--erro);box-shadow:0 1px 0 var(--erro)}
+.erro{font-size:12px;color:var(--erro)}
+.erro:not([hidden])~*,#enter:has(+.erro:not([hidden])){display:none}
+.descricao{width:100%;height:52px;margin-top:14px;padding:0;background:none;border:0;outline:0;resize:none;font-size:14px;line-height:24px;color:var(--mid)}
+.descricao:focus{color:var(--ink)}
+
+.fim{margin-top:36px;display:flex;align-items:center;gap:14px}
+.criar{height:44px;padding:0 24px;background:var(--ink);color:var(--paper);border:1px solid var(--ink);font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:transform .2s var(--ease),background .2s var(--ease)}
+.criar:hover{background:#fff;transform:translateY(-2px)}
+.criar:active{transform:none}
+
+.palco{position:absolute;left:548px;right:64px;top:40px;bottom:40px}
+.regua{position:absolute;color:var(--lo);font-size:9px;letter-spacing:.08em}
+.regua i{position:absolute;background:var(--lo);opacity:.7}
+.regua b{position:absolute;font-weight:400}
+.regua-topo{left:24px;right:0;top:0;height:18px}.regua-lado{left:0;top:24px;bottom:0;width:18px}
+.mira{position:absolute;width:13px;height:13px;border:0 solid var(--mid)}
+.m1{left:24px;top:24px;border-width:1px 0 0 1px}.m2{right:0;top:24px;border-width:1px 1px 0 0}.m3{left:24px;bottom:0;border-width:0 0 1px 1px}.m4{right:0;bottom:0;border-width:0 1px 1px 0}
+
+.figura{position:absolute;left:18px;top:30px;width:650px;height:410px}
+.q{position:absolute;inset:0}.q svg{display:block;width:100%;height:100%}
+.traco{opacity:0;transition:opacity .35s linear}
+.pronta{transition:opacity .55s var(--ease),transform .55s var(--ease)}
+.figura.montando .traco{opacity:1;transition:none}
+.figura.montando .pronta{opacity:0;transform:translateY(8px);transition:none}
+
+.carimbo{position:absolute;right:16px;bottom:16px;width:440px;border-collapse:collapse;background:#0c264bd9;table-layout:fixed;font-size:12px}
+.carimbo th,.carimbo td{border:1px solid var(--lo);padding:0 10px;height:34px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.carimbo th{width:92px;font-size:9px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--mid)}
+.carimbo td{color:var(--mid)}
+.carimbo td.forte{font-size:14px;font-weight:600;color:var(--ink)}
+.carimbo td.vazio{color:var(--lo)}
+
+.criado{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:#0c264bf2}
+.criado[hidden],.erro[hidden]{display:none}
+.criado-nome{font-size:32px;font-weight:600}

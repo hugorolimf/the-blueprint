@@ -9,7 +9,7 @@
  },
  {
   "name": "guia_de_planejamento",
-  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs), apresentacao_ajustar (small changes to a presentation that exists). Call it before planning.",
+  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), plano (the blueprint.plano/1 format; abrir_plano, escrever_acao, fechar_plano, salvar_plano), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs), apresentacao_ajustar (small changes to a presentation that exists). Call it before planning.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -17,6 +17,7 @@
      "type": "string",
      "enum": [
       "planejar",
+      "plano",
       "editar",
       "executar",
       "prototipos",
@@ -62,6 +63,287 @@
    "required": [
     "workspace_id",
     "blueprint_id"
+   ]
+  }
+ },
+ {
+  "name": "ler_plano",
+  "description": "The blueprint as a plan in the blueprint.plano/1 format, with the state of any open or pending version. Read it before changing a plan; ids in this format are the ones escrever_acao takes.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint (from listar_blueprints)."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id"
+   ]
+  }
+ },
+ {
+  "name": "ler_respostas",
+  "description": "What the user answered: reviews of your pieces (approved, to revise, rejected, with the note), answers to your questions and messages. No side effect: read it as often as you need. An agent of a plan calls it after reportar_bloqueio.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint (from listar_blueprints)."
+    },
+    "execucao_id": {
+     "type": "string",
+     "description": "Brings the messages of this execution. Defaults to the execution of this session, if any."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "blueprint_id"
+   ]
+  }
+ },
+ {
+  "name": "ler_workspace",
+  "description": "The situation of the whole workspace: blueprints, the agents of the plans (working, queued, waiting, stopped, done), notices and the last 20 messages.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    }
+   },
+   "required": [
+    "workspace_id"
+   ]
+  }
+ },
+ {
+  "name": "abrir_plano",
+  "description": "Starts writing a plan, piece by piece, on the user's screen. Declare the actions (id, nome, de, ate); new ones appear as waiting. Returns escrita_id. Calling it again on a blueprint with an open plan gets the same escrita_id back. Omitting an action does not remove it: use remover_acoes. Next: escrever_acao for each action, then fechar_plano. Read guia_de_planejamento plano first.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint to change. Omit it to create a new blueprint (then blueprint is required)."
+    },
+    "blueprint": {
+     "type": "string",
+     "description": "Name of the blueprint."
+    },
+    "resumo": {
+     "type": "string",
+     "description": "One or two sentences about the blueprint."
+    },
+    "tema": {
+     "type": "object",
+     "description": "Color variables for the figures (name to value)."
+    },
+    "projetos": {
+     "type": "array",
+     "description": "Groups of actions: [{nome?, acoes: [{id, nome, de?, ate?}]}]. Only what you declare or change; the content comes in escrever_acao.",
+     "items": {
+      "type": "object"
+     }
+    },
+    "remover_acoes": {
+     "type": "array",
+     "description": "Ids of the actions this plan removes. The user reviews the removal.",
+     "items": {
+      "type": "string"
+     }
+    }
+   },
+   "required": [
+    "workspace_id"
+   ]
+  }
+ },
+ {
+  "name": "escrever_acao",
+  "description": "Sends one action of the open plan; it appears on the user's screen right away. Sending the same id again replaces it, so resuming is safe. Every plan needs an id: ids link one version of the plan to the next. Errors come back for you to fix; the plan stays open.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "escrita_id": {
+     "type": "string",
+     "description": "From abrir_plano."
+    },
+    "acao": {
+     "type": "object",
+     "description": "The action. id is required; the rest only if it changes.",
+     "properties": {
+      "id": {
+       "type": "string",
+       "description": "Short id, such as 1.2."
+      },
+      "nome": {
+       "type": "string",
+       "description": "Name."
+      },
+      "de": {
+       "type": "string",
+       "description": "Start, yyyy-mm-dd."
+      },
+      "ate": {
+       "type": "string",
+       "description": "End, yyyy-mm-dd."
+      },
+      "texto": {
+       "type": "string",
+       "description": "What the action is, in a few lines."
+      },
+      "projeto": {
+       "type": "string",
+       "description": "Name of the group."
+      },
+      "planos": {
+       "type": "array",
+       "description": "[{id, texto, area?, depende_de?: [id], instrucoes?}]. area is the part of the project the plan touches: plans in conflicting areas do not run at the same time.",
+       "items": {
+        "type": "object"
+       }
+      },
+      "checkpoints": {
+       "type": "array",
+       "description": "[{id?, texto, data?}].",
+       "items": {
+        "type": "object"
+       }
+      },
+      "tabelas": {
+       "type": "array",
+       "description": "[{titulo?, colunas: [], larguras?: [], linhas: [[]]}].",
+       "items": {
+        "type": "object"
+       }
+      },
+      "detalhes": {
+       "type": "array",
+       "description": "[{id, titulo?, legenda?, grupo?, pede_aprovacao?, figura_caminho? or figura_svg?}]. figura_caminho is a file (SVG, PNG, JPG or WebP) relative to this session's folder; figura_svg is the SVG itself.",
+       "items": {
+        "type": "object"
+       }
+      },
+      "remover_planos": {
+       "type": "array",
+       "description": "Ids of plans to remove from this action.",
+       "items": {
+        "type": "string"
+       }
+      }
+     },
+     "required": [
+      "id"
+     ]
+    },
+    "decisoes": {
+     "type": "array",
+     "description": "[{id, rotulo?, texto, data?, acoes?: [id], pede_aprovacao?}].",
+     "items": {
+      "type": "object"
+     }
+    },
+    "perguntas": {
+     "type": "array",
+     "description": "Questions for the user: [{id, texto, opcoes: [], recomendada?, acoes?: [id]}]. Answers come in ler_respostas.",
+     "items": {
+      "type": "object"
+     }
+    }
+   },
+   "required": [
+    "escrita_id",
+    "acao"
+   ]
+  }
+ },
+ {
+  "name": "fechar_plano",
+  "description": "Closes the open plan. New actions enter the sheet; changed and removed ones wait for the user's review, and nothing else changes until the user decides. Returns what entered and what waits. Errors come back for you to fix; the plan stays open.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "escrita_id": {
+     "type": "string",
+     "description": "From abrir_plano."
+    }
+   },
+   "required": [
+    "escrita_id"
+   ]
+  }
+ },
+ {
+  "name": "salvar_plano",
+  "description": "Sends a whole plan at once from a folder with plano.json (format blueprint.plano/1), its style and figures. Everything the folder does not have is treated as removed. New actions wait for the user to place them; changed and removed ones wait for review. Read guia_de_planejamento plano first.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "pasta": {
+     "type": "string",
+     "description": "Folder with plano.json, relative to this session's folder or absolute."
+    },
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "id of the blueprint to change. Omit it to create a new blueprint."
+    }
+   },
+   "required": [
+    "pasta",
+    "workspace_id"
+   ]
+  }
+ },
+ {
+  "name": "falar_com_voce",
+  "description": "Leaves a message for the user on the agents screen or, with para_execucao, for the agent of a plan (it reads it in ler_respostas). It does not approve, start or finish anything.",
+  "inputSchema": {
+   "type": "object",
+   "properties": {
+    "workspace_id": {
+     "type": "string",
+     "description": "id of the workspace (from listar_blueprints); \"sm\" is the root workspace."
+    },
+    "texto": {
+     "type": "string",
+     "description": "The message."
+    },
+    "blueprint_id": {
+     "type": "string",
+     "description": "Blueprint the message is about."
+    },
+    "acao_id": {
+     "type": "string",
+     "description": "Action the message is about."
+    },
+    "para_execucao": {
+     "type": "string",
+     "description": "Execution whose agent should read it."
+    }
+   },
+   "required": [
+    "workspace_id",
+    "texto"
    ]
   }
  },
@@ -646,6 +928,10 @@
     "evidencia": {
      "type": "string",
      "description": "The command/test that was run and its result."
+    },
+    "execucao_segredo": {
+     "type": "string",
+     "description": "Agent of a plan: the secret of your execution (it comes in your prompt). Defaults to BLUEPRINT_EXECUCAO_SEGREDO."
     }
    },
    "required": [
@@ -681,6 +967,10 @@
     },
     "motivo": {
      "type": "string"
+    },
+    "execucao_segredo": {
+     "type": "string",
+     "description": "Agent of a plan: the secret of your execution (it comes in your prompt). Defaults to BLUEPRINT_EXECUCAO_SEGREDO."
     }
    },
    "required": [
@@ -717,6 +1007,10 @@
     "evidencia": {
      "type": "string",
      "description": "How the checkpoint was met: the command/test that was run and its result."
+    },
+    "execucao_segredo": {
+     "type": "string",
+     "description": "Agent of a plan: the secret of your execution (it comes in your prompt). Defaults to BLUEPRINT_EXECUCAO_SEGREDO."
     }
    },
    "required": [
@@ -752,6 +1046,10 @@
     },
     "motivo": {
      "type": "string"
+    },
+    "execucao_segredo": {
+     "type": "string",
+     "description": "Agent of a plan: the secret of your execution (it comes in your prompt). Defaults to BLUEPRINT_EXECUCAO_SEGREDO."
     }
    },
    "required": [
@@ -827,6 +1125,10 @@
      "minimum": 0,
      "maximum": 100,
      "description": "How much of the plan is already done."
+    },
+    "execucao_segredo": {
+     "type": "string",
+     "description": "Agent of a plan: the secret of your execution (it comes in your prompt). Defaults to BLUEPRINT_EXECUCAO_SEGREDO."
     }
    },
    "required": [

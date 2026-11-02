@@ -1,0 +1,28 @@
+<main id="tela">
+  <header class="barra">
+    <button class="voltar" id="voltar"><span>←</span> Workspaces</button>
+    <span class="tecla">Esc para voltar</span>
+  </header>
+  <form class="coluna" id="form" autocomplete="off">
+    <div class="rotulo">Novo workspace</div>
+    <input id="nome" class="nome" maxlength="80" placeholder="Como vai se chamar?" autofocus>
+    <textarea id="descricao" class="descricao" rows="2" maxlength="200" placeholder="Para que serve? (opcional)"></textarea>
+    <div class="fim">
+      <button class="criar" id="criar" type="submit">Criar workspace</button>
+      <span class="tecla" id="enter">Enter</span>
+      <div class="erro" id="erro" hidden>Digite o nome do workspace.</div>
+    </div>
+  </form>
+  <section class="palco" aria-label="Como vai ficar">
+    <div class="regua regua-topo" id="regua-topo"></div>
+    <div class="regua regua-lado" id="regua-lado"></div>
+    <i class="mira m1"></i><i class="mira m2"></i><i class="mira m3"></i><i class="mira m4"></i>
+    <div class="figura" id="figura"><div class="q traco" id="q-traco"></div><div class="q pronta" id="q-pronta"></div></div>
+    <table class="carimbo">
+      <tr><th>Workspace</th><td id="c-nome" class="forte" colspan="3">Sem nome</td></tr>
+      <tr><th>Descrição</th><td id="c-desc" colspan="3">—</td></tr>
+      <tr><th>Data</th><td colspan="3">01/11/2026</td></tr>
+    </table>
+  </section>
+  <div class="criado" id="criado" hidden><div class="rotulo">Criado</div><div class="criado-nome" id="criado-nome"></div><button class="voltar" id="refazer">Voltar ao protótipo</button></div>
+</main>

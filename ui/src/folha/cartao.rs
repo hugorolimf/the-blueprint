@@ -72,7 +72,7 @@ pub fn desenhar(c: &Cena, m: &Medidas, p: &serde_json::Value, hoje: i64, realce:
     let r = dominio::resumo(&fs);
     let nome_json = p.get("nome").and_then(|v| v.as_str()).unwrap_or("");
     let descricao_json = p.get("descricao").and_then(|v| v.as_str()).unwrap_or("");
-    let (fundo, traco, largura) = if realce { (rgba(0x1d4880, 0xff), TINTA, 1.6) } else if ok { (rgba(0x0c264b, 0xb3), BAIXO, 1.0) } else { (rgba(0x113360, 0xb3), MEDIO, 1.0) };
+    let (fundo, traco, largura) = if realce { (rgba(0x17539f, 0xff), TINTA, 1.6) } else if ok { (rgba(0x082b5e, 0xb3), BAIXO, 1.0) } else { (rgba(0x0c3a78, 0xb3), MEDIO, 1.0) };
     c.retangulo(tx, ty, tw, th, Some(fundo), Some((traco, largura)));
     let (art_w, art_x, art_y, art_h) = ((tw * 0.25).round().clamp(76.0, 116.0), tx + 12.0, ty + 26.0, th - 52.0);
     let (texto_x, texto_w) = (art_x + art_w + 14.0, tx + tw - 16.0 - (art_x + art_w + 14.0));

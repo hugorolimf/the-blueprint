@@ -8,6 +8,7 @@ use crate::telas::{self, Acao, Vista};
 use crate::{fonte, tema};
 
 mod acoes;
+mod recarga;
 use serde_json::Value;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{channel, Receiver, Sender};
@@ -27,14 +28,16 @@ pub struct App {
     vista: Vista,
     /// o documento de antes da gravação em curso: volta se ela falhar
     gravando: Option<Value>,
+    /// a busca do documento em curso é uma recarga no lugar: a tela segue à vista e falha não vira a tela de erro
+    recarga_em_curso: bool,
     envio: Sender<Msg>,
     recebe: Receiver<Msg>,
     /// alguém pediu a janela à frente (`Mostrar`)
     mostrar: Arc<AtomicBool>,
     /// só para o registro de testes (`BLUEPRINT_UI_LOG`)
     ultima_tela: String,
-    /// o clique de teste em curso: posição e se já é a hora de soltar
-    clique: Option<(egui::Pos2, bool)>,
+    /// o clique de teste em curso: posição, botão e se já é a hora de soltar
+    clique: Option<(egui::Pos2, egui::PointerButton, bool)>,
     /// a última busca de agentes (a cada poucos segundos, só com a janela aberta)
     agentes_em: Option<web_time::Instant>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -60,6 +63,7 @@ impl App {
             estado: Estado::Carregando,
             vista: Vista::nova(),
             gravando: None,
+            recarga_em_curso: false,
             envio,
             recebe,
             mostrar,
@@ -96,6 +100,8 @@ impl App {
     fn recarregar(&mut self, ctx: &egui::Context) {
         self.estado = Estado::Carregando;
         self.gravando = None;
+        self.recarga_em_curso = false;
+        self.vista.plano.recarregar_doc = false;
         rede::buscar(&self.servidor, ctx, self.envio.clone());
     }
 
@@ -103,6 +109,7 @@ impl App {
     fn receber(&mut self, ctx: &egui::Context) {
         while let Ok(msg) = self.recebe.try_recv() {
             match msg {
+                Msg::Dados(resultado) if self.recarga_em_curso => self.recarga_chegou(resultado),
                 Msg::Dados(Ok(doc)) => self.estado = Estado::Pronto(doc),
                 Msg::Dados(Err(motivo)) => self.estado = Estado::Erro(motivo),
                 Msg::Gravado(Ok(versao)) => {
@@ -156,18 +163,18 @@ impl eframe::App for App {
 
     /// Só nos testes: transforma o passo `clicar:x/y` do roteiro num clique de ponteiro de verdade (mover, apertar; no quadro seguinte, soltar).
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
-        if let Some((pos, solta)) = self.clique.take() {
+        if let Some((pos, button, solta)) = self.clique.take() {
             if solta {
-                raw.events.push(egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() });
+                raw.events.push(egui::Event::PointerButton { pos, button, pressed: false, modifiers: Default::default() });
             } else {
                 raw.events.push(egui::Event::PointerMoved(pos));
-                raw.events.push(egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: true, modifiers: Default::default() });
-                self.clique = Some((pos, true));
+                raw.events.push(egui::Event::PointerButton { pos, button, pressed: true, modifiers: Default::default() });
+                self.clique = Some((pos, button, true));
                 ctx.request_repaint();
             }
-        } else if let Some(pos) = self.vista.clique_pedido.take() {
+        } else if let Some((pos, button)) = self.vista.clique_pedido.take() {
             raw.events.push(egui::Event::PointerMoved(pos));
-            self.clique = Some((pos, false));
+            self.clique = Some((pos, button, false));
             ctx.request_repaint();
         }
     }
@@ -194,6 +201,7 @@ impl eframe::App for App {
             ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
         }
         self.receber(&ctx);
+        self.recarregar_no_lugar(&ctx);
         #[cfg(not(target_arch = "wasm32"))]
         if std::env::var_os("BLUEPRINT_UI_LOG").is_some() {
             let tela = format!("{:?}", self.vista.tela);
@@ -213,6 +221,7 @@ impl eframe::App for App {
         ctx.request_repaint_after(INTERVALO);
         let mut pedida = None;
         let ocupado = self.gravando.is_some();
+        let pela_tecla = crate::menu::teclado(&ctx, &mut self.vista);
         egui::CentralPanel::default().frame(egui::Frame::NONE).show(ui, |ui| match &self.estado {
             Estado::Carregando => {
                 ui.painter().rect_filled(ui.max_rect(), 0, tema::PAPEL);
@@ -230,6 +239,12 @@ impl eframe::App for App {
                 pedida = pedida.take().or_else(|| telas::dialogos(ui.ctx(), &mut self.vista, doc, ocupado));
             }
         });
+        if matches!(self.estado, Estado::Pronto(_)) {
+            let escolhido = crate::menu::passo(&ctx, &mut self.vista, ocupado).or(pela_tecla);
+            if let Some(comando) = escolhido {
+                pedida = crate::menu::executar(comando, &ctx, &mut self.vista, &self.servidor).or(pedida);
+            }
+        }
         #[cfg(not(target_arch = "wasm32"))]
         if pedida.is_none() && self.gravando.is_none() {
             if let (Some(roteiro), Estado::Pronto(doc)) = (&mut self.roteiro, &self.estado) {

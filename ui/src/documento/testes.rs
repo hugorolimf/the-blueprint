@@ -27,14 +27,13 @@ fn nome_vazio_ou_repetido_e_recusado() {
 }
 
 #[test]
-fn excluir_tira_da_ordem_e_nao_remove_a_raiz() {
+fn excluir_tira_da_ordem() {
     let mut d = vazio();
     let a = d.criar_workspace("Alfa", "", "blueprint").unwrap();
     d.mover_workspace(&a, -1);
     assert!(d.excluir_workspace(&a));
     assert!(d.workspace(&a).is_none());
     assert!(!d.raw["ordemWorkspaces"].as_array().unwrap().iter().any(|x| x == &json!(a)));
-    assert!(!d.excluir_workspace(RAIZ));
 }
 
 #[test]
@@ -116,4 +115,51 @@ fn criar_blueprint_vai_para_o_fim_do_workspace() {
     assert_eq!(bp["acoes"], json!([]));
     assert_eq!(d.raw["blueprints"][0]["id"].as_str(), Some(b.as_str()));
     assert!(d.criar_blueprint("nao-existe", "X", "").is_err());
+}
+
+fn com_acao() -> Documento {
+    Documento { raw: json!({ "blueprints": [{ "id": "b", "acoes": [{ "id": "a", "status": "andamento", "progresso": 0.4, "inicio": "2026-10-30", "fim": "2026-10-31" }, { "id": "c" }] }, { "id": "z" }] }), versao: 1 }
+}
+
+#[test]
+fn a_situacao_do_menu_ajusta_o_progresso() {
+    let mut d = com_acao();
+    assert!(d.definir_situacao(RAIZ, "b", "a", "concluido"));
+    assert_eq!((d.raw["blueprints"][0]["acoes"][0]["status"].as_str(), d.raw["blueprints"][0]["acoes"][0]["progresso"].as_i64()), (Some("concluido"), Some(1)));
+    assert!(d.definir_situacao(RAIZ, "b", "a", "planejado"));
+    assert_eq!(d.raw["blueprints"][0]["acoes"][0]["progresso"].as_i64(), Some(0));
+    assert!(!d.definir_situacao(RAIZ, "b", "nao-existe", "planejado"));
+}
+
+#[test]
+fn prorrogar_so_afasta_o_fim_e_vira_o_mes() {
+    let mut d = com_acao();
+    assert!(d.prorrogar(RAIZ, "b", "a", 7));
+    assert_eq!(d.raw["blueprints"][0]["acoes"][0]["fim"], "2026-11-07");
+    assert_eq!(d.raw["blueprints"][0]["acoes"][0]["inicio"], "2026-10-30");
+    assert!(!d.prorrogar(RAIZ, "b", "c", 1), "sem data, nada a empurrar");
+}
+
+#[test]
+fn excluir_leva_so_o_que_foi_pedido() {
+    let mut d = com_acao();
+    assert!(d.excluir_acao(RAIZ, "b", "a"));
+    assert_eq!(d.raw["blueprints"][0]["acoes"].as_array().unwrap().len(), 1);
+    assert!(!d.excluir_acao(RAIZ, "b", "a"));
+    assert!(d.excluir_blueprint(RAIZ, "z"));
+    assert_eq!(d.raw["blueprints"].as_array().unwrap().len(), 1);
+    assert!(!d.excluir_blueprint("outro", "b"));
+}
+
+#[test]
+fn excluir_o_principal_esvazia_e_tira_da_lista_e_um_blueprint_novo_o_traz_de_volta() {
+    let mut d = Documento { raw: json!({ "empresa": "Minha empresa", "usuario": { "nome": "Ana" }, "blueprints": [{ "id": "b" }], "workspaces": [], "ordemWorkspaces": ["sm"] }), versao: 1 };
+    assert!(d.excluir_workspace(RAIZ));
+    assert!(d.workspaces().is_empty());
+    assert_eq!(d.raw["blueprints"].as_array().unwrap().len(), 0);
+    assert_eq!(d.nome_usuario(), "Ana", "o nome da pessoa não é do workspace");
+    assert!(d.raw.get("empresa").is_none());
+    assert!(!d.excluir_workspace(RAIZ), "já foi excluído");
+    d.criar_blueprint(RAIZ, "Do agente", "").unwrap();
+    assert_eq!(d.workspaces().len(), 1);
 }

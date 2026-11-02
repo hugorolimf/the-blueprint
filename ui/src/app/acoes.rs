@@ -64,6 +64,19 @@ impl App {
                 Ok(None)
             }),
             Acao::Marcar(ws, bp, acao, tipo, item) => self.mutar(ctx, |d| if d.marcar_item(&ws, &bp, &acao, tipo, &item) { Ok(None) } else { Err(tr("Não foi possível marcar o item.").to_string()) }),
+            Acao::Situacao(ws, bp, acao, status) => {
+                crate::anima::mexer(ctx, 350.0);
+                self.mutar(ctx, |d| if d.definir_situacao(&ws, &bp, &acao, status) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) });
+            }
+            Acao::Prorrogar(ws, bp, acao, dias) => {
+                crate::anima::mexer(ctx, 350.0);
+                self.mutar(ctx, |d| if d.prorrogar(&ws, &bp, &acao, dias) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) });
+            }
+            Acao::ExcluirAcao(ws, bp, acao) => {
+                crate::anima::mexer(ctx, 350.0);
+                self.mutar(ctx, |d| if d.excluir_acao(&ws, &bp, &acao) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) });
+            }
+            Acao::ExcluirBlueprint(ws, bp) => self.mutar(ctx, |d| if d.excluir_blueprint(&ws, &bp) { Ok(Some(Tela::Workspace(ws.clone()))) } else { Err(tr("Não foi possível salvar.").to_string()) }),
             Acao::MoverPara(id, para) => self.mutar(ctx, |d| {
                 d.mover_para(&id, para);
                 Ok(None)
