@@ -1,7 +1,7 @@
 // ---- registros do agente: o que ele JÁ fez fora do plano (registrar_trabalho). NÃO é proposta: nada muda nos dados antes de o usuário clicar em "Adicionar ao blueprint". ----
 // Cada registro espera aqui (e na fila do servidor, guardada no banco, até a confirmação por número e criadaEm) com os planos e checkpoints já marcados como feitos;
 // o usuário pode desmarcar o que não aceita. Quem desenha é registros-vista.js; aqui ficam o estado e a aplicação aos dados.
-const registrosFila = []; // { blueprintId, numero, criadaEm, em, mensagem, acoes: [{ id, nome, inicio, fim, status, observacao, projeto, inc, planos, checkpoints }] }
+const registrosFila = []; // { blueprintId, numero, criadaEm, em, mensagem, acoes: [{ id, nome, status, observacao, projeto, inc, planos, checkpoints }] }
 
 const registroChave = (r) => `${r.blueprintId}|${r.numero}|${r.criadaEm}`;
 const registrosDe = (blueprintId) => registrosFila.filter((r) => r.blueprintId === blueprintId).sort((a, b) => a.numero - b.numero);
@@ -33,7 +33,6 @@ function registroMarcaPlano(t, evidencia, r) {
   t.agente.estado = "revisao";
   adicionarComentarioAgente(t, evidencia, "relatorio", `registro${r.criadaEm}`); // a chave é a criadaEm: o número volta a 1 quando o app reinicia
   confirmarConclusaoAgente(t, true);
-  t.agente.feitoEm = r.em;
 }
 // o que se conta ao usuário depois de adicionar um registro (o clique em "Adicionar ao blueprint" e o aplicar sozinho usam o mesmo texto)
 const textoRegistroAdicionado = (res) => tr("Registro adicionado: {feitos} feito(s){nf}{nt}{nc}.", { feitos: res.feitos, nf: res.nf ? tr(", {n} ação(ões) nova(s)", { n: res.nf }) : "", nt: res.nt ? tr(", {n} plano(s) novo(s)", { n: res.nt }) : "", nc: res.nc ? tr(", {n} checkpoint(s) novo(s)", { n: res.nc }) : "" });
@@ -46,22 +45,21 @@ function registroAdiciona(r) {
   for (const pf of r.acoes.filter((x) => x.inc)) {
     let f = pf.id && p.acoes.find((x) => x.id === pf.id);
     if (!f) {
-      f = { id: novoId(), nome: pf.nome, inicio: pf.inicio, fim: pf.fim, status: pf.status || "planejado", progresso: 0, obs: pf.observacao || "", planos: [], checkpoints: [] };
-      const pos = p.acoes.findIndex((x) => x.inicio > f.inicio);
-      p.acoes.splice(pos < 0 ? p.acoes.length : pos, 0, f);
+      f = { id: novoId(), nome: pf.nome, status: pf.status || "planejado", progresso: 0, obs: pf.observacao || "", planos: [], checkpoints: [] };
+      p.acoes.push(f);
       const projetoId = idDoProjetoEscolhido(p, typeof pf.projeto === "string" ? pf.projeto : "");
       if (projetoId) f.projetoId = projetoId;
       nf++;
     }
     for (const t of pf.planos) {
       let x = t.id && f.planos.find((y) => y.id === t.id);
-      if (!x) { x = { id: novoId(), texto: t.texto, descricao: String(t.descricao || ""), feito: false, ...horasDe(t.horas) }; f.planos.push(x); nt++; }
+      if (!x) { x = { id: novoId(), texto: t.texto, descricao: String(t.descricao || ""), feito: false }; f.planos.push(x); nt++; }
       if (t.feito && !x.feito) { registroMarcaPlano(x, t.evidencia, r); feitos++; }
     }
     for (const m of pf.checkpoints) {
       let x = m.id && f.checkpoints.find((y) => y.id === m.id);
-      if (!x) { x = { id: novoId(), nome: m.nome, data: m.data, feito: false }; f.checkpoints.push(x); nc++; }
-      if (m.feito && !x.feito) { x.feito = true; x.evidencia = m.evidencia || ""; x.feitoEm = new Date().toISOString(); feitos++; }
+      if (!x) { x = { id: novoId(), nome: m.nome, feito: false }; f.checkpoints.push(x); nc++; }
+      if (m.feito && !x.feito) { x.feito = true; x.evidencia = m.evidencia || ""; feitos++; }
     }
     f.status = efetiva(f).status; // o que ficou pendente mantém a ação aberta; tudo feito a conclui
     if (f.status === "planejado") f.progresso = 0;

@@ -75,10 +75,6 @@ async function mcpAplica(itens) {
     if (!auto) notificar(i); // pílula animada com a mensagem do agente (só o que pede atenção; regras em notificacao-regras.js)
     agenteAgora ={ ws, blueprintId: i.blueprintId, acaoId: i.acaoId || "", planoId: i.planoId || "", tipo: i.tipo, texto: i.tipo === "proposta" ? (auto ? tr("Proposta aplicada.") : tr("Proposta enviada: revise em ✦ Planejar.")) : i.texto, em: Date.now() };
     const nomeProj = D.blueprints.find((x) => x.id === i.blueprintId)?.nome;
-    if (i.tipo === "progresso" && i.planoId) { // o primeiro aviso de progresso com o plano marca o início do tempo real
-      const t0 = mcpPlano(i);
-      if (t0 && !t0.feito && !t0.agente?.inicioEm) { t0.agente = { ...normalizaAgente(t0.agente || {}), inicioEm: i.em }; muda = true; }
-    }
     if (i.tipo === "proposta") {
       if (!mcpProposta(i)) { soltar.add(i.id); continue; }
       if (auto && autoAplicaProposta(i)) { muda = true; continue; } // aplicada sozinha: o aviso com Desfazer vem de auto-aplicar-vista.js
@@ -100,13 +96,13 @@ async function mcpAplica(itens) {
       const m = D.blueprints.find((x) => x.id === i.blueprintId)?.acoes.find((f) => f.id === i.acaoId)?.checkpoints.find((x) => x.id === i.checkpointId);
       if (!m || m.feito) continue;
       const ok = i.tipo === "checkpoint-feito";
-      if (ok) { m.feito = true; m.evidencia = i.texto; m.feitoEm = new Date().toISOString(); muda = true; }
+      if (ok) { m.feito = true; m.evidencia = i.texto; muda = true; }
       mcpFeed.push({ tipo: i.tipo, texto: `${ok ? "✓" : "✗"} checkpoint “${i.checkpoint}” — ${i.texto}` });
     } else if (i.tipo === "concluir" || i.tipo === "nao-concluida") {
       const t = mcpPlano(i);
       if (!t || t.feito) continue;
       t.agente ||= normalizaAgente({});
-      if (i.tipo === "concluir") { t.agente.estado = "revisao"; adicionarComentarioAgente(t, i.texto, "relatorio", `mcp${i.id}`); confirmarConclusaoAgente(t, true); t.agente.feitoEm = i.em; }
+      if (i.tipo === "concluir") { t.agente.estado = "revisao"; adicionarComentarioAgente(t, i.texto, "relatorio", `mcp${i.id}`); confirmarConclusaoAgente(t, true); }
       else { t.agente.estado = "pendente"; adicionarComentarioAgente(t, tr("Não concluído: {texto}", { texto: i.texto }), "comentario", `mcp${i.id}`); }
       mcpFeed.push({ tipo: i.tipo, texto: `${i.tipo === "concluir" ? "✓" : "✗"} ${i.plano} — ${i.texto}` });
       muda = true;

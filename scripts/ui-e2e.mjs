@@ -62,8 +62,7 @@ try {
   await dormir(2500);
   await js(`document.getElementById("b-ia").click()`);
   await dormir(1000);
-  const quando = (d) => new Date(Date.now() + d * 864e5).toISOString().slice(0, 10);
-  const proposta = { workspaceId: dados.workspaces?.find((w) => w.blueprints?.some((p) => p.id === blueprint.id))?.id || "sm", blueprintId: blueprint.id, mensagem: "Proposta do teste", acoes: [{ nome: "Ação do teste", inicio: quando(1), fim: quando(10), planos: [1, 2, 3].map((k) => ({ texto: `Criar item ${k}`, descricao: "Escopo: x. Resultado: y. Validação: z.", horas: k })), checkpoints: [{ nome: "Pronto", data: quando(9) }] }] };
+  const proposta = { workspaceId: dados.workspaces?.find((w) => w.blueprints?.some((p) => p.id === blueprint.id))?.id || "sm", blueprintId: blueprint.id, mensagem: "Proposta do teste", acoes: [{ nome: "Ação do teste", planos: [1, 2, 3].map((k) => ({ texto: `Criar item ${k}`, descricao: "Escopo: x. Resultado: y. Validação: z." })), checkpoints: [{ nome: "Pronto", data: quando(9) }] }] };
   const r = await fetch(url + "/api/mcp/proposta", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(proposta) });
   assert.equal(r.status, 200, await r.clone().text());
   await dormir(1500);
@@ -75,45 +74,22 @@ try {
   gravado = achaBlueprint(await lido(), blueprint.id);
   const nova = gravado.acoes.find((f) => f.nome === "Ação do teste");
   assert(nova && nova.planos.length === 3 && nova.checkpoints.length === 1, "a ação proposta foi aplicada e gravada");
-  assert.deepEqual(nova.planos.map((x) => x.horas), [1, 2, 3], "as horas estimadas pelo agente foram gravadas em cada plano");
   console.log("Planejar: a proposta do agente foi aplicada (1 ação, 3 planos, 1 checkpoint)");
 
-  // Editar mostra a estimativa de cada plano da ação e aceita editar
-  await js(`editar(true)`);
-  await dormir(800);
-  await js(`document.querySelector('.mn-item[data-sel=${JSON.stringify(nova.id)}]').click()`);
-  await dormir(500);
-  assert.equal(await js(`[...document.querySelectorAll('.item-ed [data-c="horas"]')].map((i) => i.value).join(",")`), "1,2,3", "a tela Editar mostra as horas de cada plano");
-  await js(`(() => { const c = document.querySelector('.item-ed [data-c="horas"]'); c.value = "4"; c.dispatchEvent(new Event("input", { bubbles: true })); })()`);
-  await dormir(2500);
-  assert.equal(achaBlueprint(await lido(), blueprint.id).acoes.find((f) => f.id === nova.id).planos[0].horas, 4, "a hora editada foi gravada");
-  console.log("Horas: o agente estima, a tela Editar mostra e edita, o servidor grava");
-  // recarregar a página não perde as horas (a página só guarda os campos que conhece)
-  await cdp("Page.navigate", { url: "about:blank" });
-  await dormir(500);
-  await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
-  await dormir(3000);
-  await js(`abertos[${JSON.stringify(blueprint.id)}] = true; render()`);
-  await dormir(500);
-  // desde 28cea79 a folha soma as horas no cabeçalho ("N h de desenvolvimento"), não mostra mais "~N h" em cada plano
-  assert(/\d+ h de desenvolvimento/.test(await js(`document.body.textContent`)), "a folha mostra as horas estimadas depois de recarregar");
   await cdp("Page.navigate", { url: `${url}/#/p/${blueprint.id}` });
   await dormir(1500);
 
-  // 3) o agente conclui um plano com evidência (e o tempo real do plano é medido: primeiro progresso até a conclusão): a página marca e guarda a evidência como comentário
+  // 3) o agente conclui um plano com evidência a página marca e guarda a evidência como comentário
   const wsId = proposta.workspaceId;
   const p0 = await fetch(url + "/api/mcp/evento", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ tipo: "progresso", workspaceId: wsId, blueprintId: blueprint.id, acaoId: acao.id, planoId: pendente.id, texto: "começando" }) });
   assert.equal(p0.status, 200, await p0.clone().text());
   await dormir(2500);
-  const iniciado = achaBlueprint(await lido(), blueprint.id).acoes.find((f) => f.id === acao.id).planos.find((t) => t.id === pendente.id);
-  assert(iniciado.agente?.inicioEm, "o primeiro progresso com o plano marcou o início do tempo real");
   const c = await fetch(url + "/api/mcp/evento", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ tipo: "concluir", workspaceId: wsId, blueprintId: blueprint.id, acaoId: acao.id, planoId: pendente.id, texto: "teste do e2e passou" }) });
   assert.equal(c.status, 200, await c.clone().text());
   await dormir(2500);
   const feito = achaBlueprint(await lido(), blueprint.id).acoes.find((f) => f.id === acao.id).planos.find((t) => t.id === pendente.id);
   assert.equal(feito.feito, true, "o plano concluído pelo agente ficou marcado");
   assert(JSON.stringify(feito.agente?.comentarios || []).includes("teste do e2e passou"), "a evidência virou comentário do plano");
-  assert(feito.agente.feitoEm && feito.agente.inicioEm === iniciado.agente.inicioEm, "a conclusão marcou o fim do tempo real e o início continuou o mesmo");
   console.log("MCP: o plano concluído pelo agente ficou marcado, com a evidência como comentário");
   // 4) o agente marcou algo ANTES de a página abrir: ao abrir, a página aplica sem esperar outro aviso (a conexão SSE abre antes de os dados chegarem)
   await cdp("Page.navigate", { url: "about:blank" }); // a página fecha (a conexão SSE cai) antes de o agente marcar

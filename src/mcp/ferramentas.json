@@ -9,7 +9,7 @@
  },
  {
   "name": "guia_de_planejamento",
-  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), plano (the blueprint.plano/1 format; abrir_plano, escrever_acao, fechar_plano, salvar_plano), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs), apresentacao_ajustar (small changes to a presentation that exists). Call it before planning.",
+  "description": "Returns the planning guide in parts. Without topico: the index (the app's model, the order of work and which topic to read). Topics: planejar (actions, plans, checkpoints, checklist), anatomia (shape the plan to this project: numbers, entrega, forma, dependencies), plano (the blueprint.plano/1 format; abrir_plano, escrever_acao, fechar_plano, salvar_plano), editar (change what exists), executar (link the folder, register and tick), prototipos, importar (GitHub issues), apresentar (present and print), apresentacao_ia (AI presentation: the conversation, audience and level), apresentacao_conteudo (its content and sending), apresentacao_figuras (its figure programs), apresentacao_ajustar (small changes to a presentation that exists). Call it before planning.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -17,6 +17,7 @@
      "type": "string",
      "enum": [
       "planejar",
+      "anatomia",
       "plano",
       "editar",
       "executar",
@@ -34,7 +35,7 @@
  },
  {
   "name": "ler_blueprint",
-  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids, dates and what is done), today's date and the other blueprints in the workspace. In a large blueprint the structure is SUMMARIZED: actions in progress and the next planned ones stay complete; finished and distant planned actions shrink to one line (id, name, dates, project; no plans). `resumidas` says how many; pass incluir: \"tudo\" for everything, projeto to read one project, or acao_id for one action. With acao_id: that whole action (instructions, plan descriptions, prototypes and measured start/end when available). The blueprint may include tempoReal, an elapsed-time average including pauses. Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
+  "description": "Without acao_id: the blueprint's structure (actions, plans and checkpoints with ids and what is done) and the other blueprints in the workspace. In a large blueprint the structure is SUMMARIZED: actions in progress and the next planned ones stay complete; finished and distant planned actions shrink to one line (id, name, project; no plans). `resumidas` says how many; pass incluir: \"tudo\" for everything, projeto to read one project, or acao_id for one action. With acao_id: that whole action (instructions, plan descriptions, prototypes). Read the whole action before executing it or rewriting its instructions. After an informational notice from the monitor or channel, check the persisted state here.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -52,7 +53,10 @@
     },
     "incluir": {
      "type": "string",
-     "enum": ["ativas", "tudo"],
+     "enum": [
+      "ativas",
+      "tudo"
+     ],
      "description": "Optional, structure only. \"ativas\" (default): summarize finished and distant planned actions when the blueprint is large. \"tudo\": every action in full (can be tens of thousands of characters)."
     },
     "projeto": {
@@ -130,7 +134,7 @@
  },
  {
   "name": "abrir_plano",
-  "description": "Starts writing a plan, piece by piece, on the user's screen. Declare the actions (id, nome, de, ate); new ones appear as waiting. Returns escrita_id. Calling it again on a blueprint with an open plan gets the same escrita_id back. Omitting an action does not remove it: use remover_acoes. Next: escrever_acao for each action, then fechar_plano. Read guia_de_planejamento plano first.",
+  "description": "Starts writing a plan, piece by piece, on the user's screen. Declare the actions (id, nome); new ones appear as waiting. Returns escrita_id. Calling it again on a blueprint with an open plan gets the same escrita_id back. Omitting an action does not remove it: use remover_acoes. Next: escrever_acao for each action, then fechar_plano. Read guia_de_planejamento plano first.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -156,7 +160,7 @@
     },
     "projetos": {
      "type": "array",
-     "description": "Groups of actions: [{nome?, acoes: [{id, nome, de?, ate?}]}]. Only what you declare or change; the content comes in escrever_acao.",
+     "description": "Groups of actions: [{nome?, acoes: [{id, nome}]}]. Only what you declare or change; the content comes in escrever_acao.",
      "items": {
       "type": "object"
      }
@@ -196,14 +200,6 @@
        "type": "string",
        "description": "Name."
       },
-      "de": {
-       "type": "string",
-       "description": "Start, yyyy-mm-dd."
-      },
-      "ate": {
-       "type": "string",
-       "description": "End, yyyy-mm-dd."
-      },
       "texto": {
        "type": "string",
        "description": "What the action is, in a few lines."
@@ -214,28 +210,28 @@
       },
       "planos": {
        "type": "array",
-       "description": "[{id, texto, area?, depende_de?: [id], instrucoes?}]. area is the part of the project the plan touches: plans in conflicting areas do not run at the same time.",
+       "description": "[{id, texto, entrega?, forma?, area?, depende_de?: [id], instrucoes?}]. The id follows the action: in action 1 use 1.1, 1.2. entrega: one line, what exists when done. forma: tela, dados, servico, integracao, ia, teste, documento or infra. area is the part of the project the plan touches: plans in conflicting areas do not run at the same time.",
        "items": {
         "type": "object"
        }
       },
       "checkpoints": {
        "type": "array",
-       "description": "[{id?, texto, data?}].",
+       "description": "[{id?, texto, plano?}]. Add plano (a plan id of this action) so it shows inside that plan; without plano it belongs to the whole action.",
        "items": {
         "type": "object"
        }
       },
       "tabelas": {
        "type": "array",
-       "description": "[{titulo?, colunas: [], larguras?: [], linhas: [[]]}].",
+       "description": "[{titulo?, colunas: [], larguras?: [], linhas: [[]], plano?}]. Add plano (a plan id of this action) so it shows inside that plan; without plano it belongs to the whole action.",
        "items": {
         "type": "object"
        }
       },
       "detalhes": {
        "type": "array",
-       "description": "[{id, titulo?, legenda?, grupo?, pede_aprovacao?, figura_caminho? or figura_svg?}]. figura_caminho is a file (SVG, PNG, JPG or WebP) relative to this session's folder; figura_svg is the SVG itself.",
+       "description": "[{id, titulo?, legenda?, grupo?, plano?, variante?, pede_aprovacao?, figura_caminho? or figura_svg?}]. Add plano (a plan id of this action) so it shows inside that plan; without plano it belongs to the whole action. variante is the screen's frame: janela, celular, dialogo, faixa or quadro; without it the figure's proportion chooses. figura_caminho is a file (SVG, PNG, JPG or WebP) relative to this session's folder; figura_svg is the SVG itself.",
        "items": {
         "type": "object"
        }
@@ -254,14 +250,14 @@
     },
     "decisoes": {
      "type": "array",
-     "description": "[{id, rotulo?, texto, data?, acoes?: [id], pede_aprovacao?}].",
+     "description": "[{id, rotulo?, texto, acoes?: [id], plano?, pede_aprovacao?}]. Add plano (a plan id of this action) so it shows inside that plan; without plano it belongs to the whole action.",
      "items": {
       "type": "object"
      }
     },
     "perguntas": {
      "type": "array",
-     "description": "Questions for the user: [{id, texto, opcoes: [], recomendada?, acoes?: [id]}]. Answers come in ler_respostas.",
+     "description": "Questions for the user: [{id, texto, opcoes: [], recomendada?, acoes?: [id], plano?}]. Add plano (a plan id of this action) so it shows inside that plan; without plano it belongs to the whole action. Answers come in ler_respostas.",
      "items": {
       "type": "object"
      }
@@ -417,7 +413,10 @@
          },
          "estado": {
           "type": "string",
-          "enum": ["aberta", "decidida"],
+          "enum": [
+           "aberta",
+           "decidida"
+          ],
           "description": "aberta while undecided; decidida once chosen. Default: decidida when escolha is sent."
          }
         }
@@ -431,7 +430,7 @@
      "type": "array",
      "items": {
       "type": "object",
-      "description": "New action: nome, inicio, fim, planos and checkpoints. Existing action: id and only what changes; fields, plans and checkpoints you do not send stay as they are (nothing is erased).",
+      "description": "New action: nome, planos and checkpoints. Existing action: id and only what changes; fields, plans and checkpoints you do not send stay as they are (nothing is erased).",
       "properties": {
        "id": {
         "type": "string",
@@ -439,14 +438,6 @@
        },
        "nome": {
         "type": "string"
-       },
-       "inicio": {
-        "type": "string",
-        "description": "yyyy-mm-dd"
-       },
-       "fim": {
-        "type": "string",
-        "description": "yyyy-mm-dd"
        },
        "status": {
         "type": "string",
@@ -480,11 +471,6 @@
           "descricao": {
            "type": "string",
            "description": "Scope, expected result and validation (preferably a command or test)."
-          },
-          "horas": {
-           "type": "number",
-           "exclusiveMinimum": 0,
-           "description": "The agent's estimated work in hours, as a positive number."
           }
          }
         }
@@ -493,17 +479,13 @@
         "type": "array",
         "items": {
          "type": "object",
-         "description": "New: nome and data. Existing: id and only what changes. With the id of a checkpoint from ANOTHER action, it is moved to this one (give the new date, within the period).",
+         "description": "New: nome. Existing: id and only what changes. With the id of a checkpoint from ANOTHER action, it is moved to this one.",
          "properties": {
           "id": {
            "type": "string"
           },
           "nome": {
            "type": "string"
-          },
-          "data": {
-           "type": "string",
-           "description": "yyyy-mm-dd, within the action's period"
           }
          }
         }
@@ -565,7 +547,7 @@
  },
  {
   "name": "registrar_trabalho",
-  "description": "Records in the blueprint what you ALREADY did that was not in the plan (a one-off adjustment, a fix asked for in the conversation). It is NOT a proposal (a proposal is future work): it enters the queue as \"Record no. N\" and the app adds it by itself when automatic application is on (the default in the local app), otherwise the user adds it. Mark feito: true with the evidence on what was done; leave without feito what is still pending (plan, checkpoint or open action). After sending, tell the user it was sent and check with ler_blueprint that it entered. Accepts an existing action (id) or a new one, with past dates.",
+  "description": "Records in the blueprint what you ALREADY did that was not in the plan (a one-off adjustment, a fix asked for in the conversation). It is NOT a proposal (a proposal is future work): it enters the queue as \"Record no. N\" and the app adds it by itself when automatic application is on (the default in the local app), otherwise the user adds it. Mark feito: true with the evidence on what was done; leave without feito what is still pending (plan, checkpoint or open action). After sending, tell the user it was sent and check with ler_blueprint that it entered. Accepts an existing action (id) or a new one.",
   "inputSchema": {
    "type": "object",
    "properties": {
@@ -585,7 +567,7 @@
      "type": "array",
      "items": {
       "type": "object",
-      "description": "Existing action: id and only the plans/checkpoints that change. New action: nome, inicio, fim, planos and checkpoints.",
+      "description": "Existing action: id and only the plans/checkpoints that change. New action: nome, planos and checkpoints.",
       "properties": {
        "id": {
         "type": "string",
@@ -593,14 +575,6 @@
        },
        "nome": {
         "type": "string"
-       },
-       "inicio": {
-        "type": "string",
-        "description": "yyyy-mm-dd (may be in the past)"
-       },
-       "fim": {
-        "type": "string",
-        "description": "yyyy-mm-dd"
        },
        "status": {
         "type": "string",
@@ -635,11 +609,6 @@
            "type": "string",
            "description": "Scope, result and validation."
           },
-          "horas": {
-           "type": "number",
-           "exclusiveMinimum": 0,
-           "description": "Estimated hours of work, as a positive number."
-          },
           "feito": {
            "type": "boolean",
            "description": "true on what is ALREADY done (requires evidencia); omit or false on what is still pending."
@@ -661,10 +630,6 @@
           },
           "nome": {
            "type": "string"
-          },
-          "data": {
-           "type": "string",
-           "description": "yyyy-mm-dd, within the action's period"
           },
           "feito": {
            "type": "boolean",

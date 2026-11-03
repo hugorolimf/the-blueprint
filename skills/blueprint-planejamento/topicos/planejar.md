@@ -3,7 +3,7 @@
 ## Actions
 
 - `nome`: short and specific, not "Action 1".
-- `inicio` and `fim`: a sequence with no gaps or conflicts. New actions start **today or later**, unless the user asks for past dates.
+- Order: actions run in the order they are written, so write them in the order the work must happen. The app has no dates or durations.
 - `status`: `planejado` or `andamento` (andamento only if the work has already started).
 - `observacao` (in the app: **Action instructions**): the **complete outline of the action** (up to 20000 characters): goal, deliverable, ordered steps, **dependencies**, decisions and assumptions, risks and the definition of done. The plans are the tickable items; the instructions tell how and why.
 - As many plans as the action needs, and 1 to 3 checkpoints per action.
@@ -31,18 +31,12 @@ Cite files or modules **only** if you have seen them in the folder. Never invent
 ## Checkpoints
 
 - **Verifiable checkpoints**: a deliverable, a decision or a demonstration ("End-to-end flow validated"), not an activity.
-- `data` within the action's period, usually near the end or near an important risk.
+- Put it where it proves the action is done, or right after an important risk.
 - A short name that someone can answer with yes or no.
 
-## Deadlines at AI pace
+## The user's time
 
-The one executing is the AI: short deadlines, in sequence, starting today, with no gaps of more than 2 days.
-
-Before estimating, use the blueprint's `tempoReal` and the `tempoReal.inicioEm`/`feitoEm` of comparable completed plans (elapsed time, pauses included). If measurements are absent or thin, say so; do not invent precision.
-
-- **Plan:** estimate positive `horas` based on the work; consider splitting unusually large plans when it helps the user.
-- **Action:** 1 to 3 calendar days. More only with a written reason in the instructions (waiting on a person, CI, publishing, a third party).
-- **The user's time** (reviewing, approving, testing on a real machine) becomes a dated checkpoint, never hidden slack in the deadline.
+Reviewing, approving and testing on a real machine are the user's: make each one a checkpoint.
 
 Detail: lean, standard (default) or detailed.
 
@@ -54,8 +48,7 @@ Without `blueprint_id`, also send `blueprint: { nome, descricao }` (a short name
 
 - [ ] Titles with a verb in the infinitive; none repeated within the action.
 - [ ] Every new plan has a description (scope, result, validation).
-- [ ] Every new plan has `horas`; actions of up to 3 days (or with a reason) and no gaps between them.
-- [ ] Dates `yyyy-mm-dd`, `fim` after `inicio`, checkpoints inside the action, no past dates without a request.
+- [ ] Actions in the order the work must happen; no date or estimate in any field.
 - [ ] Nothing marked done; ids only the ones you read in `ler_blueprint`.
 - [ ] Invented facts? If so, turn them into declared assumptions.
 

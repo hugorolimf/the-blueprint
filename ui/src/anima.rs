@@ -59,12 +59,15 @@ pub fn atual(ctx: &Context) -> Option<Abertura> {
     ctx.data(|d| d.get_temp::<Option<Abertura>>(chave_atual())).flatten()
 }
 
-/// `BLUEPRINT_UI_SEM_ANIMACAO=1`: a tela aparece pronta (o «movimento reduzido» da página).
+/// `BLUEPRINT_UI_SEM_ANIMACAO=1`: a tela aparece pronta (o «movimento reduzido» da página). Lida uma vez: o ambiente não muda com o app aberto.
 fn desligada() -> bool {
-    #[cfg(not(target_arch = "wasm32"))]
-    return std::env::var_os("BLUEPRINT_UI_SEM_ANIMACAO").is_some();
-    #[cfg(target_arch = "wasm32")]
-    false
+    static DESLIGADA: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *DESLIGADA.get_or_init(|| {
+        #[cfg(not(target_arch = "wasm32"))]
+        return std::env::var_os("BLUEPRINT_UI_SEM_ANIMACAO").is_some();
+        #[cfg(target_arch = "wasm32")]
+        false
+    })
 }
 
 /// Recomeça a abertura da tela atual (trocar o período reescreve a folha, como `desenrolar` depois do filtro em dados.js).
@@ -95,29 +98,39 @@ struct Trilho {
 /// Os valores de `chave` (posição, largura…) neste quadro: iguais ao `alvo`, ou a caminho dele se o alvo mudou logo depois de um
 /// [`mexer`]. Devolve também a opacidade de quem nasceu numa mudança (220 ms).
 pub fn deslize(ctx: &Context, chave: impl Hash + std::fmt::Debug, alvo: &[f32]) -> (Vec<f32>, f32) {
-    let (agora, id) = (ctx.input(|i| i.time), Id::unique(("anima-deslize", chave)));
-    let mexendo: Option<(f64, f32)> = ctx.data(|d| d.get_temp(Id::unique("anima-mexer"))).filter(|(ate, _)| agora <= *ate);
-    let quadro = ctx.cumulative_frame_nr();
-    let antes: Option<Trilho> = ctx.data(|d| d.get_temp::<Trilho>(id)).filter(|t| t.quadro + 1 >= quadro);
+    let (agora, quadro, id) = (ctx.input(|i| i.time), ctx.cumulative_frame_nr(), Id::unique(("anima-deslize", chave)));
     let posicao = |t: &Trilho| -> Vec<f32> {
         let k = curva(BARRA, ((agora - t.inicio) as f32 * 1000.0) / t.dur.max(1.0));
         t.de.iter().zip(&t.para).map(|(a, b)| a + (b - a) * k).collect()
     };
-    let trilho = match antes {
-        None => Trilho { de: alvo.to_vec(), para: alvo.to_vec(), inicio: 0.0, dur: 1.0, nasceu: mexendo.map(|_| agora), quadro },
-        Some(t) if t.para.len() == alvo.len() && t.para.iter().zip(alvo).all(|(a, b)| (a - b).abs() < 0.5) => t,
-        Some(t) => match mexendo {
-            Some((_, dur)) if t.para.len() == alvo.len() => Trilho { de: posicao(&t), para: alvo.to_vec(), inicio: agora, dur, nasceu: t.nasceu, quadro },
-            _ => Trilho { de: alvo.to_vec(), para: alvo.to_vec(), inicio: 0.0, dur: 1.0, nasceu: None, quadro },
-        },
-    };
-    let trilho = Trilho { quadro, ..trilho };
-    let valores = posicao(&trilho);
-    let alfa = trilho.nasceu.map_or(1.0, |n| curva(CHEGA, ((agora - n) as f32 * 1000.0) / 220.0));
-    if alfa < 1.0 || ((agora - trilho.inicio) as f32 * 1000.0) < trilho.dur {
+    let parado = |nasceu: Option<f64>| Trilho { de: alvo.to_vec(), para: alvo.to_vec(), inicio: 0.0, dur: 1.0, nasceu, quadro };
+    // tudo numa trava só e no lugar: o trilho não é copiado nem guardado de novo a cada quadro (o corpo não chama o `ctx`)
+    let (valores, alfa, anda) = ctx.data_mut(|d| {
+        let mexendo: Option<(f64, f32)> = d.get_temp(Id::unique("anima-mexer")).filter(|(ate, _)| agora <= *ate);
+        let mut novo = false;
+        let t = d.get_temp_mut_or_insert_with(id, || {
+            novo = true;
+            parado(mexendo.map(|_| agora))
+        });
+        if novo {
+            // acabou de nascer: já está parado no alvo
+        } else if t.quadro + 1 < quadro {
+            // sumiu e voltou: é novo, não anda do lugar antigo
+            *t = parado(mexendo.map(|_| agora));
+        } else if t.para.len() == alvo.len() && t.para.iter().zip(alvo).all(|(a, b)| (a - b).abs() < 0.5) {
+            // o mesmo alvo: segue o trilho que já tem
+        } else if let Some((_, dur)) = mexendo.filter(|_| t.para.len() == alvo.len()) {
+            *t = Trilho { de: posicao(t), para: alvo.to_vec(), inicio: agora, dur, nasceu: t.nasceu, quadro };
+        } else {
+            *t = parado(None);
+        }
+        t.quadro = quadro;
+        let alfa = t.nasceu.map_or(1.0, |n| curva(CHEGA, ((agora - n) as f32 * 1000.0) / 220.0));
+        (posicao(t), alfa, alfa < 1.0 || ((agora - t.inicio) as f32 * 1000.0) < t.dur)
+    });
+    if anda {
         ctx.request_repaint();
     }
-    ctx.data_mut(|d| d.insert_temp(id, trilho));
     (valores, alfa)
 }
 

@@ -1,7 +1,7 @@
 // Inglês: o que sobrou das outras telas (cartão do carimbo, pastas, projetos, arte, protótipos, agentes, markdown, avisos pequenos). Chave = texto-fonte em português (web/js/i18n.js).
 Object.assign(I18N.catalogos.en, {
   // folha
-  "Data": "Date", "Progresso": "Progress", "Folha": "Sheet", "Ações": "Actions", "Planejar este blueprint": "Plan this blueprint",
+  "Progresso": "Progress", "Folha": "Sheet", "Ações": "Actions", "Planejar este blueprint": "Plan this blueprint",
   "Ver o que {agente} está fazendo": "See what {agente} is doing", "o agente": "the agent",
   "Agente": "Agent",
   "(mais {n} agente junto aqui)": ["(plus {n} agent here)", "(plus {n} agents here)"],
@@ -18,7 +18,7 @@ Object.assign(I18N.catalogos.en, {
   "Descrição do projeto": "Project description", "Remover projeto": "Remove project", "Projetos": "Projects",
   "Sem projetos: todas as ações ficam juntas. Crie projetos para agrupar as ações do blueprint na folha.": "No projects: all actions stay together. Create projects to group the blueprint's actions on the sheet.",
   "+ Projeto": "+ Project",
-  "Na folha cada projeto é uma seção numerada (01, 02…) com o cabeçalho de um blueprint e as ações dele; a ordem segue o início da primeira ação. A ação sem projeto fica em “Geral”; escolha o projeto dela em Período e situação.": "On the sheet each project is a numbered section (01, 02…) with a blueprint-style header and its actions; the order follows the start of the first action. An action without a project stays under “General”; pick its project in Period and status.",
+  "Na folha cada projeto é uma seção numerada (01, 02…) com o cabeçalho de um blueprint e as ações dele; a ordem é a de criação. A ação sem projeto fica em “Geral”; escolha o projeto dela em Situação.": "On the sheet each project is a numbered section (01, 02…) with a blueprint-style header and its actions; the order is the order of creation. An action without a project stays under “General”; pick its project in Status.",
   "Projeto": "Project", "Geral (sem projeto)": "General (no project)", "Geral": "General", "{nome} (novo)": "{nome} (new)",
   "Projetos que esta proposta cria: {nomes}.": "Projects this proposal creates: {nomes}.",
   // arte
@@ -31,7 +31,6 @@ Object.assign(I18N.catalogos.en, {
   "O protótipo \"{titulo}\" será apagado. Não dá para desfazer.": "The prototype \"{titulo}\" will be deleted. This cannot be undone.",
   // agentes
   "Lendo": "Reading", "Escrevendo": "Writing", "Testando": "Testing", "Aguardando": "Waiting", "Bloqueado": "Blocked", "Concluído": "Done", "Parado": "Idle",
-  "agora": "now", "há {n} s": "{n} s ago", "há {n} min": "{n} min ago", "há {n} h": "{n} h ago",
   // markdown
   "A prévia aparece aqui enquanto você escreve.": "The preview appears here as you write.", "Prévia": "Preview",
   // primeiro uso (primeiro-uso.js): a entrada vazia e o exemplo

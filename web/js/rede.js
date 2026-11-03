@@ -10,8 +10,6 @@ function normalizaAgente(a = {}) {
     estado,
     alteracoes: (Array.isArray(a.alteracoes) ? a.alteracoes : []).filter((x) => typeof x === "string").slice(-100).map((x) => x.slice(0, 500)),
     sessaoId: typeof a.sessaoId === "string" ? a.sessaoId.slice(0, 80) : "",
-    // medição do tempo real do plano: primeiro aviso de progresso e conclusão (só existem depois de medidos)
-    ...["inicioEm", "feitoEm"].filter((k) => typeof a[k] === "string" && a[k]).reduce((o, k) => ({ ...o, [k]: a[k].slice(0, 40) }), {}),
     atualizadoEm: typeof a.atualizadoEm === "string" ? a.atualizadoEm.slice(0, 40) : "",
     comentarios: (Array.isArray(a.comentarios) ? a.comentarios : []).filter((c) => c && typeof c.texto === "string").slice(-20).map((c) => ({ texto: c.texto.slice(0, 12000), em: typeof c.em === "string" ? c.em.slice(0, 40) : "", tipo: c.tipo === "relatorio" ? "relatorio" : "comentario", sessaoId: typeof c.sessaoId === "string" ? c.sessaoId.slice(0, 80) : "" })),
   };
@@ -26,12 +24,12 @@ const limpa = (d) => {
     // repositório GitHub (opcional, docs/repositorio-github.md): sem esta linha um recarregamento o tiraria da página e o próximo salvamento o apagaria do servidor
     ...(typeof p.repositorio?.url === "string" && p.repositorio.url ? { repositorio: { url: p.repositorio.url.slice(0, 200) } } : {}),
     // decisões (opcionais), do mesmo jeito
-    ...(Array.isArray(p.decisoes) && p.decisoes.some((x) => x && x.id) ? { decisoes: p.decisoes.filter((x) => x && x.id).map((x) => ({ id: String(x.id), titulo: String(x.titulo || ""), escolha: String(x.escolha || ""), motivo: String(x.motivo || ""), estado: x.estado === "aberta" ? "aberta" : "decidida", em: String(x.em || "").slice(0, 40) })) } : {}),
+    ...(Array.isArray(p.decisoes) && p.decisoes.some((x) => x && x.id) ? { decisoes: p.decisoes.filter((x) => x && x.id).map((x) => ({ id: String(x.id), titulo: String(x.titulo || ""), escolha: String(x.escolha || ""), motivo: String(x.motivo || ""), estado: x.estado === "aberta" ? "aberta" : "decidida" })) } : {}),
     acoes: (Array.isArray(p.acoes) ? p.acoes : []).map((f) => ({
-      id: f.id || novoId(), nome: f.nome || "", inicio: f.inicio || "", fim: f.fim || "", obs: f.obs || "", ...(f.projetoId ? { projetoId: String(f.projetoId) } : {}),
+      id: f.id || novoId(), nome: f.nome || "", obs: f.obs || "", ...(f.projetoId ? { projetoId: String(f.projetoId) } : {}),
       status: ROTULO[f.status] ? f.status : "planejado", progresso: Number(f.progresso) || 0,
-      planos: (Array.isArray(f.planos) ? f.planos : []).map((t) => ({ id: t.id || novoId(), texto: t.texto || "", ...(typeof t.descricao === "string" ? { descricao: t.descricao } : {}), feito: !!t.feito, ...(Number.isFinite(t.horas) && t.horas > 0 ? { horas: t.horas } : {}), ...(t.agente && typeof t.agente === "object" ? { agente: normalizaAgente(t.agente) } : {}), ...(typeof t.responsavel?.id === "string" && t.responsavel.id ? { responsavel: { id: t.responsavel.id.slice(0, 64), ...(t.responsavel.agente === true ? { agente: true } : {}) } } : {}) })), // responsavel: só rótulo (docs/colaboracao.md)
-      checkpoints: (Array.isArray(f.checkpoints) ? f.checkpoints : []).map((m) => ({ id: m.id || novoId(), nome: m.nome || "", data: m.data || "", feito: !!m.feito, ...(m.feito && typeof m.evidencia === "string" ? { evidencia: m.evidencia.slice(0, 2000), feitoEm: String(m.feitoEm || "") } : {}) })),
+      planos: (Array.isArray(f.planos) ? f.planos : []).map((t) => ({ id: t.id || novoId(), texto: t.texto || "", ...(typeof t.descricao === "string" ? { descricao: t.descricao } : {}), feito: !!t.feito, ...(t.agente && typeof t.agente === "object" ? { agente: normalizaAgente(t.agente) } : {}), ...(typeof t.responsavel?.id === "string" && t.responsavel.id ? { responsavel: { id: t.responsavel.id.slice(0, 64), ...(t.responsavel.agente === true ? { agente: true } : {}) } } : {}) })), // responsavel: só rótulo (docs/colaboracao.md)
+      checkpoints: (Array.isArray(f.checkpoints) ? f.checkpoints : []).map((m) => ({ id: m.id || novoId(), nome: m.nome || "", feito: !!m.feito, ...(m.feito && typeof m.evidencia === "string" ? { evidencia: m.evidencia.slice(0, 2000) } : {}) })),
       prototipos: (Array.isArray(f.prototipos) ? f.prototipos : []).filter((x) => x && /^[a-f0-9]{16}$/.test(x.id)).map((x) => ({ id: x.id, titulo: String(x.titulo || "Protótipo").slice(0, 120), em: String(x.em || "").slice(0, 40) })),
     })),
   }));
@@ -60,7 +58,7 @@ async function carregar() {
     if (salvandoPerfil || salvandoWorkspace || timer || arquivo.chats?.some((c) => c.pensando)) return;
     falhou = false;
     versaoDados = r.headers.get("x-dados-versao") || versaoDados;
-    if (texto === ultimo && carregado) { if (hoje !== (hojeSimulado || local(new Date()))) render(); return; }
+    if (texto === ultimo && carregado) return;
     ultimo = texto;
     arquivo = preparaArquivo(JSON.parse(texto));
     workspaceAtual = workspaceDaRota(arquivo, location.hash);

@@ -20,8 +20,6 @@ use web_time::Instant;
 
 pub const TEXTOS: &[(&str, &str)] = &[("desenhando…", "drawing…")];
 
-/// Acima desta proporção (largura/altura), a figura ocupa duas colunas da prancha e fica baixa (`tela-acao.mjs:92`).
-pub const PROPORCAO_LARGA: f32 = 5.0;
 const PASSO_LARGURA: u32 = 64;
 const TETO_TEXTURAS: usize = 32;
 /// Quantas figuras rasterizam ao mesmo tempo; as outras esperam o próximo quadro.
@@ -40,10 +38,6 @@ type Chave = (String, u32);
 /// Largura/altura que o servidor mediu; sem medida, 1.
 pub fn proporcao(figura: Option<&Figura>) -> f32 {
     figura.and_then(medida).unwrap_or(1.0)
-}
-
-pub fn larga(figura: Option<&Figura>) -> bool {
-    proporcao(figura) > PROPORCAO_LARGA
 }
 
 /// A altura que a figura pede nesta largura, antes de existir textura.
@@ -85,6 +79,23 @@ pub fn desenhar(p: &Painter, servidor: &str, figura: Option<&Figura>, nome: &str
         mistura(ctx, &aparece, false, 0.45);
         esqueleto::desenhar(p, area, tr("desenhando…"));
     }
+}
+
+/// A textura pronta da figura, para colar numa face da planta em 3D. Enquanto não chega, pede e devolve a de outra largura, se houver.
+pub fn textura(ctx: &Context, servidor: &str, figura: Option<&Figura>, largura: f32) -> Option<egui::TextureId> {
+    let f = figura.filter(|f| hash_valido(&f.hash) && abre(&f.tipo))?;
+    let quadro = ctx.cumulative_frame_nr();
+    let chave = (f.hash.clone(), arredondar(largura * ctx.pixels_per_point()));
+    let figuras = do_contexto(ctx);
+    let mut g = figuras.lock().unwrap_or_else(PoisonError::into_inner);
+    g.receber(ctx, quadro);
+    if let Some(t) = g.texturas.usar(&chave, quadro) {
+        return Some(t.id());
+    }
+    if !g.falhas.contains_key(&chave) {
+        g.pedir(ctx, servidor, f, &chave, quadro);
+    }
+    g.texturas.outra_largura(&f.hash, quadro).map(TextureHandle::id)
 }
 
 fn medida(f: &Figura) -> Option<f32> {

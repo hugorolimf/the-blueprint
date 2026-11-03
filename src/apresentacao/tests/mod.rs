@@ -9,7 +9,7 @@ use serde_json::{json, Value};
 pub(super) fn conteudo() -> Value {
     json!({"versao": 1, "publico": "cliente", "nivel": "padrao", "idioma": "pt-BR", "titulo": "Atendimento de usuários",
            "resumo": ["Você recebe o atendimento no WhatsApp."],
-           "etapas": [{"id": "e1", "titulo": "Cadastro", "inicio": "2026-10-26", "fim": "2026-10-28", "texto": "Fichas dos usuários.", "figura": "fichas"}]})
+           "etapas": [{"id": "e1", "titulo": "Cadastro", "texto": "Fichas dos usuários.", "figura": "fichas"}]})
 }
 
 pub(super) fn figura(id: &str) -> Value {

@@ -1,14 +1,6 @@
-// ---- linha do tempo da execução do agente na folha da ação: o que ele avisou (começou, mudou de arquivo, bloqueou, concluiu), com a hora e o plano ----
-// Só leitura. Os eventos vêm de GET /api/mcp/linha-do-tempo (guardados no banco: 50 por ação, até 30 dias; regra em docs/claude-na-folha.md) e a lista
+// ---- linha do tempo da execução do agente na folha da ação: o que ele avisou (começou, mudou de arquivo, bloqueou, concluiu) e o plano, do mais novo ao mais antigo ----
+// Só leitura. Os eventos vêm de GET /api/mcp/linha-do-tempo (guardados no banco; regra em docs/claude-na-folha.md) e a lista
 // só é buscada de novo quando o servidor avisa por SSE (`linha-do-tempo`, com os ids) e a folha daquela ação está aberta. Sem polling.
-
-// a hora do evento: só hh:mm se for de hoje, senão com o dia
-function ldtHora(iso, agora = Date.now()) {
-  const d = new Date(iso);
-  if (isNaN(d)) return "";
-  const hoje = new Date(agora).toDateString() === d.toDateString();
-  return new Intl.DateTimeFormat(I18N.ativo, hoje ? { hour: "2-digit", minute: "2-digit" } : { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }).format(d);
-}
 
 // o que aconteceu, numa frase; o progresso é a própria frase do agente
 function ldtFrase(e) {
@@ -30,11 +22,11 @@ function ldtAlvo(e, acao) {
   return item ? item.texto || item.nome || "" : "";
 }
 
-function ldtLista(eventos, acao, agora = Date.now()) {
+function ldtLista(eventos, acao) {
   if (!eventos.length) return `<p class="ldt-vazio">${tr("Nenhum evento do agente nesta ação ainda.")}</p>`;
   return `<ol>${eventos.map((e) => {
     const alvo = ldtAlvo(e, acao);
-    return `<li class="ldt-${esc(e.tipo)}"><time datetime="${esc(e.em)}">${esc(ldtHora(e.em, agora))}</time><div><span class="ldt-ag">${esc(e.agente || tr("agente"))}</span> ${esc(ldtFrase(e))}${alvo ? `<span class="ldt-alvo">${esc(alvo)}</span>` : ""}</div></li>`;
+    return `<li class="ldt-${esc(e.tipo)}"><div><span class="ldt-ag">${esc(e.agente || tr("agente"))}</span> ${esc(ldtFrase(e))}${alvo ? `<span class="ldt-alvo">${esc(alvo)}</span>` : ""}</div></li>`;
   }).join("")}</ol>`;
 }
 

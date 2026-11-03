@@ -63,7 +63,25 @@ pub fn tr(pt: &'static str) -> &'static str {
 
 /// O inglês de `pt`: os textos locais, os do Planejar (cada arquivo de `plano/` traz os seus) e o catálogo da página.
 fn em_ingles(pt: &str) -> Option<&'static str> {
-    LOCAIS.iter().chain(crate::plano::textos::TODOS.iter().flat_map(|t| t.iter())).find(|(chave, _)| *chave == pt).map(|(_, en)| *en).or_else(|| catalogo().get(pt).and_then(Value::as_str))
+    traducoes().get(pt).copied()
+}
+
+/// Todas as traduções numa tabela só, montada uma vez: cada `tr` é uma consulta, e não uma busca pelas listas a cada quadro.
+/// Vale a primeira que aparece, na ordem de antes: os locais, os do Planejar na ordem de `TODOS` e, por último, o catálogo (só os textos).
+fn traducoes() -> &'static HashMap<&'static str, &'static str> {
+    static TRADUCOES: OnceLock<HashMap<&'static str, &'static str>> = OnceLock::new();
+    TRADUCOES.get_or_init(|| {
+        let mut m = HashMap::new();
+        for (pt, en) in LOCAIS.iter().chain(crate::plano::textos::TODOS.iter().flat_map(|t| t.iter())) {
+            m.entry(*pt).or_insert(*en);
+        }
+        for (pt, en) in catalogo() {
+            if let Some(en) = en.as_str() {
+                m.entry(pt.as_str()).or_insert(en);
+            }
+        }
+        m
+    })
 }
 
 /// `tr` com os `{nome}` do texto trocados pelos valores.

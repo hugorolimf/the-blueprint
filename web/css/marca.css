@@ -43,7 +43,7 @@
 .emblema.marca-fundo{opacity:.18}
 .emblema.marca-fundo:hover,.emblema.marca-fundo:focus-visible{opacity:.28}
 .emblema .legenda-marca{letter-spacing:.16em}
-svg.desenho text:not(.iso-face-text):not(.hoje-t):not(.botao-t){paint-order:stroke;stroke:#0c3a78;stroke-width:3px;stroke-linejoin:round}
+svg.desenho text:not(.iso-face-text):not(.botao-t){paint-order:stroke;stroke:#0c3a78;stroke-width:3px;stroke-linejoin:round}
 svg.desenho .lk text{stroke:none}
 .emblema .fantasma-emb{opacity:.6}
 .emblema .fantasma-emb .iso-fill,.emblema .fantasma-emb .iso-shade,.emblema .fantasma-emb .iso-top{fill:none}

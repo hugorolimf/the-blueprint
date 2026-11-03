@@ -10,14 +10,14 @@ fn tamanho(v: &Value) -> usize {
 fn grande() -> Value {
     let acoes: Vec<Value> = (0..100)
         .map(|i| {
-            let (status, mes) = if i < 62 { ("concluido", 1 + i / 12) } else if i < 65 { ("andamento", 8) } else { ("planejado", 9 + (i - 65) / 12) };
+            let status = if i < 62 { "concluido" } else if i < 65 { "andamento" } else { "planejado" };
             let planos: Vec<Value> = (0..3 + i % 4)
-                .map(|k| json!({"id": format!("t{i}-{k}"), "texto": format!("Implementar a parte {k} da ação {i}: rota, validação e teste de ponta a ponta no módulo"), "horas": 2,
+                .map(|k| json!({"id": format!("t{i}-{k}"), "texto": format!("Implementar a parte {k} da ação {i}: rota, validação e teste de ponta a ponta no módulo"),
                     "descricao": "Escopo: ajustar o módulo e a interface. Resultado: o fluxo funciona sem regressão. Validação: cargo test passa e a tela abre sem erro no console. ".repeat(3),
                     "feito": status == "concluido" || (status == "andamento" && k == 0)}))
                 .collect();
-            let checkpoints: Vec<Value> = (0..1 + i % 2).map(|k| json!({"id": format!("c{i}-{k}"), "nome": format!("Usuário confere a entrega {k} da ação {i}"), "data": format!("2026-{:02}-20", mes), "feito": status == "concluido"})).collect();
-            let mut a = json!({"id": format!("f{i}"), "nome": format!("Ação {i}: reorganizar o módulo e cobrir com testes"), "inicio": format!("2026-{mes:02}-01"), "fim": format!("2026-{mes:02}-28"),
+            let checkpoints: Vec<Value> = (0..1 + i % 2).map(|k| json!({"id": format!("c{i}-{k}"), "nome": format!("Usuário confere a entrega {k} da ação {i}"), "feito": status == "concluido"})).collect();
+            let mut a = json!({"id": format!("f{i}"), "nome": format!("Ação {i}: reorganizar o módulo e cobrir com testes"),
                 "status": status, "obs": "Instruções longas da ação, que a estrutura nunca devolve.", "planos": planos, "checkpoints": checkpoints});
             if i % 10 != 9 {
                 a["projetoId"] = json!(format!("pr{}", i % 4));
@@ -31,8 +31,8 @@ fn grande() -> Value {
 
 fn pequeno() -> Value {
     json!({"id": "p", "nome": "Pequeno", "descricao": "d", "obs": "", "acoes": [
-        {"id": "a1", "nome": "Feita", "inicio": "2026-10-01", "fim": "2026-10-10", "status": "concluido", "obs": "", "planos": [{"id": "t1", "texto": "x", "feito": true}], "checkpoints": []},
-        {"id": "a2", "nome": "Depois", "inicio": "2026-12-01", "fim": "2026-12-10", "status": "planejado", "obs": "", "planos": [{"id": "t2", "texto": "y"}], "checkpoints": [{"id": "c1", "nome": "ok", "data": "2026-12-09"}]}]})
+        {"id": "a1", "nome": "Feita", "status": "concluido", "obs": "", "planos": [{"id": "t1", "texto": "x", "feito": true}], "checkpoints": []},
+        {"id": "a2", "nome": "Depois", "status": "planejado", "obs": "", "planos": [{"id": "t2", "texto": "y"}], "checkpoints": [{"id": "c1", "nome": "ok"}]}]})
 }
 
 fn lida(p: &Value, incluir: &str, projeto: &str) -> Value {
@@ -57,13 +57,13 @@ fn o_que_importa_continua_completo_e_o_resto_vira_linha() {
     let por_id = |id: &str| acoes.iter().find(|a| a["id"] == id).unwrap();
     for id in ["f62", "f63", "f64"] {
         let a = por_id(id);
-        assert!(a["planos"].as_array().unwrap().iter().all(|t| t["id"].is_string() && t["texto"].is_string() && t["horas"] == 2) && a["checkpoints"].is_array(), "em andamento: completa");
+        assert!(a["planos"].as_array().unwrap().iter().all(|t| t["id"].is_string() && t["texto"].is_string()) && a["checkpoints"].is_array(), "em andamento: completa");
     }
     assert!(por_id("f65")["planos"].is_array() && por_id("f68")["planos"].is_array() && por_id("f69").get("planos").is_none(), "as próximas planejadas ficam completas");
     let feita = por_id("f3");
-    assert_eq!(feita, &json!({"id": "f3", "nome": "Ação 3: reorganizar o módulo e cobrir com testes", "fim": "2026-01-28", "status": "concluido", "projeto": "Documentação"}), "concluída: uma linha com o id");
+    assert_eq!(feita, &json!({"id": "f3", "nome": "Ação 3: reorganizar o módulo e cobrir com testes", "status": "concluido", "projeto": "Documentação"}), "concluída: uma linha com o id");
     let distante = por_id("f99");
-    assert!(distante.get("planos").is_none() && distante["id"] == "f99" && distante["inicio"].is_string() && distante["nPlanos"] == 6 && distante["nCheckpoints"] == 2, "{distante}");
+    assert!(distante.get("planos").is_none() && distante["id"] == "f99" && distante["nPlanos"] == 6 && distante["nCheckpoints"] == 2, "{distante}");
     assert_eq!(e["resumidas"]["concluidas"], 62);
     assert_eq!(e["resumidas"]["planejadas"], 31);
     let como = e["resumidas"]["como"].as_str().unwrap();

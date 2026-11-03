@@ -1,7 +1,6 @@
 {
   "dados": "data.exemplo.json",
   "tamanho": "1440x900",
-  "hoje": "2026-10-26",
   "telas": {
     "01-lista-de-workspaces": "6351a5ef21fe0ba4",
     "02-workspace": "bbaebc279a6ef1fd",

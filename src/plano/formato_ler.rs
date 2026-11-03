@@ -74,7 +74,7 @@ pub(super) fn ler_plano(acao: &str, i: usize, v: &Value, erros: &mut Erros) -> P
         return PlanoItem::default();
     }
     let id = opcional(v, "id", &onde, erros);
-    PlanoItem { id_gerado: id.is_none(), id: id.unwrap_or(gerado), texto: texto(v, "texto", &onde, erros), area: opcional(v, "area", &onde, erros), depende_de: textos(v, "depende_de", &onde, erros), instrucoes: opcional(v, "instrucoes", &onde, erros) }
+    PlanoItem { id_gerado: id.is_none(), id: id.unwrap_or(gerado), texto: texto(v, "texto", &onde, erros), area: opcional(v, "area", &onde, erros), depende_de: textos(v, "depende_de", &onde, erros), instrucoes: opcional(v, "instrucoes", &onde, erros), forma: opcional(v, "forma", &onde, erros), entrega: opcional(v, "entrega", &onde, erros) }
 }
 
 pub(super) fn ler_checkpoint(acao: &str, i: usize, v: &Value, erros: &mut Erros) -> CheckpointDoc {
@@ -83,14 +83,14 @@ pub(super) fn ler_checkpoint(acao: &str, i: usize, v: &Value, erros: &mut Erros)
     if !exige_objeto(v, &onde, erros) {
         return CheckpointDoc::default();
     }
-    CheckpointDoc { id: opcional(v, "id", &onde, erros).unwrap_or(gerado), texto: texto(v, "texto", &onde, erros), data: opcional(v, "data", &onde, erros) }
+    CheckpointDoc { id: opcional(v, "id", &onde, erros).unwrap_or(gerado), texto: texto(v, "texto", &onde, erros), plano: opcional(v, "plano", &onde, erros) }
 }
 
 pub(super) fn ler_detalhe(v: &Value, onde: &str, erros: &mut Erros) -> Detalhe {
     if !exige_objeto(v, onde, erros) {
         return Detalhe::default();
     }
-    Detalhe { id: texto(v, "id", onde, erros), titulo: opcional(v, "titulo", onde, erros), legenda: opcional(v, "legenda", onde, erros), grupo: opcional(v, "grupo", onde, erros), figura: opcional(v, "figura", onde, erros), figura_info: None, pede_aprovacao: booleano(v, "pede_aprovacao", onde, erros) }
+    Detalhe { id: texto(v, "id", onde, erros), titulo: opcional(v, "titulo", onde, erros), legenda: opcional(v, "legenda", onde, erros), grupo: opcional(v, "grupo", onde, erros), figura: opcional(v, "figura", onde, erros), plano: opcional(v, "plano", onde, erros), variante: opcional(v, "variante", onde, erros), figura_info: None, pede_aprovacao: booleano(v, "pede_aprovacao", onde, erros) }
 }
 
 pub(super) fn ler_tabela(v: &Value, onde: &str, erros: &mut Erros) -> Tabela {
@@ -120,7 +120,7 @@ pub(super) fn ler_tabela(v: &Value, onde: &str, erros: &mut Erros) -> Tabela {
         }
         linhas.push(lida);
     }
-    Tabela { titulo: opcional(v, "titulo", onde, erros), colunas: textos(v, "colunas", onde, erros), larguras, linhas }
+    Tabela { plano: opcional(v, "plano", onde, erros), titulo: opcional(v, "titulo", onde, erros), colunas: textos(v, "colunas", onde, erros), larguras, linhas }
 }
 
 pub(super) fn ler_acao(v: &Value, onde: &str, erros: &mut Erros) -> AcaoDoc {
@@ -133,7 +133,7 @@ pub(super) fn ler_acao(v: &Value, onde: &str, erros: &mut Erros) -> AcaoDoc {
     let checkpoints = itens(v, "checkpoints", &onde, erros).iter().enumerate().map(|(i, c)| ler_checkpoint(&id, i, c, erros)).collect();
     let detalhes = itens(v, "detalhes", &onde, erros).iter().map(|d| ler_detalhe(d, &format!("{onde}, detail"), erros)).collect();
     let tabelas = itens(v, "tabelas", &onde, erros).iter().map(|t| ler_tabela(t, &format!("{onde}, table"), erros)).collect();
-    AcaoDoc { nome: texto(v, "nome", &onde, erros), de: opcional(v, "de", &onde, erros), ate: opcional(v, "ate", &onde, erros), texto: opcional(v, "texto", &onde, erros), id, planos, checkpoints, detalhes, tabelas }
+    AcaoDoc { nome: texto(v, "nome", &onde, erros), texto: opcional(v, "texto", &onde, erros), id, planos, checkpoints, detalhes, tabelas }
 }
 
 pub(super) fn ler_decisao(v: &Value, erros: &mut Erros) -> Decisao {
@@ -142,7 +142,7 @@ pub(super) fn ler_decisao(v: &Value, erros: &mut Erros) -> Decisao {
     }
     let id = texto(v, "id", "decision", erros);
     let onde = format!("decision {id}");
-    Decisao { rotulo: opcional(v, "rotulo", &onde, erros), texto: texto(v, "texto", &onde, erros), data: opcional(v, "data", &onde, erros), acoes: textos(v, "acoes", &onde, erros), pede_aprovacao: booleano(v, "pede_aprovacao", &onde, erros), id }
+    Decisao { rotulo: opcional(v, "rotulo", &onde, erros), texto: texto(v, "texto", &onde, erros), acoes: textos(v, "acoes", &onde, erros), plano: opcional(v, "plano", &onde, erros), pede_aprovacao: booleano(v, "pede_aprovacao", &onde, erros), id }
 }
 
 pub(super) fn ler_recomendada(v: &Value, opcoes: &[String], onde: &str, erros: &mut Erros) -> Option<String> {
@@ -165,5 +165,5 @@ pub(super) fn ler_pergunta(v: &Value, erros: &mut Erros) -> Pergunta {
     let id = texto(v, "id", "question", erros);
     let onde = format!("question {id}");
     let opcoes = textos(v, "opcoes", &onde, erros);
-    Pergunta { texto: texto(v, "texto", &onde, erros), recomendada: ler_recomendada(v, &opcoes, &onde, erros), acoes: textos(v, "acoes", &onde, erros), opcoes, id }
+    Pergunta { texto: texto(v, "texto", &onde, erros), recomendada: ler_recomendada(v, &opcoes, &onde, erros), acoes: textos(v, "acoes", &onde, erros), plano: opcional(v, "plano", &onde, erros), opcoes, id }
 }

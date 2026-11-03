@@ -35,7 +35,7 @@ const figuras = [
       { marca: "lit", rotulo: "A ficha escolhida sobe e acende" },
       { marca: "raised", rotulo: "Quatorze fichas; a aba mostra a situação" },
     ],
-    legenda: "Um fichário com um leitor no trilho da frente. Dados de exemplo: a ficha que sobe mostra, pela aba, se o cadastro está em dia, pendente ou atrasado.",
+    legenda: "Um fichário com um leitor no trilho da frente. Dados de exemplo: a ficha que sobe mostra, pela aba, se o cadastro está completo, pendente ou em revisão.",
     rotulo: "Um fichário de quatorze fichas com um leitor que desliza e levanta a ficha escolhida",
     impressao: contexto.__L.impressao(conteudo),
     codigo: codigo("fichario"),

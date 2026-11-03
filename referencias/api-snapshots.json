@@ -97,20 +97,16 @@
               {
                 "checkpoints": [
                   {
-                    "data": "2026-11-20",
                     "id": "m1",
                     "nome": "Rota no ar"
                   },
                   {
-                    "data": "2026-11-25",
                     "feito": true,
                     "id": "m2",
                     "nome": "Já feito"
                   }
                 ],
-                "fim": "2026-11-30",
                 "id": "f1",
-                "inicio": "2026-11-01",
                 "nome": "Base",
                 "obs": "instruções",
                 "planos": [
@@ -188,20 +184,16 @@
               {
                 "checkpoints": [
                   {
-                    "data": "2026-11-20",
                     "id": "m1",
                     "nome": "Rota no ar"
                   },
                   {
-                    "data": "2026-11-25",
                     "feito": true,
                     "id": "m2",
                     "nome": "Já feito"
                   }
                 ],
-                "fim": "2026-11-30",
                 "id": "f1",
-                "inicio": "2026-11-01",
                 "nome": "Base",
                 "obs": "instruções",
                 "planos": [
@@ -350,7 +342,6 @@
       "status": 200,
       "tipo": "application/json",
       "corpo": {
-        "hoje": "<mascarado>",
         "workspaces": [
           {
             "blueprints": [
@@ -388,20 +379,16 @@
             {
               "checkpoints": [
                 {
-                  "data": "2026-11-20",
                   "id": "m1",
                   "nome": "Rota no ar"
                 },
                 {
-                  "data": "2026-11-25",
                   "feito": true,
                   "id": "m2",
                   "nome": "Já feito"
                 }
               ],
-              "fim": "2026-11-30",
               "id": "f1",
-              "inicio": "2026-11-01",
               "nome": "Base",
               "planos": [
                 {
@@ -421,7 +408,6 @@
           "id": "p1",
           "nome": "Portal"
         },
-        "hoje": "<mascarado>",
         "outros": [],
         "workspaceId": "sm"
       }
@@ -433,21 +419,17 @@
         "acao": {
           "checkpoints": [
             {
-              "data": "2026-11-20",
               "feito": false,
               "id": "m1",
               "nome": "Rota no ar"
             },
             {
-              "data": "2026-11-25",
               "feito": true,
               "id": "m2",
               "nome": "Já feito"
             }
           ],
-          "fim": "2026-11-30",
           "id": "f1",
-          "inicio": "2026-11-01",
           "nome": "Base",
           "observacao": "instruções",
           "planos": [
@@ -468,7 +450,6 @@
           "status": "planejado"
         },
         "blueprintId": "p1",
-        "hoje": "<mascarado>",
         "workspaceId": "sm"
       }
     },
@@ -482,7 +463,6 @@
           "id": "p9",
           "nome": "Dele"
         },
-        "hoje": "<mascarado>",
         "outros": [],
         "workspaceId": "w2"
       }
@@ -535,7 +515,7 @@
           "Ação 1 \"x\": sem planos (ok só se for um esqueleto que o usuário vai detalhar)."
         ],
         "erros": [
-          "Ação 1 \"x\": `fim` (2026-11-01) é anterior a `inicio` (2026-12-01)."
+          "Ação 1 \"x\": `status` deve ser \"planejado\" ou \"andamento\" (o status concluído não pode ser proposto; recebido \"concluido\")."
         ]
       }
     },
@@ -551,9 +531,7 @@
       "status": 422,
       "tipo": "application/json",
       "corpo": {
-        "avisos": [
-          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-        ],
+        "avisos": [],
         "erros": [
           "Blueprint novo: informe `blueprint: { nome, descricao }`."
         ]
@@ -563,9 +541,7 @@
       "status": 200,
       "tipo": "application/json",
       "corpo": {
-        "avisos": [
-          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-        ],
+        "avisos": [],
         "ids": [
           {
             "checkpoints": [
@@ -600,9 +576,7 @@
       "status": 200,
       "tipo": "application/json",
       "corpo": {
-        "avisos": [
-          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-        ],
+        "avisos": [],
         "ids": [
           {
             "checkpoints": [
@@ -637,9 +611,7 @@
       "status": 200,
       "tipo": "application/json",
       "corpo": {
-        "avisos": [
-          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-        ],
+        "avisos": [],
         "ids": [
           {
             "checkpoints": [
@@ -675,8 +647,7 @@
       "tipo": "application/json",
       "corpo": {
         "avisos": [
-          "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
-          "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+          "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8."
         ],
         "ids": [
           {
@@ -719,9 +690,7 @@
       "corpo": {
         "itens": [
           {
-            "avisos": [
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-            ],
+            "avisos": [],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
             "em": "<mascarado>",
@@ -732,14 +701,11 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-30",
                       "id": "",
                       "nome": "Pronto"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -770,9 +736,7 @@
             "workspaceId": "sm"
           },
           {
-            "avisos": [
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-            ],
+            "avisos": [],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
             "em": "<mascarado>",
@@ -783,14 +747,11 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-30",
                       "id": "",
                       "nome": "Pronto"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -821,9 +782,7 @@
             "workspaceId": "sm"
           },
           {
-            "avisos": [
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-            ],
+            "avisos": [],
             "blueprintId": "",
             "criadaEm": "<mascarado>",
             "em": "<mascarado>",
@@ -834,14 +793,11 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-30",
                       "id": "",
                       "nome": "Pronto"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -877,8 +833,7 @@
           },
           {
             "avisos": [
-              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8."
             ],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
@@ -890,15 +845,12 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-10",
                       "de": "f1",
                       "id": "m1",
                       "nome": "Rota no ar"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -1094,9 +1046,7 @@
       "corpo": {
         "itens": [
           {
-            "avisos": [
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-            ],
+            "avisos": [],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
             "em": "<mascarado>",
@@ -1107,14 +1057,11 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-30",
                       "id": "",
                       "nome": "Pronto"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -1145,9 +1092,7 @@
             "workspaceId": "sm"
           },
           {
-            "avisos": [
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-            ],
+            "avisos": [],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
             "em": "<mascarado>",
@@ -1158,14 +1103,11 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-30",
                       "id": "",
                       "nome": "Pronto"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -1196,9 +1138,7 @@
             "workspaceId": "sm"
           },
           {
-            "avisos": [
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
-            ],
+            "avisos": [],
             "blueprintId": "",
             "criadaEm": "<mascarado>",
             "em": "<mascarado>",
@@ -1209,14 +1149,11 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-30",
                       "id": "",
                       "nome": "Pronto"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -1252,8 +1189,7 @@
           },
           {
             "avisos": [
-              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8."
             ],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
@@ -1265,15 +1201,12 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-10",
                       "de": "f1",
                       "id": "m1",
                       "nome": "Rota no ar"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [
@@ -1441,8 +1374,7 @@
         "itens": [
           {
             "avisos": [
-              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8.",
-              "Ação 1 \"Nova\": dura 31 dias; ação de mais de 3 dias pede um motivo nas instruções (espera por pessoa, CI, publicação, terceiro) ou divisão em ações menores."
+              "Ação 1 \"Nova\": 1 plano(s); o ideal é de 3 a 8."
             ],
             "blueprintId": "p1",
             "criadaEm": "<mascarado>",
@@ -1454,15 +1386,12 @@
                 {
                   "checkpoints": [
                     {
-                      "data": "2030-01-10",
                       "de": "f1",
                       "id": "m1",
                       "nome": "Rota no ar"
                     }
                   ],
-                  "fim": "2030-01-31",
                   "id": "",
-                  "inicio": "2030-01-01",
                   "nome": "Nova",
                   "observacao": "",
                   "planos": [

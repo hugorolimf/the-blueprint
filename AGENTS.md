@@ -9,14 +9,16 @@ The Blueprint (beta), a local-first roadmap in Rust (`blueprint.exe`) with a web
 | Where | What |
 | --- | --- |
 | `src/dados/` | the only layer that talks to SQLite (migrations in `src/dados/migracoes/NNN_*.sql`; `formato.rs` maps the JSON to tables) |
-| `src/blueprint/` | validation of the agent's proposals (`validar_proposta`), deadlines, summaries for `ler_blueprint` |
+| `src/blueprint/` | validation of the agent's proposals (`validar_proposta`), summaries for `ler_blueprint` |
 | `src/mcp/` | the queue (read from memory, saved in the database), MCP actions, agent activity, SSE, `ferramentas.json` and `instrucoes.txt` (the source of truth of the MCP, written in English) |
 | `src/http/` | the synchronous HTTP server (`tiny_http`), pure routes, static files with ETag and gzip, the versioned `/api/dados` |
 | `src/janela/` | the WebView2 window, tray and single instance (Windows only) |
 | `ui/` | the native interface (egui): one crate that runs as a window on Windows and Linux and in the browser as WebAssembly; see [ui/README.md](ui/README.md). It replaces `web/` screen by screen |
+| `ui/src/anatomia/` | our Anatomy engine in Rust: camera with perspective, mesh of faces and edges, solids, ink in light bands, scene with click testing; see [skills/blueprint-anatomia/SKILL.md](skills/blueprint-anatomia/SKILL.md) |
 | `web/`, `blueprint.html` | the legacy web interface, until each screen is migrated to `ui/`: CSS in `web/css`, classic scripts in `web/js` in the order listed in `blueprint.html`, language catalogs in `web/i18n` |
 | `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | the isometric kit (Anatomy) and figures; they run in the browser |
 | `skills/blueprint-planejamento/` | the guide the agent reads through the MCP (`guia_de_planejamento`), in English |
+| `skills/blueprint-anatomia/` | the skill for the plan floor: the Anatomy engine, the stage of an action, the Screen component and its variants, and how to plan so the floor says something (linked from `.claude/skills/`) |
 | `scripts/` | end-to-end checks (HTTP contract, Edge e2e, mutations, measurements, installer, the video recorder) |
 | `roadmap.json` | the single source of the public roadmap (generates `ROADMAP.md` and the app's Roadmap screen) |
 
@@ -33,7 +35,7 @@ node scripts/capturas.mjs --comparar
 
 ## Rules
 
-- Run tests and builds only when they can finish in under one minute; stop any that reach the limit and report what was not verified.
+- **Do not run tests or builds of the program unless the user asks for it in the current task.** This covers `cargo test`, `cargo build`, `cargo run`, `trunk`, the Node checks, the e2e scripts and opening the app to check something. The agents' job here is to write code: fix bugs, make changes, ship to production. Writing tests is welcome; only running them needs the user's word. The user runs them afterwards. Say plainly that the change was not compiled or tested. When the user does ask, stop anything that passes one minute and report what was not verified.
 
 - Files of at most 350 lines (ceiling 500 with the reason at the top). One file, one responsibility.
 - Few dependencies. The interface is native (`ui/`, egui, one code for every system); `web/` is legacy: no new screens there, and no framework or bundler in it.

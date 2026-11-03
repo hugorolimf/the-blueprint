@@ -15,7 +15,6 @@ pub(crate) enum Grupo {
     Abrir,
     Editar,
     Estado,
-    Prazo,
     Perigo,
     Geral,
 }
@@ -32,7 +31,6 @@ pub(crate) enum Icone {
     Voltar,
     TelaCheia,
     Relogio,
-    Calendario,
     Mais,
     Recolher,
     Expandir,

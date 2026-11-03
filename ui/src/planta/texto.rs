@@ -3,7 +3,7 @@
 use crate::fonte::{familia, Peso};
 use crate::tema::TINTA;
 use egui::text::{LayoutJob, TextFormat};
-use egui::{pos2, Align2, Color32, FontId, Galley, Painter, Pos2, Rect};
+use egui::{pos2, Align2, Color32, FontId, Galley, Id, Painter, Pos2, Rect};
 use std::borrow::Cow;
 use std::sync::Arc;
 
@@ -80,6 +80,14 @@ impl<'a> Texto<'a> {
     pub fn largura(&self, p: &Painter) -> f32 {
         self.galeria(p).size().x + self.trilha
     }
+    /// Mede e pinta com a mesma galeria: `onde` recebe a largura (a de `largura`) e devolve o canto de cima à esquerda. Devolve a largura.
+    /// A cor não muda o desenho das letras, então a medida é a mesma de medir antes com outra cor.
+    pub fn em_medindo(&self, p: &Painter, onde: impl FnOnce(f32) -> Pos2) -> f32 {
+        let g = self.galeria(p);
+        let largura = g.size().x + self.trilha;
+        self.pintar(p, onde(largura), g);
+        largura
+    }
     /// Pinta com o canto de cima à esquerda em `pos`.
     pub fn em(&self, p: &Painter, pos: Pos2) -> Rect {
         let g = self.galeria(p);
@@ -113,12 +121,21 @@ impl<'a> Texto<'a> {
     /// Pinta numa caixa de linha de altura `altura` (como o `line-height` do CSS): o texto fica no meio dela.
     pub fn na_linha(&self, p: &Painter, x: f32, topo: f32, altura: f32) -> Rect {
         let g = self.galeria(p);
-        self.em(p, pos2(x, topo + (altura - g.size().y) / 2.0))
+        self.na_linha_com(p, g, x, topo, altura)
     }
     /// Pinta com o canto de cima à direita em `(direita, topo)` na caixa de linha.
     pub fn na_linha_dir(&self, p: &Painter, direita: f32, topo: f32, altura: f32) -> Rect {
-        let l = self.largura(p);
-        self.na_linha(p, direita - l, topo, altura)
+        let g = self.galeria(p);
+        // a largura de `largura`, da mesma galeria
+        let l = g.size().x + self.trilha;
+        self.na_linha_com(p, g, direita - l, topo, altura)
+    }
+    /// `na_linha` com a galeria já feita: mede e pinta com a mesma.
+    fn na_linha_com(&self, p: &Painter, g: Arc<Galley>, x: f32, topo: f32, altura: f32) -> Rect {
+        let pos = pos2(x, topo + (altura - g.size().y) / 2.0);
+        let r = Rect::from_min_size(pos, g.size());
+        self.pintar(p, pos, g);
+        r
     }
     /// Pinta o bloco (de `caixa` de largura) centralizado em `cx`, com o topo em `topo`.
     pub fn centrado_em(&self, p: &Painter, cx: f32, topo: f32) -> Rect {
@@ -136,9 +153,16 @@ impl<'a> Texto<'a> {
 }
 
 /// O avanço de uma letra como o egui a mede neste tamanho e escala (medido numa linha de 16 letras, porque cada uma é arredondada).
+/// Medido uma vez por tamanho, peso e escala, e guardado no contexto: todo texto passa por aqui, e as fontes só são instaladas na criação (`fonte::instalar`).
 fn avanco_real(p: &Painter, tam: f32, peso: Peso) -> f32 {
+    let id = Id::unique(("planta-avanco-real", tam.to_bits(), peso as u8, p.pixels_per_point().to_bits()));
+    if let Some(v) = p.ctx().data(|d| d.get_temp::<f32>(id)) {
+        return v;
+    }
     let mut job = LayoutJob::default();
     job.append("MMMMMMMMMMMMMMMM", 0.0, TextFormat { font_id: FontId::new(tam, familia(peso)), ..Default::default() });
-    p.layout_job(job).size().x / 16.0
+    let v = p.layout_job(job).size().x / 16.0;
+    p.ctx().data_mut(|d| d.insert_temp(id, v));
+    v
 }
 

@@ -26,12 +26,6 @@ pub(super) fn acao_atual(acoes: &[Value]) -> Option<usize> {
 }
 
 /// `2026-10-27` → `27/10`
-fn dia(data: &str) -> String {
-    match data.split('-').collect::<Vec<_>>()[..] {
-        [_, m, d] => format!("{d}/{m}"),
-        _ => data.to_string(),
-    }
-}
 
 fn curto(s: &str, max: usize) -> String {
     s.chars().take(max).collect()
@@ -50,14 +44,14 @@ fn montar(workspace: &str, estrutura: &Value, n: usize) -> (String, String) {
     let numero = &numeros_das_acoes(p, n)[i];
     let planos = lista(&a["planos"]);
     let feitos = planos.iter().filter(|x| x["feito"] == true).count();
-    let mut t = crate::tr!("The Blueprint · {workspace} › {}\nAction {numero}: {} ({} to {}) · {feitos}/{} plans\n", "The Blueprint · {workspace} › {}\nAção {numero}: {} ({} a {}) · {feitos}/{} planos\n", texto(p, "nome"), texto(a, "nome"), dia(texto(a, "inicio")), dia(texto(a, "fim")), planos.len());
+    let mut t = crate::tr!("The Blueprint · {workspace} › {}\nAction {numero}: {} · {feitos}/{} plans\n", "The Blueprint · {workspace} › {}\nAção {numero}: {} · {feitos}/{} planos\n", texto(p, "nome"), texto(a, "nome"), planos.len());
     for x in planos {
         t += &format!("  [{}] {}\n", if x["feito"] == true { "x" } else { " " }, texto(x, "texto"));
     }
-    // o checkpoint pendente mais próximo de todo o blueprint (datas aaaa-mm-dd ordenam como texto)
-    let proximo = acoes.iter().flat_map(|a| lista(&a["checkpoints"])).filter(|c| c["feito"] != true).min_by_key(|c| texto(c, "data"));
+    // o primeiro checkpoint pendente de todo o blueprint, na ordem das ações
+    let proximo = acoes.iter().flat_map(|a| lista(&a["checkpoints"])).find(|c| c["feito"] != true);
     match proximo {
-        Some(c) => t += &crate::tr!("Next checkpoint: {} · {}", "Próximo checkpoint: {} · {}", dia(texto(c, "data")), texto(c, "nome")),
+        Some(c) => t += &crate::tr!("Next checkpoint: {}", "Próximo checkpoint: {}", texto(c, "nome")),
         None => t += crate::idioma::ou("No pending checkpoints.", "Sem checkpoints pendentes."),
     }
     (t, crate::tr!("Blueprint · {onde} · action {numero} · {} · {feitos}/{}", "Blueprint · {onde} · ação {numero} · {} · {feitos}/{}", curto(texto(a, "nome"), 30), planos.len()))

@@ -12,7 +12,7 @@ export const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 export const portaLivre = () => new Promise((ok) => { const l = createServer(); l.listen(0, "127.0.0.1", () => { const p = l.address().port; l.close(() => ok(p)); }); });
 
 /** Dados mínimos: o workspace raiz "sm" com um blueprint p1, uma ação f1 e um plano t1. */
-export const DADOS = { blueprints: [{ id: "p1", nome: "Projeto", acoes: [{ id: "f1", nome: "Ação", inicio: "2026-11-01", fim: "2026-11-05", status: "andamento", planos: [{ id: "t1", texto: "Plano um", descricao: "d" }], checkpoints: [] }] }] };
+export const DADOS = { blueprints: [{ id: "p1", nome: "Projeto", acoes: [{ id: "f1", nome: "Ação", status: "andamento", planos: [{ id: "t1", texto: "Plano um", descricao: "d" }], checkpoints: [] }] }] };
 
 /** Uma pasta de dados temporária com o data.json mínimo e as variáveis de ambiente que o app lê. */
 export async function pastaDeDados(prefixo, extra = {}) {

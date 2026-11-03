@@ -251,13 +251,13 @@ fn o_guia_vem_por_partes_sem_o_cabecalho() {
     assert!(texto.starts_with("# Plan a blueprint") && !texto.contains("description:"), "{}", &texto[..60.min(texto.len())]);
     let editar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "editar"}}));
     assert!(editar["result"]["content"][0]["text"].as_str().unwrap().contains("Move"));
-    for topico in ["planejar", "plano", "editar", "executar", "prototipos", "importar", "apresentar", "apresentacao_ia", "apresentacao_conteudo", "apresentacao_figuras", "apresentacao_ajustar"] {
+    for topico in ["planejar", "anatomia", "plano", "editar", "executar", "prototipos", "importar", "apresentar", "apresentacao_ia", "apresentacao_conteudo", "apresentacao_figuras", "apresentacao_ajustar"] {
         let r = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": topico}}));
         assert!(r["result"]["content"][0]["text"].as_str().unwrap().chars().count() < 4500, "o tópico {topico} cabe em menos de 4.500 caracteres"); // o guia em inglês é ~5% mais longo que o português (era 4.000)
     }
     let planejar = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "planejar"}}));
     let planejar = planejar["result"]["content"][0]["text"].as_str().unwrap();
-    assert!(planejar.contains("## Deadlines at AI pace") && planejar.contains("`horas`") && planejar.contains("1 to 3 calendar days"), "a régua de prazos da IA está no tópico planejar");
+    assert!(!planejar.contains("## Deadlines at AI pace") && !planejar.contains("`horas`") && !planejar.contains("calendar days"), "o tópico planejar não fala mais de prazos");
     let ruim = rpc("tools/call", json!({"name": "guia_de_planejamento", "arguments": {"topico": "nada"}}));
     assert_eq!(ruim["result"]["isError"], true);
     assert!(ruim["result"]["content"][0]["text"].as_str().unwrap().contains("Unknown topic: nada"));

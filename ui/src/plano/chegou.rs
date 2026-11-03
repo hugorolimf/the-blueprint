@@ -6,7 +6,7 @@ use super::escala::{Escala, LINHA, MARGEM, X0};
 use super::linha::{self, Letra, Pincel};
 use super::modelo::{Acao as AcaoPlano, Chegou, Folha, Projeto};
 use super::Sub;
-use crate::documento::{dia, Documento, RAIZ};
+use crate::documento::{Documento, RAIZ};
 use crate::i18n::{tr, tr_com};
 use crate::menu::{self, Alvo};
 use crate::planta::{self, Papel};
@@ -60,8 +60,8 @@ pub const TEXTOS: &[(&str, &str)] = &[
     ("{n} outros", "{n} others"),
     ("Sai do plano ao aprovar", "Leaves the plan on approval"),
     ("O agente", "The agent"),
-    ("Versão {n} · visto há {tempo}", "Version {n} · seen {tempo} ago"),
-    ("enviado por {agente} · visto há {tempo}", "sent by {agente} · seen {tempo} ago"),
+    ("Versão {n}", "Version {n}"),
+    ("enviado por {agente}", "sent by {agente}"),
 ];
 
 const LARGURA_MIN: f32 = 960.0;
@@ -153,7 +153,7 @@ fn desenhar(ui: &mut Ui, f: &Folha, chegou: Option<&Chegou>, aviso: &str, k: &Ca
     let tem = dados.numero != 0 || !secoes(dados).is_empty();
     let (mut pedido, mut saida) = (None, None);
     mov::abrir(ui.ctx(), "chegou");
-    egui::ScrollArea::both().id_salt("plano-chegou").auto_shrink([false, false]).show(ui, |ui| {
+    crate::rolagem::mostrar(ui, egui::ScrollArea::both().id_salt("plano-chegou").auto_shrink([false, false]), |ui| {
         let h = alto.max(ALTURA_MIN).max(fim_esquerda(f) + 120.0).max(Y_PAINEL + altura_painel(dados, tem) + 110.0);
         let (pagina, _) = ui.allocate_exact_size(vec2(w, h), Sense::hover());
         let painter = ui.painter().clone();
@@ -169,7 +169,7 @@ fn desenhar(ui: &mut Ui, f: &Folha, chegou: Option<&Chegou>, aviso: &str, k: &Ca
         moldura(&c, w, h);
         pedido = titulo(ui, &c, f, k, ws, bp);
         escrever_aviso(ui, &c, aviso, xp);
-        regua_dias::regua(&c, &e, h - 110.0);
+        regua_dias::regua(&c, &e);
         linhas(ui, &c, &r, &e, f, dados);
         saida = painel(ui, &c, dados, chegou.is_some(), tem, xp, x1, h).map(|(o, r)| Saida::Oferta(o, r));
         legenda(&c, h);
@@ -189,7 +189,7 @@ fn desenhar(ui: &mut Ui, f: &Folha, chegou: Option<&Chegou>, aviso: &str, k: &Ca
     (pedido, saida)
 }
 
-/// O que o último gesto respondeu: a recusa de «Colocar» tem de aparecer aqui também. Fica acima da etiqueta do hoje.
+/// O que o último gesto respondeu: a recusa de «Colocar» tem de aparecer aqui também.
 fn escrever_aviso(ui: &Ui, c: &Pincel, aviso: &str, xp: f32) {
     if aviso.is_empty() {
         return;
@@ -226,9 +226,9 @@ fn cabecalho(c: &Pincel, r: &Pincel, e: &Escala, n: usize, p: &Projeto, nome_pad
     let letra = Letra::nova(12.0, TINTA).forte();
     let nome = if p.nome.is_empty() { nome_padrao } else { &p.nome };
     c.texto(&c.cortado(nome, e.x0 - X0 - 36.0, &letra).0, X0 + 30.0, y, letra);
-    let datas = p.acoes.iter().filter(|a| !a.sem_data).filter_map(|a| Some((dia(&a.de)?, dia(&a.ate)?)));
-    let extremos = datas.fold(None, |t: Option<(i64, i64)>, (a, b)| Some(t.map_or((a.min(b), a.max(b)), |(m, x)| (m.min(a).min(b), x.max(a).max(b)))));
-    if let Some((xa, xb)) = extremos.and_then(|(a, b)| e.recorte(a, b)) {
+    // o trecho do projeto na escada, da primeira à última ação dele
+    let trechos = p.acoes.first().and_then(|a| e.trecho(a)).zip(p.acoes.last().and_then(|a| e.trecho(a)));
+    if let Some(((xa, _), (_, xb))) = trechos {
         r.fio(xa, y - 4.0, xb, y - 4.0, TINTA, 2.0);
         r.fio(xa, y - 8.0, xa, y, TINTA, 2.0);
         r.fio(xb, y - 8.0, xb, y, TINTA, 2.0);

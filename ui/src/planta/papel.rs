@@ -23,15 +23,27 @@ fn radial(p: &Painter, r: Rect, centro: (f32, f32), cor: impl Fn(f32) -> Color32
     let (cx, cy) = (r.min.x + r.width() * centro.0, r.min.y + r.height() * centro.1);
     let (rx, ry) = ((r.width() * centro.0).max(r.width() * (1.0 - centro.0)) * 2f32.sqrt(), (r.height() * centro.1).max(r.height() * (1.0 - centro.1)) * 2f32.sqrt());
     let (colunas, linhas) = (((r.width() / 32.0).ceil() as usize).clamp(4, 80), ((r.height() / 32.0).ceil() as usize).clamp(4, 120));
+    // só as faixas da malha que cruzam o recorte (a página cresce com os blueprints e o resto não aparece), com uma de folga de cada lado;
+    // cada vértice continua na mesma conta, então o que aparece é o mesmo
+    let alto = r.height() / linhas as f32;
+    let (j_de, j_ate) = if alto > 0.0 {
+        let faixa = |y: f32| (y - r.min.y) / alto;
+        ((faixa(p.clip_rect().min.y).floor() - 1.0).max(0.0) as usize, ((faixa(p.clip_rect().max.y).ceil() + 1.0).max(0.0) as usize).min(linhas))
+    } else {
+        (0, linhas)
+    };
+    if j_de >= j_ate {
+        return;
+    }
     let mut m = Mesh::default();
-    for j in 0..=linhas {
+    for j in j_de..=j_ate {
         for i in 0..=colunas {
             let pos = pos2(r.min.x + r.width() * i as f32 / colunas as f32, r.min.y + r.height() * j as f32 / linhas as f32);
             let t = (((pos.x - cx) / rx).powi(2) + ((pos.y - cy) / ry).powi(2)).sqrt();
             m.colored_vertex(pos, cor(t));
         }
     }
-    for j in 0..linhas {
+    for j in 0..j_ate - j_de {
         for i in 0..colunas {
             let a = (j * (colunas + 1) + i) as u32;
             let b = a + 1;

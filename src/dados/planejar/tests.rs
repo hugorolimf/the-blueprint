@@ -155,32 +155,28 @@ fn limpar_por_blueprint() {
 fn concluir_sobe_revisao() {
     let (mut d, ctx) = com_exemplo();
     assert_eq!(plano(d.ler_tudo(&ctx).unwrap(), "t3")["novo"], json!({"a": [1, 2, {"b": null}]}));
-    let antes = d.revisao_tempos();
+    let antes = d.revisao_dados();
     d.concluir_por_execucao("t2", "testes passando", "2026-11-01T10:00:00Z").unwrap();
-    assert_eq!(d.revisao_tempos(), antes + 1);
+    assert_eq!(d.revisao_dados(), antes + 1);
     let t2 = plano(d.ler_tudo(&ctx).unwrap(), "t2").clone();
     assert_eq!(t2["feito"], true);
     assert_eq!(t2["agente"]["estado"], "concluido");
-    assert_eq!(t2["agente"]["feitoEm"], "2026-11-01T10:00:00Z");
     assert_eq!(t2["agente"]["comentarios"][0]["tipo"], "relatorio");
     assert_eq!(t2["agente"]["comentarios"][0]["texto"], "testes passando");
-    let fim: Option<String> = d.conexao().query_row("SELECT fim_em FROM tempos_planos WHERE plano_id = 't2'", [], |l| l.get(0)).unwrap();
-    assert_eq!(fim.as_deref(), Some("2026-11-01T10:00:00Z"));
 
     // plano sem `agente` nasce com ele; `feito` sobrevive a um PUT, porque é da árvore
     d.concluir_por_execucao("t3", "ok", "2026-11-01T11:00:00Z").unwrap();
     let tudo = d.ler_tudo(&ctx).unwrap().clone();
     assert_eq!(plano(&tudo, "t3")["novo"], json!({"a": [1, 2, {"b": null}]}), "campo alheio fica");
     d.gravar_tudo(&ctx, &tudo).unwrap();
-    assert_eq!(plano(d.ler_tudo(&ctx).unwrap(), "t2")["agente"]["feitoEm"], "2026-11-01T10:00:00Z");
+    assert_eq!(plano(d.ler_tudo(&ctx).unwrap(), "t2")["feito"], true);
 
-    let antes = d.revisao_tempos();
+    let antes = d.revisao_dados();
     d.desfazer_por_execucao("t2", "a tela quebrou", "2026-11-01T12:00:00Z").unwrap();
-    assert_eq!(d.revisao_tempos(), antes + 1);
+    assert_eq!(d.revisao_dados(), antes + 1);
     let t2 = plano(d.ler_tudo(&ctx).unwrap(), "t2").clone();
     assert_eq!(t2["feito"], false);
     assert_eq!(t2["agente"]["estado"], "pendente");
-    assert!(t2["agente"].get("feitoEm").is_none(), "{t2}");
     let comentarios = t2["agente"]["comentarios"].as_array().unwrap();
     assert_eq!(comentarios.len(), 2);
     assert!(comentarios[1]["texto"].as_str().unwrap().contains("a tela quebrou"));
@@ -192,15 +188,15 @@ fn concluir_sobe_revisao() {
 #[test]
 fn checkpoint_por_execucao() {
     let (mut d, ctx) = com_exemplo();
-    let antes = d.revisao_tempos();
+    let antes = d.revisao_dados();
     d.checkpoint_por_execucao("m2", true, "no ar", "2026-11-30T10:00:00Z").unwrap();
-    assert_eq!(d.revisao_tempos(), antes + 1);
+    assert_eq!(d.revisao_dados(), antes + 1);
     let m2 = checkpoint(d.ler_tudo(&ctx).unwrap(), "m2").clone();
-    assert_eq!((&m2["feito"], &m2["evidencia"], &m2["feitoEm"], &m2["nome"]), (&json!(true), &json!("no ar"), &json!("2026-11-30T10:00:00Z"), &json!("Fim")));
+    assert_eq!((&m2["feito"], &m2["evidencia"], &m2["nome"]), (&json!(true), &json!("no ar"), &json!("Fim")));
     d.checkpoint_por_execucao("m2", false, "caiu", "2026-11-30T11:00:00Z").unwrap();
     let m2 = checkpoint(d.ler_tudo(&ctx).unwrap(), "m2").clone();
     assert_eq!(m2["feito"], false);
-    assert!(m2.get("evidencia").is_none() && m2.get("feitoEm").is_none(), "{m2}");
+    assert!(m2.get("evidencia").is_none(), "{m2}");
     assert!(matches!(d.checkpoint_por_execucao("nao", true, "x", "e"), Err(Erro::NaoEncontrado(_))));
 }
 

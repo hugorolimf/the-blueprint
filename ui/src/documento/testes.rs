@@ -47,29 +47,17 @@ fn campo_desconhecido_volta_intacto() {
 }
 
 #[test]
-fn datas_de_ida_e_volta() {
-    for iso in ["1970-01-01", "2026-10-20", "2024-02-29", "2000-03-01", "1999-12-31"] {
-        assert_eq!(iso_do_dia(dia(iso).unwrap()), iso);
-    }
-    assert_eq!(dia("1970-01-02"), Some(1));
-    assert_eq!(dia("2026-10-2x"), None);
-    assert_eq!(dia("20261020"), None);
-}
-
-#[test]
-fn exemplo_vira_workspace_novo_com_ids_novos_e_datas_deslocadas() {
+fn exemplo_vira_workspace_novo_com_ids_novos() {
     let modelo: Value = serde_json::from_str(include_str!("../../../data.exemplo.json")).unwrap();
     let mut d = vazio();
     assert!(!d.tem_blueprint());
-    let id = d.adicionar_exemplo(&modelo, "2026-11-20");
+    let id = d.adicionar_exemplo(&modelo);
     assert!(d.tem_blueprint());
     assert_eq!(d.exemplo().unwrap().id, id);
     let ws = d.workspace(&id).unwrap();
     let antiga = &modelo["blueprints"][0]["acoes"][0];
     let nova = &ws["blueprints"][0]["acoes"][0];
     assert_ne!(antiga["id"], nova["id"]);
-    // 20/10 -> 20/11 são 31 dias
-    assert_eq!(dia(nova["inicio"].as_str().unwrap()).unwrap() - dia(antiga["inicio"].as_str().unwrap()).unwrap(), 31);
     assert_eq!(nova["prototipos"], json!([]));
     assert_eq!(ws["exemplo"], json!(true));
 }
@@ -129,15 +117,6 @@ fn a_situacao_do_menu_ajusta_o_progresso() {
     assert!(d.definir_situacao(RAIZ, "b", "a", "planejado"));
     assert_eq!(d.raw["blueprints"][0]["acoes"][0]["progresso"].as_i64(), Some(0));
     assert!(!d.definir_situacao(RAIZ, "b", "nao-existe", "planejado"));
-}
-
-#[test]
-fn prorrogar_so_afasta_o_fim_e_vira_o_mes() {
-    let mut d = com_acao();
-    assert!(d.prorrogar(RAIZ, "b", "a", 7));
-    assert_eq!(d.raw["blueprints"][0]["acoes"][0]["fim"], "2026-11-07");
-    assert_eq!(d.raw["blueprints"][0]["acoes"][0]["inicio"], "2026-10-30");
-    assert!(!d.prorrogar(RAIZ, "b", "c", 1), "sem data, nada a empurrar");
 }
 
 #[test]

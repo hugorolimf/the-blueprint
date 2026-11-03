@@ -53,15 +53,15 @@ assert.deepEqual(Object.keys(A.autoRastroGuardavel(lista)[0]).sort(), ["blueprin
 
 // ---- Desfazer ----
 const blueprint = () => ({ id: "bp", nome: "B", acoes: [
-  { id: "a1", nome: "Um", inicio: "2026-10-26", fim: "2026-10-27", status: "planejado", planos: [{ id: "p1", texto: "Plano 1", feito: false }, { id: "p2", texto: "Plano 2", feito: false }], checkpoints: [{ id: "c1", nome: "Marco", data: "2026-10-27", feito: false }] },
-  { id: "a2", nome: "Dois", inicio: "2026-10-28", fim: "2026-10-29", status: "planejado", planos: [], checkpoints: [] },
+  { id: "a1", nome: "Um", status: "planejado", planos: [{ id: "p1", texto: "Plano 1", feito: false }, { id: "p2", texto: "Plano 2", feito: false }], checkpoints: [{ id: "c1", nome: "Marco", feito: false }] },
+  { id: "a2", nome: "Dois", status: "planejado", planos: [], checkpoints: [] },
 ] });
 // a aplicação: muda um campo, cria uma ação (com plano e checkpoint) e move o plano p2 para a ação a2
 function aplica(bp) {
   bp.acoes[0].nome = "Um (novo nome)";
   bp.acoes[0].planos.splice(1, 1);
   bp.acoes[1].planos.push({ id: "p2", texto: "Plano 2", feito: false });
-  bp.acoes.push({ id: "a3", nome: "Nova", inicio: "2026-10-30", fim: "2026-10-31", status: "planejado", planos: [{ id: "p3", texto: "Plano 3", feito: false }], checkpoints: [{ id: "c3", nome: "Marco 3", data: "2026-10-31", feito: false }] });
+  bp.acoes.push({ id: "a3", nome: "Nova", status: "planejado", planos: [{ id: "p3", texto: "Plano 3", feito: false }], checkpoints: [{ id: "c3", nome: "Marco 3", feito: false }] });
 }
 function cena() {
   const bp = blueprint(), antes = A.autoEnvolve(bp);

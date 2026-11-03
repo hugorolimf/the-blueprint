@@ -197,10 +197,8 @@ fn reabrir_feitos(nova: &mut Value, r: &str, comp: &CompAcao) -> Vec<String> {
         let Some(o) = q.as_object_mut() else { continue };
         o.insert("feito".into(), json!(false));
         o.remove("evidencia");
-        o.remove("feitoEm");
         if let Some(agente) = o.get_mut("agente").and_then(Value::as_object_mut) {
             agente.insert("estado".into(), json!("pendente"));
-            agente.remove("feitoEm");
         }
     }
     reabertos
@@ -242,7 +240,7 @@ fn revisar_diff(d: &mut Dados, c: &Clique, r: &str, numero: i64, textos: Option<
             let editada = acao_do(&atual, r).zip(acao_do(&doc, r)).map(|(a, b)| comparar_acao(a, b));
             sem_execucao_nos_mudados(d, c.bp, &arvore, r, editada.as_ref())?;
             let refs = [r.to_string()];
-            let mut nova = projetar(&arvore, &so_as_acoes(&doc), Escopo::So(&refs), &crate::tempo::hoje_local());
+            let mut nova = projetar(&arvore, &so_as_acoes(&doc), Escopo::So(&refs));
             if let Some(e) = &editada {
                 reabertos = reabrir_feitos(&mut nova, r, e);
             }
@@ -327,7 +325,7 @@ fn colocar(dados: &Mutex<Dados>, corpo: &Value) -> R<Value> {
     if !refs.iter().all(|r| novas.contains(r)) {
         return Err(plano_mudou());
     }
-    let nova = projetar(&arvore, &so_as_acoes(&doc), Escopo::So(&refs), &crate::tempo::hoje_local());
+    let nova = projetar(&arvore, &so_as_acoes(&doc), Escopo::So(&refs));
     let avisos = gravar_projecao(&mut d, &ws, nova)?;
     let resolvida = resolver_se_acabou(&mut d, &ws, &bp, &v, &doc)?;
     Ok(json!({"ok": true, "colocadas": refs, "avisos": avisos, "resolvida": resolvida}))

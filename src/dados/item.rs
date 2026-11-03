@@ -91,6 +91,7 @@ pub fn escrever(conn: &Connection, t: &Tabela, id: &str, mut listas: Vec<String>
             }
         }
     }
+    super::formato::sem_datas(t, &mut obj);
     let valores = extrair(&mut obj, t.colunas);
     let sets: String = t.colunas.iter().map(|c| format!(", {} = ?", c.coluna)).collect();
     let mut params = vec![Sql::Text(serde_json::to_string(&listas)?), Sql::Text(Value::Object(obj).to_string())];

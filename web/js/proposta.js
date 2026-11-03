@@ -26,33 +26,28 @@ function textoComoUsar() {
 }
 $("cu-abrir").onclick = () => { $("cu-corpo").textContent = textoComoUsar(); $("como-usar").showModal(); desenrolar($("como-usar"), $("como-usar")); }; // abre como as outras folhas: desenrola (ou escreve), já preenchida
 $("cu-fechar").onclick = () => $("como-usar").close();
-// estimativa em horas do plano (o servidor já validou como positiva); sem número válido, o campo nem existe
-const horasDe = (h) => (h != null && h !== "" && Number.isFinite(Number(h)) && Number(h) > 0 ? { horas: Number(h) } : {});
-const etiquetaHoras = (t) => (t.horas ? `<span class="badge" title="${tr("Estimativa de trabalho do agente")}">~${t.horas} h</span>` : "");
 function normalizaProposta(acoes, p) {
-  const iso = (s, alt) => (ISO.test(String(s)) ? s : alt);
   return acoes.map((f) => {
     const ex = p.acoes.find((x) => x.id === f.id);
-    const inicio = iso(f.inicio, hoje), fim = iso(f.fim, deDia(dia(inicio) + 30));
     return {
-      id: ex ? ex.id : "", nome: String(f.nome || "").trim() || "Nova ação", inicio, fim, status: f.status === "andamento" ? "andamento" : "planejado", obs: String(f.observacao || ""), inc: true, projeto: projetoDaProposta(f, ex),
-      planos: (f.planos || []).map((t) => ({ id: t.de || ex?.planos.some((x) => x.id === t.id) ? t.id : "", de: t.de || "", texto: String(t.texto || ""), descricao: String(t.descricao || ""), ...horasDe(t.horas) })),
-      checkpoints: (f.checkpoints || []).map((m) => ({ id: m.de || ex?.checkpoints.some((x) => x.id === m.id) ? m.id : "", de: m.de || "", nome: String(m.nome || ""), data: iso(m.data, fim) })),
+      id: ex ? ex.id : "", nome: String(f.nome || "").trim() || "Nova ação", status: f.status === "andamento" ? "andamento" : "planejado", obs: String(f.observacao || ""), inc: true, projeto: projetoDaProposta(f, ex),
+      planos: (f.planos || []).map((t) => ({ id: t.de || ex?.planos.some((x) => x.id === t.id) ? t.id : "", de: t.de || "", texto: String(t.texto || ""), descricao: String(t.descricao || "") })),
+      checkpoints: (f.checkpoints || []).map((m) => ({ id: m.de || ex?.checkpoints.some((x) => x.id === m.id) ? m.id : "", de: m.de || "", nome: String(m.nome || "") })),
     };
   });
 }
 function htmlPropAcao(pf, i, p) {
   const ex = p.acoes.find((x) => x.id === pf.id);
-  const semMudar = ex && !propostaDiff(pf, ex).mudancas; // compara o conteúdo (títulos, descrições, horas, datas, instruções), não só ids
+  const semMudar = ex && !propostaDiff(pf, ex).mudancas; // compara o conteúdo (títulos, descrições, instruções), não só ids
   const origem = (x) => { const o = x.de && p.acoes.find((y) => y.id === x.de); return o ? `<span class="badge mov" title="${tr("Movido de “{nome}”", { nome: esc(o.nome) })}">← ${esc(o.nome)}</span>` : ""; }; // o que veio de outra ação
   const badge = !ex ? `<span class="badge nova">${tr("Nova")}</span>` : `<span class="badge">${semMudar ? tr("Sem mudança") : tr("Alterada")}</span>`;
   return `<div class="pf${pf.inc ? "" : " off"}" data-i="${i}">
     <div class="pf-topo"><input type="checkbox" data-pc="inc" aria-label="${tr("Incluir esta ação")}"${pf.inc ? " checked" : ""}>${badge}<input data-pc="nome" value="${esc(pf.nome)}" aria-label="${tr("Nome da ação")}"><button class="btn mini" data-pact="ver-acao" type="button">${tr("Leitura")}</button></div>
-    <div class="grade3"><label class="f">${tr("Início")}<input type="date" data-pc="inicio" value="${esc(pf.inicio)}"></label><label class="f">${tr("Fim")}<input type="date" data-pc="fim" value="${esc(pf.fim)}"></label><label class="f">${tr("Situação")}<select data-pc="status"><option value="planejado"${pf.status === "planejado" ? " selected" : ""}>${tr("Planejada")}</option><option value="andamento"${pf.status === "andamento" ? " selected" : ""}>${tr("Em desenvolvimento")}</option></select></label></div>
+    <div class="grade3"><label class="f">${tr("Situação")}<select data-pc="status"><option value="planejado"${pf.status === "planejado" ? " selected" : ""}>${tr("Planejada")}</option><option value="andamento"${pf.status === "andamento" ? " selected" : ""}>${tr("Em desenvolvimento")}</option></select></label></div>
     ${htmlProjetoDaProposta(pf, p)}
     <div class="obs-bloco" data-obs-bloco><div class="obs-topo"><span>${tr("Instruções da ação")}</span><span class="obs-abas"><button class="btn mini" type="button" data-obs="ver" aria-pressed="true">${tr("Visualizar")}</button><button class="btn mini" type="button" data-obs="editar" aria-pressed="false">${tr("Editar")}</button></span></div><div class="md obs-ver">${mdHtml(pf.obs) || `<p class="md-vazio">${tr("Sem instruções ainda.")}</p>`}</div>${mdEdicao('data-pc="obs"', pf.obs, { rows: 8, placeholder: tr("O que fazer nesta ação: o roteiro"), oculto: true })}</div>
-    <div><p class="sub2"><span>${tr("Planos")}</span><span>${pf.planos.length}</span></p>${pf.planos.map((t, j) => `<div class="pi"><span class="pt">${t.de ? "↦" : t.id ? "·" : "+"}</span><input data-pc="plano" data-j="${j}" value="${esc(t.texto)}" aria-label="${tr("Plano")}">${origem(t)}${etiquetaHoras(t)}<button class="x" data-pact="del-t" data-j="${j}" type="button" aria-label="${tr("Remover plano")}">×</button></div>`).join("")}<div class="acoes" style="margin-top:8px"><button class="btn mini" data-pact="add-t" type="button">${tr("+ plano")}</button></div></div>
-    <div><p class="sub2"><span>${tr("Checkpoints")}</span><span>${pf.checkpoints.length}</span></p>${pf.checkpoints.map((m, j) => `<div class="pi"><span class="pt">${m.de ? "↦" : m.id ? "·" : "+"}</span><input data-pc="cp-nome" data-j="${j}" value="${esc(m.nome)}" aria-label="${tr("Checkpoint")}">${origem(m)}<input type="date" data-pc="cp-data" data-j="${j}" value="${esc(m.data)}" aria-label="${tr("Data do checkpoint")}"><button class="x" data-pact="del-cp" data-j="${j}" type="button" aria-label="${tr("Remover checkpoint")}">×</button></div>`).join("")}<div class="acoes" style="margin-top:8px"><button class="btn mini" data-pact="add-cp" type="button">${tr("+ checkpoint")}</button></div></div>
+    <div><p class="sub2"><span>${tr("Planos")}</span><span>${pf.planos.length}</span></p>${pf.planos.map((t, j) => `<div class="pi"><span class="pt">${t.de ? "↦" : t.id ? "·" : "+"}</span><input data-pc="plano" data-j="${j}" value="${esc(t.texto)}" aria-label="${tr("Plano")}">${origem(t)}<button class="x" data-pact="del-t" data-j="${j}" type="button" aria-label="${tr("Remover plano")}">×</button></div>`).join("")}<div class="acoes" style="margin-top:8px"><button class="btn mini" data-pact="add-t" type="button">${tr("+ plano")}</button></div></div>
+    <div><p class="sub2"><span>${tr("Checkpoints")}</span><span>${pf.checkpoints.length}</span></p>${pf.checkpoints.map((m, j) => `<div class="pi"><span class="pt">${m.de ? "↦" : m.id ? "·" : "+"}</span><input data-pc="cp-nome" data-j="${j}" value="${esc(m.nome)}" aria-label="${tr("Checkpoint")}">${origem(m)}<button class="x" data-pact="del-cp" data-j="${j}" type="button" aria-label="${tr("Remover checkpoint")}">×</button></div>`).join("")}<div class="acoes" style="margin-top:8px"><button class="btn mini" data-pact="add-cp" type="button">${tr("+ checkpoint")}</button></div></div>
   </div>`;
 }
 // apagar é só um pedido: cada item vem desmarcado e só some se o usuário marcar e aplicar
@@ -139,9 +134,9 @@ function moverAcoes(p, c) {
   (c.mover || []).filter((r) => r.inc).forEach((r) => {
     const o = D.blueprints.find((x) => x.id === r.deBlueprintId), i = o && o !== p ? o.acoes.findIndex((y) => y.id === r.acaoId) : -1;
     if (i < 0 || p.acoes.some((y) => y.id === r.acaoId)) return;
-    const [f] = o.acoes.splice(i, 1), pos = p.acoes.findIndex((x) => x.inicio > f.inicio);
+    const [f] = o.acoes.splice(i, 1);
     delete f.projetoId; // o projeto era do blueprint de origem: aqui a ação chega no Geral
-    p.acoes.splice(pos < 0 ? p.acoes.length : pos, 0, f);
+    p.acoes.push(f);
     n++;
   });
   return n;
@@ -152,19 +147,18 @@ function aplicarAcoes(p, c) {
   (c.proposta || []).filter((x) => x.inc).forEach((pf) => {
     let f = p.acoes.find((x) => x.id === pf.id);
     if (!f) {
-      f = { id: novoId(), nome: pf.nome, inicio: pf.inicio, fim: pf.fim, status: pf.status, progresso: 0, obs: pf.obs, planos: [], checkpoints: [] };
-      const pos = p.acoes.findIndex((x) => x.inicio > f.inicio); // entra na ordem do tempo, não no fim da lista
-      p.acoes.splice(pos < 0 ? p.acoes.length : pos, 0, f);
+      f = { id: novoId(), nome: pf.nome, status: pf.status, progresso: 0, obs: pf.obs, planos: [], checkpoints: [] };
+      p.acoes.push(f);
       nf++;
     }
-    else { f.nome = pf.nome; f.inicio = pf.inicio; f.fim = pf.fim; if (f.status !== "concluido") f.status = pf.status; if (pf.obs) f.obs = pf.obs; }
+    else { f.nome = pf.nome; if (f.status !== "concluido") f.status = pf.status; if (pf.obs) f.obs = pf.obs; }
     pf.planos.filter((t) => t.texto.trim()).forEach((t) => {
       const x = f.planos.find((y) => y.id === t.id) || f.planos.find((y) => norm(y.texto) === norm(t.texto));
-      if (x) { x.texto = t.texto; if (typeof t.descricao === "string") x.descricao = t.descricao; if (t.horas != null) x.horas = t.horas; } else if (t.de) nmv += moverItem(p, f, "planos", t.de, t.id, { texto: t.texto, descricao: String(t.descricao || ""), ...horasDe(t.horas) }); else { tiraPendente(p, f, "planos", "texto", t.texto); f.planos.push({ id: novoId(), texto: t.texto, descricao: String(t.descricao || ""), feito: false, ...horasDe(t.horas) }); nt++; }
+      if (x) { x.texto = t.texto; if (typeof t.descricao === "string") x.descricao = t.descricao; } else if (t.de) nmv += moverItem(p, f, "planos", t.de, t.id, { texto: t.texto, descricao: String(t.descricao || "") }); else { tiraPendente(p, f, "planos", "texto", t.texto); f.planos.push({ id: novoId(), texto: t.texto, descricao: String(t.descricao || ""), feito: false }); nt++; }
     });
     pf.checkpoints.filter((m) => m.nome.trim()).forEach((m) => {
       const x = f.checkpoints.find((y) => y.id === m.id) || f.checkpoints.find((y) => norm(y.nome) === norm(m.nome));
-      if (x) { x.nome = m.nome; x.data = m.data; } else if (m.de) nmv += moverItem(p, f, "checkpoints", m.de, m.id, { nome: m.nome, data: m.data }); else { tiraPendente(p, f, "checkpoints", "nome", m.nome); f.checkpoints.push({ id: novoId(), nome: m.nome, data: m.data, feito: false }); nm++; }
+      if (x) { x.nome = m.nome; } else if (m.de) nmv += moverItem(p, f, "checkpoints", m.de, m.id, { nome: m.nome }); else { tiraPendente(p, f, "checkpoints", "nome", m.nome); f.checkpoints.push({ id: novoId(), nome: m.nome, feito: false }); nm++; }
     });
     const projetoId = idDoProjetoEscolhido(p, pf.projeto);
     if (projetoId) f.projetoId = projetoId; else delete f.projetoId;
@@ -260,7 +254,6 @@ $("cl-prop").addEventListener("input", (e) => {
   if (k === "inc") { pf.inc = el.checked; card.classList.toggle("off", !pf.inc); atualizaBotao(); }
   else if (k === "plano") pf.planos[j].texto = el.value;
   else if (k === "cp-nome") pf.checkpoints[j].nome = el.value;
-  else if (k === "cp-data") pf.checkpoints[j].data = el.value;
   else pf[k] = el.value;
   if (k === "obs") { alturaDoCampo(el); mdPrevia(el); }
 });
@@ -289,7 +282,7 @@ $("cl-prop").addEventListener("click", (e) => {
   else if (a === "editar-acao" || a === "ver-acao") pf.editando = a === "editar-acao"; // leitura por padrão; a edição é um clique
   else if (a === "add-t") pf.planos.push({ id: "", texto: "" });
   else if (a === "del-t") pf.planos.splice(j, 1);
-  else if (a === "add-cp") pf.checkpoints.push({ id: "", nome: "", data: pf.fim });
+  else if (a === "add-cp") pf.checkpoints.push({ id: "", nome: "" });
   else if (a === "del-cp") pf.checkpoints.splice(j, 1);
   montaProposta();
 });

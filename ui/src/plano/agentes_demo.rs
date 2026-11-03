@@ -135,4 +135,26 @@ pub fn escrita(folha: &mut Folha, estagio: usize, parada_min: i64) {
             std::cmp::Ordering::Greater => EstadoEscrita::Aguardando,
         };
     }
+    folha.renovar();
+}
+
+/// Os `n` primeiros planos de cada ação feitos e o seguinte em andamento, só na memória: é para ver a obra subir na aba Planta.
+pub fn obra(f: &mut crate::plano::modelo::Folha, n: usize) {
+    for a in f.projetos.iter_mut().flat_map(|p| p.acoes.iter_mut()) {
+        for (i, q) in a.planos.iter_mut().enumerate() {
+            match i.cmp(&n) {
+                std::cmp::Ordering::Less => {
+                    q.feito = true;
+                    q.situacao = Situacao::Pronto;
+                    q.agente = "plano-a".into();
+                }
+                std::cmp::Ordering::Equal => {
+                    q.situacao = Situacao::Trabalhando;
+                    q.agente = "plano-b".into();
+                }
+                std::cmp::Ordering::Greater => {}
+            }
+        }
+    }
+    f.renovar();
 }

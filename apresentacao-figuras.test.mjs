@@ -17,7 +17,7 @@ const carrega = (extra = {}) => {
 const json = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
 
 const exemplo = JSON.parse(readFileSync(join(raiz, "data.exemplo.json"), "utf8")).blueprints[0];
-const acao = (id, status, extra = {}) => ({ id, nome: id, inicio: "2026-11-01", fim: "2026-11-02", status, planos: [], checkpoints: [], ...extra });
+const acao = (id, status, extra = {}) => ({ id, nome: id, status, planos: [], checkpoints: [], ...extra });
 const comProjetos = {
   id: "b", nome: "B", projetos: [{ id: "p1", nome: "Interface" }, { id: "p2", nome: "Servidor" }],
   acoes: [acao("a1", "concluido", { projetoId: "p1" }), acao("a2", "andamento", { projetoId: "p1" }), acao("a3", "planejado", { projetoId: "p2" }), acao("a4", "planejado")],

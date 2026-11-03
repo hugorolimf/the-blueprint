@@ -12,8 +12,8 @@ use serde_json::{json, Value};
 
 #[path = "revisao_nota.rs"]
 mod observacao;
-pub use super::cartao_carimbo::{carimbo, desfazer, risco, situacao};
-pub use super::cartao_controle::{controle, medir_partes};
+pub use super::cartao_carimbo::{carimbo, desfazer, risco};
+pub use super::cartao_controle::{controle, fileira, medir_partes, ALTO_FILEIRA as ALTO_VERBOS};
 pub use observacao::{altura_nota, compondo, nota};
 
 pub const TEXTOS: &[(&str, &str)] = &[
@@ -25,6 +25,15 @@ pub const TEXTOS: &[(&str, &str)] = &[
     ("Revisar", "Review"),
     ("Editar", "Edit"),
     ("Reprovar", "Reject"),
+    ("Confirmar", "Confirm"),
+    ("Ajustar", "Adjust"),
+    ("Contestar", "Dispute"),
+    ("Pedir ajuste", "Ask for changes"),
+    ("Confirmada", "Confirmed"),
+    ("Contestada", "Disputed"),
+    ("Em ajuste", "Being adjusted"),
+    ("Aprovada", "Approved"),
+    ("Reprovada", "Rejected"),
     ("desfazer", "undo"),
     ("Diga o que mudar…", "Say what to change…"),
     ("Enviar", "Send"),
@@ -57,6 +66,20 @@ pub fn rotulo(e: EstadoPeca) -> (&'static str, Color32) {
         EstadoPeca::Revisar => (tr("Em revisão"), AMBAR),
         EstadoPeca::Reprovada => (tr("Reprovado"), VERMELHO),
     }
+}
+
+/// O rótulo com o verbo do tipo de peça: quem clicou «Confirmar» vê «Confirmada».
+pub fn rotulo_de(e: EstadoPeca, meio: Meio) -> (&'static str, Color32) {
+    let (padrao, cor) = rotulo(e);
+    let texto = match (meio, e) {
+        (Meio::Decisao, EstadoPeca::Aprovada) => tr("Confirmada"),
+        (Meio::Decisao, EstadoPeca::Reprovada) => tr("Contestada"),
+        (Meio::Decisao | Meio::Tela, EstadoPeca::Revisar) => tr("Em ajuste"),
+        (Meio::Tela, EstadoPeca::Aprovada) => tr("Aprovada"),
+        (Meio::Tela, EstadoPeca::Reprovada) => tr("Reprovada"),
+        _ => padrao,
+    };
+    (texto, cor)
 }
 
 /// A cor do corpo da peça: aprovada e reprovada saem do primeiro plano, mas continuam à vista.
@@ -123,10 +146,13 @@ fn enviar(ctx: &egui::Context, alvo: Alvo, peca: &Peca, estado: &str, observacao
     alvo.estado.gesto(ctx, alvo.servidor, "revisar", &corpo(alvo.ws, alvo.bp, peca, estado, observacao));
 }
 
-/// A parte do meio: «Revisar» numa peça comum, «Editar» num plano alterado (com `true` enquanto a edição está aberta).
+/// O tipo de revisão, que dá os verbos dos botões. Numa decisão o agente já escolheu: você confirma, pede ajuste ou contesta. Numa tela você vê o resultado: aprova, pede ajuste ou reprova.
+/// «Revisar» é a peça comum; «Editar», um plano alterado (com `true` enquanto a edição está aberta). O estado guardado no servidor é o mesmo em todos.
 #[derive(Clone, Copy, PartialEq)]
 pub enum Meio {
     Revisar,
+    Decisao,
+    Tela,
     Editar(bool),
 }
 
@@ -137,12 +163,33 @@ pub enum Parte {
     Reprovar,
 }
 
+/// Os verbos da peça, grandes e à esquerda, como a lista de peças mostra; decidida, o carimbo com desfazer na borda `x_fim`. `y` é o topo. Devolve se a pessoa acabou de aprovar ou recusar.
+#[allow(clippy::too_many_arguments)]
+pub fn verbos(l: Lapis, ui: &mut Ui, alvo: Alvo, x: f32, x_fim: f32, y: f32, peca: &Peca, meio: Meio) -> bool {
+    if peca.estado() != EstadoPeca::Pendente {
+        canto(l, ui, alvo, x_fim, y + ALTO_VERBOS * 0.5 + 4.0, peca, meio);
+        return false;
+    }
+    let ctx = ui.ctx().clone();
+    let escrevendo = compondo(&ctx, &peca.chave);
+    match fileira(l, ui, x, y, meio, escrevendo) {
+        Some(Parte::Aprovar) => enviar(&ctx, alvo, peca, "aprovada", ""),
+        Some(Parte::Reprovar) => enviar(&ctx, alvo, peca, "reprovada", ""),
+        Some(Parte::Meio) => {
+            observacao::alternar(&ctx, &peca.chave, !escrevendo);
+            return false;
+        }
+        None => return false,
+    }
+    true
+}
+
 /// O canto direito da peça: o controle enquanto espera você, o carimbo com desfazer depois. `y` é a linha de base do título da peça, como `canto` do protótipo. Devolve `true` se pediu «Editar», que fica com quem chamou.
 pub fn canto(l: Lapis, ui: &mut Ui, alvo: Alvo, x_fim: f32, y: f32, peca: &Peca, meio: Meio) -> bool {
     let ctx = ui.ctx().clone();
     let estado = peca.estado();
     if estado != EstadoPeca::Pendente {
-        let x0 = carimbo(l, x_fim, y, estado, peca.revisao.map_or(0, |r| r.em));
+        let x0 = carimbo(l, x_fim, y, estado, meio);
         if desfazer(l, ui, &peca.chave, x0 - 12.0, y) {
             enviar(&ctx, alvo, peca, "pendente", "");
         }
@@ -153,7 +200,7 @@ pub fn canto(l: Lapis, ui: &mut Ui, alvo: Alvo, x_fim: f32, y: f32, peca: &Peca,
     match controle(l, ui, x_fim, y - 16.0, meio, ativo) {
         Some(Parte::Aprovar) => enviar(&ctx, alvo, peca, "aprovada", ""),
         Some(Parte::Reprovar) => enviar(&ctx, alvo, peca, "reprovada", ""),
-        Some(Parte::Meio) if meio != Meio::Revisar => return true,
+        Some(Parte::Meio) if matches!(meio, Meio::Editar(_)) => return true,
         Some(Parte::Meio) => observacao::alternar(&ctx, &peca.chave, !escrevendo),
         None => {}
     }

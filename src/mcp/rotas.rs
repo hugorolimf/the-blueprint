@@ -12,16 +12,16 @@ use std::collections::HashSet;
 use std::sync::Mutex;
 use std::sync::atomic::Ordering;
 
-/// Serializa as gravações de tempo com a versão e a cópia HTTP dos dados.
+/// Serializa as gravações da execução com a versão e a cópia HTTP dos dados.
 pub fn rota_estado(estado: &crate::http::Estado, pedido: &Pedido, ctx: &Contexto) -> Resposta {
     estado.mcp.versao_espelho.store(estado.versao_dados.load(Ordering::SeqCst), Ordering::SeqCst);
     if pedido.metodo != "POST" || !matches!(pedido.caminho.as_str(), "/api/mcp/evento" | "/api/mcp/hook/edicao" | "/api/mcp/hook/subagente" | "/api/mcp/hook/subagentes" | "/api/mcp/plano/abrir" | "/api/mcp/plano/fechar" | "/api/mcp/gesto/revisar" | "/api/mcp/gesto/colocar") {
         return rota_com(&estado.mcp, &estado.dados, pedido, ctx);
     }
     let mut cache = estado.dados_json.lock().unwrap_or_else(|e| e.into_inner());
-    let antes = estado.dados.lock().unwrap_or_else(|e| e.into_inner()).revisao_tempos();
+    let antes = estado.dados.lock().unwrap_or_else(|e| e.into_inner()).revisao_dados();
     let resposta = rota_com(&estado.mcp, &estado.dados, pedido, ctx);
-    let depois = estado.dados.lock().unwrap_or_else(|e| e.into_inner()).revisao_tempos();
+    let depois = estado.dados.lock().unwrap_or_else(|e| e.into_inner()).revisao_dados();
     if depois != antes {
         *cache = None;
         let nova = estado.versao_dados.fetch_add(1, Ordering::SeqCst) + 1;

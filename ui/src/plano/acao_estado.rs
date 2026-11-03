@@ -47,7 +47,7 @@ pub fn situacao_de(q: &Plano) -> Option<(&'static str, Color32)> {
 }
 
 /// A pose da figura. Plano feito à mão não tem agente, portanto não tem figura.
-fn pose_de(q: &Plano) -> Option<usize> {
+pub fn pose_de(q: &Plano) -> Option<usize> {
     match q.situacao {
         Situacao::Trabalhando => Some(0),
         Situacao::Revisao | Situacao::Fila | Situacao::Dependencia | Situacao::Area => Some(1),
@@ -57,7 +57,7 @@ fn pose_de(q: &Plano) -> Option<usize> {
     }
 }
 
-fn figura(c: &Pincel, ui: &Ui, indice: usize, r: Rect) {
+pub fn figura(c: &Pincel, ui: &Ui, indice: usize, r: Rect) {
     static CACHE: [OnceLock<Arc<[u8]>>; 4] = [const { OnceLock::new() }; 4];
     let (nome, gz) = POSES[indice];
     let svg = CACHE[indice].get_or_init(|| {

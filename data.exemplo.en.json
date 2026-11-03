@@ -8,7 +8,7 @@
       "id": "bp1a2b3",
       "nome": "Delivery app",
       "descricao": "An app for the courier to receive orders, follow the route and confirm the delivery.",
-      "obs": "Fictional example. Goals: first version for the pilot in November; no real customer data.",
+      "obs": "Fictional example. Goals: first version for the pilot; no real customer data.",
       "links": [
         {
           "id": "lk01",
@@ -20,8 +20,6 @@
         {
           "id": "ac1a001",
           "nome": "Clickable prototype",
-          "inicio": "2026-10-05",
-          "fim": "2026-10-12",
           "obs": "Goal: validate the flow with three couriers before writing production code.\nDeliverable: a clickable prototype with the order, route and confirmation screens.",
           "status": "concluido",
           "progresso": 100,
@@ -31,7 +29,6 @@
               "texto": "Design the main screens",
               "descricao": "Scope: order, route and confirmation\nExpected result: three approved screens\nValidation: review with the operations team",
               "feito": true,
-              "horas": 2,
               "agente": {
                 "estado": "concluido",
                 "comentarios": [
@@ -47,33 +44,27 @@
               "id": "xgrnhia",
               "texto": "Assemble the clickable prototype",
               "descricao": "Scope: link the screens into a navigable flow\nExpected result: a single link to test on a phone\nValidation: test with one courier",
-              "feito": true,
-              "horas": 3
+              "feito": true
             },
             {
               "id": "1oo198z",
               "texto": "Test with three couriers",
               "descricao": "Scope: a 20-minute session per person\nExpected result: a list of adjustments\nValidation: a report with the observations",
-              "feito": true,
-              "horas": 1
+              "feito": true
             }
           ],
           "checkpoints": [
             {
               "id": "xxjaz0k",
               "nome": "Flow approved by operations",
-              "data": "2026-10-12",
               "feito": true,
-              "evidencia": "Meeting on 12/10: flow approved with no reservations.",
-              "feitoEm": "2026-10-12T17:00:00.000Z"
+              "evidencia": "Meeting with operations: flow approved with no reservations."
             }
           ]
         },
         {
           "id": "ac1a002",
           "nome": "Orders API",
-          "inicio": "2026-10-13",
-          "fim": "2026-10-27",
           "obs": "Goal: a service that receives orders and gives the app the day's list.\nDeliverable: endpoints to list, accept and complete an order, with automated tests.\nRisks: instability of the maps provider (mitigation: cache the last route).",
           "status": "andamento",
           "progresso": 60,
@@ -82,22 +73,19 @@
               "id": "x6ekos5",
               "texto": "Model orders and couriers",
               "descricao": "Scope: tables and relationships\nExpected result: an approved schema\nValidation: migration applied to an empty database",
-              "feito": true,
-              "horas": 1.5
+              "feito": true
             },
             {
               "id": "1eaygiu",
               "texto": "Create the list-orders endpoint",
               "descricao": "Scope: GET /orders filtered by courier\nExpected result: a paginated list\nValidation: automated contract test",
-              "feito": true,
-              "horas": 2
+              "feito": true
             },
             {
               "id": "xn686af",
               "texto": "Create the accept-order endpoint",
               "descricao": "Scope: POST /orders/{id}/accept\nExpected result: the order changes to on route\nValidation: the test covers an already accepted order (409)",
               "feito": false,
-              "horas": 3,
               "agente": {
                 "estado": "trabalhando",
                 "comentarios": [
@@ -113,22 +101,19 @@
               "id": "1v2ly14",
               "texto": "Record the delivery confirmation",
               "descricao": "Scope: photo and time of delivery\nExpected result: the order is completed with proof\nValidation: test with a 3 MB file",
-              "feito": false,
-              "horas": 1
+              "feito": false
             },
             {
               "id": "13xvnsp",
               "texto": "Document the API",
               "descricao": "Scope: call examples for each endpoint\nExpected result: a published document\nValidation: another person runs the examples without help",
-              "feito": false,
-              "horas": 2.5
+              "feito": false
             }
           ],
           "checkpoints": [
             {
               "id": "xct5dka",
               "nome": "API in a test environment",
-              "data": "2026-10-26",
               "feito": false
             }
           ]
@@ -136,8 +121,6 @@
         {
           "id": "ac1a003",
           "nome": "Courier app",
-          "inicio": "2026-10-28",
-          "fim": "2026-11-10",
           "obs": "Goal: a version for the pilot, with an order list, route and confirmation.\nDepends on the \"Orders API\" action.",
           "status": "planejado",
           "progresso": 0,
@@ -146,29 +129,25 @@
               "id": "1kpj5az",
               "texto": "Implement the order list",
               "descricao": "Scope: a list screen with refresh\nExpected result: the day's list on the phone\nValidation: manual test on two devices",
-              "feito": false,
-              "horas": 2
+              "feito": false
             },
             {
               "id": "xtksv2k",
               "texto": "Implement the route to the customer",
               "descricao": "Scope: a map with the suggested route\nExpected result: the route opens when the order is accepted\nValidation: field test with one courier",
-              "feito": false,
-              "horas": 3
+              "feito": false
             },
             {
               "id": "x2g2ku5",
               "texto": "Implement the delivery confirmation",
               "descricao": "Scope: photo and signature\nExpected result: the order is completed on the server\nValidation: end-to-end test with the API",
-              "feito": false,
-              "horas": 1
+              "feito": false
             }
           ],
           "checkpoints": [
             {
               "id": "1acgcku",
               "nome": "Pilot with five couriers",
-              "data": "2026-11-10",
               "feito": false
             }
           ]
@@ -185,8 +164,6 @@
         {
           "id": "ac2b001",
           "nome": "Content and identity",
-          "inicio": "2026-10-14",
-          "fim": "2026-10-23",
           "obs": "Goal: texts and images approved before building the pages.",
           "status": "andamento",
           "progresso": 50,
@@ -195,22 +172,19 @@
               "id": "xj7q2cf",
               "texto": "Write the page texts",
               "descricao": "Scope: home, services and contact\nExpected result: reviewed texts\nValidation: read by two outside people",
-              "feito": true,
-              "horas": 1.5
+              "feito": true
             },
             {
               "id": "1r43u34",
               "texto": "Select the portfolio images",
               "descricao": "Scope: twelve images cleared for use\nExpected result: an organized folder\nValidation: the list of permissions checked",
-              "feito": false,
-              "horas": 2
+              "feito": false
             }
           ],
           "checkpoints": [
             {
               "id": "xzzdjup",
               "nome": "Content approved",
-              "data": "2026-10-23",
               "feito": false
             }
           ]
@@ -218,8 +192,6 @@
         {
           "id": "ac2b002",
           "nome": "Page assembly",
-          "inicio": "2026-10-24",
-          "fim": "2026-11-04",
           "obs": "Goal: pages published at a test address.",
           "status": "planejado",
           "progresso": 0,
@@ -228,22 +200,19 @@
               "id": "x8un9ma",
               "texto": "Build the home page",
               "descricao": "Scope: header, services and footer\nExpected result: a navigable page\nValidation: test at three screen sizes",
-              "feito": false,
-              "horas": 1
+              "feito": false
             },
             {
               "id": "1gr11cz",
               "texto": "Build the portfolio",
               "descricao": "Scope: an image grid with captions\nExpected result: a portfolio page\nValidation: performance test under 3 s",
-              "feito": false,
-              "horas": 2.5
+              "feito": false
             },
             {
               "id": "xpmar4k",
               "texto": "Wire up the contact form",
               "descricao": "Scope: sending a message by email\nExpected result: the message reaches the test inbox\nValidation: test with an invalid attachment",
-              "feito": false,
-              "horas": 1.5
+              "feito": false
             }
           ],
           "checkpoints": []
@@ -274,8 +243,6 @@
             {
               "id": "ac3c001",
               "nome": "Meter collection",
-              "inicio": "2026-11-02",
-              "fim": "2026-11-09",
               "obs": "Goal: read the meters every minute and store the series.",
               "status": "planejado",
               "progresso": 0,
@@ -284,29 +251,25 @@
                   "id": "1xioiv9",
                   "texto": "Read the meters over the local network",
                   "descricao": "Scope: each room's meter protocol\nExpected result: readings every minute\nValidation: one hour of readings with no failure",
-                  "feito": false,
-                  "horas": 2
+                  "feito": false
                 },
                 {
                   "id": "16dy8mu",
                   "texto": "Store the readings",
                   "descricao": "Scope: a time-series table\nExpected result: a seven-day history\nValidation: a one-day query in under 1 s",
-                  "feito": false,
-                  "horas": 3
+                  "feito": false
                 },
                 {
                   "id": "xf97yef",
                   "texto": "Show consumption by room",
                   "descricao": "Scope: a bar chart for the day\nExpected result: a simple dashboard\nValidation: comparison with the electricity bill",
-                  "feito": false,
-                  "horas": 1
+                  "feito": false
                 }
               ],
               "checkpoints": [
                 {
                   "id": "1n5lq54",
-                  "nome": "First week of data",
-                  "data": "2026-11-09",
+                  "nome": "First data collected",
                   "feito": false
                 }
               ]

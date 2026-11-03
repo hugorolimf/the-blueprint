@@ -42,7 +42,7 @@ try {
 
   // 2) A fica velha de propósito (não recebe mais atualizações); B cria uma ação; A edita outra coisa e grava
   await A.js(`carregar = async () => {}; aoVivoES.close(); aoVivoES = { readyState: 2, close() {} }`);
-  await B.js(`D.blueprints[0].acoes.push({ id: "fB", nome: "Nova de B", inicio: "2026-11-06", fim: "2026-11-07", status: "planejado", progresso: 0, obs: "", planos: [], checkpoints: [] }); mudou();`);
+  await B.js(`D.blueprints[0].acoes.push({ id: "fB", nome: "Nova de B", status: "planejado", progresso: 0, obs: "", planos: [], checkpoints: [] }); mudou();`);
   await dormir(1500);
   assert.equal(await A.js(`D.blueprints[0].acoes.some((f) => f.id === "fB")`), false, "A está velha: não conhece a ação de B");
   await A.js(`D.blueprints[0].acoes[0].nome = "Editada em A"; mudou();`);

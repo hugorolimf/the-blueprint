@@ -9,7 +9,7 @@ use super::secao::Secao;
 use crate::agentes::Lugar;
 use crate::dominio::{Acao, Situacao};
 use crate::fonte::Peso;
-use crate::i18n::{tr, trn};
+use crate::i18n::tr;
 use crate::menu::Alvo;
 use crate::pesquisa::{self, ResAcao};
 use crate::telas::Acao as Pedido;
@@ -24,19 +24,17 @@ fn texto(v: &Value, campo: &str) -> String {
 /// As ações abertas, com as caixas marcáveis. Devolve o pedido de marcar, se houve clique.
 pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao) -> Option<Pedido> {
     let mut pedido = None;
-    let j = s.regua.janela;
     if s.total == 0 {
         c.texto(&tr("Sem ações · abra Editar para adicionar"), s.l + 40.0, s.y + PH + 8.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     }
     if s.total > 0 && s.acoes.is_empty() {
-        let aviso = if s.pendentes { tr("Nada pendente neste blueprint.") } else { tr("Nenhuma ação neste período.") };
-        c.texto(aviso, s.l, s.y + PH + 30.0, 12.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
+        c.texto(tr("Nada pendente neste blueprint."), s.l, s.y + PH + 30.0, 12.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
     }
     for pos in &s.disp.posicoes {
         let f = s.acoes[pos.i];
         // pesquisando: a ação que não casou esmaece (18%); a que casou fica inteira
         let ra: Option<&ResAcao> = s.pesq.and_then(|(r, _)| r.acoes.iter().find(|a| a.id == f.id));
-        // abrir, recolher ou trocar o período: a ação anda até o lugar novo, a barra muda de largura e o andamento cresce (anima::deslize)
+        // abrir ou recolher: a ação anda até o lugar novo, a barra muda de largura e o andamento cresce (anima::deslize)
         let (topo, bx, bw) = if s.aberto { (PH + s.disp.linha_y[pos.linha], pos.bx0, pos.bw) } else { (PH - 12.0 + s.disp.linha_y[pos.linha], pos.x0, (pos.x1 - pos.x0).max(6.0)) };
         let (v, nasce) = crate::anima::deslize(ui.ctx(), ("acao", f.id.as_str()), &[topo, bx, bw, f.pct]);
         let fraco = barra::opaco(c.p, if s.pesq.is_some() && ra.is_none() { 0.16 * nasce } else { nasce });
@@ -84,24 +82,14 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao) -> Option<Pedido> {
         if f.itens.1 > 0 {
             c.texto(&format!("{}/{}", f.itens.0, f.itens.1), xp, by + 31.0, 9.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
         }
-        for m in f.checkpoints.iter().filter(|m| m.data.is_some_and(|d| d >= j.t0 && d < j.t1)) {
-            let d = m.data.unwrap_or(0);
-            let mx = x0 + ((d as f32 + 0.5 - f.a as f32) / ((f.b + 1 - f.a) as f32)) * (x1 - x0);
-            barra::losango(c, x0, x1, mx, by + bh / 2.0, 7.0, m.feito, vez);
+        for (i, m) in f.checkpoints.iter().enumerate() {
+            barra::losango(c, x0, x1, barra::x_marco(x0, x1, i, f.checkpoints.len(), 16.0), by + bh / 2.0, 7.0, m.feito, vez);
         }
-        // a cota de dias: duas hastes, a linha e os traços oblíquos das pontas (abre da esquerda na abertura)
+        // a cota: duas hastes, a linha e os traços oblíquos das pontas (abre da esquerda na abertura)
         let cy = fy + 72.0;
         let pincel_cota = barra::cota(c, x0, x1, by + bh, cy + 24.0, vez);
         let c = &Cena { p: &pincel_cota, o: c.o };
         c.fios(Fio::Medio, &[(x0, by + bh + 2.0, x0, cy + 6.0), (x1, by + bh + 2.0, x1, cy + 6.0), (x0, cy, x1, cy), (x0 - 4.0, cy + 4.0, x0 + 4.0, cy - 4.0), (x1 - 4.0, cy + 4.0, x1 + 4.0, cy - 4.0)]);
-        c.texto(&trn((f.b - f.a + 1) as usize, "{n} DIA", "{n} DIAS"), (x0 + x1) / 2.0, cy - 5.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
-        let (ini, fim) = (data_curta(f.a), data_curta(f.b));
-        if x1 - x0 < 104.0 {
-            c.texto(&format!("{ini} → {fim}"), (x0 + x1) / 2.0, cy + 18.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
-        } else {
-            c.texto(&ini, x0, cy + 18.0, 10.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
-            c.texto(&fim, x1, cy + 18.0, 10.0, Peso::Normal, MEDIO, Ancora::Fim, false);
-        }
         if !f.planos.is_empty() || !f.checkpoints.is_empty() {
             if let Some(p) = itens(&ce, ui, s, pos, f, fy + 112.0, ra) {
                 pedido = Some(p);
@@ -109,11 +97,6 @@ pub fn desenhar(c: &Cena, ui: &mut Ui, s: &Secao) -> Option<Pedido> {
         }
     }
     pedido
-}
-
-fn data_curta(dias: i64) -> String {
-    let iso = crate::documento::iso_do_dia(dias);
-    format!("{}/{}", &iso[8..10], &iso[5..7])
 }
 
 /// As duas colunas de baixo: os planos (caixas) e os checkpoints (losangos), cada item clicável.
@@ -182,9 +165,8 @@ fn itens(c: &Cena, ui: &mut Ui, s: &Secao, pos: &super::disposicao::Posicao, f: 
             let ci = Cena { p: if s.pesq.is_some() && achou.is_none() && ra.is_some_and(|a| a.propria.is_none()) { &fraco } else { c.p }, o: c.o };
             ci.losango_r(cx0 + 6.5, yy - 5.5, 6.5, m.feito, if sobre { 2.6 } else { 1.4 });
             let nome = if m.nome.is_empty() { tr("sem nome").to_string() } else { m.nome.clone() };
-            let data = m.data.map(|d| format!(" · {}", data_curta(d))).unwrap_or_default();
             let cor = if sobre || achou.is_some() { egui::Color32::WHITE } else if m.feito { MEDIO.gamma_multiply(0.8) } else { TINTA };
-            let linha = corta(&format!("{nome}{data}"), maxc);
+            let linha = corta(&nome, maxc);
             if let (Some((_, termos)), Some((_, onde))) = (s.pesq, achou) {
                 if onde.contains(&"nome") {
                     ci.realce(&linha, cx0 + 22.0, yy, 11.0, Peso::Normal, 0.06, false, &pesquisa::trechos(&linha, termos));
@@ -206,9 +188,7 @@ fn compacta(c: &Cena, s: &Secao, f: &Acao, by: f32, x0: f32, w: f32, pct: f32) {
     let vez = barra::Vez::da(c, by - 7.0, by + 17.0);
     barra::caixa(c, x0, by, w, 10.0, f.status, vez);
     barra::miolo(c, x0 + 1.0, by + 1.0, w - 2.0, 8.0, f.status, pct, vez);
-    let j = s.regua.janela;
-    for m in f.checkpoints.iter().filter(|m| m.data.is_some_and(|d| d >= j.t0 && d < j.t1)) {
-        let mx = s.regua.xf(m.data.unwrap_or(0) as f32 + 0.5).clamp(s.l, s.r);
-        barra::losango(c, x0, x0 + w, mx, by + 5.0, 4.5, m.feito, vez);
+    for (i, m) in f.checkpoints.iter().enumerate() {
+        barra::losango(c, x0, x0 + w, barra::x_marco(x0, x0 + w, i, f.checkpoints.len(), 9.0), by + 5.0, 4.5, m.feito, vez);
     }
 }

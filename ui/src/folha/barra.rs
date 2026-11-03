@@ -105,3 +105,8 @@ pub fn cota(c: &Cena, x0: f32, x1: f32, topo: f32, fundo: f32, vez: Vez) -> Pain
     let r = Rect::from_min_max(c.pt(de, topo), pos2(c.pt(de + (ate - de) * k, 0.0).x, c.pt(0.0, fundo).y));
     c.p.with_clip_rect(r.intersect(c.p.clip_rect()))
 }
+
+/// O x do checkpoint `i` de `n` na barra `x0..x1`: juntos no fim dela, separados por `passo`, sem sair pela esquerda.
+pub fn x_marco(x0: f32, x1: f32, i: usize, n: usize, passo: f32) -> f32 {
+    (x1 - 4.0 - n.saturating_sub(i + 1) as f32 * passo).max(x0 + 4.0)
+}

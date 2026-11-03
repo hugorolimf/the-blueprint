@@ -75,7 +75,6 @@ pub const TEXTOS: &[(&str, &str)] = &[
     ("Depende de", "Depends on"),
     ("Área", "Area"),
     ("Ramo do agente", "Agent branch"),
-    ("Tempo", "Time"),
     ("trabalhando", "working"),
     ("na fila", "in the queue"),
     ("esperando", "waiting"),
@@ -84,12 +83,6 @@ pub const TEXTOS: &[(&str, &str)] = &[
     ("Agentes ao mesmo tempo", "Agents at the same time"),
     ("Avisos · {n}", "Warnings · {n}"),
     ("{n} de {total} prontos", "{n} of {total} done"),
-    ("nesta janela", "in this window"),
-    ("Contado desde que esta janela viu o plano nesta situação.", "Counted since this window saw the plan in this status."),
-    ("agora", "now"),
-    ("{n} min", "{n} min"),
-    ("{h} h {m} min", "{h} h {m} min"),
-    ("{n} d", "{n} d"),
     ("Nenhum agente por aqui", "No agents here"),
     ("Marque a caixinha de um plano na folha para chamar um agente.", "Check a plan's box on the sheet to call an agent."),
     ("Marque a caixinha de um plano na folha", "Check a plan's box on the sheet"),
@@ -158,7 +151,7 @@ fn desenhar(ui: &mut Ui, vista: &Vista, w: &Value, ws: &str, bp: &str, rolagem: 
     if let Some(y) = rolagem {
         area = area.vertical_scroll_offset(y);
     }
-    area.show(ui, |ui| {
+    crate::rolagem::mostrar(ui, area, |ui| {
         let h = alto.max(ALTURA_MIN).max(fim + 120.0);
         let (pagina, _) = ui.allocate_exact_size(vec2(largura, h), Sense::hover());
         let painter = ui.painter().clone();

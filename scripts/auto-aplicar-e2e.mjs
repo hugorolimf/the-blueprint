@@ -55,7 +55,7 @@ async function rodar(lang) {
     const acaoDe = async (nome) => (await dados()).acoes.find((f) => f.nome === nome);
     const fila = async (tipo) => (await (await fetch(url + "/api/mcp/fila")).json()).itens.filter((i) => i.tipo === tipo && i.blueprintId === bp.id);
     const aviso = () => js(`(() => { const e = document.getElementById("auto-aviso"); return e && !e.hidden ? { texto: e.querySelector(".aa-texto").textContent, desfazer: !e.querySelector(".aa-desfazer").hidden } : null; })()`);
-    const proposta = (nome, extra = {}) => chamar("propor_blueprint", { acoes: [{ nome, inicio: "2027-03-01", fim: "2027-03-02", planos: [{ texto: "Escrever o roteiro", descricao: "Scope: o roteiro. Expected result: texto. Validation: revisão." }], checkpoints: [{ nome: "Roteiro aprovado", data: "2027-03-02" }] }], ...extra });
+    const proposta = (nome, extra = {}) => chamar("propor_blueprint", { acoes: [{ nome, planos: [{ texto: "Escrever o roteiro", descricao: "Scope: o roteiro. Expected result: texto. Validation: revisão." }], checkpoints: [{ nome: "Roteiro aprovado" }] }], ...extra });
 
     await cdp("Page.navigate", { url: `${url}/#/p/${bp.id}` });
     await espera(() => js(`typeof autoElegivel === "function" && carregado && !!workspaceAtual`), "a página não carregou");
@@ -111,7 +111,7 @@ async function rodar(lang) {
 
     // 4) registro: entra sozinho como o "Adicionar ao blueprint" faz (feito e evidência)
     const EVID = "node teste.mjs: 5 passam, 0 falham";
-    const r2 = await chamar("registrar_trabalho", { mensagem: "Corrigi fora do plano.", acoes: [{ nome: "Ajuste do agente", inicio: "2026-10-20", fim: "2026-10-23", planos: [{ texto: "Corrigir o botão", descricao: "Escopo: o botão. Validação: o teste passa.", feito: true, evidencia: EVID }] }] });
+    const r2 = await chamar("registrar_trabalho", { mensagem: "Corrigi fora do plano.", acoes: [{ nome: "Ajuste do agente", planos: [{ texto: "Corrigir o botão", descricao: "Escopo: o botão. Validação: o teste passa.", feito: true, evidencia: EVID }] }] });
     assert.equal(r2.isError, false, r2.texto);
     await espera(async () => !!(await acaoDe("Ajuste do agente")), "o registro entrou sem clique", 8000);
     const f = await acaoDe("Ajuste do agente");

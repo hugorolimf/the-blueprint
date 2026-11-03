@@ -1,6 +1,6 @@
 //! A ação aberta no lugar, desenhada direto no papel da folha, sem cartão, como a seção aberta da folha original (`folha/acoes.rs`): tudo que se decide do plano se decide aqui. A altura é medida antes de empilhar, e `altura` e `painel` usam a mesma conta.
 //! Quem usa: `empilhar` soma `ocupa` na ação aberta; `painel` desenha logo abaixo da linha dela; e `aplicar` faz o que o painel devolver, depois de a folha sair de empréstimo.
-//! O painel abre crescendo (a altura anda junto com as linhas de baixo) e os blocos chegam em cascata; cada bloco mora no seu arquivo `acao_*.rs`.
+//! É uma prancha só: o palco (`acao_obra.rs`), com tudo em cima dele, em figura e clique. O painel abre crescendo (a altura anda junto com as linhas de baixo).
 
 use super::acao_estilo::rotulo_secao;
 use super::acao_movimento::{cascata, com_alfa, desde_que_abriu};
@@ -9,64 +9,108 @@ use super::escala::X0;
 use super::folha::links;
 use super::linha::{self, Pincel};
 use super::modelo::{Acao as AcaoPlano, Folha};
-use super::perguntas;
 use super::revisao::Alvo;
-use super::{Estado, Sub};
+use super::Sub;
 use crate::anima;
 use crate::menu;
 use crate::planta::Texto;
 use crate::telas::Acao as Pedido;
 use egui::{vec2, Painter, Ui};
 
+#[path = "acao_blocos.rs"]
+mod blocos;
 #[path = "acao_cabeca.rs"]
 mod cabecalho;
 #[path = "acao_decisoes.rs"]
 mod decisoes;
 #[path = "acao_estado.rs"]
 mod estado;
+#[path = "acao_decidir.rs"]
+mod decidir;
+#[path = "acao_movimentos.rs"]
+mod movimentos;
+#[path = "acao_obra_bordo.rs"]
+mod obra_bordo;
+#[path = "acao_obra_cena.rs"]
+mod obra_cena;
+#[path = "acao_obra_icones.rs"]
+mod obra_icones;
+#[path = "acao_obra_mesa.rs"]
+mod mesa_acao;
+#[path = "acao_obra_tela.rs"]
+mod obra_tela;
+#[path = "acao_obra_miniatura.rs"]
+mod obra_miniatura;
+pub use obra_miniatura::{largura_pecas, miniatura, pe, pecas, tem_o_ponto};
+#[path = "acao_obra_regra.rs"]
+mod obra_regra;
+#[path = "acao_obra_dutos.rs"]
+mod dutos;
+#[path = "acao_obra_formas.rs"]
+mod obra_formas;
+#[path = "acao_obra_mergulho.rs"]
+mod obra_mergulho;
+#[path = "acao_obra_ficha.rs"]
+mod ficha;
+#[path = "acao_textos.rs"]
+mod textos;
+pub use textos::TEXTOS;
+#[path = "acao_obra_pecas.rs"]
+mod obra_pecas;
+#[path = "acao_obra_letreiro.rs"]
+mod obra_letreiro;
+#[path = "acao_partes_explodida.rs"]
+mod explodida;
+#[path = "acao_obra_explosao.rs"]
+mod obra_explosao;
+#[path = "acao_obra_zoom.rs"]
+mod obra_zoom;
+#[path = "acao_obra_na_tela.rs"]
+mod na_tela;
+#[path = "acao_obra_lista.rs"]
+mod lista;
+#[path = "acao_obra_fora.rs"]
+mod obra_fora;
+#[path = "acao_obra_sumico.rs"]
+mod obra_sumico;
+#[path = "acao_obra_rotulos.rs"]
+mod obra_rotulos;
+#[path = "acao_obra_tempo.rs"]
+mod obra_tempo;
+#[path = "acao_voo.rs"]
+mod voo;
+#[path = "acao_mapa_figura.rs"]
+mod figura;
+#[path = "acao_obra.rs"]
+mod obra;
+#[path = "acao_obra_figura.rs"]
+mod obra_figura;
 #[path = "acao_linha_tempo.rs"]
 mod tempo;
+#[path = "acao_mapa_forma.rs"]
+mod forma;
 #[path = "acao_planos.rs"]
 mod planos;
 #[path = "acao_prancha.rs"]
 mod prancha;
-#[path = "acao_ver.rs"]
-mod ver;
 
-pub const TEXTOS: &[(&str, &str)] = &[
-    ("− Recolher", "− Collapse"),
-    ("Recolher", "Collapse"),
-    ("ver tudo", "see all"),
-    ("ver menos", "see less"),
-    ("sem data", "no date"),
-    ("Planos · {feitos}/{total}", "Plans · {feitos}/{total}"),
-    ("Checkpoints · {feitos}/{total}", "Checkpoints · {feitos}/{total}"),
-    ("Decisões · {n}", "Decisions · {n}"),
-    ("Detalhes · {n}", "Details · {n}"),
-    ("Tabela", "Table"),
-    ("Passou da data sem ser feito", "Past the date and not done"),
-    ("Depende de {lista}", "Depends on {lista}"),
-    ("Livre", "Free"),
-    ("Revise a mudança", "Review the change"),
-    ("Trabalhando", "Working"),
-    ("Na fila", "In queue"),
-    ("Esperando plano", "Waiting for a plan"),
-    ("Esperando área", "Waiting for the area"),
-    ("Parado", "Stopped"),
-    ("O agente sumiu", "The agent disappeared"),
-    ("Falhou ao iniciar", "Failed to start"),
-    ("Pediu ajuda", "Asked for help"),
-    ("Marcado como feito", "Marked as done"),
-    ("O agente concluiu e marcou", "The agent finished and marked it"),
-];
 
 /// A largura máxima do conteúdo: em janela larga os botões continuam perto do que decidem.
-const LARGURA_MAX: f32 = 1440.0;
+const LARGURA_MAX: f32 = 1800.0;
 /// O vão entre as duas colunas, o mesmo da folha original.
 const VAO_COLUNAS: f32 = 30.0;
-/// O vão antes de cada seção: maior que o de dentro dela.
-const VAO_SECAO: f32 = 26.0;
+/// A seção «Plano alterado», à direita: larga o bastante para o diff ler bem, sem tirar o lugar das telas.
+const FRACAO_DIFF: f32 = 0.34;
+const LARGURA_DIFF: (f32, f32) = (400.0, 620.0);
+/// A distância do topo da janela em que a seção à direita para ao rolar.
+const FOLGA_TOPO: f32 = 12.0;
 const VAO_ABAIXO: f32 = 18.0;
+
+/// Gira a obra (o passo `obra-orbita` do roteiro).
+#[cfg(not(target_arch = "wasm32"))]
+pub fn girar_obra(ctx: &egui::Context, az: f32, el: f32) {
+    obra_figura::orbitar(ctx, az, el);
+}
 
 /// O que o painel pede e só quem tem `vista` pode fazer. Marcar e revisar já foram ao servidor.
 #[derive(Debug)]
@@ -74,14 +118,17 @@ pub enum Saida {
     Recolher,
     Agentes,
     Pedido(Pedido),
+    /// abre outra ação e rola até ela
+    IrPara(String),
 }
 
 /// Faz o que o painel pediu; o que for de `app` volta como pedido.
-pub fn aplicar(plano: &mut Estado, _a: &AcaoPlano, s: Saida) -> Option<Pedido> {
+pub fn aplicar(vista: &mut crate::telas::Vista, _a: &AcaoPlano, s: Saida) -> Option<Pedido> {
     match s {
-        Saida::Recolher => plano.aberta = None,
-        Saida::Agentes => plano.tela = Sub::Agentes,
+        Saida::Recolher => vista.plano.aberta = None,
+        Saida::Agentes => vista.plano.tela = Sub::Agentes,
         Saida::Pedido(p) => return Some(p),
+        Saida::IrPara(id) => vista.ir_para = Some(id),
     }
     None
 }
@@ -90,28 +137,15 @@ pub fn aplicar(plano: &mut Estado, _a: &AcaoPlano, s: Saida) -> Option<Pedido> {
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct Partes {
     pub cabeca: f32,
-    /// o diff com o vão depois dele; zero sem diff
+    /// a seção à direita; zero sem diff
     pub diff: f32,
-    /// a lista normal; zero com diff, porque o diff a substitui
-    pub planos: f32,
-    pub checkpoints: f32,
-    pub decisoes: f32,
-    pub perguntas: f32,
-    pub tabelas: f32,
-    pub detalhes: f32,
+    /// o palco, ou a vista expandida
+    pub corpo: f32,
 }
 
 impl Partes {
-    /// As duas colunas: planos e checkpoints, lado a lado como na folha original. Vale a maior.
-    pub fn colunas(&self) -> f32 {
-        self.planos.max(self.checkpoints)
-    }
-    /// Uma seção e o vão antes dela; zero quando ela não existe.
-    fn secao(alto: f32) -> f32 {
-        if alto > 0.0 { alto + VAO_SECAO } else { 0.0 }
-    }
     pub fn total(&self) -> f32 {
-        self.cabeca + self.diff + self.colunas() + Self::secao(self.decisoes) + Self::secao(self.perguntas) + Self::secao(self.tabelas) + Self::secao(self.detalhes) + 6.0
+        (self.cabeca + self.corpo).max(self.diff) + 6.0
     }
 }
 
@@ -119,23 +153,28 @@ impl Partes {
 #[derive(Clone, Copy)]
 pub(super) struct Geometria {
     pub x: f32,
+    /// a largura do resumo e dos planos: a parte da esquerda, quando há diff
     pub w: f32,
-    /// a largura de cada coluna e onde a segunda começa
-    pub coluna: f32,
-    pub x_direita: f32,
+    /// a seção «Plano alterado»; zero sem diff
+    pub x_diff: f32,
+    pub w_diff: f32,
 }
 
 impl Geometria {
-    fn de(x1: f32) -> Geometria {
-        let (x, w) = (X0, (x1 - X0).min(LARGURA_MAX));
-        let coluna = (w - VAO_COLUNAS) / 2.0;
-        Geometria { x, w, coluna, x_direita: x + coluna + VAO_COLUNAS }
+    fn de(x1: f32, com_diff: bool) -> Geometria {
+        let (x, total) = (X0, (x1 - X0).min(LARGURA_MAX));
+        if com_diff {
+            let w_diff = (total * FRACAO_DIFF).clamp(LARGURA_DIFF.0, LARGURA_DIFF.1);
+            let w = total - w_diff - VAO_COLUNAS;
+            return Geometria { x, w, x_diff: x + w + VAO_COLUNAS, w_diff };
+        }
+        Geometria { x, w: total, x_diff: x, w_diff: 0.0 }
     }
 }
 
-/// A letra do bloco de várias linhas: mesma trilha do resto do painel, e altura de linha fixa para a conta fechar.
-pub fn bloco(s: &str, tam: f32, max: f32, passo: f32, linhas: usize) -> Texto<'_> {
-    Texto::novo(s, tam).trilha(0.03).caixa(max.max(1.0)).lh(passo).linhas(linhas)
+/// O bloco de texto, sempre inteiro: mesma trilha do resto do painel, e altura de linha fixa para a conta fechar.
+pub fn bloco(s: &str, tam: f32, max: f32, passo: f32) -> Texto<'_> {
+    Texto::novo(s, tam).trilha(0.03).caixa(max.max(1.0)).lh(passo)
 }
 
 /// O título de uma seção: marca, caixa alta e um fio que some.
@@ -153,23 +192,17 @@ pub fn tem_links(lista: &[serde_json::Value]) -> bool {
 }
 
 fn medir(p: &Painter, f: &Folha, a: &AcaoPlano, g: &Geometria) -> Partes {
-    let com_diff = a.diff.is_some();
-    let coluna = g.coluna;
+    let montagem = blocos::montar(f, a);
     Partes {
         cabeca: cabecalho::altura(p, a, g),
-        diff: if com_diff { diff::altura(p, a, g.w) + 22.0 } else { 0.0 },
-        planos: if com_diff { 0.0 } else { planos::altura_planos(p, a, coluna) },
-        checkpoints: tempo::altura(a),
-        decisoes: decisoes::altura(p, f, a, g.w),
-        perguntas: perguntas::altura(p, f, a, g.w),
-        tabelas: prancha::altura_tabelas(a),
-        detalhes: prancha::altura_detalhes(p, f, a, g.w),
+        diff: if a.diff.is_some() { diff::altura(p, a, g.w_diff) } else { 0.0 },
+        corpo: obra::altura(p, f, a, &montagem, g.w),
     }
 }
 
 /// A altura do painel inteiro, para empilhar antes de desenhar. `x1` é a borda direita da folha.
 pub fn altura(p: &Painter, f: &Folha, a: &AcaoPlano, x1: f32) -> f32 {
-    medir(p, f, a, &Geometria::de(x1)).total()
+    medir(p, f, a, &Geometria::de(x1, a.diff.is_some())).total()
 }
 
 /// O que `empilhar` soma na ação aberta: o painel e o vão até a próxima linha.
@@ -179,7 +212,7 @@ pub fn ocupa(p: &Painter, f: &Folha, a: &AcaoPlano, x1: f32) -> f32 {
 
 /// Desenha o painel com o topo em `y`. `x1` é a borda direita da folha. Devolve o que só quem tem `vista` pode fazer: passe a `aplicar`.
 pub fn painel(ui: &mut Ui, c: &Pincel, alvo: Alvo, f: &Folha, a: &AcaoPlano, y: f32, x1: f32) -> Option<Saida> {
-    let g = Geometria::de(x1);
+    let g = Geometria::de(x1, a.diff.is_some());
     let m = medir(c.p, f, a, &g);
     let ctx = ui.ctx().clone();
     let ms = desde_que_abriu(&ctx, ("acao-painel", &a.referencia));
@@ -198,45 +231,18 @@ pub fn painel(ui: &mut Ui, c: &Pincel, alvo: Alvo, f: &Folha, a: &AcaoPlano, y: 
         (com_alfa(&recorte, k), (1.0 - k) * 10.0)
     };
     let (p0, d0) = bloco_n(0);
+    let montagem = blocos::montar(f, a);
     let mut saida = cabecalho::desenhar(ui, &Pincel { p: &p0, o: c.o + vec2(0.0, d0) }, a, &g, y);
-    let mut yy = y + m.cabeca;
     let (p1, d1) = bloco_n(1);
     let c1 = Pincel { p: &p1, o: c.o + vec2(0.0, d1) };
     if a.diff.is_some() {
-        if diff::desenhar(lapis(&c1), ui, alvo, a, g.x, yy + 2.0, g.w).ver_agentes {
-            saida = Some(Saida::Agentes);
-        }
-        yy += m.diff;
-    } else if let Some(s) = planos::planos(ui, &c1, alvo, a, g.x, yy, g.coluna) {
+        // a seção à direita acompanha a rolagem enquanto couber na altura do painel
+        let topo_visivel = c.p.clip_rect().top() - c.o.y + FOLGA_TOPO;
+        let y_diff = topo_visivel.min(y + (m.total() - m.diff).max(0.0)).max(y);
+        diff::desenhar(lapis(&c1), ui, alvo, a, g.x_diff, y_diff, g.w_diff);
+    }
+    if let Some(s) = obra::desenhar(ui, &c1, alvo, f, a, &montagem, g.x, y + m.cabeca, g.w) {
         saida = Some(s);
-    }
-    // sem a lista de planos (o diff a substitui), os checkpoints ficam na primeira coluna
-    let x_checkpoints = if m.planos > 0.0 { g.x_direita } else { g.x };
-    let (p2, d2) = bloco_n(2);
-    tempo::desenhar(ui, &Pincel { p: &p2, o: c.o + vec2(0.0, d2) }, alvo, a, &f.hoje, (x_checkpoints, yy, g.coluna));
-    yy += m.colunas();
-    let (p3, d3) = bloco_n(2);
-    let c3 = Pincel { p: &p3, o: c.o + vec2(0.0, d3) };
-    if m.decisoes > 0.0 {
-        yy += VAO_SECAO;
-        decisoes::desenhar(ui, &c3, alvo, f, a, g.x, yy, g.w);
-        yy += m.decisoes;
-    }
-    if m.perguntas > 0.0 {
-        yy += VAO_SECAO;
-        perguntas::desenhar(ui, &c3, alvo, f, a, g.x, yy, g.w);
-        yy += m.perguntas;
-    }
-    let (p4, d4) = bloco_n(3);
-    if m.tabelas > 0.0 {
-        yy += VAO_SECAO;
-        prancha::tabelas(ui, &Pincel { p: &p4, o: c.o + vec2(0.0, d4) }, a, g.x, yy, g.w);
-        yy += m.tabelas;
-    }
-    let (p5, d5) = bloco_n(4);
-    if m.detalhes > 0.0 {
-        yy += VAO_SECAO;
-        prancha::detalhes(ui, &Pincel { p: &p5, o: c.o + vec2(0.0, d5) }, alvo, f, a, g.x, yy, g.w);
     }
     saida
 }

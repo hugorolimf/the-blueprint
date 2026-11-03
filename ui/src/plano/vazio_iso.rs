@@ -6,7 +6,7 @@ use egui::{vec2, Color32, Painter, Pos2, Shape, Stroke};
 pub type P3 = (f32, f32, f32);
 
 /// Meia largura e meia altura de uma unidade na tela (30 graus).
-const COS: f32 = 0.866;
+pub const COS: f32 = 0.866;
 const SEN: f32 = 0.5;
 
 /// As cores das três faces de uma caixa e o traço das arestas.

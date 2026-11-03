@@ -49,7 +49,7 @@ function apEdMuda(ops, { caminho = "", junta = false, redesenha = false, fragmen
 }
 
 // ---- eventos ----
-const apEdValor = (tipo, chave, bruto) => (bruto === "" && ["situacao", "figura", "ate", "secao"].includes(chave) ? null : bruto);
+const apEdValor = (tipo, chave, bruto) => (bruto === "" && ["situacao", "figura", "secao"].includes(chave) ? null : bruto);
 function apEdCampoMudou(el, final) {
   if (el.matches("[data-c]")) {
     const caminho = el.dataset.c, chave = caminho.split(".").pop();

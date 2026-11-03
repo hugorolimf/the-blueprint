@@ -18,7 +18,6 @@ const posicionais = args.filter((a) => !a.startsWith("--"));
 const dadosArq = resolve(posicionais[0] || join(raiz, "data.exemplo.json"));
 const saida = resolve(posicionais[1] || join(raiz, "target", "capturas"));
 const referencia = join(raiz, "referencias", "capturas.json");
-const hoje = "2026-10-26"; // data fixa: o chip de hoje não muda a referência a cada dia
 const exe = resolve(process.env.BLUEPRINT_EXE || join(raiz, "target/release/blueprint.exe"));
 mkdirSync(saida, { recursive: true });
 const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -79,7 +78,7 @@ try {
   const fotos = {};
   for (const [nome, hash, fazer] of TELAS) {
     await cdp("Page.navigate", { url: "about:blank" }); // hash sozinho preserva diálogos e telas da captura anterior
-    await cdp("Page.navigate", { url: `${url}/?hoje=${hoje}${hash}` });
+    await cdp("Page.navigate", { url: `${url}/${hash}` });
     let pronta = false;
     for (let i = 0; i < 100 && !pronta; i++) {
       try { pronta = await js(`(() => { try { return typeof carregado !== "undefined" && carregado; } catch { return false; } })()`); } catch {}
@@ -110,7 +109,7 @@ try {
     })()`);
   }
   console.log(`${TELAS.length} capturas em ${saida}`);
-  if (gravar) { writeFileSync(referencia, JSON.stringify({ dados: "data.exemplo.json", tamanho: "1440x900", hoje, telas: hashes }, null, 2) + "\n"); console.log(`hashes gravados em ${referencia}`); }
+  if (gravar) { writeFileSync(referencia, JSON.stringify({ dados: "data.exemplo.json", tamanho: "1440x900", telas: hashes }, null, 2) + "\n"); console.log(`hashes gravados em ${referencia}`); }
   if (comparar) {
     const esperado = JSON.parse(readFileSync(referencia, "utf8")).telas;
     let diferentes = 0;

@@ -11,13 +11,13 @@ const ctx = vm.createContext({ navigator: { languages: ["pt-BR"] }, location: { 
 const le = (f) => readFileSync(join(import.meta.dirname, "web", "js", f), "utf8");
 vm.runInContext(le("i18n.js"), ctx, { filename: "i18n.js" });
 vm.runInContext(le("claude-logica.js"), ctx, { filename: "claude-logica.js" });
-vm.runInContext(le("foco-logica.js") + "\nthis.api = { focoCartoes, focoEmFoco, focoLugar, focoProximo, focoDeveRolar, focoEsc, focoFixoSumiu, focoDesde, focoMinutos, focoEventosDoAgente, focoTokens, FOCO_EVENTOS, FOCO_HISTORICO };", ctx);
+vm.runInContext(le("foco-logica.js") + "\nthis.api = { focoCartoes, focoEmFoco, focoLugar, focoProximo, focoDeveRolar, focoEsc, focoFixoSumiu, focoEventosDoAgente, focoTokens, FOCO_EVENTOS, FOCO_HISTORICO };", ctx);
 const A = ctx.api;
 const J = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
 const nomes = (c) => c.itens.map((i) => i.agente);
 
 const bps = [{ id: "b1", acoes: [
-  { id: "f1", nome: "Ação um", planos: [{ id: "t1", texto: "Plano um", feito: false, agente: { inicioEm: "2026-10-26T10:00:00Z" } }, { id: "t2", texto: "Plano dois", feito: false }, { id: "t3", texto: "Plano três", feito: true }] },
+  { id: "f1", nome: "Ação um", planos: [{ id: "t1", texto: "Plano um", feito: false }, { id: "t2", texto: "Plano dois", feito: false }, { id: "t3", texto: "Plano três", feito: true }] },
   { id: "f2", nome: "Ação dois", planos: [{ id: "t4", texto: "Plano quatro", feito: false }] },
 ] }];
 const ag = (agente, extra = {}) => ({ agente, blueprintId: "b1", acaoId: "f1", planoId: "t1", estado: "escrevendo", em: "2026-10-26T10:10:00Z", mensagem: "fazendo", onde: ["a.js"], ...extra });
@@ -34,7 +34,6 @@ const um = A.focoCartoes([ag("claude", { percentual: 40 })], bps);
 const c1 = J(um.itens[0]);
 assert.equal(um.vazio, false);
 assert.deepEqual([c1.acaoNome, c1.planoTexto, c1.planoId, c1.acaoId, c1.estado, c1.mensagem, c1.onde, c1.percentual], ["Ação um", "Plano um", "t1", "f1", "escrevendo", "fazendo", ["a.js"], 40]);
-assert.equal(c1.inicioEm, Date.parse("2026-10-26T10:00:00Z"), "o início medido do plano");
 assert.equal(um.principal.agente, "claude");
 
 // ---- vários agentes: o principal (sem papel) primeiro; depois por urgência (bloqueado, trabalhando, aguardando, concluiu, repouso); empate: o que avisou há menos tempo, depois o nome
@@ -93,23 +92,6 @@ assert.equal(A.focoEsc(""), "fechar");
 assert.equal(A.focoFixoSumiu(varios, "exp"), false);
 assert.equal(A.focoFixoSumiu(varios, "x"), true);
 assert.equal(A.focoFixoSumiu(varios, ""), false);
-
-// ---- desde quando no plano: o início medido, ou o começo da sequência de eventos do agente neste plano (do mais novo ao mais antigo)
-const evs = [
-  { agente: "claude", alvo: "t1", em: "2026-10-26T10:30:00Z", tipo: "progresso" },
-  { agente: "claude", alvo: "t1", em: "2026-10-26T10:20:00Z", tipo: "progresso" },
-  { agente: "claude", alvo: "t1", em: "2026-10-26T10:10:00Z", tipo: "progresso" },
-  { agente: "claude", alvo: "t0", em: "2026-10-26T10:00:00Z", tipo: "progresso" },
-];
-assert.equal(A.focoDesde(123, evs, "claude", "t1"), 123, "o início medido vence");
-assert.equal(A.focoDesde(0, evs, "claude", "t1"), Date.parse("2026-10-26T10:10:00Z"), "começo da sequência neste plano");
-assert.equal(A.focoDesde(0, evs, "outro", "t1"), 0, "outro agente: não sabe");
-assert.equal(A.focoDesde(0, [], "claude", "t1"), 0);
-assert.equal(A.focoDesde(0, [{ alvo: "t2", agente: "claude", em: "2026-10-26T09:00:00Z" }, ...evs], "claude", "t1"), Date.parse("2026-10-26T10:10:00Z"), "evento mais novo de outro plano não atrapalha");
-assert.equal(A.focoMinutos(0, 5), 0);
-assert.equal(A.focoMinutos(1000, 1000 + 12 * 60000), 12);
-assert.equal(A.focoMinutos(1000, 1000 + 5000), 1, "menos de um minuto conta como 1");
-assert.equal(A.focoMinutos(5000, 1000), 0, "fim antes do início: 0");
 
 // ---- eventos do agente: os dele neste plano (e os gerais), até n, na ordem recebida
 const todos = [{ id: 1, agente: "claude", alvo: "t1" }, { id: 2, agente: "outro", alvo: "t1" }, { id: 3, agente: "claude", alvo: "t2" }, { id: 4 }, { id: 5, agente: "claude", alvo: "t1" }, { id: 6, agente: "claude", alvo: "t1" }, { id: 7, agente: "claude", alvo: "t1" }];

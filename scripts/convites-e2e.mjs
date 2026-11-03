@@ -9,7 +9,7 @@ import { ambiente, entrar, navegador, segredoDe } from "./lib-hospedado.mjs";
 
 const exe = exePadrao();
 const DADOS = { blueprints: [
-  { id: "p1", nome: "Portal", acoes: [{ id: "f1", nome: "Base", inicio: "2026-11-01", fim: "2026-11-05", status: "andamento", planos: [{ id: "t1", texto: "Plano um", descricao: "d", agente: { comentarios: [{ texto: "comentário do agente" }] } }], checkpoints: [] }] },
+  { id: "p1", nome: "Portal", acoes: [{ id: "f1", nome: "Base", status: "andamento", planos: [{ id: "t1", texto: "Plano um", descricao: "d", agente: { comentarios: [{ texto: "comentário do agente" }] } }], checkpoints: [] }] },
   { id: "p2", nome: "Aberto", acoes: [] },
 ] };
 const amb = await ambiente(exe, "blueprint-convites", DADOS);

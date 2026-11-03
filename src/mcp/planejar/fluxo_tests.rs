@@ -133,7 +133,7 @@ impl Cena {
 
     /// O que `salvar_plano` compõe: abrir, figuras, escrever por ação, fechar.
     fn salvar(&self, p: &Pacote, bp: Option<&str>, pasta: Option<&Path>) -> (String, Value) {
-        let acoes = |pr: &Value| pr["acoes"].as_array().unwrap().iter().map(|a| json!({"id": a["id"], "nome": a["nome"], "de": a["de"], "ate": a["ate"]})).collect::<Vec<_>>();
+        let acoes = |pr: &Value| pr["acoes"].as_array().unwrap().iter().map(|a| json!({"id": a["id"], "nome": a["nome"]})).collect::<Vec<_>>();
         let projetos: Vec<Value> = p.plano["projetos"].as_array().unwrap().iter().map(|pr| json!({"acoes": acoes(pr)})).collect();
         let mut corpo = json!({"workspaceId": "sm", "blueprint": p.plano["blueprint"], "resumo": p.plano["resumo"], "origem": "salvar", "agente": "exemplo", "projetos": projetos});
         if let Some(b) = bp {
@@ -210,7 +210,6 @@ fn trocar(v: &mut Value, ids: &BTreeMap<String, String>) {
         Value::Object(o) => {
             for (k, x) in o.iter_mut() {
                 match k.as_str() {
-                    "hoje" => *x = json!("2026-11-01"),
                     "versaoDados" => *x = json!(1),
                     "revisao" if x.is_number() => *x = json!(1),
                     "em" => *x = json!(1_790_000_000_000_i64),
@@ -316,17 +315,23 @@ fn exemplo_monitor_ponta_a_ponta() {
     let (bp2, fechado) = c.salvar(&ler_pasta(&monitor()).unwrap(), Some(&bp), None);
     assert_eq!(bp2, bp);
     assert_eq!((fechado["numero"].as_i64(), refs(&fechado["novas"]), refs(&fechado["alteradas"]), fechado["iguais"].as_u64()), (Some(2), vec!["1.3"], vec!["1.2"], Some(1)));
-    assert_eq!(fechado["alteradas"][0]["resumo"], json!({"mais": 1, "menos": 1, "alterados": 2, "detalhes": 1, "outros": 0}));
+    assert_eq!(fechado["alteradas"][0]["resumo"], json!({"mais": 1, "menos": 1, "alterados": 1, "detalhes": 1, "outros": 0}));
     assert_eq!(c.arvore(&bp)["acoes"][1]["planos"][0]["texto"], "Somar as leituras", "a árvore só muda ao aprovar");
 
     // diff: dentro da ação, com as palavras e a ordem do contrato
     let folha = c.folha(&bp);
     let diff = acao(&folha, "1.2")["diff"].clone();
     let tipos: Vec<&str> = diff["linhas"].as_array().unwrap().iter().map(|l| l["tipo"].as_str().unwrap()).collect();
-    assert_eq!(tipos, ["prazo", "alterado", "igual", "novo", "removido"]);
-    assert_eq!((diff["numero"].as_i64(), diff["prazo"]["depois"].as_str()), (Some(2), Some("2026-11-10 → 2026-11-20")));
-    assert_eq!(diff["linhas"][1]["palavras"], json!([{"t": "igual", "s": "Somar as leituras"}, {"t": "mais", "s": " por sala"}]));
+    assert_eq!(tipos, ["alterado", "igual", "novo", "removido"]);
+    assert_eq!(diff["numero"].as_i64(), Some(2));
+    assert_eq!(diff["linhas"][0]["palavras"], json!([{"t": "igual", "s": "Somar as leituras"}, {"t": "mais", "s": " por sala"}]));
     assert_eq!(diff["detalhesNovos"][0]["id"], "02");
+    assert_eq!(acao(&folha, "1.2")["numeros"]["detalhes"].as_u64(), Some(2), "o detalhe que chega conta na ação");
+    // o detalhe que chega se revisa na ação, antes de aprovar o diff
+    let revisar_det = |estado: &str| c.gesto("revisar", json!({"workspaceId": "sm", "blueprintId": bp, "peca": "det:1.2/02", "numero": 2, "hash": diff["detalhesNovos"][0]["hash"], "estado": estado}));
+    ok(revisar_det("aprovada"));
+    assert_eq!(acao(&c.folha(&bp), "1.2")["diff"]["detalhesNovos"][0]["revisao"]["estado"], "aprovada");
+    ok(revisar_det("pendente"));
     assert!(acao(&folha, "1.1")["diff"].is_null());
     assert_eq!((acao(&folha, "1.3")["nova"].as_bool(), plano(acao(&folha, "1.3"), "1.3.1")["situacao"].as_str()), (Some(true), Some("revisao")));
     assert_eq!((folha["pendente"]["numero"].as_i64(), folha["numeros"]["diffs"].as_i64(), folha["numeros"]["novas"].as_i64()), (Some(2), Some(1), Some(1)));
@@ -359,7 +364,7 @@ fn exemplo_monitor_ponta_a_ponta() {
     assert_eq!(recusa(revisar(&json!("0"))), (409, "plano-mudou".to_string()));
     c.agente_conclui("1.2", "1.2.1", &segredo_vivo);
     let diff = acao(&c.folha(&bp), "1.2")["diff"].clone();
-    assert_eq!(diff["linhas"][1]["situacao"], "reabre");
+    assert_eq!(diff["linhas"][0]["situacao"], "reabre");
     ok(c.gesto("cancelar", json!({"execucaoId": c.execucao("1.2.2").id})));
     let aprovado = ok(revisar(&diff["hash"]));
     assert_eq!((refs(&aprovado["reabertos"]), aprovado["resolvida"].as_bool()), (vec!["1.2.1"], Some(false)));
@@ -367,7 +372,7 @@ fn exemplo_monitor_ponta_a_ponta() {
     let arvore = c.arvore(&bp);
     let a12 = &arvore["acoes"][1];
     let planos: Vec<&str> = a12["planos"].as_array().unwrap().iter().map(|q| q["ref"].as_str().unwrap()).collect();
-    assert_eq!((planos, a12["fim"].as_str(), a12["planos"][0]["texto"].as_str(), a12["planos"][0]["feito"].as_bool()), (vec!["1.2.1", "1.2.2", "1.2.3"], Some("2026-11-20"), Some("Somar as leituras por sala"), Some(false)));
+    assert_eq!((planos, a12["planos"][0]["texto"].as_str(), a12["planos"][0]["feito"].as_bool()), (vec!["1.2.1", "1.2.2", "1.2.3"], Some("Somar as leituras por sala"), Some(false)));
     assert_eq!(a12["detalhes"].as_array().unwrap().len(), 2);
     assert_eq!((arvore["acoes"][0]["planos"][0]["feito"].as_bool(), arvore["acoes"][0]["planos"][1]["feito"].as_bool()), (Some(true), Some(true)), "a ação igual não perde o feito");
 
@@ -400,7 +405,7 @@ fn segunda_versao_por_escrita() {
     let c = Cena::nova();
 
     // a primeira escrita: as ações aparecem aguardando e entram na árvore ao fechar
-    let abrir = json!({"workspaceId": "sm", "blueprint": "Reforma da sala", "origem": "escrita", "agente": "orquestrador", "projetos": [{"acoes": [{"id": "1", "nome": "Medir", "de": "2026-11-02", "ate": "2026-11-03"}, {"id": "2", "nome": "Pintar"}]}]});
+    let abrir = json!({"workspaceId": "sm", "blueprint": "Reforma da sala", "origem": "escrita", "agente": "orquestrador", "projetos": [{"acoes": [{"id": "1", "nome": "Medir"}, {"id": "2", "nome": "Pintar"}]}]});
     let aberta = ok(c.post("plano/abrir", abrir));
     let (bp, escrita) = (aberta["blueprintId"].as_str().unwrap().to_string(), aberta["escritaId"].clone());
     assert_eq!((refs(&aberta["aguardando"]), aberta["numero"].as_i64()), (vec!["1", "2"], Some(1)));
@@ -442,7 +447,7 @@ fn segunda_versao_por_escrita() {
 
     let arvore = c.arvore(&bp);
     assert_eq!((arvore["acoes"][1]["planos"][0]["texto"].as_str(), arvore["acoes"][1]["planos"][1]["texto"].as_str(), arvore["acoes"][1]["obs"].as_str()), (Some("Pintar as paredes de branco"), Some("Trocar o rodapé"), Some("Duas demãos.")));
-    assert_eq!((arvore["acoes"][0]["planos"][0]["feito"].as_bool(), arvore["acoes"][0]["inicio"].as_str()), (Some(true), Some("2026-11-02")), "a ação não tocada fica como estava");
+    assert_eq!(arvore["acoes"][0]["planos"][0]["feito"].as_bool(), Some(true), "a ação não tocada fica como estava");
     let folha = c.folha(&bp);
     assert!(folha["pendente"].is_null() && acao(&folha, "2")["diff"].is_null());
     assert!(folha["versaoDados"].as_u64().unwrap() > antes, "aprovar muda a árvore: a versão sobe");

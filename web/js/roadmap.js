@@ -39,7 +39,7 @@ function html() {
     return `<section class="rm-faixa" data-tema="${t.id}"><header>${anel(feitos, itens.length)}<div><h2>${esc(t[lang])}</h2><small>${tr("{a} de {b} entregues", { a: feitos, b: itens.length })}</small></div></header><div class="rm-colunas">${cols}</div></section>`;
   }).join("");
   const marca = typeof EMB !== "undefined" && EMB && typeof previaMarca === "function" ? `<div class="rm-marca" aria-hidden="true">${previaMarca(EMB.BLUEPRINT, 150, 104)}</div>` : "";
-  return `<div class="rm-topo"><button class="btn rm-voltar" type="button">${tr("← Voltar")}</button>${marca}<div class="rm-titulo"><h1>${tr("Roadmap")}</h1><p>${esc(ROADMAP.resumo[lang])}</p><small>${tr("Atualizado em {data}", { data: esc(ROADMAP.atualizado) })}</small></div><label class="rm-busca"><span class="rm-so-leitor">${tr("Buscar no roadmap…")}</span><input type="search" placeholder="${esc(tr("Buscar no roadmap…"))}" value="${esc(filtro.q)}" autocomplete="off"></label></div>
+  return `<div class="rm-topo"><button class="btn rm-voltar" type="button">${tr("← Voltar")}</button>${marca}<div class="rm-titulo"><h1>${tr("Roadmap")}</h1><p>${esc(ROADMAP.resumo[lang])}</p></div><label class="rm-busca"><span class="rm-so-leitor">${tr("Buscar no roadmap…")}</span><input type="search" placeholder="${esc(tr("Buscar no roadmap…"))}" value="${esc(filtro.q)}" autocomplete="off"></label></div>
 <div class="rm-filtros" role="group" aria-label="${esc(tr("Filtros"))}"><div>${chipsEstado}</div><div>${chipsTema}</div></div>
 <p class="rm-vazio" hidden>${tr("Nenhum item com esses filtros.")}</p><div class="rm-grade">${faixas}</div><p class="rm-dica">${tr("Atalhos: setas navegam, Enter abre, / busca, 1 a 4 filtram, 0 limpa, Esc fecha.")}</p>`;
 }

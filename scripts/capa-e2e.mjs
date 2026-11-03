@@ -42,8 +42,8 @@ try {
   // 95 ações misturadas: 45 concluídas, 4 em andamento, o resto a fazer; 2 checkpoints por ação, em datas que se sobrepõem
   await js(`(() => {
     const p = D.blueprints.find((x) => x.id === ${JSON.stringify(alvo)});
-    for (let i = 0; i < 95; i++) { const st = i < 45 ? "concluido" : i < 49 ? "andamento" : "planejado", d = 1 + (i % 28); p.acoes.push({ id: "g" + i, nome: "Ação gerada " + i, inicio: "2026-11-" + String(d).padStart(2, "0"), fim: "2026-12-" + String(d).padStart(2, "0"), status: st,
-      planos: [0, 1, 2].map((k) => ({ id: "gp" + i + "_" + k, texto: "Plano " + k, descricao: "d", feito: st === "concluido" || (st === "andamento" && k === 0) })), checkpoints: [0, 1].map((k) => ({ id: "gm" + i + "_" + k, nome: "Marco " + k, data: "2026-11-" + String(1 + ((i + k * 3) % 28)).padStart(2, "0"), feito: st === "concluido" })) }); }
+    for (let i = 0; i < 95; i++) { const st = i < 45 ? "concluido" : i < 49 ? "andamento" : "planejado"; p.acoes.push({ id: "g" + i, nome: "Ação gerada " + i, status: st,
+      planos: [0, 1, 2].map((k) => ({ id: "gp" + i + "_" + k, texto: "Plano " + k, descricao: "d", feito: st === "concluido" || (st === "andamento" && k === 0) })), checkpoints: [0, 1].map((k) => ({ id: "gm" + i + "_" + k, nome: "Marco " + k, feito: st === "concluido" })) }); }
     render();
   })()`);
   await dormir(800);

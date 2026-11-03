@@ -194,7 +194,14 @@ pub(super) fn tratar(estado: &mut Estado, msg: Msg) {
             estado.recarregar_doc |= doc;
         }
         Msg::Folha(n, _) | Msg::Agentes(n, _) | Msg::Chegou(n, _) | Msg::Config(n, _) if n != rodada => {}
-        Msg::Folha(_, Ok(folha)) => {
+        Msg::Folha(_, Ok(mut folha)) => {
+            // a mesma folha de novo (a cada 30 s ela volta igual) fica com a geração que já tem: o que a tela mediu dela continua valendo
+            if let Some(antes) = estado.folha.as_ref() {
+                folha.geracao = antes.geracao;
+            }
+            if estado.folha.as_ref() != Some(&folha) {
+                folha.renovar();
+            }
             estado.folha = Some(folha);
             estado.folha_falhou = false;
         }
@@ -224,11 +231,21 @@ fn trocar_alvo(estado: &mut Estado, ws: &str, bp: &str) {
     *estado = Estado { canal, recarregar_doc, ..Estado::default() };
 }
 
-/// Um quadro do Planejar: trata o que chegou, manda o pulso e a rodada que estiverem na hora.
-pub fn passo(ctx: &egui::Context, estado: &mut Estado, ws: &str, bp: &str, servidor: &str) {
-    if estado.canal.alvo.as_ref().is_none_or(|(w, b)| w != ws || b != bp) {
+/// Se o Planejar já é deste blueprint; se não for, o próximo `passo` o zera.
+pub fn e_o_alvo(estado: &Estado, ws: &str, bp: &str) -> bool {
+    estado.canal.alvo.as_ref().is_some_and(|(w, b)| w == ws && b == bp)
+}
+
+/// Passa o Planejar para este blueprint já, para o que vier depois não ser zerado pelo próximo `passo`.
+pub fn entrar(estado: &mut Estado, ws: &str, bp: &str) {
+    if !e_o_alvo(estado, ws, bp) {
         trocar_alvo(estado, ws, bp);
     }
+}
+
+/// Um quadro do Planejar: trata o que chegou, manda o pulso e a rodada que estiverem na hora.
+pub fn passo(ctx: &egui::Context, estado: &mut Estado, ws: &str, bp: &str, servidor: &str) {
+    entrar(estado, ws, bp);
     while let Ok(msg) = estado.canal.recebe.try_recv() {
         tratar(estado, msg);
     }

@@ -13,7 +13,7 @@ const edgeExe = ["C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
 assert(edgeExe, "o teste precisa do Microsoft Edge");
 const dados = await pastaDeDados("blueprint-foco", { BLUEPRINT_ASSETS_DIR: raiz });
 // oito ações de dois planos cada: a folha é mais alta que a janela, então ir até o plano 15 pede rolagem
-const acoes = Array.from({ length: 8 }, (_, i) => ({ id: `f${i + 1}`, nome: `Ação ${i + 1}`, inicio: `2026-11-${String(i + 1).padStart(2, "0")}`, fim: `2026-11-${String(i + 4).padStart(2, "0")}`, status: "andamento",
+const acoes = Array.from({ length: 8 }, (_, i) => ({ id: `f${i + 1}`, nome: `Ação ${i + 1}`, status: "andamento",
   planos: [1, 2].map((k) => ({ id: `t${2 * i + k}`, texto: `Plano ${2 * i + k}`, descricao: "d" })), checkpoints: [] }));
 writeFileSync(join(dados.dir, "data.json"), JSON.stringify({ blueprints: [{ id: "p1", nome: "Projeto", acoes }], usuario: { nome: "Teste" } }));
 const depuracao = await portaLivre();

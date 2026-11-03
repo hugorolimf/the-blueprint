@@ -1,4 +1,4 @@
-//! As peças de toda folha (`moldura`, `rodape` em web/js/render.js): a moldura dupla com as réguas dos meses e das linhas, a legenda e o carimbo.
+//! As peças de toda folha (`moldura`, `rodape` em web/js/render.js): a moldura dupla com as réguas das colunas e das linhas, a legenda e o carimbo.
 
 use super::cena::{Ancora, Cena, Fio};
 use crate::fonte::Peso;
@@ -19,22 +19,35 @@ pub struct Medidas {
     pub meses: Vec<f32>,
 }
 
-/// A moldura: o retângulo fino e o grosso, as marcas dos meses (1, 2, 3…) em cima e embaixo e as letras das linhas (A, B, C…) dos lados.
+/// A moldura: o retângulo fino e o grosso, as marcas das colunas (1, 2, 3…) em cima e embaixo e as letras das linhas (A, B, C…) dos lados.
 pub fn moldura(c: &Cena, m: &Medidas) {
     let (w, h) = (m.w, m.h);
     c.retangulo(FM, FM, w - 2.0 * FM, h - 2.0 * FM, None, Some((TINTA, 1.0)));
     c.retangulo(IL, IL, w - 2.0 * IL, h - 2.0 * IL, None, Some((TINTA, 2.2)));
+    // a faixa da página que aparece no recorte: as marcas de fora não seriam vistas (a página cresce com os blueprints)
+    let (vt, vb) = (c.p.clip_rect().min.y - c.o.y, c.p.clip_rect().max.y - c.o.y);
+    let (cima, baixo) = (vt <= IL + 4.0, vb >= h - IL - 4.0);
     for (i, &xa) in m.meses.iter().enumerate() {
-        c.fios(Fio::Baixo, &[(xa, FM, xa, IL), (xa, h - IL, xa, h - FM)]);
+        match (cima, baixo) {
+            (true, true) => c.fios(Fio::Baixo, &[(xa, FM, xa, IL), (xa, h - IL, xa, h - FM)]),
+            (true, false) => c.fios(Fio::Baixo, &[(xa, FM, xa, IL)]),
+            (false, true) => c.fios(Fio::Baixo, &[(xa, h - IL, xa, h - FM)]),
+            (false, false) => {}
+        }
         if let Some(&prox) = m.meses.get(i + 1) {
             let xc = (xa + prox) / 2.0;
             let n = (i + 1).to_string();
-            c.texto(&n, xc, FM + 17.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
-            c.texto(&n, xc, h - FM - 9.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
+            if cima {
+                c.texto(&n, xc, FM + 17.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
+            }
+            if baixo {
+                c.texto(&n, xc, h - FM - 9.0, 10.0, Peso::Normal, MEDIO, Ancora::Meio, false);
+            }
         }
     }
-    let mut k = 0;
-    while IL + k as f32 * 120.0 < h - IL {
+    // as letras das linhas, uma a cada 120 px: só as que cruzam o recorte (cada uma depende só de `k`)
+    let mut k = ((vt - IL - 130.0) / 120.0).floor().max(0.0) as usize;
+    while IL + k as f32 * 120.0 < h - IL && IL + k as f32 * 120.0 <= vb + 10.0 {
         let (ya, yb) = (IL + k as f32 * 120.0, (IL + k as f32 * 120.0 + 120.0).min(h - IL));
         let letra = ((b'A' + (k % 26) as u8) as char).to_string();
         c.fios(Fio::Baixo, &[(FM, ya, IL, ya), (w - IL, ya, w - FM, ya)]);
@@ -49,7 +62,6 @@ pub fn moldura(c: &Cena, m: &Medidas) {
 pub struct Carimbo<'a> {
     pub empresa: &'a str,
     pub tela: &'a str,
-    pub data: &'a str,
     pub progresso: f32,
     /// «folha/total»: a lista é a 1; o blueprint `n` é a folha `n + 2`
     pub folha: usize,
@@ -84,12 +96,12 @@ pub fn rodape(c: &Cena, m: &Medidas, dica: &str, k: &Carimbo) {
     c.texto(dica, l, ly + 100.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, false);
     // o carimbo
     c.retangulo(cx, cy, cw, ch, None, Some((TINTA, 1.6)));
-    c.fios(Fio::Medio, &[(cx, cy + 36.0, cx + cw, cy + 36.0), (cx, cy + 66.0, cx + cw, cy + 66.0), (cx + 150.0, cy + 66.0, cx + 150.0, cy + ch), (cx + 250.0, cy + 66.0, cx + 250.0, cy + ch), (cx + 340.0, cy + 66.0, cx + 340.0, cy + ch)]);
+    c.fios(Fio::Medio, &[(cx, cy + 36.0, cx + cw, cy + 36.0), (cx, cy + 66.0, cx + cw, cy + 66.0), (cx + 150.0, cy + 66.0, cx + 150.0, cy + ch), (cx + 290.0, cy + 66.0, cx + 290.0, cy + ch)]);
     c.texto(&tr("Workspace"), cx + 8.0, cy + 11.0, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     c.texto(&corta(k.empresa, 28), cx + 8.0, cy + 28.0, 16.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
     c.texto(&tr("Tela"), cx + 8.0, cy + 47.0, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
     c.texto(&corta(k.tela, 38), cx + 8.0, cy + 61.0, 12.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
-    let celulas = [(tr("Data"), k.data.to_string(), 0.0), (tr("Progresso"), format!("{}%", (k.progresso * 100.0).round() as i32), 150.0), (tr("Folha"), format!("{}/{}", k.folha, k.folhas), 250.0), (tr("Ações"), format!("{}/{}", k.feitas, k.acoes), 340.0)];
+    let celulas = [(tr("Progresso"), format!("{}%", (k.progresso * 100.0).round() as i32), 0.0), (tr("Folha"), format!("{}/{}", k.folha, k.folhas), 150.0), (tr("Ações"), format!("{}/{}", k.feitas, k.acoes), 290.0)];
     for (rotulo, valor, desloca) in celulas {
         c.texto(rotulo, cx + desloca + 8.0, cy + 77.0, 8.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
         c.texto(&valor, cx + desloca + 8.0, cy + 91.0, 12.0, Peso::Negrito, TINTA, Ancora::Inicio, false);

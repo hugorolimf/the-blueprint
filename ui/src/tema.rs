@@ -19,6 +19,8 @@ pub const VERMELHO: Color32 = rgb(0xff8f80);
 pub const AMBAR: Color32 = rgb(0xffcf6b);
 pub const VERDE: Color32 = rgb(0x8be3b5);
 pub const AZUL: Color32 = rgb(0xbfe0ff);
+/// O ponto de início ou o ponto em que a obra está: a mesma cor em todo lugar. Só em preenchimento, marca e texto.
+pub const DESTAQUE: Color32 = AMBAR;
 pub const CARTAO: Color32 = rgb(0x082b5e);
 pub const CAMPO: Color32 = rgb(0x081d3c);
 pub const QUADRA: Color32 = rgb(0x14509b);

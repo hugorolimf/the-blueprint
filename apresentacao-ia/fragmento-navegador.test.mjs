@@ -89,9 +89,9 @@ try {
   assert.deepEqual([ultima(ms).secao, ultima(ms).etapa], ["etapas", 2], "ap-ir com etapa: " + JSON.stringify(ms));
 
   // replaceState bloqueado: o fragmento é gravado por location.replace e a seção continua certa
-  ms = await mensagens("pagina=/p-sem-replacestate&h=linha");
-  assert.ok(estados(ms).length && estados(ms).every((m) => m.via === "replace" && m.secao === "linha"), "sem replaceState: grava por location.replace: " + JSON.stringify(ms));
-  assert.equal(sonda(ms).hash, "#linha");
+  ms = await mensagens("pagina=/p-sem-replacestate&h=voce");
+  assert.ok(estados(ms).length && estados(ms).every((m) => m.via === "replace" && m.secao === "voce"), "sem replaceState: grava por location.replace: " + JSON.stringify(ms));
+  assert.equal(sonda(ms).hash, "#voce");
   via.add("replace (quando o replaceState falha)");
 
   // mensagens de outro formato são ignoradas: a seção continua a do começo

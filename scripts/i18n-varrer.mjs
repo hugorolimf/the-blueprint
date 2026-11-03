@@ -28,7 +28,7 @@ try {
   await tela("folha", () => A.ir(`#/p/${bp.id}`, 3200));
   await tela("menu da ação", async () => { await A.js(`document.querySelector('.acao[data-f="${acao.id}"]')?.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: 500, clientY: 400 }))`); });
   await A.js(`document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }))`);
-  await A.post("/api/mcp/proposta", { workspaceId: "sm", blueprintId: bp.id, mensagem: "Teste", acoes: [{ nome: "Ação nova de teste", inicio: "2026-12-14", fim: "2026-12-15", planos: [{ texto: "Plano de teste", horas: 1, descricao: "Escopo: a.\nResultado esperado: b.\nValidação: c." }], checkpoints: [{ nome: "Checkpoint de teste", data: "2026-12-15" }] }], remover: [{ acao_id: acao.id, motivo: "teste" }] });
+  await A.post("/api/mcp/proposta", { workspaceId: "sm", blueprintId: bp.id, mensagem: "Teste", acoes: [{ nome: "Ação nova de teste", planos: [{ texto: "Plano de teste", descricao: "Escopo: a.\nResultado esperado: b.\nValidação: c." }], checkpoints: [{ nome: "Checkpoint de teste" }] }], remover: [{ acao_id: acao.id, motivo: "teste" }] });
   await dormir(1500);
   await tela("Planejar com proposta", async () => { await A.js(`document.getElementById("b-ia").click()`); await dormir(1500); });
   await tela("Planejar: editar a ação", async () => { await A.js(`document.querySelector("#agente-tela [data-pact=editar-acao]")?.click()`); });

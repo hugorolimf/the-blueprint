@@ -12,7 +12,7 @@ Why data plus code, and not a full HTML from the agent: a dense figure is 0.3 to
 
 ## Audience
 
-- `cliente`: a PROJECT PLAN. Shows what the client receives, stages with dates, what is expected from the client, open decisions, risks, in plain language. Never shows technology, routes, files, hours per plan, or the internal instructions of actions. Nothing that the blueprint does not say (no prices, features or dates invented).
+- `cliente`: a PROJECT PLAN. Shows what the client receives, stages, what is expected from the client, open decisions, risks, in plain language. Never shows technology, routes, files, hours per plan, or the internal instructions of actions. Nothing that the blueprint does not say (no prices, features or dates invented).
 - `interno`: the full technical view for the owner.
 
 `apresentacao-ia/termos-tecnicos.json` lists the terms that must not appear in a `cliente` presentation (lowercase, matched as whole words or word prefixes). The library (`auditarCliente`) and the MCP tool both use it; a hit is a warning in the tool reply, never silent.
@@ -39,12 +39,11 @@ Why data plus code, and not a full HTML from the agent: a dense figure is 0.3 to
   "titulo": "string",
   "subtitulo": "string?",
   "cliente": "string?",
-  "data": "yyyy-mm-dd",
   "resumo": ["short sentence", "..."],
   "entregas": [{ "titulo": "string", "texto": "string" }],
-  "etapas": [{ "id": "e1", "titulo": "string", "inicio": "yyyy-mm-dd", "fim": "yyyy-mm-dd", "texto": "string",
-               "figura": "figura-id | null", "marcos": [{ "data": "yyyy-mm-dd", "nome": "string" }] }],
-  "precisamosDeVoce": [{ "titulo": "string", "texto": "string", "ate": "yyyy-mm-dd | null" }],
+  "etapas": [{ "id": "e1", "titulo": "string", "texto": "string",
+               "figura": "figura-id | null", "marcos": [{ "nome": "string" }] }],
+  "precisamosDeVoce": [{ "titulo": "string", "texto": "string" }],
   "decisoes": [{ "titulo": "string", "texto": "string", "estado": "aberta | decidida" }],
   "riscos": [{ "titulo": "string", "texto": "string" }],
   "interno": { "acoes": [{ "numero": "string", "nome": "string", "planos": ["string"] }] }
@@ -76,7 +75,7 @@ A global script set (classic scripts, no modules), each file at most 350 lines:
 
 ## Page assembly
 
-`apresentacao-ia/modelo.html` is a template with these placeholders, replaced by plain string substitution (so Rust can do it): `{{titulo}}`, `{{idioma}}`, `{{css}}` (app tokens plus the presentation CSS plus `ISO_CSS`), `{{kit}}` (the kit scripts, inlined), `{{biblioteca}}` (the library scripts), `{{conteudo}}` (the content JSON, with `</` escaped as `<\/`), `{{figuras}}` (a JSON array of the figures, same escaping). The page script builds the interface from `conteudo`, runs each figure, and mounts them in their stage. Screen layout: top bar with breadcrumb and title in a box, section navigation (overview, stages, timeline, what we need from you, decisions and risks), cover with the main figure, panels with header and ruler, plan progress, A4 print stylesheet. The `interno` audience adds an Actions section. No network, no storage, no `localStorage` writes.
+`apresentacao-ia/modelo.html` is a template with these placeholders, replaced by plain string substitution (so Rust can do it): `{{titulo}}`, `{{idioma}}`, `{{css}}` (app tokens plus the presentation CSS plus `ISO_CSS`), `{{kit}}` (the kit scripts, inlined), `{{biblioteca}}` (the library scripts), `{{conteudo}}` (the content JSON, with `</` escaped as `<\/`), `{{figuras}}` (a JSON array of the figures, same escaping). The page script builds the interface from `conteudo`, runs each figure, and mounts them in their stage. Screen layout: top bar with breadcrumb and title in a box, section navigation (overview, stages, what we need from you, decisions and risks), cover with the main figure, panels with header and ruler, plan progress, A4 print stylesheet. The `interno` audience adds an Actions section. No network, no storage, no `localStorage` writes.
 
 ## Storage, MCP and HTTP (Rust)
 
@@ -90,7 +89,7 @@ A global script set (classic scripts, no modules), each file at most 350 lines:
 
 ## Web UI (`web/`)
 
-In the existing Apresentar dialog (`web/js/apresentacao.js`): a second group in the side rail, "Generate with AI": audience (Client, Internal), level (Quick, Standard, Complete) each with its time estimate, `Epico` never listed, and a Generate button that calls `/api/mcp/apresentar`. When the blueprint has generated presentations, the preview area lists them (title, audience, level, date), shows the selected one in a sandboxed `<iframe sandbox="allow-scripts" src="/apresentacao/<id>">`, and offers Regenerate, Export HTML (`?baixar=1`) and Remove. Every new string goes through `tr()` with an English entry (`node scripts/i18n-completude.mjs`). Files stay under 350 lines, no work at rest.
+In the existing Apresentar dialog (`web/js/apresentacao.js`): a second group in the side rail, "Generate with AI": audience (Client, Internal), level (Quick, Standard, Complete) each with its time estimate, `Epico` never listed, and a Generate button that calls `/api/mcp/apresentar`. When the blueprint has generated presentations, the preview area lists them (title, audience, level), shows the selected one in a sandboxed `<iframe sandbox="allow-scripts" src="/apresentacao/<id>">`, and offers Regenerate, Export HTML (`?baixar=1`) and Remove. Every new string goes through `tr()` with an English entry (`node scripts/i18n-completude.mjs`). Files stay under 350 lines, no work at rest.
 
 ## Rules that hold everywhere
 
@@ -102,8 +101,8 @@ The code diverges from the text above in these places; the code is the truth.
 
 - **Metadata and list.** There is no `blueprint.apresentacoes` in the blueprint data and no migration: the metadata live in each `<id>.json` and the list is read from the folder (`%APPDATA%\Blueprint\apresentacoes\`, or inside the prototypes folder when that is moved). The web reads `GET /api/mcp/apresentacoes?workspace=&blueprint=` (newest first) and the SSE event `apresentacao` `{workspaceId, blueprintId, apresentacaoId}`; `ler_blueprint` also returns `apresentacoes`. In team mode they do not sync between machines.
 - **Request.** `POST /api/mcp/apresentar` takes `{workspaceId, blueprintId, publico, nivel, sessaoId?, semCanal?}` (like `/iniciar`; not `sessao`) and answers `{ok, pasta, terminal: wt|cmd|canal|copiar, prompt?}`. Local app only: the route does not exist in hosted mode or for guests, and `MCP_REDE=1` does not open it. `remover` takes `{apresentacaoId}` and is idempotent.
-- **Figure call.** `codigo(L, c)`: the library also receives `conteudo` (`L.idiomaDe(c.idioma)`). `impressao` only has to be a non-empty string; the tool warns when it is missing. `ler_blueprint` gives each project an `impressao` (`projetos[].impressao`, `src/blueprint/impressao.rs`: 16 hex chars of the SHA-256 of the project's name, description and its actions' names, dates, status, plan titles and checkpoints; marking a plan done or editing internal instructions does not change it); a figure about one project stores it.
-- **Audit.** Banned terms match whole words (not prefixes: `cli` would flag "cliente"); identifier fields (`publico`, `nivel`, `id`, `figura`, dates, `estado`) are skipped; hours such as "3 h" or "1,5 horas" also warn. `interno` inside a `cliente` presentation is an error (`interno-no-cliente`), not a warning.
+- **Figure call.** `codigo(L, c)`: the library also receives `conteudo` (`L.idiomaDe(c.idioma)`). `impressao` only has to be a non-empty string; the tool warns when it is missing. `ler_blueprint` gives each project an `impressao` (`projetos[].impressao`, `src/blueprint/impressao.rs`: 16 hex chars of the SHA-256 of the project's name, description and its actions' names, status, plan titles and checkpoints; marking a plan done or editing internal instructions does not change it); a figure about one project stores it.
+- **Audit.** Banned terms match whole words (not prefixes: `cli` would flag "cliente"); identifier fields (`publico`, `nivel`, `id`, `figura`, `estado`) are skipped; hours such as "3 h" or "1,5 horas" also warn. `interno` inside a `cliente` presentation is an error (`interno-no-cliente`), not a warning.
 - **Page.** A no-network CSP `<meta>` follows `<head>` for the exported file, where the HTTP header does not apply. The tool stores nothing when the app is closed (unlike `anexar_prototipo`).
 - **Guide topics.** The guide is split to keep every topic under 4,500 characters: `apresentar` (the app's own three types), `apresentacao_ia` (conversation, audience, level), `apresentacao_conteudo` (the `conteudo` object and sending) and `apresentacao_figuras` (the figure programs). `/blueprint:apresentar` points to `apresentacao_ia`.
 
@@ -141,16 +140,16 @@ Screen: when the blueprint has generated presentations the screen opens on the n
 ## One figure per section (2026-10-26)
 
 - **The overview figure does not change.** The figure the AI already made for the cover (`capa`, now `secao: "visao"`) stays exactly as generated. The app's own tower figure is NOT brought back, and no structure is injected by the server (an earlier draft of this section proposed `estrutura` and `L.figuraBlueprint`; the user rejected it: only more figures are added).
-- **Figures by section.** A figure may carry `secao`, one of `visao`, `recebe`, `etapas`, `linha`, `precisamos`, `decisoes`, `riscos`, `acoes` (the section ids of the page). The page puts that figure in its section's panel, beside the text (below it on a narrow screen). A stage's own figure (`etapas[].figura`) keeps working and sits inside that stage. A figure with neither is shown at the end of Stages, as today.
-- **Levels, corrected:** `rapido` = one AI figure (`visao`); `padrao` = one different AI figure per section (`visao`, `recebe`, `etapas`, `linha`, `precisamos`, `decisoes`, `riscos`; `acoes` only for `interno`); `completo` = `padrao` plus one dense machine of the whole system in `visao` and one figure per stage (`etapas[].figura`). Each object is different from the others and helps to understand its section (index cards on a rail for what the client receives, a conveyor of stages, a calendar drum for the timeline, a request tray for what we need from the client, a pair of scales for decisions, a gauge cluster for risks).
+- **Figures by section.** A figure may carry `secao`, one of `visao`, `recebe`, `etapas`, `precisamos`, `decisoes`, `riscos`, `acoes` (the section ids of the page). The page puts that figure in its section's panel, beside the text (below it on a narrow screen). A stage's own figure (`etapas[].figura`) keeps working and sits inside that stage. A figure with neither is shown at the end of Stages, as today.
+- **Levels, corrected:** `rapido` = one AI figure (`visao`); `padrao` = one different AI figure per section (`visao`, `recebe`, `etapas`, `precisamos`, `decisoes`, `riscos`; `acoes` only for `interno`); `completo` = `padrao` plus one dense machine of the whole system in `visao` and one figure per stage (`etapas[].figura`). Each object is different from the others and helps to understand its section (index cards on a rail for what the client receives, a conveyor of stages, a request tray for what we need from the client, a pair of scales for decisions, a gauge cluster for risks).
 - `validar` accepts and checks `secao` (a known id, otherwise the warning `secao-desconhecida`); it adds a warning when two figures claim the same section.
 
 ## Text and figure linked (2026-10-26)
 
 The figure of a section is part of its text: the text refers to it and the two drive each other.
 
-- **Items.** In each section the page lists items in `conteudo` order and gives each element `data-item="<i>"` (0-based) and `data-sessao="<secao>"`, focusable (`tabindex="0"`): `recebe` -> `entregas`, `etapas` -> `etapas`, `linha` -> `etapas` (the timeline rows), `precisamos` -> `precisamosDeVoce`, `decisoes` -> `decisoes`, `riscos` -> `riscos`. `visao` has no items.
-- **The bridge.** `vivo(palco, dizer, ponte)` gets a third argument (it may be absent when a figure runs elsewhere: always guard `if (ponte)`). `ponte.total` is the number of items of its section. `ponte.liga({ selecionar(i) })` registers how the figure selects item `i`; the page calls `selecionar(i)` when the pointer enters, or the keyboard focuses, a text item, and `selecionar(null)` when it leaves (the figure goes back to its own tour). The figure calls `ponte.mudou(i)` (or `null`) whenever its current item changes by its own mouse, keys or tour; the page then marks the matching text item (`data-ativo`, `aria-current="true"`) and clears the previous one. A figure whose own position is not an item index maps it (the calendar drum maps an item to the start day of that stage and reports the stage of the current day).
+- **Items.** In each section the page lists items in `conteudo` order and gives each element `data-item="<i>"` (0-based) and `data-sessao="<secao>"`, focusable (`tabindex="0"`): `recebe` -> `entregas`, `etapas` -> `etapas`, `precisamos` -> `precisamosDeVoce`, `decisoes` -> `decisoes`, `riscos` -> `riscos`. `visao` has no items.
+- **The bridge.** `vivo(palco, dizer, ponte)` gets a third argument (it may be absent when a figure runs elsewhere: always guard `if (ponte)`). `ponte.total` is the number of items of its section. `ponte.liga({ selecionar(i) })` registers how the figure selects item `i`; the page calls `selecionar(i)` when the pointer enters, or the keyboard focuses, a text item, and `selecionar(null)` when it leaves (the figure goes back to its own tour). The figure calls `ponte.mudou(i)` (or `null`) whenever its current item changes by its own mouse, keys or tour; the page then marks the matching text item (`data-ativo`, `aria-current="true"`) and clears the previous one.
 - **The reference.** Under each section title that has a figure the page writes one line, `Fig n · <figure's dica>`, where `n` is the card number, and the `Fig n` is a link that scrolls to the figure and focuses it. The line says, in the page language, that an item of the text can be pointed at to see it in the figure.
 - **Look.** The marked item uses the app's selected state (accent border and a left bar), no animation beyond the figure's own; reduced motion changes nothing else. Touch: a tap on an item selects it (no hover on touch); the figure's tour pauses while an item is selected by text.
 - Figures written before this keep working (no `ponte` use); the guide teaches the bridge for new ones.

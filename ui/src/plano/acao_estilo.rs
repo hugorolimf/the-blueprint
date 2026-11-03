@@ -74,9 +74,21 @@ pub fn fio_que_some(c: &Pincel, x0: f32, x1: f32, y: f32, cor: Color32, forca: f
     degrade_h(c.p, r, alfa(cor, forca), alfa(cor, forca * 0.08));
 }
 
+/// A letra do texto das ações, em toda parte do painel: mudou aqui, muda em todos. O passo é a distância de uma linha à seguinte.
+pub const LETRA: f32 = 14.0;
+pub const PASSO_LETRA: f32 = 21.0;
+/// O plano é o título do bloco: é o que se lê primeiro.
+pub const LETRA_PLANO: f32 = 16.0;
+pub const PASSO_PLANO: f32 = 23.0;
+/// Os títulos dentro do bloco (decisão, tela): pesam pelo negrito, abaixo do plano.
+pub const LETRA_TITULO: f32 = 14.0;
+pub const LETRA_MENOR: f32 = 12.0;
+/// A medida do texto corrido: linha mais longa que isso cansa a leitura.
+pub const MEDIDA_TEXTO: f32 = 700.0;
+
 /// O título de uma seção, como as colunas da folha original: o nome em caixa alta e o fio embaixo. Ocupa 22 px abaixo de `y` (a linha de base).
 pub fn rotulo_secao(c: &Pincel, x: f32, y: f32, t: &str, w: f32) {
-    c.rotulo(t, x, y, Letra::nova(9.0, MEDIO));
+    c.rotulo(t, x, y, Letra::nova(10.5, MEDIO));
     c.fio(x, y + 7.0, x + w, y + 7.0, BAIXO, 1.0);
 }
 

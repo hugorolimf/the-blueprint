@@ -8,7 +8,7 @@ fn blueprint() -> Value {
 }
 
 fn valida(entrada: Value, p: &Value) -> Validacao {
-    validar_proposta(&entrada, Some(p), "2026-10-26")
+    validar_proposta(&entrada, Some(p))
 }
 
 fn erro_com(entrada: Value, trecho: &str) {

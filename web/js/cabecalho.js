@@ -1,7 +1,7 @@
 // ---- cabeçalho de uma seção da folha: círculo com o número, nome, descrição, progresso geral, linha e botão Recolher/Abrir, mais a nota e os links ----
 // É o cabeçalho que o blueprint sempre teve; agora serve também a cada projeto (cada projeto é uma seção igual a um blueprint). Só desenha: o clique de
 // recolher/abrir é do atributo `s.toggle` (data-toggle do blueprint ou data-projeto do projeto), tratado em navegacao.js e projetos.js.
-// `s`: { p, y, numero, nome, descricao, total, concl, horas, ok, futuro, geral, aberto, toggle, obs?, links? }; `{ L, R }`: as margens da folha.
+// `s`: { p, y, numero, nome, descricao, total, concl, ok, futuro, geral, aberto, toggle, obs?, links? }; `{ L, R }`: as margens da folha.
 function cabecalhoSecao(out, s, { L, R }) {
   const yb = s.y;
   const nomeH = corta(s.nome || tr("Sem nome"), 48), descH = corta(s.descricao || "", 70);
@@ -9,9 +9,9 @@ function cabecalhoSecao(out, s, { L, R }) {
   out.push(`<g ${s.toggle} class="alvo" tabindex="0" role="button" aria-expanded="${s.aberto}" aria-label="${esc(s.aberto ? tr("{nome}: recolher ações", { nome: s.nome }) : tr("{nome}: expandir ações", { nome: s.nome }))}"><rect class="cab" x="${L - 8}" y="${yb - 8}" width="${R - L + 16}" height="86"/>`);
   out.push(`<g><circle class="ln" cx="${L + 14}" cy="${yb + 20}" r="14"/><text x="${L + 14}" y="${yb + 25}" font-size="13" font-weight="700" text-anchor="middle">${s.numero}</text>`);
   out.push(`<text x="${L + 40}" y="${yb + 19}" font-size="17" font-weight="700" class="cap">${esc(nomeH)}</text><text class="mid cap" x="${L + 40}" y="${yb + 38}" font-size="11">${esc(descH)}</text></g>`);
-  // medidor logo depois do nome, longe da linha de eixo "hoje"
+  // medidor logo depois do nome
   const px = Math.min(L + 40 + Math.max(nomeH.length * 11.6 + (s.obs?.trim() ? 30 : 0), descH.length * 7.2) + 64, R - 330);
-  const contagem = `${tr("{concl}/{total} ações concluídas", { concl: s.concl, total: s.total })}${s.horas ? ` · ${tr("{horas} h de desenvolvimento", { horas: s.horas })}` : ""}`;
+  const contagem = tr("{concl}/{total} ações concluídas", { concl: s.concl, total: s.total });
   out.push(`<g>` + (!s.total
     ? `<text class="mid cap" x="${px}" y="${yb + 14}" font-size="9">${tr("Situação")}</text><text x="${px}" y="${yb + 32}" font-size="12" font-weight="700">${tr("SEM AÇÕES AINDA")}</text>`
     : s.ok

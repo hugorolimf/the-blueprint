@@ -59,6 +59,8 @@ pub fn figura_svg_alfa(ui: &Ui, r: Rect, nome: &'static str, gz: &'static [u8], 
         bytes.into()
     });
     let opaco = Color32::from_white_alpha((alfa.clamp(0.0, 1.0) * 255.0).round() as u8);
+    // no pixel inteiro: rolando, o mesmo SVG não pede ±1 px conforme a posição (e não é rasterizado de novo)
+    let r = crate::emblema::no_pixel(ui, r);
     Image::from_bytes(format!("bytes://plano-{nome}.svg"), Bytes::Shared(svg.clone())).fit_to_exact_size(r.size()).tint(opaco).paint_at(ui, r);
 }
 

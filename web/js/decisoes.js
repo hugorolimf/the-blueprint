@@ -11,7 +11,7 @@ function htmlDecisoesEd(p) {
   return `<div class="card"><h3>${tr("Decisões")}<small>${lista.length || ""}</small></h3>${lista.length ? lista.map(linha).join("") : `<p class="vazio">${tr("Nenhuma decisão registrada. Stack, escopo e regras escolhidas ficam aqui, fora das instruções das ações.")}</p>`}<div class="acoes"><button class="btn mini" data-act="add-decisao" type="button">${tr("+ Decisão")}</button></div><p class="dica">${tr("O seu agente propõe decisões em Planejar; você escolhe quais aplicar. Uma decisão em aberto ainda espera a escolha.")}</p></div>`;
 }
 function novaDecisao(p) {
-  const x = { id: novoId(), titulo: "", escolha: "", motivo: "", estado: "aberta", em: local(new Date()) };
+  const x = { id: novoId(), titulo: "", escolha: "", motivo: "", estado: "aberta" };
   (p.decisoes ||= []).push(x);
   return x;
 }
@@ -40,7 +40,7 @@ function htmlDecisoesProposta(c, p) {
 function aplicaDecisoes(p, c) {
   let n = 0;
   (c.decisoesNovas || []).filter((d) => d.inc && d.titulo.trim()).forEach((d) => {
-    const campos = { titulo: d.titulo, escolha: d.escolha || "", motivo: d.motivo || "", estado: d.estado === "aberta" ? "aberta" : "decidida", em: local(new Date()) };
+    const campos = { titulo: d.titulo, escolha: d.escolha || "", motivo: d.motivo || "", estado: d.estado === "aberta" ? "aberta" : "decidida" };
     const x = d.id && (p.decisoes || []).find((y) => y.id === d.id);
     if (x) Object.assign(x, campos); else (p.decisoes ||= []).push({ id: novoId(), ...campos });
     n++;

@@ -42,7 +42,7 @@ eframe = { version = "0.37.0", default-features = false, features = ["glow", "de
 log = "0.4"
 wasm-bindgen = "0.2"
 wasm-bindgen-futures = "0.4"
-web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "Navigator"] }
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "Navigator", "Event", "EventTarget", "MouseEvent"] }
 
 # `trunk --release` usa este perfil: opt-level 2 é tão rápido quanto o 3 e bem menor, que é o que pesa ao baixar o app.
 [profile.web]

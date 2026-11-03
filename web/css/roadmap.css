@@ -6,7 +6,7 @@ body.rm-aberto{overflow:hidden}
 .rm-topo{display:grid;grid-template-columns:auto auto 1fr minmax(220px,320px);align-items:start;gap:24px;padding-bottom:22px;border-bottom:1px solid var(--lo)}
 .rm-marca{opacity:.95}.rm-marca svg{display:block}
 .rm-titulo h1{margin:0 0 6px;font-size:clamp(26px,4vw,38px);font-weight:500;letter-spacing:-.04em}
-.rm-titulo p{margin:0;max-width:62ch;color:var(--mid)}.rm-titulo small{display:block;margin-top:8px;color:var(--lo);letter-spacing:.1em;text-transform:uppercase;font-size:10px}
+.rm-titulo p{margin:0;max-width:62ch;color:var(--mid)}
 .rm-busca{display:block;position:relative}.rm-busca input{width:100%;padding:11px 12px;background:#082b5ecc;color:var(--ink);border:1px solid var(--lo);font:inherit}.rm-busca input:focus{outline:none;border-color:var(--ink)}
 .rm-so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 .rm-filtros{display:grid;gap:10px;margin:18px 0 8px}.rm-filtros>div{display:flex;flex-wrap:wrap;gap:8px}

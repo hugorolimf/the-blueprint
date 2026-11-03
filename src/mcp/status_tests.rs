@@ -10,7 +10,7 @@ fn o_status_mostra_a_acao_atual_os_planos_e_o_proximo_checkpoint() {
     let r = status(&m, &d, &json!({"cwd": "C:/Proj/sub"})).unwrap();
     assert_eq!(r["vinculado"], true);
     let t = r["texto"].as_str().unwrap();
-    assert!(t.contains("Ação 1.2: Tela (01/12 a 05/12) · 0/1 planos"), "{t}");
+    assert!(t.contains("Ação 1.2: Tela · 0/1 planos"), "{t}");
     assert!(t.contains("[ ] Criar tela") && !t.contains("Feito"), "{t}");
     assert!(t.contains("Sem checkpoints pendentes."), "{t}");
     assert_eq!(r["linha"], "Blueprint · Eu › Portal · ação 1.2 · Tela · 0/1");

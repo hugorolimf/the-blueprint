@@ -5,8 +5,6 @@ use super::formato::{PlanoDoc, FORMATO};
 use serde_json::{json, Value};
 use std::collections::HashSet;
 
-const HOJE: &str = "2026-11-01";
-
 fn exemplo() -> Value {
     let tudo: Value = serde_json::from_str(include_str!("../dados/tests/exemplo.json")).unwrap();
     tudo["blueprints"][0].clone()
@@ -48,20 +46,20 @@ fn ida_e_volta_sem_mudanca() {
     let fixtures = [include_str!("fixtures/monitor/plano.json"), include_str!("fixtures/reforma/plano.json"), include_str!("fixtures/biblioteca/plano.json")];
     for texto in fixtures {
         let d = doc(serde_json::from_str(texto).unwrap());
-        let vazio = projetar(&json!({"id": "b1", "nome": "x"}), &d, Escopo::Tudo, HOJE);
+        let vazio = projetar(&json!({"id": "b1", "nome": "x"}), &d, Escopo::Tudo);
         assert_tudo_igual(&do_blueprint(&vazio), &d);
         assert_eq!(do_blueprint(&vazio).decisoes, d.decisoes);
         assert_eq!(do_blueprint(&vazio).perguntas, d.perguntas);
         assert_eq!(do_blueprint(&vazio).tema, d.tema);
         // Por cima de um blueprint que já tem outra coisa, e projetar de novo não muda nada.
-        let cheio = projetar(&exemplo(), &d, Escopo::Tudo, HOJE);
+        let cheio = projetar(&exemplo(), &d, Escopo::Tudo);
         assert_tudo_igual(&do_blueprint(&cheio), &d);
-        assert_eq!(projetar(&cheio, &d, Escopo::Tudo, HOJE), cheio);
+        assert_eq!(projetar(&cheio, &d, Escopo::Tudo), cheio);
     }
     // A árvore antiga, para doc e de volta.
     let b = exemplo();
     let d = do_blueprint(&b);
-    assert_eq!(do_blueprint(&projetar(&b, &d, Escopo::Tudo, HOJE)), d);
+    assert_eq!(do_blueprint(&projetar(&b, &d, Escopo::Tudo)), d);
 }
 
 #[test]
@@ -69,12 +67,12 @@ fn feito_sobrevive() {
     let b = exemplo();
     let mut d = do_blueprint(&b);
     d.projetos[0].acoes[0].planos[0].texto = "Criar rota nova".into();
-    let depois = projetar(&b, &d, Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &d, Escopo::Tudo);
     let t1 = plano(acao(&depois, "f1"), "t1");
     assert_eq!((t1["id"].as_str(), t1["texto"].as_str(), &t1["feito"]), (Some("t1"), Some("Criar rota nova"), &json!(true)));
     assert_eq!(t1["agente"], b["acoes"][0]["planos"][0]["agente"]);
     let m1 = &acao(&depois, "f1")["checkpoints"][0];
-    assert_eq!((&m1["feito"], m1["evidencia"].as_str(), m1["feitoEm"].as_str()), (&json!(true), Some("ok"), Some("2026-11-20T12:00:00Z")));
+    assert_eq!((&m1["feito"], m1["evidencia"].as_str()), (&json!(true), Some("ok")));
     assert_tudo_igual(&do_blueprint(&depois), &d);
 }
 
@@ -88,18 +86,18 @@ fn so_uma_acao() {
     d.resumo = Some("resumo novo".into());
 
     let so = ["f1".to_string()];
-    let depois = projetar(&b, &d, Escopo::So(&so), HOJE);
+    let depois = projetar(&b, &d, Escopo::So(&so));
     let nomes: Vec<&str> = depois["acoes"].as_array().unwrap().iter().map(|a| a["nome"].as_str().unwrap()).collect();
     assert_eq!(nomes, ["Base nova", "Sem listas"], "f2 e a nova ficam de fora");
     assert_eq!(depois["descricao"], "resumo novo", "o que é do blueprint entra em qualquer escopo");
 
     let so = ["n".to_string()];
-    let depois = projetar(&b, &d, Escopo::So(&so), HOJE);
+    let depois = projetar(&b, &d, Escopo::So(&so));
     let nomes: Vec<&str> = depois["acoes"].as_array().unwrap().iter().map(|a| a["nome"].as_str().unwrap()).collect();
     assert_eq!(nomes, ["Base", "Sem listas", "Nova"], "a nova entra depois da anterior no doc");
 
     let fora = ["f1".to_string()];
-    let depois = projetar(&b, &d, Escopo::SoFora(&fora), HOJE);
+    let depois = projetar(&b, &d, Escopo::SoFora(&fora));
     let nomes: Vec<&str> = depois["acoes"].as_array().unwrap().iter().map(|a| a["nome"].as_str().unwrap()).collect();
     assert_eq!(nomes, ["Base", "F2 nova", "Nova"]);
 }
@@ -112,50 +110,30 @@ fn remove_acao() {
     d.projetos[0].acoes.retain(|a| a.id != "f2");
 
     let so = ["f2".to_string()];
-    let depois = projetar(&b, &d, Escopo::So(&so), HOJE);
+    let depois = projetar(&b, &d, Escopo::So(&so));
     assert_eq!(depois["acoes"].as_array().unwrap().len(), 1);
     assert_eq!(depois["acoes"][0]["nome"], "Base", "f1 não estava no escopo");
 
-    assert_eq!(projetar(&b, &d, Escopo::Tudo, HOJE)["acoes"].as_array().unwrap().len(), 1);
+    assert_eq!(projetar(&b, &d, Escopo::Tudo)["acoes"].as_array().unwrap().len(), 1);
 
     let fora = ["f2".to_string()];
-    let depois = projetar(&b, &d, Escopo::SoFora(&fora), HOJE);
+    let depois = projetar(&b, &d, Escopo::SoFora(&fora));
     assert_eq!(depois["acoes"].as_array().unwrap().len(), 2, "fora do escopo, a ausente fica");
     let so_outra = ["f1".to_string()];
-    assert_eq!(projetar(&b, &d, Escopo::So(&so_outra), HOJE)["acoes"].as_array().unwrap().len(), 2);
+    assert_eq!(projetar(&b, &d, Escopo::So(&so_outra))["acoes"].as_array().unwrap().len(), 2);
 }
 
 #[test]
 fn ids_de_dois_blueprints_nao_colidem() {
     let d = doc_de(json!([{"id": "1", "nome": "Um", "planos": [{"id": "1.1", "texto": "x"}], "checkpoints": [{"id": "c", "texto": "y"}]}]));
-    let a = projetar(&json!({"id": "a"}), &d, Escopo::Tudo, HOJE);
-    let b = projetar(&json!({"id": "b"}), &d, Escopo::Tudo, HOJE);
+    let a = projetar(&json!({"id": "a"}), &d, Escopo::Tudo);
+    let b = projetar(&json!({"id": "b"}), &d, Escopo::Tudo);
     assert_ne!(a["acoes"][0]["id"], b["acoes"][0]["id"]);
     assert_ne!(a["acoes"][0]["planos"][0]["id"], b["acoes"][0]["planos"][0]["id"]);
     assert_ne!(a["acoes"][0]["checkpoints"][0]["id"], b["acoes"][0]["checkpoints"][0]["id"]);
     assert_eq!(a["acoes"][0]["ref"], "1");
     // Projetar de novo acha pelo ref e não troca o id.
-    assert_eq!(projetar(&a, &d, Escopo::Tudo, HOJE)["acoes"][0]["id"], a["acoes"][0]["id"]);
-}
-
-#[test]
-fn sem_data_nao_vai_e_volta_com_hoje() {
-    let d = doc_de(json!([{"id": "1", "nome": "Um"}]));
-    let b = projetar(&json!({"id": "b"}), &d, Escopo::Tudo, HOJE);
-    let a = &b["acoes"][0];
-    assert_eq!((a["inicio"].as_str(), a["fim"].as_str(), &a["semData"]), (Some(HOJE), Some(HOJE), &json!(true)));
-    let volta = do_blueprint(&b);
-    assert_eq!((&volta.projetos[0].acoes[0].de, &volta.projetos[0].acoes[0].ate), (&None, &None));
-    assert_tudo_igual(&volta, &d);
-
-    let com_data = doc_de(json!([{"id": "1", "nome": "Um", "de": "2026-12-01", "ate": "2026-12-05"}]));
-    let a = projetar(&b, &com_data, Escopo::Tudo, "2027-01-01");
-    assert!(a["acoes"][0].get("semData").is_none());
-    assert_eq!(a["acoes"][0]["inicio"], "2026-12-01");
-    // Uma ação com datas que passa a não ter: o doc vale, e o `hoje` não substitui o que já havia para a web legada.
-    let de_novo = projetar(&a, &d, Escopo::Tudo, "2027-01-01");
-    assert_eq!((de_novo["acoes"][0]["semData"].as_bool(), de_novo["acoes"][0]["inicio"].as_str()), (Some(true), Some("2026-12-01")));
-    assert_tudo_igual(&do_blueprint(&de_novo), &d);
+    assert_eq!(projetar(&a, &d, Escopo::Tudo)["acoes"][0]["id"], a["acoes"][0]["id"]);
 }
 
 #[test]
@@ -166,10 +144,10 @@ fn blueprint_antigo_ref_e_o_id() {
     assert_eq!(f1.id, "f1");
     assert_eq!(f1.planos.iter().map(|q| q.id.as_str()).collect::<Vec<_>>(), ["t1", "t2", "t3", "t4"]);
     assert_eq!(f1.checkpoints[0].id, "m1");
-    assert_eq!((f1.de.as_deref(), f1.ate.as_deref(), f1.texto.as_deref()), (Some("2026-11-01"), Some("2026-11-30"), Some("instruções")));
+    assert_eq!(f1.texto.as_deref(), Some("instruções"));
     assert_eq!(f1.planos[0].instrucoes.as_deref(), Some("x"));
     assert!(!f1.planos[0].id_gerado);
-    let depois = projetar(&b, &d, Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &d, Escopo::Tudo);
     assert_eq!(acao(&depois, "f1")["id"], "f1");
     assert_eq!(plano(acao(&depois, "f1"), "t1")["id"], "t1");
     assert_eq!(acao(&depois, "f1")["checkpoints"][0]["id"], "m1");
@@ -184,7 +162,7 @@ fn estado_nao_entra_em_extra() {
             "planos": [{"id": "1.1", "texto": "x", "feito": true, "estado": "pronto", "aprovado": true}],
             "checkpoints": [{"id": "c", "texto": "y", "feito": true, "evidencia": "forjada"}],
             "detalhes": [{"id": "d", "aprovado": true, "figura_info": {"hash": "forjado", "tipo": "svg"}}]}]}]}));
-    let b = projetar(&json!({"id": "b"}), &d, Escopo::Tudo, HOJE);
+    let b = projetar(&json!({"id": "b"}), &d, Escopo::Tudo);
     let a = &b["acoes"][0];
     assert_eq!(a["planos"][0]["feito"], false);
     assert_eq!(a["checkpoints"][0]["feito"], false);
@@ -199,17 +177,17 @@ fn estado_nao_entra_em_extra() {
 #[test]
 fn campos_alheios_sobrevivem() {
     let b = exemplo();
-    let depois = projetar(&b, &do_blueprint(&b), Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &do_blueprint(&b), Escopo::Tudo);
     assert_eq!(sem_ref(&depois), b, "só o ref é novo");
     // Um campo qualquer, em cada nível.
     let mut outro = b.clone();
-    outro["acoes"][0]["horas"] = json!(3);
+    outro["acoes"][0]["cor"] = json!(3);
     outro["acoes"][0]["planos"][1]["responsavel"] = json!("alguém");
     outro["acoes"][0]["checkpoints"][1]["novo"] = json!({"a": 1});
     let mut d = do_blueprint(&outro);
     d.projetos[0].acoes[0].nome = "Outro nome".into();
-    let depois = projetar(&outro, &d, Escopo::Tudo, HOJE);
-    assert_eq!(acao(&depois, "f1")["horas"], 3);
+    let depois = projetar(&outro, &d, Escopo::Tudo);
+    assert_eq!(acao(&depois, "f1")["cor"], 3);
     assert_eq!(plano(acao(&depois, "f1"), "t2")["responsavel"], "alguém");
     assert_eq!(acao(&depois, "f1")["checkpoints"][1]["novo"], json!({"a": 1}));
     assert_eq!(acao(&depois, "f1")["prototipos"], b["acoes"][0]["prototipos"]);
@@ -227,7 +205,7 @@ fn projeto_existente_mantem_id_e_descricao() {
         super::formato::ProjetoDoc { nome: Some("  front ".into()), acoes: acoes[..1].to_vec() },
         super::formato::ProjetoDoc { nome: Some("Back".into()), acoes: acoes[1..].to_vec() },
     ];
-    let depois = projetar(&b, &d, Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &d, Escopo::Tudo);
     let projetos = depois["projetos"].as_array().unwrap();
     assert_eq!(projetos.len(), 3, "um novo; nenhum removido");
     assert_eq!(projetos[0], json!({"id": "pj1", "nome": "Front", "descricao": "dd", "cor": "x"}));
@@ -239,8 +217,8 @@ fn projeto_existente_mantem_id_e_descricao() {
     assert_eq!(volta.projetos[0].nome.as_deref(), Some("Front"));
     assert_eq!(volta.projetos[2].nome.as_deref(), Some("Sem uso"), "projeto sem ação continua no doc");
     // Sem nome de projeto, a ação sai do grupo, e o projeto fica.
-    let solto = doc_de(json!([{"id": "f1", "nome": "Base", "de": "2026-11-01", "ate": "2026-11-30"}]));
-    let depois2 = projetar(&depois, &solto, Escopo::Tudo, HOJE);
+    let solto = doc_de(json!([{"id": "f1", "nome": "Base"}]));
+    let depois2 = projetar(&depois, &solto, Escopo::Tudo);
     assert!(acao(&depois2, "f1").get("projetoId").is_none());
     assert_eq!(depois2["projetos"].as_array().unwrap().len(), 3);
 }
@@ -254,7 +232,7 @@ fn resumo_ausente_nao_apaga() {
     d.projetos[0].acoes[0].texto = None;
     d.projetos[0].acoes[0].planos[0].instrucoes = None;
     d.projetos[0].acoes[0].planos[1].area = None;
-    let depois = projetar(&b, &d, Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &d, Escopo::Tudo);
     assert_eq!(depois["descricao"], "d");
     assert_eq!(acao(&depois, "f1")["obs"], "instruções");
     assert_eq!(plano(acao(&depois, "f1"), "t1")["descricao"], "x");
@@ -265,7 +243,7 @@ fn resumo_ausente_nao_apaga() {
     d.projetos[0].acoes[0].texto = Some(String::new());
     d.projetos[0].acoes[0].planos[0].instrucoes = Some(String::new());
     d.projetos[0].acoes[0].planos[1].area = Some(String::new());
-    let vazio = do_blueprint(&projetar(&b, &d, Escopo::Tudo, HOJE));
+    let vazio = do_blueprint(&projetar(&b, &d, Escopo::Tudo));
     assert_eq!(vazio.resumo, None, "apagar é mandar vazio");
     let f1 = &vazio.projetos[0].acoes[0];
     assert_eq!((&f1.texto, &f1.planos[0].instrucoes, &f1.planos[1].area), (&None, &None, &None));
@@ -316,10 +294,10 @@ fn ref_igual_id_real_nao_herda_feito() {
     let b = exemplo(); // t1 é feito, na ação f1
     let mut d = do_blueprint(&b);
     // A f2 ganha um plano cujo ref imita o id real de t1; uma ação nova também.
-    let imitadores = doc_de(json!([{"id": "f2", "nome": "Sem listas", "de": "2026-12-01", "ate": "2026-12-10", "planos": [{"id": "t1", "texto": "imita"}], "checkpoints": [{"id": "m1", "texto": "imita"}]}, {"id": "nova", "nome": "Nova", "planos": [{"id": "t1", "texto": "imita"}]}]));
+    let imitadores = doc_de(json!([{"id": "f2", "nome": "Sem listas", "planos": [{"id": "t1", "texto": "imita"}], "checkpoints": [{"id": "m1", "texto": "imita"}]}, {"id": "nova", "nome": "Nova", "planos": [{"id": "t1", "texto": "imita"}]}]));
     d.projetos[0].acoes.truncate(1);
     d.projetos[0].acoes.extend(imitadores.projetos[0].acoes.clone());
-    let depois = projetar(&b, &d, Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &d, Escopo::Tudo);
     assert_eq!(plano(acao(&depois, "f1"), "t1")["feito"], true);
     let f2 = plano(acao(&depois, "f2"), "t1");
     assert_eq!(f2["feito"], false);
@@ -330,11 +308,11 @@ fn ref_igual_id_real_nao_herda_feito() {
     assert_eq!(plano(acao(&depois, "nova"), "t1")["feito"], false);
 
     // Dentro da mesma ação, um item só responde por um ref: um novo com o id real de um renomeado não copia o estado.
-    let renomeado = projetar(&b, &do_blueprint(&b), Escopo::Tudo, HOJE);
+    let renomeado = projetar(&b, &do_blueprint(&b), Escopo::Tudo);
     let mut ja = renomeado.clone();
     ja["acoes"][0]["planos"][0]["ref"] = json!("x");
-    let dois = doc_de(json!([{"id": "f1", "nome": "Base", "de": "2026-11-01", "ate": "2026-11-30", "planos": [{"id": "t1", "texto": "imita"}, {"id": "x", "texto": "o verdadeiro"}]}]));
-    let saida = projetar(&ja, &dois, Escopo::Tudo, HOJE);
+    let dois = doc_de(json!([{"id": "f1", "nome": "Base", "planos": [{"id": "t1", "texto": "imita"}, {"id": "x", "texto": "o verdadeiro"}]}]));
+    let saida = projetar(&ja, &dois, Escopo::Tudo);
     assert_eq!(plano(acao(&saida, "f1"), "x")["feito"], true);
     assert_eq!(plano(acao(&saida, "f1"), "t1")["feito"], false);
     assert_ne!(plano(acao(&saida, "f1"), "t1")["id"], "t1");
@@ -346,7 +324,7 @@ fn mover_plano_nao_duplica_id() {
     let mut d = do_blueprint(&b);
     let movido = d.projetos[0].acoes[0].planos.remove(0); // t1, feito
     d.projetos[0].acoes[1].planos.push(movido);
-    let depois = projetar(&b, &d, Escopo::Tudo, HOJE);
+    let depois = projetar(&b, &d, Escopo::Tudo);
     let ids: Vec<&str> = depois["acoes"].as_array().unwrap().iter().flat_map(|a| a["planos"].as_array().into_iter().flatten()).map(|q| q["id"].as_str().unwrap()).collect();
     assert_eq!(ids.len(), ids.iter().collect::<HashSet<_>>().len(), "{ids:?}");
     assert!(!ids.contains(&"t1"), "mover é remover e criar");
@@ -357,7 +335,7 @@ fn mover_plano_nao_duplica_id() {
 
     // Aprovar só o destino deixa os dois, ainda com ids diferentes.
     let so = ["f2".to_string()];
-    let parcial = projetar(&b, &d, Escopo::So(&so), HOJE);
+    let parcial = projetar(&b, &d, Escopo::So(&so));
     assert_ne!(plano(acao(&parcial, "f2"), "t1")["id"], "t1");
     assert_eq!(acao(&parcial, "f1")["planos"][0]["id"], "t1");
 }

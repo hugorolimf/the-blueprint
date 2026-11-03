@@ -142,7 +142,6 @@ fn feito_alterado_reabre() {
     let q = c.plano(0, 1);
     assert_eq!(q["feito"], false);
     assert_eq!(q["agente"]["estado"], "pendente");
-    assert!(q["agente"].get("feitoEm").is_none());
 }
 
 #[test]

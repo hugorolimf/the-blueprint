@@ -10,14 +10,12 @@ pub mod acao_movimento;
 pub mod agentes;
 pub mod agentes_movimento;
 pub mod agentes_pecas;
-pub mod agentes_tempo;
 pub mod caixinha;
 pub mod cartao_botao;
 pub mod cartao_caixa;
 pub mod cartao_carimbo;
 pub mod cartao_controle;
 pub mod cartao_esqueleto;
-pub mod cartao_ladrilho;
 pub mod chegou;
 pub mod detalhe;
 pub mod diff;
@@ -59,8 +57,8 @@ pub struct Estado {
     pub tela: Sub,
     /// a ação aberta na folha (`ref`)
     pub aberta: Option<String>,
-    /// o roteiro de teste pediu a prévia deste detalhe (`ref` da ação, id): sai no próximo quadro, que tem o `Context`
-    pub pedir_detalhe: Option<(String, String)>,
+    /// `aberta` acabou de mudar sozinha, acompanhando o agente: não entra no histórico de voltar e avançar
+    pub aberta_pelo_agente: bool,
     /// o que o último gesto respondeu: recusa, ou os avisos do servidor
     pub aviso: String,
     /// o menu «Mais» do topo da folha está aberto
@@ -91,11 +89,6 @@ pub fn tela(ui: &mut egui::Ui, vista: &mut Vista, doc: &Documento, ws: &str, bp:
         ui.painter().rect_filled(ui.max_rect(), 0, tema::PAPEL);
         planta::Texto::novo(tr("Carregando…"), 14.0).cor(tema::MEDIO).na_linha(ui.painter(), 64.0, 64.0, 22.4);
         return None;
-    }
-    if let Some((acao, det)) = vista.plano.pedir_detalhe.take() {
-        detalhe::abrir(&ctx, &acao, &det);
-        vista.plano.tela = Sub::Folha;
-        vista.plano.aberta = Some(acao);
     }
     match vista.plano.tela.clone() {
         Sub::Folha => folha::tela(ui, vista, doc, ws, bp, servidor),

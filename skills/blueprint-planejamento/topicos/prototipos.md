@@ -1,5 +1,7 @@
 # Action prototypes
 
+In a plan written with `abrir_plano`, `escrever_acao` or `salvar_plano`, a screen or figure goes in the action's `detalhes` (topic `plano`); the sheet of that plan does not show attached prototypes. `anexar_prototipo` is for the other cases.
+
 When the user asks for a **prototype** of an action (a screen, a dashboard, a figure that shows the idea), generate it and attach it with `anexar_prototipo(workspace_id, blueprint_id, acao_id, titulo, html)`. The app shows it in a viewer next to the action: a screen icon on the blueprint sheet, or "View prototype" in the action's right-click menu.
 
 - The `html` is **a single, self-contained HTML document**: CSS, SVG and JavaScript inline. No outside images or libraries and no network calls: the viewer runs isolated (sandbox, no network, no access to the app) and blocks whatever comes from outside. 2 MB maximum.

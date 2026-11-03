@@ -11,8 +11,8 @@ import { exePadrao, http, pastaDeDados, raiz } from "./lib-e2e-rust.mjs";
 import { PUBLICA, entrar, ligarHospedado, navegador } from "./lib-hospedado.mjs";
 
 const DADOS = { usuario: { nome: "Equipe" }, blueprints: [{ id: "p1", nome: "Projeto", acoes: [
-  { id: "f1", nome: "Ação um", inicio: "2026-11-01", fim: "2026-11-05", status: "andamento", planos: [{ id: "t1", texto: "Plano um" }, { id: "t2", texto: "Plano dois" }], checkpoints: [] },
-  { id: "f9", nome: "Ação nove", inicio: "2026-11-06", fim: "2026-11-09", status: "planejado", planos: [{ id: "t9", texto: "Plano nove" }], checkpoints: [] }] }] };
+  { id: "f1", nome: "Ação um", status: "andamento", planos: [{ id: "t1", texto: "Plano um" }, { id: "t2", texto: "Plano dois" }], checkpoints: [] },
+  { id: "f9", nome: "Ação nove", status: "planejado", planos: [{ id: "t9", texto: "Plano nove" }], checkpoints: [] }] }] };
 const pasta = await pastaDeDados("responsavel", { BLUEPRINT_ASSETS_DIR: raiz });
 await writeFile(pasta.env.DADOS_ARQ, JSON.stringify(DADOS));
 const servidor = await ligarHospedado(exePadrao(), pasta);

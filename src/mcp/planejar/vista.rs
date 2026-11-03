@@ -17,7 +17,6 @@ use crate::plano::entrada::{entrada_esc, ExecEsc};
 use crate::plano::escalonar::{escalonar, Causa, EstadoEsc, PlanoEsc, Situacao};
 use crate::plano::formato::{AcaoDoc, Detalhe, PlanoDoc, PlanoItem};
 use crate::plano::ids::{id_real, nome_agente};
-use crate::tempo::hoje_local;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
@@ -139,7 +138,7 @@ fn figura_json(det: &Detalhe) -> Value {
 }
 
 fn det_json(det: &Detalhe) -> Value {
-    json!({"id": det.id, "titulo": det.titulo.clone().unwrap_or_default(), "legenda": det.legenda.clone().unwrap_or_default(), "grupo": det.grupo.clone().unwrap_or_default(), "figura": figura_json(det), "pedeAprovacao": det.pede_aprovacao, "hash": hash_detalhe(det), "revisao": Value::Null})
+    json!({"id": det.id, "titulo": det.titulo.clone().unwrap_or_default(), "legenda": det.legenda.clone().unwrap_or_default(), "grupo": det.grupo.clone().unwrap_or_default(), "figura": figura_json(det), "plano": det.plano.clone().unwrap_or_default(), "variante": det.variante.clone().unwrap_or_default(), "pedeAprovacao": det.pede_aprovacao, "hash": hash_detalhe(det), "revisao": Value::Null})
 }
 
 fn pedacos(p: &[Pedaco]) -> Value {
@@ -150,14 +149,9 @@ fn pedacos(p: &[Pedaco]) -> Value {
     }).collect())
 }
 
-fn prazo(a: &AcaoDoc) -> String {
-    [a.de.as_deref(), a.ate.as_deref()].into_iter().flatten().collect::<Vec<_>>().join(" → ")
-}
-
 /// A linha do diff. `reabre`: plano feito cujo texto, instruções ou área mudou volta a não feito ao aprovar (5.3); dependência não reabre.
 fn linha_json(l: &crate::plano::comparar::Linha, arvore: Option<&Value>) -> Value {
     let tipo = match l.tipo {
-        TipoLinha::Prazo => "prazo",
         TipoLinha::Novo => "novo",
         TipoLinha::Alterado => "alterado",
         TipoLinha::Igual => "igual",
@@ -170,11 +164,11 @@ fn linha_json(l: &crate::plano::comparar::Linha, arvore: Option<&Value>) -> Valu
     json!({"tipo": tipo, "ref": r, "texto": l.plano.as_ref().map_or("", |q| q.texto.as_str()), "antes": l.antes.as_ref().map_or("", |q| q.texto.as_str()), "palavras": pedacos(&l.palavras), "campos": l.campos, "situacao": situacao})
 }
 
-/// O DIFF da ação; a revisão entra depois, por quem sabe qual vale. `nova` `None`: a ação sai da árvore se aprovada.
+/// O DIFF da ação; a revisão entra depois, por quem sabe qual vale. `nova` `None`: a ação sai da árvore se aprovada. Telas e tabelas que chegam vão inteiras: a ação as mostra antes de aprovar.
 fn diff_json(versao: &VersaoLinha, antiga: &AcaoDoc, nova: Option<&AcaoDoc>, c: &CompAcao, arvore: Option<&Value>) -> Value {
-    let tem_prazo = c.linhas.iter().any(|l| l.tipo == TipoLinha::Prazo);
-    let prazo_json = if tem_prazo { json!({"antes": prazo(antiga), "depois": nova.map(prazo).unwrap_or_default()}) } else { Value::Null };
-    json!({"numero": versao.numero, "agente": versao.agente, "hash": hash_diff(Some(antiga), nova), "resumo": {"mais": c.resumo.mais, "menos": c.resumo.menos, "alterados": c.resumo.alterados, "detalhes": c.resumo.detalhes, "outros": c.resumo.outros}, "removida": nova.is_none(), "prazo": prazo_json, "linhas": c.linhas.iter().map(|l| linha_json(l, arvore)).collect::<Vec<_>>(), "detalhesNovos": c.detalhes_novos.iter().map(det_json).collect::<Vec<_>>(), "outros": c.outros, "revisao": Value::Null})
+    let tabelas_novas: Vec<Value> = nova.map_or(Vec::new(), |n| n.tabelas.iter().filter(|t| !antiga.tabelas.contains(t)).map(|t| t.para_json()).collect());
+    let mudados: Vec<Value> = nova.map_or(Vec::new(), |n| n.detalhes.iter().filter(|d| c.detalhes_mudados.contains(&d.id)).map(det_json).collect());
+    json!({"numero": versao.numero, "agente": versao.agente, "hash": hash_diff(Some(antiga), nova), "resumo": {"mais": c.resumo.mais, "menos": c.resumo.menos, "alterados": c.resumo.alterados, "detalhes": c.resumo.detalhes, "outros": c.resumo.outros}, "removida": nova.is_none(), "linhas": c.linhas.iter().map(|l| linha_json(l, arvore)).collect::<Vec<_>>(), "detalhesNovos": c.detalhes_novos.iter().map(det_json).collect::<Vec<_>>(), "detalhesMudados": mudados, "tabelasNovas": tabelas_novas, "outros": c.outros, "revisao": Value::Null})
 }
 
 /// O que a montagem da folha consulta o tempo todo.
@@ -210,10 +204,16 @@ impl Foto<'_> {
         let nova = acao_do(doc, r);
         let mut v = match (comp.alteradas.get(r), nova) {
             (Some(c), Some(_)) => diff_json(versao, antiga, nova, c, arvore),
-            (_, None) => diff_json(versao, antiga, None, &comparar_acao(antiga, &AcaoDoc { id: antiga.id.clone(), nome: antiga.nome.clone(), de: antiga.de.clone(), ate: antiga.ate.clone(), ..AcaoDoc::default() }), arvore),
+            (_, None) => diff_json(versao, antiga, None, &comparar_acao(antiga, &AcaoDoc { id: antiga.id.clone(), nome: antiga.nome.clone(), ..AcaoDoc::default() }), arvore),
             _ => return Value::Null,
         };
         v["revisao"] = self.revisao(&format!("diff:{r}"), v["hash"].as_str().unwrap_or(""));
+        // o detalhe que chega também se decide na ação: a revisão dele precisa voltar à tela
+        for campo in ["detalhesNovos", "detalhesMudados"] {
+            for n in v[campo].as_array_mut().into_iter().flatten() {
+                n["revisao"] = self.revisao(&format!("det:{r}/{}", texto(n, "id")), texto(n, "hash"));
+            }
+        }
         v
     }
 
@@ -239,7 +239,7 @@ impl Foto<'_> {
         };
         let agente = exec.map_or_else(|| cru.map_or("", |x| texto(x, "agente")).to_string(), |x| nome_agente(&x.plano_ref));
         let sem_iniciar: Vec<&str> = estado.map_or(Vec::new(), |e| e.sem_iniciar.iter().map(|s| curto(s)).collect());
-        let v = json!({"id": id, "ref": q.id, "texto": q.texto, "instrucoes": q.instrucoes.clone().unwrap_or_default(), "area": q.area.clone().unwrap_or_default(), "dependeDe": q.depende_de, "feito": feito, "situacao": situacao, "causa": nome_causa(estado.and_then(|e| e.causa.as_ref())), "por": estado.and_then(|e| e.por.as_deref()).map_or("", curto), "semIniciar": sem_iniciar, "execucaoId": exec.map_or("", |x| x.id.as_str()), "ramo": exec.map_or("", |x| x.ramo.as_str()), "agente": agente, "motivo": exec.map_or("", |x| x.motivo.as_str())});
+        let v = json!({"id": id, "ref": q.id, "texto": q.texto, "instrucoes": q.instrucoes.clone().unwrap_or_default(), "area": q.area.clone().unwrap_or_default(), "forma": q.forma.clone().unwrap_or_default(), "entrega": q.entrega.clone().unwrap_or_default(), "dependeDe": q.depende_de, "feito": feito, "situacao": situacao, "causa": nome_causa(estado.and_then(|e| e.causa.as_ref())), "por": estado.and_then(|e| e.por.as_deref()).map_or("", curto), "semIniciar": sem_iniciar, "execucaoId": exec.map_or("", |x| x.id.as_str()), "ramo": exec.map_or("", |x| x.ramo.as_str()), "agente": agente, "motivo": exec.map_or("", |x| x.motivo.as_str())});
         (v, feito)
     }
 
@@ -252,10 +252,12 @@ impl Foto<'_> {
             prontos += feito as usize;
             v
         }).collect();
+        // o checkpoint já aparece no plano da versão pendente, como as telas
+        let pendente = self.doc_pendente.as_ref().and_then(|d| acao_do(d, &a.id));
         let checkpoints: Vec<Value> = a.checkpoints.iter().map(|k| {
             let cru = arvore.and_then(|c| lista(c, "checkpoints").iter().find(|x| ref_de(x) == k.id));
             let id = cru.map_or_else(|| id_real(self.bp_id, "checkpoint", &format!("{}/{}", a.id, k.id)), |x| texto(x, "id").to_string());
-            json!({"id": id, "nome": k.texto, "data": k.data.clone().unwrap_or_default(), "feito": cru.is_some_and(|x| verdade(x.get("feito")))})
+            json!({"id": id, "nome": k.texto, "plano": pendente.and_then(|n| n.checkpoints.iter().find(|x| x.id == k.id)).unwrap_or(k).plano.clone().unwrap_or_default(), "feito": cru.is_some_and(|x| verdade(x.get("feito")))})
         }).collect();
         let detalhes: Vec<Value> = a.detalhes.iter().map(|x| self.det(&a.id, x)).collect();
         let diff = self.diff(&a.id, arvore);
@@ -266,7 +268,7 @@ impl Foto<'_> {
         let recados: Vec<Value> = self.recados.iter().filter(|r| r.blueprint_id == self.bp_id && (r.acao_id == id || r.acao_id == a.id)).map(|r| json!({"de": r.de, "texto": r.texto, "em": r.em})).collect();
         let agentes = self.esc.execs.iter().filter(|x| x.blueprint_id == self.bp_id && x.acao_id == id && matches!(x.situacao.as_str(), "preparando" | "rodando" | "ajuda")).count();
         let links = arvore.and_then(|c| c.get("links")).cloned().unwrap_or_else(|| json!([]));
-        json!({"id": id, "ref": a.id, "nome": a.nome, "de": a.de.clone().unwrap_or_default(), "ate": a.ate.clone().unwrap_or_default(), "semData": a.de.is_none() && a.ate.is_none(), "texto": a.texto.clone().unwrap_or_default(), "status": arvore.map_or("planejado", |c| texto(c, "status")), "links": links, "temNota": arvore.is_some_and(|c| !texto(c, "obs").is_empty()), "escrita": self.estado_escrita(&a.id), "nova": arvore.is_none(), "agentes": agentes, "planos": planos, "checkpoints": checkpoints, "tabelas": a.tabelas.iter().map(|t| t.para_json()).collect::<Vec<_>>(), "detalhes": detalhes, "diff": diff, "recados": recados, "numeros": {"planos": a.planos.len(), "prontos": prontos, "detalhes": a.detalhes.len(), "decisoes": decisoes.len(), "aprovar": espera_dec + espera_det + espera_diff}})
+        json!({"id": id, "ref": a.id, "nome": a.nome, "texto": a.texto.clone().unwrap_or_default(), "status": arvore.map_or("planejado", |c| texto(c, "status")), "links": links, "temNota": arvore.is_some_and(|c| !texto(c, "obs").is_empty()), "escrita": self.estado_escrita(&a.id), "nova": arvore.is_none(), "agentes": agentes, "planos": planos, "checkpoints": checkpoints, "tabelas": a.tabelas.iter().map(|t| t.para_json()).collect::<Vec<_>>(), "detalhes": detalhes, "diff": diff, "recados": recados, "numeros": {"planos": a.planos.len(), "prontos": prontos, "detalhes": a.detalhes.len() + lista(&diff, "detalhesNovos").len(), "decisoes": decisoes.len(), "aprovar": espera_dec + espera_det + espera_diff}})
     }
 }
 
@@ -318,11 +320,11 @@ pub(super) fn folha(mcp: &Mcp, d: &mut Dados, ws_id: &str, bp_id: &str, agora_ms
     let projetos = projetos_json(&foto);
     let decisoes: Vec<Value> = foto.base.decisoes.iter().map(|x| {
         let hash = hash_decisao(x);
-        json!({"id": x.id, "rotulo": x.rotulo.clone().unwrap_or_default(), "texto": x.texto, "data": x.data.clone().unwrap_or_default(), "acoes": x.acoes, "pedeAprovacao": x.pede_aprovacao, "revisao": foto.revisao(&format!("d:{}", x.id), &hash), "hash": hash})
+        json!({"id": x.id, "rotulo": x.rotulo.clone().unwrap_or_default(), "texto": x.texto, "acoes": x.acoes, "plano": x.plano.clone().unwrap_or_default(), "pedeAprovacao": x.pede_aprovacao, "revisao": foto.revisao(&format!("d:{}", x.id), &hash), "hash": hash})
     }).collect();
     let perguntas: Vec<Value> = foto.base.perguntas.iter().map(|q| {
         let resposta = foto.revisoes.get(&format!("q:{}", q.id)).filter(|r| r.estado == "respondida" && r.hash_peca == hash_peca(&q.para_json())).map_or("", |r| r.observacao.as_str());
-        json!({"id": q.id, "texto": q.texto, "opcoes": q.opcoes, "recomendada": q.recomendada.clone().unwrap_or_default(), "acoes": q.acoes, "resposta": resposta})
+        json!({"id": q.id, "texto": q.texto, "opcoes": q.opcoes, "recomendada": q.recomendada.clone().unwrap_or_default(), "acoes": q.acoes, "plano": q.plano.clone().unwrap_or_default(), "resposta": resposta})
     }).collect();
     let (mut diffs, mut sem_revisao, mut dets) = (0, 0, 0);
     for a in projetos.iter().flat_map(|p| lista(p, "acoes")) {
@@ -334,7 +336,7 @@ pub(super) fn folha(mcp: &Mcp, d: &mut Dados, ws_id: &str, bp_id: &str, agora_ms
     }
     let dec = decisoes.iter().filter(|x| x["pedeAprovacao"] == true && x["revisao"].is_null()).count();
     let novas = foto.comp.as_ref().map_or(0, |c| c.novas.len());
-    Ok(json!({"versaoDados": mcp.versao_espelho.load(std::sync::atomic::Ordering::SeqCst), "revisao": mcp.revisao_planejar(), "hoje": hoje_local(),
+    Ok(json!({"versaoDados": mcp.versao_espelho.load(std::sync::atomic::Ordering::SeqCst), "revisao": mcp.revisao_planejar(),
         "blueprint": {"id": bp_id, "nome": texto(bp, "nome"), "resumo": texto(bp, "descricao"), "links": bp.get("links").cloned().unwrap_or_else(|| json!([])), "temNota": !texto(bp, "obs").is_empty()},
         "escrita": foto.aberta.as_ref().map_or(Value::Null, |v| escrita_json(v, agora_ms)), "pendente": pendente_json(foto.pendente.as_ref()),
         "semPasta": d.pasta_real_do_blueprint(ws_id, bp_id)?.is_none(), "limite": foto.esc.limite,

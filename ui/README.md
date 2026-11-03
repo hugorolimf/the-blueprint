@@ -27,7 +27,7 @@ Variáveis de ambiente, para rodar o app sem mouse e comparar com a página:
 | Variável | O que faz |
 | --- | --- |
 | `BLUEPRINT_UI_CAPTURA=<arquivo.png>` | salva uma imagem da janela e fecha (`BLUEPRINT_UI_ESPERA=<s>` muda os 2 s de espera) |
-| `BLUEPRINT_UI_ROTEIRO=nome:Ana,criar:Alfa,exemplo,mover:Alfa,excluir:Alfa,voltar,novo` | roda as ações em ordem (também `direito:x/y` clica com o botão direito, `abrir:ws`, `novobp:ws` abre «Novo blueprint», `criarbp:ws/Nome` cria e abre, `pausa:ms` espera antes do próximo, para ver uma animação no meio; no Planejar, `blueprint:ws/bp` abre a folha, `abrir-acao:ref` abre uma ação, `marcar-plano:id-ou-ref` marca um plano para iniciar e `agentes` abre a tela de agentes) |
+| `BLUEPRINT_UI_ROTEIRO=nome:Ana,criar:Alfa,exemplo,mover:Alfa,excluir:Alfa,voltar,novo` | roda as ações em ordem (também `direito:x/y` clica com o botão direito, `abrir:ws`, `novobp:ws` abre «Novo blueprint», `criarbp:ws/Nome` cria e abre, `pausa:ms` espera antes do próximo, para ver uma animação no meio; no Planejar, `blueprint:ws/bp` abre a folha, `abrir-acao:ref` abre uma ação, `marcar-plano:id-ou-ref` marca um plano para iniciar e `agentes` abre a tela de agentes; `mouse-voltar` e `mouse-avancar` são os botões laterais do mouse) |
 | `BLUEPRINT_UI_ABRIR=novo` | abre direto a tela «Novo workspace» |
 | `BLUEPRINT_UI_PPP=1` | força a escala (o monitor pode ser 1,25) para comparar pixel a pixel com a página |
 | `BLUEPRINT_UI_APPID=<id>` | muda o `app_id` da janela (para uma regra do compositor mandá-la para outra área) |
@@ -37,4 +37,5 @@ Variáveis de ambiente, para rodar o app sem mouse e comparar com a página:
 Nome, workspaces (cartões, arrastar para reordenar, Alt+setas, excluir pelo menu de contexto, novo com marca) e a faixa «Remover exemplo».
 O menu do botão direito (`src/menu/`) existe em todas as telas: cada tela marca o que está sob o cursor com `menu::marcar`, e o que depende de tela ainda não migrada (editar, a tela de proposta, conversar, iniciar com o Claude) vira «Abrir na versão web».
 O blueprint aberto é o Planejar (`src/plano/`, [docs/planejar.md](../docs/planejar.md)): a folha, a ação aberta, o que chegou, os agentes e o detalhe, com os dados e as regras no servidor. A folha antiga (`src/folha/blueprint.rs`) continua atrás do botão «Folha antiga» e do menu do botão direito, porque período, Pendentes e busca só existem lá, e é para ela que a tela cai se o servidor não tiver a rota `planejar/folha`.
+Os botões laterais do mouse voltam e avançam pelos lugares da interface (`src/historico.rs`): telas, ação e detalhe abertos. Quem muda de tela não precisa avisar, porque o histórico observa `Vista` a cada quadro.
 Ficam para depois: login hospedado e convite, e a versão estreita (menos de 650 px).

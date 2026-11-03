@@ -1,10 +1,9 @@
-//! As linhas do diff já prontas para pintar: os dois lados de cada plano, o prazo, as notas e o rascunho de «Editar».
+//! As linhas do diff já prontas para pintar: os dois lados de cada plano, as notas e o rascunho de «Editar».
 
 use super::quebra::{quebrar, Fileira};
 use crate::fonte::{familia, Peso};
 use crate::i18n::{tr, tr_com};
 use crate::planta::Texto;
-use crate::plano::escala::curta;
 use crate::plano::modelo::{Acao, Diff, LinhaDiff, Palavra, Resumo, TipoLinha, TipoPalavra};
 use crate::tema::{AMBAR, MEDIO, TINTA, VERDE, VERMELHO};
 use egui::text::LayoutJob;
@@ -12,16 +11,14 @@ use egui::{Color32, FontId, Id, Painter};
 use serde_json::{Map, Value};
 use std::collections::BTreeMap;
 
-pub const TAM: f32 = 11.0;
-pub const TAM_NOTA: f32 = 10.0;
-pub const ALT: f32 = 22.0;
+pub const TAM: f32 = 14.0;
+pub const TAM_NOTA: f32 = 12.0;
+pub const ALT: f32 = 28.0;
 /// De uma linha quebrada para a seguinte.
-pub const PASSO: f32 = 15.0;
-pub const PASSO_NOTA: f32 = 14.0;
+pub const PASSO: f32 = 20.0;
+pub const PASSO_NOTA: f32 = 17.0;
 pub const X_TEXTO: f32 = 78.0;
 pub const MARGEM_DIR: f32 = 12.0;
-/// A folga da caixinha nas linhas iguais.
-const MARGEM_CAIXINHA: f32 = 30.0;
 
 /// Um lado da linha alterada: o que é igual e o que é só deste lado, em destaque.
 fn lado(palavras: &[Palavra], este: TipoPalavra) -> Vec<(String, bool)> {
@@ -66,28 +63,13 @@ pub fn pedacos(r: &Resumo) -> Vec<(String, Option<Color32>)> {
     p
 }
 
-/// O prazo de um lado, com o destaque só na data que difere do outro. O servidor manda `de → ate`, e lado sem data vem vazio.
-fn lado_do_prazo(este: &str, outro: &str) -> Vec<(String, bool)> {
-    if este.is_empty() {
-        return vec![(tr("sem data").to_string(), true)];
-    }
-    let datas: Vec<&str> = este.split(" → ").collect();
-    let outras: Vec<&str> = outro.split(" → ").collect();
-    let mut p = Vec::new();
-    for (i, d) in datas.iter().enumerate() {
-        if i > 0 {
-            p.push((" → ".to_string(), false));
-        }
-        p.push((curta(d), outras.get(i) != Some(d)));
-    }
-    p
-}
-
 fn nome_campo(c: &str) -> String {
     match c {
         "area" => tr("área").to_string(),
         "depende_de" => tr("dependências").to_string(),
         "instrucoes" => tr("instruções").to_string(),
+        "forma" => tr("forma").to_string(),
+        "entrega" => tr("entrega").to_string(),
         "nome" => tr("nome").to_string(),
         "texto" => tr("texto").to_string(),
         "checkpoints" => tr("checkpoints").to_string(),
@@ -162,7 +144,7 @@ impl Sinal {
 }
 
 pub enum Item {
-    Linha { sinal: Sinal, id: String, fileiras: Vec<Fileira>, caixinha: Option<String> },
+    Linha { sinal: Sinal, id: String, fileiras: Vec<Fileira> },
     Editor { sinal: Sinal, id: String, referencia: String, texto: String },
     Nota(Vec<Fileira>),
 }
@@ -176,23 +158,14 @@ pub fn montar(p: &Painter, acao: &Acao, d: &Diff, w: f32, edicao: Option<&Edicao
     let medir = medidor(p, TAM);
     let medir_nota = medidor(p, TAM_NOTA);
     let largura = w - X_TEXTO - MARGEM_DIR;
-    let linha = |sinal: Sinal, id: &str, pedacos: Vec<(String, bool)>| Item::Linha { sinal, id: id.to_string(), fileiras: quebrar(&pedacos, largura, &medir), caixinha: None };
+    let linha = |sinal: Sinal, id: &str, pedacos: Vec<(String, bool)>| Item::Linha { sinal, id: id.to_string(), fileiras: quebrar(&pedacos, largura, &medir) };
     let nota = |t: String| Item::Nota(quebrar(&[(t, false)], largura, &medir_nota));
     let mut itens = Vec::new();
     for l in &d.linhas {
         let r = l.referencia.as_str();
         let texto = if l.texto.is_empty() { &l.antes } else { &l.texto };
         match l.tipo {
-            TipoLinha::Prazo => {
-                let id = tr("prazo");
-                let (antes, depois) = d.prazo.as_ref().map_or(("", ""), |z| (z.antes.as_str(), z.depois.as_str()));
-                itens.push(linha(Sinal::Menos, id, lado_do_prazo(antes, depois)));
-                itens.push(linha(Sinal::Mais, id, lado_do_prazo(depois, antes)));
-            }
-            TipoLinha::Igual => {
-                let fileiras = quebrar(&[(texto.clone(), false)], w - X_TEXTO - MARGEM_CAIXINHA, &medir);
-                itens.push(Item::Linha { sinal: Sinal::Neutro, id: r.to_string(), fileiras, caixinha: Some(r.to_string()) });
-            }
+            TipoLinha::Igual => itens.push(linha(Sinal::Neutro, r, vec![(texto.clone(), false)])),
             TipoLinha::Novo => itens.push(linha(Sinal::Mais, r, vec![(texto.clone(), false)])),
             TipoLinha::Removido => itens.push(linha(Sinal::Menos, r, vec![(texto.clone(), false)])),
             TipoLinha::Alterado => {
@@ -221,6 +194,10 @@ pub fn montar(p: &Painter, acao: &Acao, d: &Diff, w: f32, edicao: Option<&Edicao
     for det in &d.detalhes_novos {
         let titulo = tr_com("Detalhe: {t}", &[("t", &det.titulo)]);
         itens.push(linha(Sinal::Mais, &format!("{}-{}", acao.referencia, det.id), vec![(titulo, false)]));
+    }
+    for det in &d.detalhes_mudados {
+        let titulo = tr_com("Detalhe refeito: {t}", &[("t", &det.titulo)]);
+        itens.push(linha(Sinal::Neutro, &format!("{}-{}", acao.referencia, det.id), vec![(titulo, false)]));
     }
     if !d.outros.is_empty() {
         itens.push(nota(tambem_mudou(&d.outros)));

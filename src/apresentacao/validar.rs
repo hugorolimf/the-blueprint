@@ -14,7 +14,7 @@ const PUBLICOS: [&str; 2] = ["cliente", "interno"];
 /// `epico` vale, mas só quem pediu pelo nome o manda: nenhum padrão do app o escolhe.
 const NIVEIS: [&str; 4] = ["rapido", "padrao", "completo", "epico"];
 /// Os ids de seção da página (a figura que leva `secao` entra no painel dela); `acoes` só existe na página `interno`.
-const SECOES: [&str; 8] = ["visao", "recebe", "etapas", "linha", "precisamos", "decisoes", "riscos", "acoes"];
+const SECOES: [&str; 7] = ["visao", "recebe", "etapas", "precisamos", "decisoes", "riscos", "acoes"];
 /// Quantos achados de termo técnico o aviso lista.
 const ACHADOS_MAX: usize = 10;
 
@@ -95,7 +95,7 @@ pub fn validar(conteudo: &Value, figuras: &Value) -> Result<Validada, ErroHttp> 
             if SECOES.contains(&nome) && !(nome == "acoes" && publico == "cliente") {
                 por_secao.entry(nome).or_default().push(id);
             } else {
-                avisos.push(format!("secao-desconhecida: Figure \"{id}\" has secao {s}, which is not a section of this page (use {}{}).", SECOES[..7].join(", "), if publico == "interno" { ", acoes" } else { "; acoes exists only in the interno page" }));
+                avisos.push(format!("secao-desconhecida: Figure \"{id}\" has secao {s}, which is not a section of this page (use {}{}).", SECOES[..6].join(", "), if publico == "interno" { ", acoes" } else { "; acoes exists only in the interno page" }));
             }
         }
         if f.get("impressao").and_then(Value::as_str).is_none_or(str::is_empty) {
@@ -162,8 +162,8 @@ fn tem_horas(texto: &str) -> bool {
     false
 }
 
-/// Campos que guardam identificador, data ou valor fixo do contrato, não texto para o cliente ler: ficam fora da auditoria.
-const ESTRUTURA: [&str; 11] = ["versao", "publico", "nivel", "idioma", "data", "id", "figura", "inicio", "fim", "ate", "estado"];
+/// Campos que guardam identificador ou valor fixo do contrato, não texto para o cliente ler: ficam fora da auditoria.
+const ESTRUTURA: [&str; 7] = ["versao", "publico", "nivel", "idioma", "id", "figura", "estado"];
 
 /// Cada texto do conteúdo contra a lista (e contra horas): `caminho: termo`, até `ACHADOS_MAX`.
 pub fn achados(conteudo: &Value, termos: &[String]) -> Vec<String> {

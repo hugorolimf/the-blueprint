@@ -33,9 +33,9 @@ const acoesDe = (d) => d.blueprints[0].acoes;
 {
   const base = dados([acao("a1", [plano("p1")])]);
   const meu = dados([acao("a1", [plano("p1", { texto: "meu título" })])]);
-  const deles = dados([acao("a1", [plano("p1", { feito: true, horas: 2 })])]);
+  const deles = dados([acao("a1", [plano("p1", { feito: true, responsavel: "ana" })])]);
   const p = acoesDe(mesclar(base, meu, deles))[0].planos[0];
-  assert.deepEqual([p.texto, p.feito, p.horas], ["meu título", true, 2]);
+  assert.deepEqual([p.texto, p.feito, p.responsavel], ["meu título", true, "ana"]);
   const deles2 = dados([acao("a1", [plano("p1", { texto: "título dela" })])]);
   assert.equal(acoesDe(mesclar(base, meu, deles2))[0].planos[0].texto, "meu título", "conflito de verdade: a edição desta janela");
 }

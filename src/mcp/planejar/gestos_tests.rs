@@ -27,10 +27,10 @@ fn pasta_temp() -> PathBuf {
 
 fn base() -> Value {
     json!({"blueprints": [{"id": "b1", "nome": "Exemplo", "acoes": [
-        {"id": "a1", "ref": "1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "status": "planejado", "planos": [
+        {"id": "a1", "ref": "1", "nome": "Base", "status": "planejado", "planos": [
             {"id": "q1", "ref": "1.1", "texto": "Fazer A", "area": "app"},
-            {"id": "q2", "ref": "1.2", "texto": "Fazer B", "feito": true, "agente": {"estado": "concluido", "feitoEm": "2026-11-02T00:00:00Z"}}]},
-        {"id": "a2", "ref": "2", "nome": "Depois", "inicio": "2026-12-01", "fim": "2026-12-30", "status": "planejado", "planos": [
+            {"id": "q2", "ref": "1.2", "texto": "Fazer B", "feito": true, "agente": {"estado": "concluido"}}]},
+        {"id": "a2", "ref": "2", "nome": "Depois", "status": "planejado", "planos": [
             {"id": "q3", "ref": "2.1", "texto": "Fazer C", "dependeDe": ["1.1"]}]}],
         "planoDoc": {"decisoes": [{"id": "d1", "texto": "Usar um banco local", "pede_aprovacao": true}], "perguntas": [{"id": "p1", "texto": "Qual cor?", "opcoes": ["azul", "verde"]}]}}]})
 }

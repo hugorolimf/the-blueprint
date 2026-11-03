@@ -10,11 +10,12 @@ const conta = (texto, re) => (texto.match(re) || []).length;
 const { html } = L.casca.html(conteudo, comFuncao([falsa("capa")]));
 for (const parte of ["ap-topo", "ap-migalhas", "ap-titulo-caixa", 'class="ap-nav"', 'id="conteudo"', "ap-rodape", "ap-pular"]) assert.ok(html.includes(parte), "falta " + parte);
 assert.equal(conta(html, /<section class="ap-sec"/g), conta(html, /data-nav="/g), "uma seção por link do menu");
-for (const sec of ["visao", "entregas", "etapas", "linha", "voce", "decisoes"]) assert.ok(html.includes(`id="s-${sec}"`), "falta a seção " + sec);
+for (const sec of ["visao", "entregas", "etapas", "voce", "decisoes"]) assert.ok(html.includes(`id="s-${sec}"`), "falta a seção " + sec);
+assert.ok(!html.includes('id="s-linha"') && !html.includes("ap-gantt") && !html.includes("ap-datas"), "sem cronograma nem datas");
 assert.ok(!html.includes('id="s-acoes"'), "o público cliente não tem Ações");
 assert.ok(html.includes("Plano de projeto") && html.includes("Cliente"), "migalhas em pt-BR");
 assert.equal(conta(html, /class="ap-etapa"/g), conteudo.etapas.length);
-assert.ok(html.includes('data-st="andamento"') && html.includes('data-st="prevista"'), "situação pelas datas");
+assert.ok(html.includes('data-st="andamento"') && html.includes('data-st="prevista"'), "a situação vem do conteúdo");
 
 // público interno: ganha Ações
 const interno = { ...conteudo, publico: "interno", interno: { acoes: [{ numero: "1.1", nome: "Fundação", planos: ["Criar o núcleo"] }] } };
@@ -48,14 +49,14 @@ assert.ok(L.casca.html({ ...conteudo, idioma: "en" }, [{ id: "capa", titulo: "z"
 {
   const com = (id, secao) => ({ ...falsa(id), ...(secao ? { secao } : {}) });
   const painel = (h, id) => { const i = h.indexOf(`id="s-${id}"`); return h.slice(i, h.indexOf("</section>", i)); };
-  const figs = [com("v", "visao"), com("rec", "recebe"), com("et", "etapas"), com("li", "linha"), com("pre", "precisamos"), com("de", "decisoes"), com("ri", "riscos"), com("solta")];
+  const figs = [com("v", "visao"), com("rec", "recebe"), com("et", "etapas"), com("pre", "precisamos"), com("de", "decisoes"), com("ri", "riscos"), com("solta")];
   const h = L.casca.html(conteudo, comFuncao(figs)).html;
-  for (const [fig, sec] of [["v", "visao"], ["rec", "entregas"], ["et", "etapas"], ["li", "linha"], ["pre", "voce"], ["de", "decisoes"], ["ri", "decisoes"]]) assert.ok(painel(h, sec).includes(`data-fig="${fig}"`), `${fig} no painel ${sec}`);
-  for (const sec of ["entregas", "etapas", "linha", "voce"]) assert.ok(painel(h, sec).includes("ap-com-fig-col"), `${sec}: figura ao lado do texto`);
+  for (const [fig, sec] of [["v", "visao"], ["rec", "entregas"], ["et", "etapas"], ["pre", "voce"], ["de", "decisoes"], ["ri", "decisoes"]]) assert.ok(painel(h, sec).includes(`data-fig="${fig}"`), `${fig} no painel ${sec}`);
+  for (const sec of ["entregas", "etapas", "voce"]) assert.ok(painel(h, sec).includes("ap-com-fig-col"), `${sec}: figura ao lado do texto`);
   const dec = painel(h, "decisoes");
   assert.ok(dec.indexOf('data-fig="de"') > dec.indexOf("ap-sub-t") && dec.indexOf('data-fig="de"') < dec.indexOf('data-fig="ri"'), "decisões e riscos: cada figura na sua coluna");
   assert.ok(painel(h, "etapas").includes('data-fig="solta"') && painel(h, "etapas").includes("ap-extras"), "sem seção e sem etapa: fim de Etapas");
-  for (const id of ["v", "rec", "et", "li", "pre", "de", "ri", "solta"]) assert.equal(conta(h, new RegExp(`data-fig="${id}"`, "g")), 1, `${id} aparece uma vez`);
+  for (const id of ["v", "rec", "et", "pre", "de", "ri", "solta"]) assert.equal(conta(h, new RegExp(`data-fig="${id}"`, "g")), 1, `${id} aparece uma vez`);
 
   // duas figuras na mesma seção: uma após a outra, na ordem da lista; a "capa" por id fica antes
   const dupla = painel(L.casca.html(conteudo, comFuncao([com("a", "recebe"), com("b", "recebe")])).html, "entregas");
@@ -65,13 +66,14 @@ assert.ok(L.casca.html({ ...conteudo, idioma: "en" }, [{ id: "capa", titulo: "z"
 
   // a figura que uma etapa cita fica na etapa, mesmo com `secao`; seção que não existe (Ações no cliente, Entregas vazia) vai ao fim de Etapas
   const semEntregas = { ...conteudo, entregas: [], etapas: conteudo.etapas.map((e, i) => (i === 0 ? { ...e, figura: "da-etapa" } : e)) };
-  const h2 = L.casca.html(semEntregas, comFuncao([com("da-etapa", "linha"), com("rec", "recebe"), com("ac", "acoes")])).html;
-  assert.ok(painel(h2, "etapas").indexOf('data-fig="da-etapa"') > painel(h2, "etapas").indexOf('id="e-e1"') && !painel(h2, "linha").includes("da-etapa"), "a da etapa fica na etapa");
+  const h2 = L.casca.html(semEntregas, comFuncao([com("da-etapa", "precisamos"), com("rec", "recebe"), com("ac", "acoes")])).html;
+  assert.ok(painel(h2, "etapas").indexOf('data-fig="da-etapa"') > painel(h2, "etapas").indexOf('id="e-e1"') && !painel(h2, "voce").includes("da-etapa"), "a da etapa fica na etapa");
   assert.ok(painel(h2, "etapas").includes("ap-extras") && painel(h2, "etapas").includes('data-fig="rec"') && painel(h2, "etapas").includes('data-fig="ac"'), "seção que não existe: fim de Etapas");
   assert.equal(L.casca.capaDe(conteudo, comFuncao([com("x"), com("y", "visao")])), "y", "a figura de secao visao é a capa");
-  assert.equal(L.casca.capaDe(conteudo, comFuncao([com("x", "linha")])), undefined, "só figuras de outras seções: sem capa");
+  assert.equal(L.casca.capaDe(conteudo, comFuncao([com("x", "recebe")])), undefined, "só figuras de outras seções: sem capa");
   assert.equal(L.casca.secaoDaFigura({ secao: "recebe" }), "entregas");
   assert.equal(L.casca.secaoDaFigura({ secao: "banana" }), undefined, "secao desconhecida vale como sem seção");
+  assert.equal(L.casca.secaoDaFigura({ secao: "linha" }), undefined, "a antiga Linha do tempo não existe mais: a figura vai ao fim de Etapas");
 }
 
 // texto e figura ligados: cada item de texto das seções com itens é focável e tem data-item (0-based, na ordem do conteúdo) e data-sessao

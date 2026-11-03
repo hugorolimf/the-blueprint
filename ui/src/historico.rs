@@ -4,7 +4,7 @@
 use crate::documento::Documento;
 use crate::plano::{self, Sub};
 use crate::telas::{Tela, Vista};
-use egui::{Context, Key, PointerButton, Value as _};
+use egui::{Context, Key, PointerButton};
 use serde_json::Value;
 
 /// Quantos lugares ficam para trás: o bastante para qualquer sessão, sem crescer para sempre.
@@ -16,7 +16,6 @@ pub struct Lugar {
     tela: Tela,
     sub: Sub,
     aberta: Option<String>,
-    detalhe: Option<String>,
     /// a folha antiga em vez do Planejar
     antiga: bool,
 }
@@ -30,9 +29,9 @@ pub struct Historico {
 
 impl Lugar {
     /// Onde a pessoa está. Trocar de blueprint zera o Planejar só no desenho seguinte: até lá, o que ele guarda é do blueprint anterior e não conta.
-    fn de(ctx: &Context, vista: &Vista) -> Lugar {
+    fn de(vista: &Vista) -> Lugar {
         let tela = vista.tela.clone();
-        let simples = |tela, antiga| Lugar { tela, sub: Sub::default(), aberta: None, detalhe: None, antiga };
+        let simples = |tela, antiga| Lugar { tela, sub: Sub::default(), aberta: None, antiga };
         let Tela::Blueprint(ws, bp) = &vista.tela else {
             return simples(tela, false);
         };
@@ -42,9 +41,7 @@ impl Lugar {
         if !plano::rede::e_o_alvo(&vista.plano, ws, bp) {
             return simples(tela, false);
         }
-        let aberta = vista.plano.aberta.clone();
-        let detalhe = aberta.as_deref().and_then(|a| plano::detalhe::aberto(ctx, a));
-        Lugar { tela, sub: vista.plano.tela.clone(), aberta, detalhe, antiga: false }
+        Lugar { tela, sub: vista.plano.tela.clone(), aberta: vista.plano.aberta.clone(), antiga: false }
     }
 
     /// Workspace ou blueprint apagado depois da visita não é destino: a tela o trocaria por outro, e voltar ficaria preso nesse vaivém.
@@ -57,7 +54,7 @@ impl Lugar {
     }
 
     /// Leva a tela de volta a este lugar.
-    fn ir(self, ctx: &Context, vista: &mut Vista) {
+    fn ir(self, vista: &mut Vista) {
         vista.tela = self.tela;
         let Tela::Blueprint(ws, bp) = &vista.tela else { return };
         if self.antiga {
@@ -67,12 +64,6 @@ impl Lugar {
         vista.folha_antiga.remove(bp);
         plano::rede::entrar(&mut vista.plano, ws, bp);
         vista.plano.tela = self.sub;
-        if let Some(a) = &self.aberta {
-            match &self.detalhe {
-                Some(d) => plano::detalhe::abrir(ctx, a, d),
-                None => plano::detalhe::fechar(ctx, a),
-            }
-        }
         vista.plano.aberta = self.aberta;
     }
 }
@@ -109,7 +100,7 @@ impl Historico {
 
     /// Um quadro: anota onde a pessoa está e atende os botões laterais (ou as teclas de voltar e avançar, que alguns mouses mandam no lugar deles).
     pub fn passo(&mut self, ctx: &Context, vista: &mut Vista, doc: &Documento) {
-        let lugar = Lugar::de(ctx, vista);
+        let lugar = Lugar::de(vista);
         // o painel que acompanha o agente abre sozinho: não foi a pessoa que andou, e a frente dela não se perde
         if std::mem::take(&mut vista.plano.aberta_pelo_agente) {
             self.atual = Some(lugar);
@@ -130,7 +121,7 @@ impl Historico {
         let existe = |l: &Lugar| l.existe(doc);
         let destino = if tras { self.voltar(existe) } else { self.avancar(existe) };
         if let Some(l) = destino {
-            l.ir(ctx, vista);
+            l.ir(vista);
         }
     }
 }

@@ -1,5 +1,5 @@
 // Primeiro uso (web/js/primeiro-uso.js, script clássico num contexto isolado, como o navegador faz): a entrada vazia com os 3 caminhos,
-// que some com dados; a linha "Remover exemplo"; e o exemplo como workspace novo (ids novos, datas perto de hoje, modelo intocado).
+// que some com dados; a linha "Remover exemplo"; e o exemplo como workspace novo (ids novos, modelo intocado).
 //   node primeiro-uso.test.mjs
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -52,7 +52,7 @@ vm.runInContext("modo = 'local';", ctx);
 for (const arquivo of ["data.exemplo.json", "data.exemplo.en.json"]) {
   const texto = readFileSync(join(import.meta.dirname, arquivo), "utf8"), modelo = JSON.parse(texto);
   ctx.modelo = modelo;
-  const ws = JSON.parse(JSON.stringify(vm.runInContext(`exemploComoWorkspace(modelo, "2026-12-01")`, ctx)));
+  const ws = JSON.parse(JSON.stringify(vm.runInContext(`exemploComoWorkspace(modelo)`, ctx)));
   assert.equal(JSON.stringify(modelo), JSON.stringify(JSON.parse(texto)), "o modelo não muda");
   assert.equal(ws.exemplo, true);
   assert.equal(ws.nome, modelo.empresa);
@@ -62,12 +62,8 @@ for (const arquivo of ["data.exemplo.json", "data.exemplo.en.json"]) {
   const novos = [ws.id, ...ids(ws.blueprints)], velhos = new Set(ids(modelo.blueprints));
   assert.equal(new Set(novos).size, novos.length, "ids repetidos");
   assert.ok(novos.every((id) => typeof id === "string" && id && !velhos.has(id)), "sobrou id do modelo");
-  // as datas andam junto com hoje (2026-10-20 -> 2026-12-01 = 42 dias); o resto do conteúdo fica
+  // o conteúdo fica como no modelo
   const a0 = modelo.blueprints[0].acoes[0], b0 = ws.blueprints[0].acoes[0];
-  const dias = (x, y) => (Date.parse(y) - Date.parse(x)) / 864e5;
-  assert.equal(dias(a0.inicio, b0.inicio), 42);
-  assert.equal(dias(a0.fim, b0.fim), 42);
-  assert.equal(dias(a0.checkpoints[0].data, b0.checkpoints[0].data), 42);
   assert.equal(b0.nome, a0.nome);
   assert.equal(b0.planos[0].texto, a0.planos[0].texto);
   assert.equal(b0.status, a0.status);

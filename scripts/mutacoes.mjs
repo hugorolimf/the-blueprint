@@ -32,8 +32,6 @@ const MUTACOES = [
   M("atividade: agente sem caracteres de controle", "src/mcp/acoes.rs", "Some(Value::String(s)) if limpo(s.trim(), 40) && !s.chars().any(char::is_control) =>", "Some(Value::String(s)) if true =>"),
   M("atividade: o agente sem sinal continua na lista (repouso, não some)", "src/mcp/atividade.rs", "let mut todos: Vec<&Registro> = self.registros.iter().collect();", "let mut todos: Vec<&Registro> = self.registros.iter().take(1).collect();"),
   M("atividade: o 33º agente substitui o mais antigo", "src/mcp/atividade.rs", "if self.registros.len() >= MAX_AGENTES {", "if false {"),
-  M("proposta: fim não pode ser antes do início", "src/blueprint/validar.rs", "if dia_valido(&inicio) && dia_valido(&fim) && fim < inicio {", "if false {"),
-  M("proposta: checkpoint dentro do período da ação", "src/blueprint/itens.rs", "else if periodo_ok && (data.as_str() < c.inicio || data.as_str() > c.fim) {", "else if false {"),
   M("proposta: nunca propor status concluído", "src/blueprint/validar.rs", 'let status_ok = status == "planejado" || status == "andamento";', "let status_ok = true;"),
   M("gravação do banco é atômica (transação)", "src/dados/mod.rs", "let tx = self.conn.transaction()?;\n        importar::importar(&tx, dados)?;\n        tx.commit()?;", "importar::importar(&self.conn, dados)?;"),
   M("só dono e colaborador editam", "src/contexto/mod.rs", "matches!(self.papel, Papel::Dono | Papel::Colaborador)", "true"),

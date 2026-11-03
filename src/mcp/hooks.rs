@@ -77,7 +77,7 @@ fn contexto_do_blueprint(estrutura: &Value, ws: &str, bp: &str, n: usize, subage
     match atual {
         Some((i, a)) => {
             // a folha numera as ações como <nº do projeto>.<nº da ação> (2.5; sem projetos, <nº do blueprint>.<nº da ação>): é como o usuário as chama
-            t += &crate::tr!(" Current action: {} «{}» (acao_id {}, from {} to {}). When talking to the user, call actions by their sheet number.", " Ação atual: {} «{}» (acao_id {}, de {} a {}). Ao falar com o usuário, chame as ações pelo número da folha.", numeros[i], texto(a, "nome"), texto(a, "id"), texto(a, "inicio"), texto(a, "fim"));
+            t += &crate::tr!(" Current action: {} «{}» (acao_id {}). When talking to the user, call actions by their sheet number.", " Ação atual: {} «{}» (acao_id {}). Ao falar com o usuário, chame as ações pelo número da folha.", numeros[i], texto(a, "nome"), texto(a, "id"));
             let pendentes: Vec<String> = lista(&a["planos"]).iter().filter(|x| x["feito"] != true).map(|x| format!("«{}» (plano_id {})", texto(x, "texto"), texto(x, "id"))).collect();
             if !pendentes.is_empty() {
                 t += &crate::tr!(" Pending plans: {}.", " Planos pendentes: {}.", pendentes.join("; "));

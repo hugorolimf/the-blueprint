@@ -25,7 +25,7 @@ Keep this blueprint always up to date: plans and changes through propor_blueprin
 - **Work outside the blueprint, not done yet:** propose it with `propor_blueprint` before executing. It only gets a `plano_id` when the user applies it.
 - **Work outside the blueprint, already done** (a one-off adjustment asked for in the conversation): `registrar_trabalho` with the done plans and checkpoints and the evidence (without `feito` on what is still pending). With the **Apply automatically** switch on (default in the local app) it enters by itself; otherwise it waits for the click on "Add to blueprint".
 - **After sending a proposal or a record:** if the user already approved it in the conversation, say "sent; it enters by itself if automatic apply is on" and check with `ler_blueprint` before saying it is in. `remover`, `mover` and new blueprints always wait for the user's click. An undone item (Undo lasts 60 s) does not come back: resend only if asked.
-- **The blueprint changed** (deadline, scope, order): `propor_blueprint` with only what changes (topic `editar`).
+- **The blueprint changed** (scope, order): `propor_blueprint` with only what changes (topic `editar`).
 
 ## Show up on the sheet (optional fields)
 

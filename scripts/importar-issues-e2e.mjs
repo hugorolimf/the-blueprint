@@ -8,22 +8,21 @@ import { join } from "node:path";
 import { exePadrao, ligarServidor, mcpStdio, pastaDeDados, raiz } from "./lib-e2e-rust.mjs";
 
 const REPO = "exemplo/loja";
-const dia = (base, n) => new Date(base.getTime() + n * 864e5).toISOString().slice(0, 10);
 
 /** A tabela do tópico `importar`: issue vira ação, item não marcado da lista de tarefas vira plano, marco vira projeto, rótulos vão na nota. */
-function mapear(issues, repo, hoje = new Date()) {
+function mapear(issues, repo) {
   const marcos = [...new Set(issues.map((i) => i.milestone?.title).filter(Boolean))];
   const ordem = [...issues].sort((a, b) => (marcos.indexOf(a.milestone?.title) + 1 || 99) - (marcos.indexOf(b.milestone?.title) + 1 || 99) || a.number - b.number);
-  const acoes = ordem.map((issue, n) => {
+  const acoes = ordem.map((issue) => {
     const linhas = (issue.body || "").split("\n");
     const tarefas = linhas.map((l) => l.match(/^\s*- \[ \] (.+)$/)?.[1]).filter(Boolean).slice(0, 6);
     const resumo = linhas.filter((l) => !/^\s*- \[[ xX]\] /.test(l)).join(" ").replace(/\s+/g, " ").trim().slice(0, 600);
     const rotulos = issue.labels.map((l) => l.name).join(", ");
     const planos = (tarefas.length ? tarefas : [`Implement #${issue.number}`]).map((texto) => ({
-      texto, horas: 2, descricao: `Scope: ${texto} (GitHub issue #${issue.number}). Expected result: done as the issue asks. Validation: the issue's own check.`,
+      texto, descricao: `Scope: ${texto} (GitHub issue #${issue.number}). Expected result: done as the issue asks. Validation: the issue's own check.`,
     }));
     return {
-      nome: issue.title, inicio: dia(hoje, 1 + 2 * n), fim: dia(hoje, 2 + 2 * n), status: "planejado", planos,
+      nome: issue.title, status: "planejado", planos,
       observacao: `${resumo}${rotulos ? `\nLabels: ${rotulos}` : ""}\nGitHub issue ${repo}#${issue.number}`,
       ...(issue.milestone ? { projeto: issue.milestone.title } : {}),
     };

@@ -69,8 +69,8 @@ try {
   const aberta = await js(`(() => { const f = D.blueprints.flatMap((p) => p.acoes).find((f) => efetiva(f).status !== "concluido" && document.querySelector('.acao[data-f="' + f.id + '"]')); return f && '.acao[data-f="' + f.id + '"]'; })()`);
   assert(aberta, "há uma ação não concluída na folha");
   const naAberta = await menu(aberta);
-  conferir(naAberta, ["Ir para esta ação", "Editar ação", "Adicionar plano", "Adicionar checkpoint", "Editar blueprint", "Planejar este blueprint", "Iniciar com o Claude…", "Conversar com o plano…", "Marcar como concluída", "Prorrogar o fim em 1 dia", "Prorrogar o fim em 1 semana", "Excluir ação…", "Recolher ações", "Voltar aos blueprints", "Entrar em tela cheia"], "da ação aberta");
-  assert.equal(naAberta.separadores, 5, "seis grupos na ação aberta: abrir, editar, estado, prazo, perigo, geral");
+  conferir(naAberta, ["Ir para esta ação", "Editar ação", "Adicionar plano", "Adicionar checkpoint", "Editar blueprint", "Planejar este blueprint", "Iniciar com o Claude…", "Conversar com o plano…", "Marcar como concluída", "Excluir ação…", "Recolher ações", "Voltar aos blueprints", "Entrar em tela cheia"], "da ação aberta");
+  assert.equal(naAberta.separadores, 4, "cinco grupos na ação aberta: abrir, editar, estado, perigo, geral");
   assert.equal(naAberta.itens.find((i) => i.t === "Marcar como concluída").desabilitado, true, "com planos e checkpoints pendentes, concluir fica desabilitado");
   await js(`window.confirmou = []; window.confirmar = async (o) => { window.confirmou.push(o.titulo); return false; }`);
   await js(`(() => { const el = document.querySelector(${JSON.stringify(aberta)}); const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: r.left + 4, clientY: r.top + 4 })); [...document.querySelectorAll('#menu-contexto [role="menuitem"]')].find((b) => b.textContent === "Iniciar com o Claude…").click(); })()`);
@@ -79,18 +79,13 @@ try {
   assert.equal(pedidos.length, 1, "o item abre uma confirmação");
   await js(`document.querySelector('dialog.escolher-sessao [data-r="0"]').click()`);
   assert(/^Iniciar a ação \d+\.\d+ com o Claude\?$/.test(pedidos[0]), "a confirmação nomeia a ação: " + pedidos[0]);
-  // situação e prazo pelo menu: a ação sem itens muda de situação, e o prazo avança e é gravado no servidor
+  // situação pelo menu: a ação sem itens muda de situação e é gravada no servidor
   const idAberta = await js(`${JSON.stringify(aberta)}.match(/"(.+)"/)[1]`);
-  const fimAntes = await js(`acaoDe(D.blueprints.find((p) => p.acoes.some((f) => f.id === ${JSON.stringify(idAberta)})).id, ${JSON.stringify(idAberta)}).fim`);
   const clicar = (seletor, rotulo) => js(`(() => { const el = document.querySelector(${JSON.stringify(seletor)}); const r = el.getBoundingClientRect(); el.dispatchEvent(new MouseEvent("contextmenu", { bubbles: true, cancelable: true, clientX: r.left + 4, clientY: r.top + 4 })); [...document.querySelectorAll('#menu-contexto [role="menuitem"]')].find((b) => b.textContent === ${JSON.stringify(rotulo)}).click(); })()`);
   await clicar(aberta, "Marcar como concluída"); // desabilitado: não faz nada
   await dormir(300);
   assert.notEqual(await js(`efetiva(acaoDe(D.blueprints.find((p) => p.acoes.some((f) => f.id === ${JSON.stringify(idAberta)})).id, ${JSON.stringify(idAberta)})).status`), "concluido", "o item desabilitado não conclui a ação");
-  await clicar(aberta, "Prorrogar o fim em 1 semana");
-  await dormir(2500);
-  const noServidor = (await (await fetch(url + "/api/dados")).json()).blueprints.flatMap((p) => p.acoes).find((f) => f.id === idAberta);
-  assert.equal(noServidor.fim, await js(`deDia(dia(${JSON.stringify(fimAntes)}) + 7)`), "o prazo avançou 7 dias e foi gravado no servidor");
-  const semItens = await js(`(() => { const p = D.blueprints.find((x) => x.acoes.some((f) => f.id === ${JSON.stringify(idAberta)})); p.acoes.push({ id: "semitens1", nome: "Ação sem itens", inicio: "2026-12-01", fim: "2026-12-05", status: "planejado", progresso: 0, planos: [], checkpoints: [] }); abertos[p.id] = true; render(); return '.acao[data-f="semitens1"]'; })()`);
+  const semItens = await js(`(() => { const p = D.blueprints.find((x) => x.acoes.some((f) => f.id === ${JSON.stringify(idAberta)})); p.acoes.push({ id: "semitens1", nome: "Ação sem itens", status: "planejado", progresso: 0, planos: [], checkpoints: [] }); abertos[p.id] = true; render(); return '.acao[data-f="semitens1"]'; })()`);
   const naSem = await menu(semItens);
   assert.deepEqual(rotulos(naSem).filter((t) => t.startsWith("Marcar")), ["Marcar como em andamento", "Marcar como concluída"], "ação sem itens: situação à escolha");
   assert(!naSem.itens.some((i) => i.desabilitado), "ação sem itens: nada desabilitado");
@@ -98,7 +93,7 @@ try {
   await dormir(2500);
   const gravada = (await (await fetch(url + "/api/dados")).json()).blueprints.flatMap((p) => p.acoes).find((f) => f.id === "semitens1");
   assert.equal(gravada?.status, "concluido", "a situação concluída foi gravada no servidor");
-  assert.deepEqual(rotulos(await menu(semItens)).filter((t) => t.startsWith("Marcar") || t.startsWith("Prorrogar")), ["Marcar como planejada", "Marcar como em andamento"], "concluída sem itens pode reabrir e não prorroga");
+  assert.deepEqual(rotulos(await menu(semItens)).filter((t) => t.startsWith("Marcar")), ["Marcar como planejada", "Marcar como em andamento"], "concluída sem itens pode reabrir");
   // adicionar plano e checkpoint pelo menu: o Editar abre na ação e o campo do item novo fica em foco
   const cresce = async (rotulo, campo, caixa, lista) => {
     const antes = await js(`D.blueprints.flatMap((p) => p.acoes).find((f) => f.id === ${JSON.stringify(idAberta)}).${lista}.length`);

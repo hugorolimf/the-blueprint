@@ -1,7 +1,6 @@
 //! As regras de negócio da folha, as mesmas de `web/js/dados.js`: a situação de uma ação vem dos planos e checkpoints marcados, o progresso
-//! de um blueprint pesa as ações pela duração e a janela de meses cobre as datas com uma semana de folga.
+//! de um blueprint é a média das ações e cada ação ocupa um passo da escada, na ordem do blueprint.
 
-use crate::documento::{dia, iso_do_dia};
 use serde_json::Value;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -15,8 +14,6 @@ pub enum Situacao {
 pub struct Checkpoint {
     pub id: String,
     pub nome: String,
-    /// dias desde 1970
-    pub data: Option<i64>,
     pub feito: bool,
 }
 
@@ -34,18 +31,12 @@ pub struct Acao {
     pub nome: String,
     /// o projeto da ação (`projetoId`); vazio se não tem
     pub projeto: String,
-    /// a posição na lista de ações do blueprint (conta também as sem data): é o número da ação, `1.2`
+    /// a posição na lista de ações do blueprint: é o número da ação, `1.2`, e o degrau dela na escada
     pub idx: usize,
-    /// primeiro e último dia (desde 1970)
-    pub a: i64,
-    pub b: i64,
-    /// sem data de verdade (`semData`, ou uma das duas faltando): `a` e `b` só guardam um lugar, e a janela de meses não conta com eles
-    pub sem_data: bool,
     pub status: Situacao,
     pub pct: f32,
     /// itens (planos e checkpoints) feitos e total
     pub itens: (usize, usize),
-    pub horas: f32,
     pub planos: Vec<Plano>,
     pub checkpoints: Vec<Checkpoint>,
 }
@@ -96,18 +87,13 @@ fn efetiva(f: &Value) -> (Situacao, f32, (usize, usize)) {
     (status, pct, (feitos, total))
 }
 
-/// As ações do blueprint `p`, na ordem do arquivo (`acoesDe`). A sem data fica em hoje, com `sem_data`: o plano do agente pode não trazer datas, e ela conta no cartão e no progresso.
+/// As ações do blueprint `p`, na ordem do arquivo (`acoesDe`).
 pub fn acoes_de(p: &Value) -> Vec<Acao> {
     lista(p, "acoes").iter().enumerate().map(|(idx, f)| {
-        let (inicio, fim) = (dia(texto(f, "inicio")), dia(texto(f, "fim")));
-        let sem_data = inicio.is_none() || fim.is_none() || f.get("semData").and_then(Value::as_bool) == Some(true);
-        let a = inicio.or(fim).unwrap_or_else(|| dia(&crate::documento::hoje()).unwrap_or(0));
-        let b = fim.unwrap_or(a);
         let (status, pct, itens) = efetiva(f);
-        let horas = lista(f, "planos").iter().map(|x| x.get("horas").and_then(Value::as_f64).unwrap_or(0.0) as f32).sum();
-        let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { id: texto(m, "id").into(), nome: texto(m, "nome").into(), data: dia(texto(m, "data")), feito: feito(m) }).collect();
+        let checkpoints = lista(f, "checkpoints").iter().map(|m| Checkpoint { id: texto(m, "id").into(), nome: texto(m, "nome").into(), feito: feito(m) }).collect();
         let planos = lista(f, "planos").iter().map(|t| Plano { id: texto(t, "id").into(), texto: texto(t, "texto").into(), feito: feito(t) }).collect();
-        Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), projeto: texto(f, "projetoId").into(), idx, a, b: b.max(a), sem_data, status, pct, itens, horas, planos, checkpoints }
+        Acao { id: texto(f, "id").into(), nome: texto(f, "nome").into(), projeto: texto(f, "projetoId").into(), idx, status, pct, itens, planos, checkpoints }
     }).collect()
 }
 
@@ -125,17 +111,14 @@ fn projeto_da(p: &Value, f: &Acao) -> String {
     if lista(p, "projetos").iter().any(|x| texto(x, "id") == f.projeto) { f.projeto.clone() } else { String::new() }
 }
 
-/// As seções do blueprint: os projetos pela data de início da primeira ação de cada um (empate: a ordem em que foram criados; sem ações vai depois) e,
-/// por último, o Geral se tiver ações. `None` se o blueprint não tem projetos (`gruposDoBlueprint` e `projetosOrdenados`).
+/// As seções do blueprint: os projetos na ordem em que foram criados e, por último, o Geral se tiver ações. `None` se o blueprint não tem projetos (`gruposDoBlueprint` e `projetosOrdenados`).
 pub fn grupos(p: &Value, acoes: &[Acao]) -> Option<Vec<Grupo>> {
     let projetos = lista(p, "projetos");
     if projetos.is_empty() {
         return None;
     }
     let do_grupo = |id: &str| -> Vec<usize> { acoes.iter().enumerate().filter(|(_, f)| projeto_da(p, f) == id).map(|(i, _)| i).collect() };
-    let mut ordem: Vec<(i64, usize, &Value)> = projetos.iter().enumerate().map(|(i, x)| (do_grupo(&texto(x, "id")).iter().map(|k| acoes[*k].a).min().unwrap_or(i64::MAX), i, x)).collect();
-    ordem.sort_by_key(|(ini, i, _)| (*ini, *i));
-    let mut grupos: Vec<Grupo> = ordem.into_iter().map(|(_, _, x)| Grupo { id: texto(x, "id").into(), nome: texto(x, "nome").into(), descricao: texto(x, "descricao").into(), acoes: do_grupo(&texto(x, "id")) }).collect();
+    let mut grupos: Vec<Grupo> = projetos.iter().map(|x| Grupo { id: texto(x, "id").into(), nome: texto(x, "nome").into(), descricao: texto(x, "descricao").into(), acoes: do_grupo(&texto(x, "id")) }).collect();
     let geral = do_grupo("");
     if !geral.is_empty() {
         grupos.push(Grupo { id: String::new(), nome: "Geral".into(), descricao: String::new(), acoes: geral });
@@ -144,7 +127,8 @@ pub fn grupos(p: &Value, acoes: &[Acao]) -> Option<Vec<Grupo>> {
 }
 
 /// O número da ação na folha (`numeroDaAcao`): `<projeto>.<posição no projeto>` com projetos (o Geral é o último), senão `<blueprint>.<posição>`.
-/// A posição conta todas as ações do blueprint, também as sem data.
+/// A folha conta todos de uma vez (`numeros` em folha/blueprint.rs, conferido contra esta nos testes); esta fica como a regra.
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn numero_da_acao(p: &Value, f: &Acao, pi: usize, acoes: &[Acao]) -> String {
     match grupos(p, acoes) {
         None => format!("{}.{}", pi + 1, f.idx + 1),
@@ -157,12 +141,13 @@ pub fn numero_da_acao(p: &Value, f: &Acao, pi: usize, acoes: &[Acao]) -> String 
     }
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 fn projeto_da_json(p: &Value, a: &Value) -> String {
     let id = texto(a, "projetoId");
     if lista(p, "projetos").iter().any(|x| texto(x, "id") == id) { id.into() } else { String::new() }
 }
 
-/// O blueprint está concluído: tem ações e todas concluídas (o status efetivo, mesmo das que não têm datas).
+/// O blueprint está concluído: tem ações e todas concluídas (o status efetivo).
 pub fn concluido(p: &Value) -> bool {
     let fs = lista(p, "acoes");
     !fs.is_empty() && fs.iter().all(|f| efetiva(f).0 == Situacao::Concluido)
@@ -172,22 +157,38 @@ pub struct Resumo {
     /// 0 a 1; só chega a 1 quando toda ação está concluída
     pub geral: f32,
     pub concl: usize,
-    pub horas: f32,
     /// todas as ações ainda planejadas
     pub futuro: bool,
 }
 
 pub fn resumo<'a>(fs: impl IntoIterator<Item = &'a Acao>) -> Resumo {
     let fs: Vec<&Acao> = fs.into_iter().collect();
-    let duracao: i64 = fs.iter().map(|f| f.b - f.a + 1).sum();
     let todas = !fs.is_empty() && fs.iter().all(|f| f.status == Situacao::Concluido);
-    let media = if duracao > 0 { fs.iter().map(|f| (f.b - f.a + 1) as f32 * f.pct).sum::<f32>() / duracao as f32 } else { 0.0 };
-    Resumo { geral: if todas { 1.0 } else { media.min(0.99) }, concl: fs.iter().filter(|f| f.status == Situacao::Concluido).count(), horas: fs.iter().map(|f| f.horas).sum(), futuro: !fs.is_empty() && fs.iter().all(|f| f.status == Situacao::Planejado) }
+    let media = if fs.is_empty() { 0.0 } else { fs.iter().map(|f| f.pct).sum::<f32>() / fs.len() as f32 };
+    Resumo { geral: if todas { 1.0 } else { media.min(0.99) }, concl: fs.iter().filter(|f| f.status == Situacao::Concluido).count(), futuro: !fs.is_empty() && fs.iter().all(|f| f.status == Situacao::Planejado) }
 }
 
-/// O progresso de um blueprint (`progressoDe`): 1 se concluído, senão o geral.
+/// O `resumo` das ações do blueprint `p` e quantas são, direto do JSON: as mesmas contas, na mesma ordem, sem montar as ações nem copiar
+/// texto. A lista pede isto de todo blueprint a cada quadro.
+pub fn resumo_json(p: &Value) -> (Resumo, usize) {
+    let fs = lista(p, "acoes");
+    let (mut soma, mut concl, mut planejadas) = (0.0f32, 0, 0);
+    for f in fs {
+        let (status, pct, _) = efetiva(f);
+        soma += pct;
+        concl += usize::from(status == Situacao::Concluido);
+        planejadas += usize::from(status == Situacao::Planejado);
+    }
+    let n = fs.len();
+    let media = if n == 0 { 0.0 } else { soma / n as f32 };
+    let todas = n > 0 && concl == n;
+    (Resumo { geral: if todas { 1.0 } else { media.min(0.99) }, concl, futuro: n > 0 && planejadas == n }, n)
+}
+
+/// O progresso de um blueprint (`progressoDe`): 1 se concluído, senão o geral. É o `geral` do resumo: «concluído» é ter ações e todas
+/// concluídas, a mesma condição que leva o geral a 1.
 pub fn progresso(p: &Value) -> f32 {
-    if concluido(p) { 1.0 } else { resumo(&acoes_de(p)).geral }
+    resumo_json(p).0.geral
 }
 
 /// Itens que ainda faltam nas ações (a soma de `it[1] - it[0]`).
@@ -195,45 +196,19 @@ pub fn faltam(fs: &[Acao]) -> usize {
     fs.iter().map(|f| f.itens.1 - f.itens.0).sum()
 }
 
-pub fn indice_mes(iso: &str) -> i64 {
-    iso[..4].parse::<i64>().unwrap_or(0) * 12 + iso[5..7].parse::<i64>().unwrap_or(1) - 1
-}
-
-pub fn mes_iso(n: i64) -> String {
-    format!("{}-{:02}", n.div_euclid(12), n.rem_euclid(12) + 1)
-}
-
-/// A janela de meses da folha: das datas das ações com uma semana de folga, em meses inteiros (`janelaPeriodo` sem período escolhido).
+/// Os passos da folha: cada ação ocupa um, na ordem do blueprint, e a seguinte começa onde ela termina (a escada).
 pub struct Janela {
-    pub inicio: i64,
-    pub fim: i64,
     pub t0: i64,
     pub t1: i64,
 }
 
-pub fn janela(fs: &[Acao], hoje: i64) -> Janela {
-    janela_com(fs, hoje, None)
-}
-
-/// O mês `aaaa-mm` é válido (`mesValido`).
-pub fn mes_valido(s: &str) -> bool {
-    s.len() == 7 && s.as_bytes()[4] == b'-' && s[..4].bytes().all(|c| c.is_ascii_digit()) && matches!(s[5..].parse::<u32>(), Ok(1..=12))
+pub fn janela(fs: &[Acao]) -> Janela {
+    Janela { t0: fs.iter().map(|f| f.idx).min().unwrap_or(0) as i64, t1: fs.iter().map(|f| f.idx + 1).max().unwrap_or(1) as i64 }
 }
 
 /// Só as ações que ainda falta fazer e, nelas, só os planos e checkpoints pendentes (o filtro «Pendentes» de `acoesVisiveis`).
 pub fn so_pendentes(fs: &[Acao]) -> Vec<Acao> {
     fs.iter().filter(|f| f.status != Situacao::Concluido).map(|f| Acao { planos: f.planos.iter().filter(|t| !t.feito).cloned().collect(), checkpoints: f.checkpoints.iter().filter(|m| !m.feito).cloned().collect(), ..f.clone() }).collect()
-}
-
-/// A janela de meses, ou o período escolhido (`inicio`, `fim` em `aaaa-mm`, em qualquer ordem) se for válido (`janelaPeriodo`).
-pub fn janela_com(fs: &[Acao], hoje: i64, escolhido: Option<(&str, &str)>) -> Janela {
-    let datadas = || fs.iter().filter(|f| !f.sem_data);
-    let (a, b) = (datadas().map(|f| f.a).min().unwrap_or(hoje) - 7, datadas().map(|f| f.b).max().unwrap_or(hoje) + 7);
-    let (mut inicio, mut fim) = (indice_mes(&iso_do_dia(a)), indice_mes(&iso_do_dia(b)));
-    if let Some((x, y)) = escolhido.filter(|(x, y)| mes_valido(x) && mes_valido(y)) {
-        (inicio, fim) = (indice_mes(x).min(indice_mes(y)), indice_mes(x).max(indice_mes(y)));
-    }
-    Janela { inicio, fim, t0: dia(&format!("{}-01", mes_iso(inicio))).unwrap_or(0), t1: dia(&format!("{}-01", mes_iso(fim + 1))).unwrap_or(0) }
 }
 
 #[cfg(test)]
@@ -244,30 +219,30 @@ mod testes {
         serde_json::from_str(include_str!("../../data.exemplo.json")).unwrap()
     }
 
-    /// Os números que a página mostra para o exemplo (conferidos na tela web): o primeiro blueprint tem 1/3 ações, 35%, 8 itens faltando e 22 h.
+    /// Os números que a página mostra para o exemplo: o primeiro blueprint tem 1/3 ações, 44%, 8 itens faltando.
     #[test]
     fn exemplo_bate_com_a_pagina() {
         let d = exemplo();
         let p = &d["blueprints"][0];
         let fs = acoes_de(p);
         let r = resumo(&fs);
-        assert_eq!((r.concl, fs.len(), (r.geral * 100.0).round() as i32, faltam(&fs), r.horas), (1, 3, 35, 8, 22.0));
+        assert_eq!((r.concl, fs.len(), (r.geral * 100.0).round() as i32, faltam(&fs)), (1, 3, 44, 8));
         let q = &d["blueprints"][1];
         let (fq, rq) = (acoes_de(q), resumo(&acoes_de(q)));
-        assert_eq!((rq.concl, fq.len(), (rq.geral * 100.0).round() as i32, faltam(&fq), rq.horas), (0, 2, 15, 5, 8.5));
-        // o carimbo da folha: média dos blueprints (25%)
+        assert_eq!((rq.concl, fq.len(), (rq.geral * 100.0).round() as i32, faltam(&fq)), (0, 2, 17, 5));
+        // o carimbo da folha: média dos blueprints (31%)
         let media = d["blueprints"].as_array().unwrap().iter().map(progresso).sum::<f32>() / 2.0;
-        assert_eq!((media * 100.0).round() as i32, 25);
+        assert_eq!((media * 100.0).round() as i32, 31);
     }
 
     /// As seções vêm pela data de início (Piloto 05/10 antes de Entregador 28/10, mesmo criado depois) e o Geral por último; a ação 3 é a `2.1`.
     #[test]
-    fn projetos_ordenam_por_inicio_e_o_geral_vai_por_ultimo() {
-        let p = serde_json::json!({ "projetos": [{ "id": "B", "nome": "Entregador" }, { "id": "A", "nome": "Piloto" }], "acoes": [
-            { "id": "a1", "nome": "x", "inicio": "2026-10-05", "fim": "2026-10-12", "projetoId": "A" },
-            { "id": "a2", "nome": "y", "inicio": "2026-10-13", "fim": "2026-10-27", "projetoId": "A" },
-            { "id": "a3", "nome": "z", "inicio": "2026-10-28", "fim": "2026-11-10", "projetoId": "B" },
-            { "id": "a4", "nome": "w", "inicio": "2026-10-20", "fim": "2026-11-02", "projetoId": "inexistente" } ] });
+    fn projetos_ficam_na_ordem_de_criacao_e_o_geral_vai_por_ultimo() {
+        let p = serde_json::json!({ "projetos": [{ "id": "A", "nome": "Piloto" }, { "id": "B", "nome": "Entregador" }], "acoes": [
+            { "id": "a1", "nome": "x", "projetoId": "A" },
+            { "id": "a2", "nome": "y", "projetoId": "A" },
+            { "id": "a3", "nome": "z", "projetoId": "B" },
+            { "id": "a4", "nome": "w", "projetoId": "inexistente" } ] });
         let fs = acoes_de(&p);
         let gs = grupos(&p, &fs).unwrap();
         assert_eq!(gs.iter().map(|g| g.id.as_str()).collect::<Vec<_>>(), ["A", "B", ""]);
@@ -279,7 +254,20 @@ mod testes {
     }
 
     #[test]
-    fn pendentes_tira_o_que_esta_feito_e_o_periodo_escolhido_manda_na_janela() {
+    fn o_resumo_do_json_bate_com_o_das_acoes() {
+        let d = exemplo();
+        let pronto = serde_json::json!({ "acoes": [{ "status": "concluido" }, { "planos": [{ "feito": true }] }] });
+        let vazio = serde_json::json!({ "acoes": [] });
+        for p in d["blueprints"].as_array().unwrap().iter().chain([&pronto, &vazio]) {
+            let (fs, (r, n)) = (acoes_de(p), resumo_json(p));
+            let esperado = resumo(&fs);
+            assert_eq!((r.geral, r.concl, r.futuro, n), (esperado.geral, esperado.concl, esperado.futuro, fs.len()));
+            assert_eq!(progresso(p), if concluido(p) { 1.0 } else { esperado.geral });
+        }
+    }
+
+    #[test]
+    fn pendentes_tira_o_que_esta_feito() {
         let d = exemplo();
         let fs = acoes_de(&d["blueprints"][0]);
         let pend = so_pendentes(&fs);
@@ -287,15 +275,6 @@ mod testes {
         assert_eq!(pend.len(), 2);
         assert_eq!(pend[0].planos.len(), 3);
         assert!(pend.iter().all(|f| f.planos.iter().all(|t| !t.feito) && f.checkpoints.iter().all(|m| !m.feito)));
-        let hoje = dia("2026-10-31").unwrap();
-        let auto = janela(&fs, hoje);
-        let outubro = janela_com(&fs, hoje, Some(("2026-10", "2026-10")));
-        assert_eq!((mes_iso(outubro.inicio), mes_iso(outubro.fim)), ("2026-10".to_string(), "2026-10".to_string()));
-        assert!(auto.t1 - auto.t0 > outubro.t1 - outubro.t0);
-        // período invertido e inválido
-        assert_eq!(janela_com(&fs, hoje, Some(("2026-11", "2026-09"))).inicio, indice_mes("2026-09"));
-        assert_eq!(janela_com(&fs, hoje, Some(("lixo", "2026-10"))).inicio, auto.inicio);
-        assert!(mes_valido("2026-12") && !mes_valido("2026-13") && !mes_valido("2026-1"));
     }
 
     #[test]
@@ -309,11 +288,10 @@ mod testes {
     }
 
     #[test]
-    fn janela_cobre_as_datas_com_folga() {
+    fn a_janela_tem_um_passo_por_acao() {
         let fs = acoes_de(&exemplo()["blueprints"][0]);
-        let j = janela(&fs, dia("2026-10-31").unwrap());
-        assert!(j.t0 <= fs.iter().map(|f| f.a).min().unwrap() - 7 + 31);
-        assert_eq!(mes_iso(indice_mes("2026-10-05")), "2026-10");
-        assert_eq!(mes_iso(j.fim + 1).len(), 7);
+        let j = janela(&fs);
+        assert_eq!((j.t0, j.t1), (0, fs.len() as i64));
+        assert_eq!((janela(&[]).t0, janela(&[]).t1), (0, 1));
     }
 }

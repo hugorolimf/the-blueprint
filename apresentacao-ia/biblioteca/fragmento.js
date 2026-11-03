@@ -1,12 +1,12 @@
 // A seção ativa e a URL: o editor do app recarrega o visor depois de cada alteração salva e quer voltar à mesma seção.
-// Fragmentos aceitos (o primeiro é o que a página escreve): #visao  #entregas  #etapas  #etapas-3 (a 3ª etapa)  #linha  #voce  #decisoes  #acoes,
+// Fragmentos aceitos (o primeiro é o que a página escreve): #visao  #entregas  #etapas  #etapas-3 (a 3ª etapa)  #voce  #decisoes  #acoes,
 // também #s-<seção> (o id real das seções), #e-<id da etapa> e os nomes do conteúdo: #recebe (entregas), #precisamos (voce), #riscos (decisoes).
 // Seção ou etapa que deixou de existir cai na mais próxima, sem erro; fragmento que não é nosso não faz nada.
 // Do app para a página: window.postMessage({ tipo: "ap-ir", secao: "etapas" [, etapa: 3] }, "*") rola até lá. Da página para o app (quando há um pai):
 // postMessage({ tipo: "ap-estado", secao, etapa (1 a n ou null), fragmento, via }) quando a seção visível muda; `via` diz como o fragmento foi gravado
 // ("replaceState", "replace" ou "nenhum"; em iframe sandbox sem allow-same-origin o primeiro pode falhar e a página cai no segundo sem quebrar).
 (function (L) {
-  const ORDEM = ["visao", "entregas", "etapas", "linha", "voce", "decisoes", "acoes"];
+  const ORDEM = ["visao", "entregas", "etapas", "voce", "decisoes", "acoes"];
   const ALIAS = { recebe: "entregas", precisamos: "voce", riscos: "decisoes" };
   const preso = (n, a, b) => Math.min(b, Math.max(a, n));
   const maisProxima = (nome, secoes) => {

@@ -41,7 +41,7 @@ pub const WORKSPACES: Tabela = Tabela { nome: "workspaces", pai: None, lista: "w
 pub const BLUEPRINTS: Tabela = Tabela { nome: "blueprints", pai: Some("workspace_id"), lista: "blueprints", sem_id: false, colunas: &[c("nome", "nome", Texto), c("descricao", "descricao", Texto), c("obs", "obs", Texto)] };
 pub const ACOES: Tabela = Tabela {
     nome: "acoes", pai: Some("blueprint_id"), lista: "acoes", sem_id: false,
-    colunas: &[c("nome", "nome", Texto), c("inicio", "inicio", Texto), c("fim", "fim", Texto), c("obs", "obs", Texto), c("status", "status", Texto), c("progresso", "progresso", Numero)],
+    colunas: &[c("nome", "nome", Texto), c("obs", "obs", Texto), c("status", "status", Texto), c("progresso", "progresso", Numero)],
 };
 pub const PLANOS: Tabela = Tabela {
     nome: "planos", pai: Some("acao_id"), lista: "planos", sem_id: false,
@@ -49,7 +49,7 @@ pub const PLANOS: Tabela = Tabela {
 };
 pub const CHECKPOINTS: Tabela = Tabela {
     nome: "checkpoints", pai: Some("acao_id"), lista: "checkpoints", sem_id: false,
-    colunas: &[c("nome", "nome", Texto), c("data", "data", Texto), c("evidencia", "evidencia", Texto), c("feitoEm", "feito_em", Texto), c("feito", "feito", Bool)],
+    colunas: &[c("nome", "nome", Texto), c("evidencia", "evidencia", Texto), c("feito", "feito", Bool)],
 };
 pub const COMENTARIOS: Tabela = Tabela {
     nome: "comentarios", pai: Some("plano_id"), lista: "comentarios", sem_id: true,
@@ -59,6 +59,21 @@ pub const PROTOTIPOS: Tabela = Tabela { nome: "prototipos", pai: Some("acao_id")
 
 /// Marca, em `listas` do plano, que `agente.comentarios` existia como lista no JSON (os itens ficam na tabela `comentarios`).
 pub const LISTA_COMENTARIOS: &str = "agente.comentarios";
+
+/// Tira os campos de data e duração que um JSON antigo (arquivo importado, backup restaurado, cliente desatualizado) ainda traga: sem coluna, iriam parar em `extra`.
+pub fn sem_datas(t: &Tabela, obj: &mut serde_json::Map<String, serde_json::Value>) {
+    let chaves: &[&str] = match t.nome {
+        "acoes" => &["inicio", "fim", "semData"],
+        "planos" => &["horas", "feitoEm"],
+        "checkpoints" => &["data", "feitoEm"],
+        _ => return,
+    };
+    chaves.iter().for_each(|c| drop(obj.remove(*c)));
+    if let Some(agente) = obj.get_mut("agente").and_then(serde_json::Value::as_object_mut) {
+        agente.remove("inicioEm");
+        agente.remove("feitoEm");
+    }
+}
 
 /// Listas filhas de cada tabela (as que viram linhas em outra tabela).
 pub fn filhas(t: &Tabela) -> &'static [&'static Tabela] {

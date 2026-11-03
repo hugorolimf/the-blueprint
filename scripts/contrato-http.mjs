@@ -20,9 +20,9 @@ const arg = (n) => { const i = process.argv.indexOf(`--${n}`); return i > 0 ? pr
 const tem = (n) => process.argv.includes(`--${n}`);
 
 const DADOS = { empresa: "Contrato", blueprints: [{ id: "p1", nome: "Portal", descricao: "d", acoes: [
-  { id: "f1", nome: "Base", inicio: "2026-11-01", fim: "2026-11-30", status: "planejado", obs: "instruções",
+  { id: "f1", nome: "Base", status: "planejado", obs: "instruções",
     planos: [{ id: "t1", texto: "Criar rota", descricao: "x" }, { id: "t2", texto: "Já feita", descricao: "y", feito: true }],
-    checkpoints: [{ id: "m1", nome: "Rota no ar", data: "2026-11-20" }, { id: "m2", nome: "Já feito", data: "2026-11-25", feito: true }], prototipos: [] }] }],
+    checkpoints: [{ id: "m1", nome: "Rota no ar" }, { id: "m2", nome: "Já feito", feito: true }], prototipos: [] }] }],
   workspaces: [{ id: "w2", nome: "Outro", blueprints: [{ id: "p9", nome: "Dele", acoes: [] }] }] };
 const HTML = "<!doctype html><title>t</title><svg></svg>";
 
@@ -40,7 +40,7 @@ function pedir(base, metodo, caminho, { cabecalhos = {}, corpo, json } = {}) {
   });
 }
 
-const MASCARAS = new Set(["em", "criadaEm", "hoje", "prototipoId", "arquivo", "url"]);
+const MASCARAS = new Set(["em", "criadaEm", "prototipoId", "arquivo", "url"]);
 const EXTENSOES_DO_RUST = new Set(["exe"]); // campos que só o Rust acrescenta (o contrato compara o que o Node já devolvia)
 const mascara = (v) => Array.isArray(v) ? v.map(mascara) : v && typeof v === "object" ? Object.fromEntries(Object.keys(v).sort().filter((k) => !EXTENSOES_DO_RUST.has(k)).map((k) => [k, MASCARAS.has(k) ? "<mascarado>" : mascara(v[k])])) : v;
 const SEM_PROTO = (t) => t.replace(/\/prototipos\/[a-f0-9]{16}\.html/g, "/prototipos/<id>.html");
@@ -102,14 +102,14 @@ async function executar(base) {
   for (const [n, q] of [["sem blueprint", "workspace=sm"], ["blueprint inexistente", "workspace=sm&blueprint=nao"], ["workspace inexistente", "workspace=nao&blueprint=p1"], ["ação inexistente", "workspace=sm&blueprint=p1&acao=nao"]]) await registra(`mcp blueprint ${n}`, "GET", `/api/mcp/blueprint?${q}`);
   await registra("mcp info", "GET", "/api/mcp/info");
   // propostas
-  const acao = (extra = {}) => ({ nome: "Nova", inicio: "2030-01-01", fim: "2030-01-31", planos: [1, 2, 3].map((n) => ({ texto: `Criar item ${n}`, descricao: "Validação: roda." })), checkpoints: [{ nome: "Pronto", data: "2030-01-30" }], ...extra });
-  await post("proposta inválida", "proposta", { workspaceId: "sm", blueprintId: "p1", acoes: [{ nome: "x", inicio: "2026-12-01", fim: "2026-11-01", planos: [], checkpoints: [] }] });
+  const acao = (extra = {}) => ({ nome: "Nova", planos: [1, 2, 3].map((n) => ({ texto: `Criar item ${n}`, descricao: "Validação: roda." })), checkpoints: [{ nome: "Pronto" }], ...extra });
+  await post("proposta inválida", "proposta", { workspaceId: "sm", blueprintId: "p1", acoes: [{ nome: "x", status: "concluido", planos: [], checkpoints: [] }] });
   await post("proposta workspace inexistente", "proposta", { workspaceId: "nao", blueprintId: "p1", acoes: [] });
   await post("proposta blueprint novo sem nome", "proposta", { workspaceId: "sm", blueprintId: "", acoes: [acao()] });
   await post("proposta válida", "proposta", { workspaceId: "sm", blueprintId: "p1", mensagem: "v1", acoes: [acao()] });
   await post("proposta substitui", "proposta", { workspaceId: "sm", blueprintId: "p1", mensagem: "v2", acoes: [acao()] });
   await post("proposta blueprint novo", "proposta", { workspaceId: "sm", blueprintId: "", blueprint: { nome: "Novo", descricao: "d" }, acoes: [acao()] });
-  await post("proposta mover", "proposta", { workspaceId: "sm", blueprintId: "p1", acoes: [acao({ planos: [{ id: "t1" }], checkpoints: [{ id: "m1", data: "2030-01-10" }] })] });
+  await post("proposta mover", "proposta", { workspaceId: "sm", blueprintId: "p1", acoes: [acao({ planos: [{ id: "t1" }], checkpoints: [{ id: "m1" }] })] });
   await post("proposta remover", "proposta", { workspaceId: "sm", blueprintId: "p1", acoes: [], remover: [{ acao_id: "f1", plano_id: "t2", motivo: "teste" }, { acao_id: "f1", checkpoint_id: "m1" }] });
   await post("proposta remover inválido", "proposta", { workspaceId: "sm", blueprintId: "p1", acoes: [], remover: [{ acao_id: "f1", plano_id: "t1", checkpoint_id: "m1" }, { acao_id: "nao" }] });
   await registra("mcp fila depois das propostas", "GET", "/api/mcp/fila");

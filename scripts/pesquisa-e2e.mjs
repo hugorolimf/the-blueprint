@@ -159,8 +159,8 @@ try {
   // ---- 80 ações: custo por tecla (a parte síncrona e até o quadro seguinte)
   await js(`(() => {
     const p = D.blueprints.find((x) => x.id === ${JSON.stringify(alvo.p.id)});
-    for (let i = 0; i < 80; i++) p.acoes.push({ id: "gerada" + i, nome: "Ação gerada " + i, obs: "instruções da ação " + i, inicio: "2026-11-0" + (1 + (i % 8)), fim: "2026-11-2" + (i % 8), status: "planejado",
-      planos: Array.from({ length: 5 }, (_, k) => ({ id: "gp" + i + "_" + k, texto: "Plano gerado " + k + " da ação " + i, descricao: "descrição " + k, feito: false })), checkpoints: [0, 1].map((k) => ({ id: "gm" + i + "_" + k, nome: "Checkpoint gerado " + k, data: "2026-11-1" + k, feito: false })) });
+    for (let i = 0; i < 80; i++) p.acoes.push({ id: "gerada" + i, nome: "Ação gerada " + i, obs: "instruções da ação " + i, status: "planejado",
+      planos: Array.from({ length: 5 }, (_, k) => ({ id: "gp" + i + "_" + k, texto: "Plano gerado " + k + " da ação " + i, descricao: "descrição " + k, feito: false })), checkpoints: [0, 1].map((k) => ({ id: "gm" + i + "_" + k, nome: "Checkpoint gerado " + k, feito: false })) });
     abertos[p.id] = true; render();
   })()`);
   await dormir(800);

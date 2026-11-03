@@ -1,6 +1,5 @@
 //! O palco do «Novo workspace»: uma margem de prancha com réguas e miras, a figura do Blueprint se montando e o carimbo com o que foi digitado.
 
-use crate::documento;
 use crate::emblema;
 use crate::fonte::Peso;
 use crate::i18n::tr;
@@ -23,9 +22,9 @@ pub fn desenhar(ui: &Ui, r: Rect, nome: &str, descricao: &str, montagem: f32) {
     miras(&p, dentro);
     // a figura fica acima do carimbo, centrada
     let altura = (dentro.width() - 16.0) / FIGURA;
-    let altura = altura.min(dentro.height() - 3.0 * LINHA - 32.0).min(600.0).max(120.0);
+    let altura = altura.min(dentro.height() - 2.0 * LINHA - 32.0).min(600.0).max(120.0);
     let tam = vec2((altura * FIGURA).round(), altura.round());
-    let vao = dentro.height() - 3.0 * LINHA - 16.0 - tam.y;
+    let vao = dentro.height() - 2.0 * LINHA - 16.0 - tam.y;
     let figura = Rect::from_min_size(pos2((dentro.center().x - tam.x / 2.0).round(), (dentro.min.y + vao / 2.0).round()), tam);
     // sai do traço para o sólido, com a curva da casa: rápido no começo
     emblema::pintar_passo(ui, figura, 1.0 - (1.0 - montagem).powi(3));
@@ -63,40 +62,28 @@ fn miras(p: &Painter, r: Rect) {
 /// O carimbo de prancha, no canto de baixo, com o que já foi digitado.
 fn carimbo(p: &Painter, dentro: Rect, nome: &str, descricao: &str) {
     let w = CARIMBO_W.min(dentro.width() - 32.0);
-    let r = Rect::from_min_size(pos2(dentro.max.x - 16.0 - w, dentro.max.y - 16.0 - 3.0 * LINHA), vec2(w, 3.0 * LINHA));
+    let r = Rect::from_min_size(pos2(dentro.max.x - 16.0 - w, dentro.max.y - 16.0 - 2.0 * LINHA), vec2(w, 2.0 * LINHA));
     p.rect_filled(r, 0, rgba(0x082b5e, 0xd9));
     planta::borda(p, r, BAIXO);
     planta::linha(p, pos2(r.min.x + ROTULO_W, r.min.y), pos2(r.min.x + ROTULO_W, r.max.y), BAIXO);
-    for i in 1..3 {
+    for i in 1..2 {
         let y = r.min.y + i as f32 * LINHA;
         planta::linha(p, pos2(r.min.x, y), pos2(r.max.x, y), BAIXO);
     }
     let util = w - ROTULO_W - 20.0;
     let (nome, descricao) = (nome.trim(), descricao.trim().replace('\n', " "));
-    let data = data_br();
-    for (i, rotulo) in [tr("Workspace"), tr("Descrição"), tr("Data")].into_iter().enumerate() {
+    for (i, rotulo) in [tr("Workspace"), tr("Descrição")].into_iter().enumerate() {
         let y = r.min.y + i as f32 * LINHA;
         Texto::novo(rotulo.to_uppercase(), 9.0).cor(MEDIO).trilha(0.14).na_linha(p, r.min.x + 10.0, y, LINHA);
         let x = r.min.x + ROTULO_W + 10.0;
         match i {
             0 if nome.is_empty() => Texto::novo(tr("Sem nome"), 14.0).peso(Peso::Medio).cor(BAIXO),
             0 => Texto::novo(nome, 14.0).peso(Peso::Medio).cor(TINTA),
-            1 if descricao.is_empty() => Texto::novo("—", 12.0).cor(MEDIO),
-            1 => Texto::novo(descricao.as_str(), 12.0).cor(MEDIO),
-            _ => Texto::novo(data.as_str(), 12.0).cor(MEDIO),
+            _ if descricao.is_empty() => Texto::novo("—", 12.0).cor(MEDIO),
+            _ => Texto::novo(descricao.as_str(), 12.0).cor(MEDIO),
         }
         .caixa(util)
         .linhas(1)
         .na_linha(p, x, y, LINHA);
-    }
-}
-
-/// Hoje, em `dd/mm/aaaa`.
-fn data_br() -> String {
-    let hoje = documento::hoje();
-    let mut partes = hoje.split('-');
-    match (partes.next(), partes.next(), partes.next()) {
-        (Some(a), Some(m), Some(d)) => format!("{d}/{m}/{a}"),
-        _ => hoje,
     }
 }

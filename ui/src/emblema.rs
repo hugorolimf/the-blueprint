@@ -34,23 +34,42 @@ impl Tamanho {
     }
 }
 
+/// O retângulo no pixel inteiro, com o tamanho em pixels inteiros. `Image::paint_at` arredonda o canto e a borda oposta cada um por si,
+/// e com rolagem ou escala fracionária o mesmo SVG pediria ±1 px conforme a posição; o carregador guarda por tamanho exato e, com dois
+/// tamanhos do mesmo URI, apaga o que não foi usado no último quadro: rasterizaria e reenviaria a textura a cada troca.
+/// Público para as outras imagens SVG que repintam a cada quadro (as figuras do Claude, o orquestrador).
+pub fn no_pixel(ui: &Ui, r: Rect) -> Rect {
+    let k = ui.pixels_per_point();
+    Rect::from_min_size(((r.min.to_vec2() * k).round() / k).to_pos2(), (r.size() * k).round() / k)
+}
+
+/// O emblema «em construção» em 11 passos, do 0 ao 100%.
+const PASSOS_CONSTRUCAO: [(&str, &[u8]); 11] = [
+    ("bytes://construcao-000.svg", include_bytes!("../assets/emblemas/construcao-000.svg")),
+    ("bytes://construcao-010.svg", include_bytes!("../assets/emblemas/construcao-010.svg")),
+    ("bytes://construcao-020.svg", include_bytes!("../assets/emblemas/construcao-020.svg")),
+    ("bytes://construcao-030.svg", include_bytes!("../assets/emblemas/construcao-030.svg")),
+    ("bytes://construcao-040.svg", include_bytes!("../assets/emblemas/construcao-040.svg")),
+    ("bytes://construcao-050.svg", include_bytes!("../assets/emblemas/construcao-050.svg")),
+    ("bytes://construcao-060.svg", include_bytes!("../assets/emblemas/construcao-060.svg")),
+    ("bytes://construcao-070.svg", include_bytes!("../assets/emblemas/construcao-070.svg")),
+    ("bytes://construcao-080.svg", include_bytes!("../assets/emblemas/construcao-080.svg")),
+    ("bytes://construcao-090.svg", include_bytes!("../assets/emblemas/construcao-090.svg")),
+    ("bytes://construcao-100.svg", include_bytes!("../assets/emblemas/construcao-100.svg")),
+];
+
 /// O emblema «em construção» dos cartões: as peças sólidas seguem o progresso (0 a 1), em passos de 10%.
 pub fn pintar_construcao(ui: &Ui, r: Rect, progresso: f32) {
-    const PASSOS: [(&str, &[u8]); 11] = [
-        ("bytes://construcao-000.svg", include_bytes!("../assets/emblemas/construcao-000.svg")),
-        ("bytes://construcao-010.svg", include_bytes!("../assets/emblemas/construcao-010.svg")),
-        ("bytes://construcao-020.svg", include_bytes!("../assets/emblemas/construcao-020.svg")),
-        ("bytes://construcao-030.svg", include_bytes!("../assets/emblemas/construcao-030.svg")),
-        ("bytes://construcao-040.svg", include_bytes!("../assets/emblemas/construcao-040.svg")),
-        ("bytes://construcao-050.svg", include_bytes!("../assets/emblemas/construcao-050.svg")),
-        ("bytes://construcao-060.svg", include_bytes!("../assets/emblemas/construcao-060.svg")),
-        ("bytes://construcao-070.svg", include_bytes!("../assets/emblemas/construcao-070.svg")),
-        ("bytes://construcao-080.svg", include_bytes!("../assets/emblemas/construcao-080.svg")),
-        ("bytes://construcao-090.svg", include_bytes!("../assets/emblemas/construcao-090.svg")),
-        ("bytes://construcao-100.svg", include_bytes!("../assets/emblemas/construcao-100.svg")),
-    ];
-    let (uri, bytes) = PASSOS[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
+    let (uri, bytes) = PASSOS_CONSTRUCAO[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
+    let r = no_pixel(ui, r);
     Image::from_bytes(uri, bytes).fit_to_exact_size(r.size()).paint_at(ui, r);
+}
+
+/// O emblema pronto do cartão «novo blueprint». Os mesmos bytes do passo 100%, com URI próprio: ele tem outro tamanho que o dos cartões
+/// prontos e, no mesmo URI, um apagaria o outro do carregador sempre que só um dos dois aparecesse na janela.
+pub fn pintar_construcao_novo(ui: &Ui, r: Rect) {
+    let r = no_pixel(ui, r);
+    Image::from_bytes("bytes://construcao-novo-100.svg", PASSOS_CONSTRUCAO[10].1).fit_to_exact_size(r.size()).paint_at(ui, r);
 }
 
 /// A figura do Blueprint em 11 passos: da só no traço (0) à pronta (100).
@@ -71,25 +90,36 @@ const PASSOS_FIGURA: [(&str, &[u8]); 11] = [
 /// A marca-d'água da lista: a marca do workspace «construída» conforme o progresso (só a padrão tem os passos; as outras vão inteiras), bem apagada.
 pub fn pintar_fundo(ui: &Ui, r: Rect, icone: &str, progresso: f32) {
     let tom = egui::Color32::from_white_alpha(46);
-    if icone == "blueprint" || !EMBLEMAS.iter().any(|(n, _, _)| *n == format!("{icone}-previa")) {
-        let (uri, bytes) = PASSOS_FIGURA[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
-        Image::from_bytes(uri, bytes).tint(tom).fit_to_exact_size(r.size()).paint_at(ui, r);
-    } else if let Some((_, uri, bytes)) = EMBLEMAS.iter().find(|(n, _, _)| *n == format!("{icone}-previa")) {
-        Image::from_bytes(*uri, *bytes).tint(tom).fit_to_exact_size(r.size()).paint_at(ui, r);
+    let r = no_pixel(ui, r);
+    // `<icone>-previa`, comparado sem montar o nome
+    let previa = EMBLEMAS.iter().find(|(n, _, _)| n.strip_suffix("-previa") == Some(icone));
+    match previa {
+        Some((_, uri, bytes)) if icone != "blueprint" => Image::from_bytes(*uri, *bytes).tint(tom).fit_to_exact_size(r.size()).paint_at(ui, r),
+        _ => {
+            let (uri, bytes) = PASSOS_FIGURA[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
+            Image::from_bytes(uri, bytes).tint(tom).fit_to_exact_size(r.size()).paint_at(ui, r);
+        }
     }
 }
 
 /// A figura do Blueprint montada até `progresso` (0 a 1), inteira: o palco do «Novo workspace».
 pub fn pintar_passo(ui: &Ui, r: Rect, progresso: f32) {
     let (uri, bytes) = PASSOS_FIGURA[(progresso.clamp(0.0, 1.0) * 10.0).round() as usize];
+    let r = no_pixel(ui, r);
     Image::from_bytes(uri, bytes).fit_to_exact_size(r.size()).paint_at(ui, r);
 }
 
 /// Pinta o emblema da marca `icone` dentro de `r`, inteiro e centralizado. Marca desconhecida vira a padrão.
 pub fn pintar(ui: &Ui, r: Rect, icone: &str, tamanho: Tamanho) {
-    let nome = |marca: &str| format!("{marca}-{}", tamanho.sufixo());
-    let achado = EMBLEMAS.iter().find(|(n, _, _)| *n == nome(icone)).or_else(|| EMBLEMAS.iter().find(|(n, _, _)| *n == nome("blueprint")));
+    let sufixo = tamanho.sufixo();
+    let achado = EMBLEMAS.iter().find(|(n, _, _)| e_de(n, icone, sufixo)).or_else(|| EMBLEMAS.iter().find(|(n, _, _)| e_de(n, "blueprint", sufixo)));
     if let Some((_, uri, bytes)) = achado {
+        let r = no_pixel(ui, r);
         Image::from_bytes(*uri, *bytes).fit_to_exact_size(r.size()).paint_at(ui, r);
     }
+}
+
+/// O emblema `n` é `<marca>-<sufixo>` (comparado sem montar o nome a cada emblema).
+fn e_de(n: &str, marca: &str, sufixo: &str) -> bool {
+    n.strip_suffix(sufixo).and_then(|m| m.strip_suffix('-')) == Some(marca)
 }

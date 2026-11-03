@@ -1,19 +1,15 @@
-// Lógica pura da apresentação com IA (web/js/apresentacao-ia-logica.js): estimativas, Épico ausente, corpo do pedido, frases do resultado e a lista.
+// Lógica pura da apresentação com IA (web/js/apresentacao-ia-logica.js): Épico ausente, corpo do pedido, frases do resultado e a lista.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const ctx = vm.createContext({ tr: (t, p = {}) => t.replace(/\{(\w+)\}/g, (_, k) => p[k] ?? "") });
-vm.runInContext(readFileSync(new URL("web/js/apresentacao-ia-logica.js", import.meta.url), "utf8") + "\nthis.api = { AP_IA_NIVEIS, AP_IA_PUBLICOS, apIaEstimativa, apIaCorpoPedido, apIaMensagem, apIaLista, apIaUrl, apIaRotuloNivel };", ctx);
+vm.runInContext(readFileSync(new URL("web/js/apresentacao-ia-logica.js", import.meta.url), "utf8") + "\nthis.api = { AP_IA_NIVEIS, AP_IA_PUBLICOS, apIaCorpoPedido, apIaMensagem, apIaLista, apIaUrl, apIaRotuloNivel };", ctx);
 const j = (x) => JSON.parse(JSON.stringify(x)); // o vm tem os seus próprios Object e Array: compara por valor
-const { AP_IA_NIVEIS, AP_IA_PUBLICOS, apIaEstimativa, apIaCorpoPedido, apIaMensagem, apIaLista, apIaUrl, apIaRotuloNivel } = ctx.api;
+const { AP_IA_NIVEIS, AP_IA_PUBLICOS, apIaCorpoPedido, apIaMensagem, apIaLista, apIaUrl, apIaRotuloNivel } = ctx.api;
 
 assert.deepEqual(j(AP_IA_NIVEIS.map((n) => n.id)), ["rapido", "padrao", "completo"], "o Épico nunca aparece na tela");
 assert.deepEqual(j(AP_IA_PUBLICOS), ["cliente", "interno"]);
-assert.equal(apIaEstimativa("rapido"), "até 1 h");
-assert.equal(apIaEstimativa("padrao"), "1 a 3 h");
-assert.equal(apIaEstimativa("completo"), "2 a 4 h");
-assert.equal(apIaEstimativa("epico"), "", "sem estimativa para o que a tela não oferece");
 assert.equal(apIaRotuloNivel().epico, undefined);
 
 const base = { workspaceId: "w", blueprintId: "b", publico: "cliente", nivel: "padrao" };
@@ -43,7 +39,7 @@ const lista = apIaLista([
   null, { titulo: "sem id" },
 ], new Set());
 assert.deepEqual(j(lista.map((a) => a.id)), ["b2", "c3", "a1"], "mais nova primeiro; id fora do padrão não entra");
-assert.equal(lista[0].em, "2026-10-26");
+assert.equal(lista[0].em, "2026-10-26T09:00:00Z", "só para a ordem: não aparece na tela");
 assert.equal(lista[1].titulo.length, 120);
 assert.equal(lista[1].publico, "");
 assert.equal(lista[1].nivel, "", "um nível desconhecido aparece sem rótulo, a apresentação não some");

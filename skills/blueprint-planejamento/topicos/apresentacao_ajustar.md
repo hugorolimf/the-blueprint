@@ -5,17 +5,17 @@ The user asks for a change to a presentation that already exists: from the Prese
 1. `ler_apresentacao(workspace_id, blueprint_id, apresentacao_id)`: the `conteudo` and the figures. The `codigo` of a figure shows only for ids in `figuras_codigo`: ask for one figure when you must change its code.
 2. `editar_apresentacao(..., operacoes)`: small operations, applied in order, all or none. Paths are dotted, list items by 0-based index (stage 3 is `etapas.2`).
 3. Read the `avisos` of the reply and fix what they say (a technical term in a `cliente` presentation, an unknown `figura`, a duplicate `secao`).
-4. Answer in one sentence what changed. If the request is ambiguous (which stage? which date?), ask before changing anything.
+4. Answer in one sentence what changed. If the request is ambiguous (which stage?), ask before changing anything.
 
 ## The operations
 
 ```json
 { "op": "definir", "caminho": "etapas.2.titulo", "valor": "Pagamento por Pix" }
-{ "op": "definir", "caminho": "etapas.2.fim", "valor": "2026-11-12" }
+{ "op": "definir", "caminho": "etapas.2.situacao", "valor": "andamento" }
 { "op": "inserir", "caminho": "riscos", "indice": 1, "valor": { "titulo": "…", "texto": "…" } }
 { "op": "remover", "caminho": "resumo.0" }
 { "op": "mover", "caminho": "etapas.3", "para": 1 }
-{ "op": "figura_definir", "figura": "capa", "campo": "secao", "valor": "linha" }
+{ "op": "figura_definir", "figura": "capa", "campo": "secao", "valor": "recebe" }
 { "op": "figura_trecho", "figura": "capa", "de": "{ x: 40, y: -20 }", "para": "{ x: 52, y: -20 }" }
 { "op": "figura_remover", "figura": "extra" }
 ```
@@ -23,7 +23,6 @@ The user asks for a change to a presentation that already exists: from the Prese
 - `definir` creates the last key if it does not exist; a list item is replaced whole.
 - `figura_trecho` replaces one **exact** piece of the figure's `codigo`. The piece must occur exactly once: copy it from `ler_apresentacao` with enough context to be unique, otherwise the call fails and tells you how many times it appeared. Prefer it to rewriting the code.
 - `figura_definir` changes any figure field except `codigo` and `id` (`titulo`, `dica`, `leitura`, `chaves`, `legenda`, `rotulo`, `secao`).
-- Dates stay `yyyy-mm-dd` and inside the blueprint's facts: a date the user gives you is theirs; one you invent is not allowed.
 
 ## Rules that never relax
 

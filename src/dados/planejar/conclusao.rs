@@ -41,7 +41,7 @@ fn comentar(agente: &mut Objeto, texto: &str, tipo: &str, em: &str) {
 }
 
 impl Dados {
-    /// Plano feito, com a evidência como comentário `relatorio` e o tempo de fim.
+    /// Plano feito, com a evidência como comentário `relatorio`.
     pub fn concluir_por_execucao(&mut self, plano_id: &str, evidencia: &str, em: &str) -> Resultado<()> {
         let tx = self.conn.transaction()?;
         let Lido { listas, mut obj, .. } = item::ler(&tx, &PLANOS, plano_id)?.ok_or_else(|| sem_item("plano", plano_id))?;
@@ -49,16 +49,14 @@ impl Dados {
         let agente = agente_de(&mut obj);
         agente.insert("estado".into(), json!("concluido"));
         agente.insert("atualizadoEm".into(), json!(em));
-        agente.insert("feitoEm".into(), json!(em));
         comentar(agente, evidencia, "relatorio", em);
         item::escrever(&tx, &PLANOS, plano_id, listas, obj)?;
-        tx.execute("INSERT INTO tempos_planos (plano_id, fim_em) VALUES (?1, ?2) ON CONFLICT (plano_id) DO UPDATE SET fim_em = excluded.fim_em", (plano_id, em))?;
         tx.commit()?;
         self.tocar_revisao();
         Ok(())
     }
 
-    /// O agente desfez a própria conclusão: o plano volta a pendente, sem tempo de fim, com o motivo nos comentários.
+    /// O agente desfez a própria conclusão: o plano volta a pendente, com o motivo nos comentários.
     pub fn desfazer_por_execucao(&mut self, plano_id: &str, motivo: &str, em: &str) -> Resultado<()> {
         let tx = self.conn.transaction()?;
         let Lido { listas, mut obj, .. } = item::ler(&tx, &PLANOS, plano_id)?.ok_or_else(|| sem_item("plano", plano_id))?;
@@ -66,28 +64,24 @@ impl Dados {
         let agente = agente_de(&mut obj);
         agente.insert("estado".into(), json!("pendente"));
         agente.insert("atualizadoEm".into(), json!(em));
-        agente.remove("feitoEm");
         if !motivo.is_empty() {
             comentar(agente, &crate::tr!("Not completed: {motivo}", "Não concluído: {motivo}"), "comentario", em);
         }
         item::escrever(&tx, &PLANOS, plano_id, listas, obj)?;
-        tx.execute("UPDATE tempos_planos SET fim_em = NULL WHERE plano_id = ?1", [plano_id])?;
         tx.commit()?;
         self.tocar_revisao();
         Ok(())
     }
 
-    /// `feito`: grava a evidência e a hora no checkpoint. Não feito: desfaz, e o motivo (`evidencia`) fica só na linha do tempo, com o resto do evento.
+    /// `feito`: grava a evidência no checkpoint. Não feito: desfaz, e o motivo (`evidencia`) fica só na linha do tempo, com o resto do evento.
     pub fn checkpoint_por_execucao(&mut self, checkpoint_id: &str, feito: bool, evidencia: &str, em: &str) -> Resultado<()> {
         let tx = self.conn.transaction()?;
         let Lido { listas, mut obj, .. } = item::ler(&tx, &CHECKPOINTS, checkpoint_id)?.ok_or_else(|| sem_item("checkpoint", checkpoint_id))?;
         obj.insert("feito".into(), Value::Bool(feito));
         if feito {
             obj.insert("evidencia".into(), json!(evidencia));
-            obj.insert("feitoEm".into(), json!(em));
         } else {
             obj.remove("evidencia");
-            obj.remove("feitoEm");
         }
         item::escrever(&tx, &CHECKPOINTS, checkpoint_id, listas, obj)?;
         tx.commit()?;

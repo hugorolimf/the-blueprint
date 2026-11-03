@@ -2109,49 +2109,43 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     "pt-BR": {
       plano: "Plano de projeto", plano_interno: "Plano de projeto, visão interna", sim: "Simulação com dados de exemplo. O sistema final pode diferir.",
       menu: "Seções", pular: "Ir para o conteúdo", imprimir: "Imprimir",
-      visao: "Visão geral", entregas: "O que você recebe", etapas: "Etapas", linha: "Linha do tempo",
+      visao: "Visão geral", entregas: "O que você recebe", etapas: "Etapas",
       voce: "O que precisamos de você", decisoes: "Decisões e riscos", acoes: "Ações",
-      riscos: "Riscos", decisoes_t: "Decisões", aberta: "a definir", decidida: "decidida", ate: "até",
-      periodo: "Período", etapa: "Etapa", etapas_n: "etapas", dias: "dias", dia_de: "Dia {n} de {total}",
+      riscos: "Riscos", decisoes_t: "Decisões", aberta: "a definir", decidida: "decidida",
+      etapa: "Etapa", etapas_n: "etapas",
       marcos: "Marcos", fig: "Fig", figura_erro: "Esta figura não pôde ser desenhada.", codigo_nao_carregou: "O código desta figura não carregou.", figura_erro_det: "Detalhe",
       st_prevista: "prevista", st_andamento: "em andamento", st_concluida: "concluída",
-      comeca: "começa em {d}", hoje: "hoje", nada: "Nada a informar nesta seção.",
+      nada: "Nada a informar nesta seção.",
       nav_dica: "Teclas: [ e ] trocam de seção, Home e End vão ao começo e ao fim.",
       ref_item: "Aponte um item do texto para vê-lo na figura.", ir_fig: "Ir para a figura {n}",
-      gerado: "Gerado em {d}", nivel: "Nível", publico: "Público", cliente: "Cliente", interno: "Interno",
+      nivel: "Nível", publico: "Público", cliente: "Cliente", interno: "Interno",
       nivel_rapido: "Rápido", nivel_padrao: "Padrão", nivel_completo: "Completo", nivel_epico: "Épico",
-      inicio: "Início", fim: "Fim", progresso: "Dia do plano", sem_figura: "Sem figura nesta etapa.",
+      sem_figura: "Sem figura nesta etapa.",
     },
     en: {
       plano: "Project plan", plano_interno: "Project plan, internal view", sim: "Simulation with sample data. The final system may differ.",
       menu: "Sections", pular: "Skip to content", imprimir: "Print",
-      visao: "Overview", entregas: "What you receive", etapas: "Stages", linha: "Timeline",
+      visao: "Overview", entregas: "What you receive", etapas: "Stages",
       voce: "What we need from you", decisoes: "Decisions and risks", acoes: "Actions",
-      riscos: "Risks", decisoes_t: "Decisions", aberta: "to be decided", decidida: "decided", ate: "by",
-      periodo: "Period", etapa: "Stage", etapas_n: "stages", dias: "days", dia_de: "Day {n} of {total}",
+      riscos: "Risks", decisoes_t: "Decisions", aberta: "to be decided", decidida: "decided",
+      etapa: "Stage", etapas_n: "stages",
       marcos: "Milestones", fig: "Fig", figura_erro: "This figure could not be drawn.", codigo_nao_carregou: "This figure's code did not load.", figura_erro_det: "Detail",
       st_prevista: "planned", st_andamento: "in progress", st_concluida: "done",
-      comeca: "starts {d}", hoje: "today", nada: "Nothing to report in this section.",
+      nada: "Nothing to report in this section.",
       nav_dica: "Keys: [ and ] switch section, Home and End jump to the start and the end.",
       ref_item: "Point at an item of the text to see it in the figure.", ir_fig: "Go to figure {n}",
-      gerado: "Generated {d}", nivel: "Level", publico: "Audience", cliente: "Client", interno: "Internal",
+      nivel: "Level", publico: "Audience", cliente: "Client", interno: "Internal",
       nivel_rapido: "Quick", nivel_padrao: "Standard", nivel_completo: "Complete", nivel_epico: "Epic",
-      inicio: "Start", fim: "End", progresso: "Plan day", sem_figura: "No figure for this stage.",
+      sem_figura: "No figure for this stage.",
     },
   };
   const dicionario = (idioma) => TEXTOS[idioma] || TEXTOS[String(idioma || "").startsWith("pt") ? "pt-BR" : "en"];
-  // t("dia_de", "pt-BR", { n: 3, total: 20 }) -> "Dia 3 de 20"
+  // t("ir_fig", "pt-BR", { n: 3 }) -> "Ir para a figura 3"
   L.t = (chave, idioma, parametros) => {
     const texto = dicionario(idioma)[chave] ?? chave;
     return parametros ? texto.replace(/\{(\w+)\}/g, (_, nome) => (parametros[nome] ?? "")) : texto;
   };
   L.idiomaDe = (idioma) => (dicionario(idioma) === TEXTOS["pt-BR"] ? "pt-BR" : "en");
-  // yyyy-mm-dd -> "26 out" / "Oct 26", em UTC para a data não andar com o fuso
-  L.dataCurta = (iso, idioma) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return "";
-    const d = new Date(iso + "T00:00:00Z");
-    return new Intl.DateTimeFormat(L.idiomaDe(idioma), { day: "numeric", month: "short", timeZone: "UTC" }).format(d).replace(/\.$/, "");
-  };
   L.TEXTOS = TEXTOS;
 })(L);
 
@@ -2356,48 +2350,29 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 
 // ---- biblioteca/secoes.js ----
 // Seções da apresentação como texto HTML puro (sem DOM): cada função recebe o `conteudo` e devolve uma string. Nada é inventado aqui:
-// os números vêm das datas de `conteudo`, o resto é o que o agente escreveu. O que vem de fora passa sempre por esc().
+// tudo é o que o agente escreveu em `conteudo`. O que vem de fora passa sempre por esc().
 (function (L) {
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  const dia = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(String(iso || "")) ? Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10)) / 86400000 : NaN);
   const num = (n) => String(n).padStart(2, "0");
   const lista = (v) => (Array.isArray(v) ? v : []);
 
-  // período do plano e onde a data do documento cai nele
-  const periodo = (c) => {
-    const ini = Math.min(...lista(c.etapas).map((e) => dia(e.inicio)).filter(Number.isFinite)), fim = Math.max(...lista(c.etapas).map((e) => dia(e.fim)).filter(Number.isFinite));
-    if (!Number.isFinite(ini) || !Number.isFinite(fim)) return null;
-    const hoje = dia(c.data), total = fim - ini + 1;
-    const n = Number.isFinite(hoje) ? Math.min(total, Math.max(0, hoje - ini + 1)) : 0;
-    return { ini, fim, total, n, pct: Math.round((n / total) * 100), hoje: Number.isFinite(hoje) ? hoje : null };
-  };
-  // `etapa.situacao` (prevista, andamento, concluida), quando vem no conteúdo, vale mais que as datas: o blueprint é quem sabe o que já começou
-  const situacao = (e, c) => {
-    if (["prevista", "andamento", "concluida"].includes(e.situacao)) return e.situacao;
-    const hoje = dia(c.data);
-    if (!Number.isFinite(hoje)) return "prevista";
-    return hoje > dia(e.fim) ? "concluida" : hoje >= dia(e.inicio) ? "andamento" : "prevista";
-  };
-  const doDia = (n, idioma) => L.dataCurta(new Date(n * 86400000).toISOString().slice(0, 10), idioma);
+  // `etapa.situacao` vem do conteúdo (prevista, andamento, concluida): o blueprint é quem sabe o que já começou
+  const situacao = (e) => (["prevista", "andamento", "concluida"].includes(e.situacao) ? e.situacao : "prevista");
 
   const secao = (id, n, titulo, corpo, extra = "") =>
     `<section class="ap-sec" id="s-${id}" aria-labelledby="h-${id}" data-sec="${id}"${extra}><header class="ap-sec-cab"><span class="ap-sec-n" aria-hidden="true">${num(n)}</span><h2 id="h-${id}">${esc(titulo)}</h2><span class="ap-sec-regua" aria-hidden="true"></span></header><div class="ap-sec-corpo">${corpo}</div></section>`;
   // a figura da seção ao lado do texto (abaixo em tela estreita); duas figuras na mesma seção ficam uma após a outra
   const lado = (corpo, fig) => (fig ? `<div class="ap-com-fig"><div class="ap-com-texto">${corpo}</div><div class="ap-com-fig-col">${fig}</div></div>` : corpo);
   const vazio = (idioma) => `<p class="ap-vazio">${esc(L.t("nada", idioma))}</p>`;
-  const datas = (a, b, idioma) => (a && b ? `${esc(L.dataCurta(a, idioma))} &rarr; ${esc(L.dataCurta(b, idioma))}` : "");
 
   const visao = (c, cartoes, n) => {
-    const p = periodo(c), idioma = c.idioma, t = (k, par) => L.t(k, idioma, par);
+    const idioma = c.idioma, t = (k, par) => L.t(k, idioma, par);
     const resumo = lista(c.resumo).map((f) => `<li>${esc(f)}</li>`).join("");
-    const kpis = p ? [
-      [t("periodo"), `${doDia(p.ini, idioma)} &rarr; ${doDia(p.fim, idioma)}`],
+    const kpis = [
       [t("etapas"), String(lista(c.etapas).length)],
       [t("entregas"), String(lista(c.entregas).length)],
-      [t("progresso"), p.hoje === null || p.hoje < p.ini ? t("comeca", { d: doDia(p.ini, idioma) }) : t("dia_de", { n: p.n, total: p.total })],
-    ].map(([r, v]) => `<div class="ap-kpi"><span>${esc(r)}</span><b>${v}</b></div>`).join("") : "";
-    const barra = p ? `<div class="ap-barra" role="img" aria-label="${esc(t("progresso"))}: ${p.pct}%"><i style="width:${p.pct}%"></i></div>` : "";
-    return secao("visao", n, t("visao"), `<div class="ap-visao"><div class="ap-visao-texto"><h3 class="ap-titulo">${esc(c.titulo)}</h3>${c.subtitulo ? `<p class="ap-sub">${esc(c.subtitulo)}</p>` : ""}${c.cliente ? `<p class="ap-cliente">${esc(c.cliente)}</p>` : ""}<ul class="ap-resumo">${resumo}</ul></div><div class="ap-visao-fig">${cartoes.capa || ""}</div></div><div class="ap-kpis">${kpis}</div>${barra}`);
+    ].map(([r, v]) => `<div class="ap-kpi"><span>${esc(r)}</span><b>${v}</b></div>`).join("");
+    return secao("visao", n, t("visao"), `<div class="ap-visao"><div class="ap-visao-texto"><h3 class="ap-titulo">${esc(c.titulo)}</h3>${c.subtitulo ? `<p class="ap-sub">${esc(c.subtitulo)}</p>` : ""}${c.cliente ? `<p class="ap-cliente">${esc(c.cliente)}</p>` : ""}<ul class="ap-resumo">${resumo}</ul></div><div class="ap-visao-fig">${cartoes.capa || ""}</div></div><div class="ap-kpis">${kpis}</div>`);
   };
 
   const entregas = (c, n, fig) => {
@@ -2408,33 +2383,16 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
   const etapas = (c, cartoes, n, extras = "", fig = "") => {
     const idioma = c.idioma, l = lista(c.etapas);
     const corpo = l.map((e, i) => {
-      const st = situacao(e, c), marcos = lista(e.marcos);
-      const m = marcos.length ? `<ul class="ap-marcos" aria-label="${esc(L.t("marcos", idioma))}">${marcos.map((k) => `<li><i aria-hidden="true"></i><b>${esc(L.dataCurta(k.data, idioma))}</b><span>${esc(k.nome)}</span></li>`).join("")}</ul>` : "";
-      return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}" data-item="${i}" data-sessao="etapas" tabindex="0"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-datas">${datas(e.inicio, e.fim, idioma)}</span><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
+      const st = situacao(e), marcos = lista(e.marcos);
+      const m = marcos.length ? `<ul class="ap-marcos" aria-label="${esc(L.t("marcos", idioma))}">${marcos.map((k) => `<li><i aria-hidden="true"></i><span>${esc(k.nome)}</span></li>`).join("")}</ul>` : "";
+      return `<article class="ap-etapa" id="e-${esc(e.id || i + 1)}" data-st="${st}" data-item="${i}" data-sessao="etapas" tabindex="0"><header><span class="ap-num">${num(i + 1)}</span><h3>${esc(e.titulo)}</h3><span class="ap-tag" data-st="${st}">${esc(L.t("st_" + st, idioma))}</span></header><p>${esc(e.texto)}</p>${m}${e.figura && cartoes[e.figura] ? `<div class="ap-etapa-fig">${cartoes[e.figura]}</div>` : ""}</article>`;
     }).join("");
     return secao("etapas", n, L.t("etapas", idioma), lado((l.length ? corpo : vazio(idioma)) + (extras ? `<div class="ap-etapa-fig ap-extras">${extras}</div>` : ""), fig));
   };
 
-  const linha = (c, n, fig = "") => {
-    const p = periodo(c), idioma = c.idioma;
-    if (!p) return secao("linha", n, L.t("linha", idioma), lado(vazio(idioma), fig));
-    const pos = (d) => (((d - p.ini) / p.total) * 100).toFixed(2);
-    const eixo = [];
-    const passo = Math.max(1, Math.ceil(p.total / 6));
-    for (let d = p.ini; d <= p.fim; d += passo) eixo.push(`<span style="left:${pos(d)}%">${esc(doDia(d, idioma))}</span>`);
-    const linhas = lista(c.etapas).map((e, i) => {
-      const a = dia(e.inicio), b = dia(e.fim);
-      if (!Number.isFinite(a) || !Number.isFinite(b)) return "";
-      const marcos = lista(e.marcos).map((k) => (Number.isFinite(dia(k.data)) ? `<b class="ap-g-marco" style="left:${pos(dia(k.data) + 0.5)}%" title="${esc(k.nome)}"></b>` : "")).join("");
-      return `<li class="ap-g-linha" data-item="${i}" data-sessao="linha" tabindex="0"><span class="ap-g-nome"><i>${num(i + 1)}</i>${esc(e.titulo)}</span><div class="ap-g-faixa"><i class="ap-g-barra" data-st="${situacao(e, c)}" style="left:${pos(a)}%;width:${(((b - a + 1) / p.total) * 100).toFixed(2)}%"></i>${marcos}</div></li>`;
-    }).join("");
-    const hoje = p.hoje !== null && p.hoje >= p.ini && p.hoje <= p.fim ? `<i class="ap-g-hoje" style="--p:${((p.hoje + 0.5 - p.ini) / p.total).toFixed(4)}" title="${esc(L.t("hoje", idioma))}"></i>` : "";
-    return secao("linha", n, L.t("linha", idioma), lado(`<div class="ap-gantt" style="--passo:${((passo / p.total) * 100).toFixed(3)}%"><div class="ap-g-eixo" aria-hidden="true"><span></span><div>${eixo.join("")}</div></div><ol class="ap-g-lista">${linhas}</ol>${hoje}</div>`, fig));
-  };
-
   const voce = (c, n, fig = "") => {
     const l = lista(c.precisamosDeVoce), idioma = c.idioma;
-    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido" data-item="${i}" data-sessao="precisamos" tabindex="0"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p>${x.ate ? `<span class="ap-ate">${esc(L.t("ate", idioma))} ${esc(L.dataCurta(x.ate, idioma))}</span>` : ""}</article>`).join("")}</div>` : vazio(idioma), fig));
+    return secao("voce", n, L.t("voce", idioma), lado(l.length ? `<div class="ap-grade ap-grade-voce">${l.map((x, i) => `<article class="ap-cartao ap-pedido" data-item="${i}" data-sessao="precisamos" tabindex="0"><span class="ap-num">${num(i + 1)}</span><h3>${esc(x.titulo)}</h3><p>${esc(x.texto)}</p></article>`).join("")}</div>` : vazio(idioma), fig));
   };
 
   const decisoes = (c, n, figD = "", figR = "") => {
@@ -2450,19 +2408,19 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     return secao("acoes", n, L.t("acoes", c.idioma), lado(l.length ? l.map((a) => `<article class="ap-item"><h4><span class="ap-num">${esc(a.numero)}</span> ${esc(a.nome)}</h4><ul class="ap-planos">${lista(a.planos).map((p) => `<li>${esc(p)}</li>`).join("")}</ul></article>`).join("") : vazio(c.idioma), fig));
   };
 
-  L.secoes = { esc, dia, periodo, situacao, visao, entregas, etapas, linha, voce, decisoes, acoes };
+  L.secoes = { esc, situacao, visao, entregas, etapas, voce, decisoes, acoes };
 })(L);
 
 // ---- biblioteca/fragmento.js ----
 // A seção ativa e a URL: o editor do app recarrega o visor depois de cada alteração salva e quer voltar à mesma seção.
-// Fragmentos aceitos (o primeiro é o que a página escreve): #visao  #entregas  #etapas  #etapas-3 (a 3ª etapa)  #linha  #voce  #decisoes  #acoes,
+// Fragmentos aceitos (o primeiro é o que a página escreve): #visao  #entregas  #etapas  #etapas-3 (a 3ª etapa)  #voce  #decisoes  #acoes,
 // também #s-<seção> (o id real das seções), #e-<id da etapa> e os nomes do conteúdo: #recebe (entregas), #precisamos (voce), #riscos (decisoes).
 // Seção ou etapa que deixou de existir cai na mais próxima, sem erro; fragmento que não é nosso não faz nada.
 // Do app para a página: window.postMessage({ tipo: "ap-ir", secao: "etapas" [, etapa: 3] }, "*") rola até lá. Da página para o app (quando há um pai):
 // postMessage({ tipo: "ap-estado", secao, etapa (1 a n ou null), fragmento, via }) quando a seção visível muda; `via` diz como o fragmento foi gravado
 // ("replaceState", "replace" ou "nenhum"; em iframe sandbox sem allow-same-origin o primeiro pode falhar e a página cai no segundo sem quebrar).
 (function (L) {
-  const ORDEM = ["visao", "entregas", "etapas", "linha", "voce", "decisoes", "acoes"];
+  const ORDEM = ["visao", "entregas", "etapas", "voce", "decisoes", "acoes"];
   const ALIAS = { recebe: "entregas", precisamos: "voce", riscos: "decisoes" };
   const preso = (n, a, b) => Math.min(b, Math.max(a, n));
   const maisProxima = (nome, secoes) => {
@@ -2573,7 +2531,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 // Toque: o toque num item o seleciona (e o foco que ele recebe também); toque fora o solta. Sem figura registrada nada quebra. Os ouvintes são delegados na raiz (um só conjunto,
 // desfeito por desligar()) e nada roda em repouso: só os eventos e, ao sair de um item, um único adiamento de 0 ms que junta "saiu de um" com "entrou no outro".
 (function (L) {
-  const GRUPOS = { recebe: (c) => c.entregas, etapas: (c) => c.etapas, linha: (c) => c.etapas, precisamos: (c) => c.precisamosDeVoce, decisoes: (c) => c.decisoes, riscos: (c) => c.riscos };
+  const GRUPOS = { recebe: (c) => c.entregas, etapas: (c) => c.etapas, precisamos: (c) => c.precisamosDeVoce, decisoes: (c) => c.decisoes, riscos: (c) => c.riscos };
   const ITEM = "[data-item][data-sessao]";
   const inteiro = (i) => (Number.isInteger(i) && i >= 0 ? i : null);
 
@@ -2660,7 +2618,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 // ---- biblioteca/casca.js ----
 // A casca da apresentação: monta a interface (barra superior, navegação por seções, painéis) a partir de `conteudo` e roda as figuras.
 // L.casca.html(conteudo, figuras) devolve { html, vivos } sem tocar no DOM (serve aos testes e à prévia); L.casca.montar(raiz, ...) a põe na página.
-// Cada figura vai para o painel da sua seção (`figura.secao`: visao, recebe, etapas, linha, precisamos, decisoes, riscos, acoes), ao lado do texto; a que uma etapa
+// Cada figura vai para o painel da sua seção (`figura.secao`: visao, recebe, etapas, precisamos, decisoes, riscos, acoes), ao lado do texto; a que uma etapa
 // cita (`etapas[].figura`) fica dentro da etapa; a sem seção e sem etapa vai ao fim de Etapas. Uma figura que lança erro vira um cartão de erro; o resto da página segue.
 (function (L) {
   const { esc } = L.secoes, S = L.secoes;
@@ -2692,8 +2650,8 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
 
   // o nome da figura no conteúdo -> o id da seção da página (riscos mora na seção Decisões e riscos); desconhecido = sem seção
   // a seção da página onde a figura está -> o grupo de itens do texto que ela comanda pela ponte (biblioteca/ponte.js); visao e acoes não têm itens
-  const GRUPO_DA_SECAO = { entregas: "recebe", etapas: "etapas", linha: "linha", voce: "precisamos", decisoes: "decisoes", riscos: "riscos" };
-  const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", linha: "linha", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
+  const GRUPO_DA_SECAO = { entregas: "recebe", etapas: "etapas", voce: "precisamos", decisoes: "decisoes", riscos: "riscos" };
+  const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
   const secaoDaFigura = (f) => SECAO_DA_FIGURA[f && f.secao];
   const usadasPorEtapas = (c) => new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
 
@@ -2703,7 +2661,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     return (livres.find((f) => secaoDaFigura(f) === "visao") || livres.find((f) => f.id === "capa") || livres.find((f) => !f.secao) || {}).id;
   };
 
-  const secoesDe = (c) => ["visao", c.entregas && c.entregas.length ? "entregas" : null, "etapas", "linha", c.precisamosDeVoce && c.precisamosDeVoce.length ? "voce" : null, "decisoes", c.publico === "interno" ? "acoes" : null].filter(Boolean);
+  const secoesDe = (c) => ["visao", c.entregas && c.entregas.length ? "entregas" : null, "etapas", c.precisamosDeVoce && c.precisamosDeVoce.length ? "voce" : null, "decisoes", c.publico === "interno" ? "acoes" : null].filter(Boolean);
 
   const html = (c, figuras = []) => {
     c = { ...c, idioma: L.idiomaDe(c.idioma) };
@@ -2731,7 +2689,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     };
     const comRef = (id, secaoHtml) => secaoHtml.replace('<div class="ap-sec-corpo">', (m) => m + refLinha(id)); // função: a dica da figura pode ter "$&"
     const j = (k) => (porSecao[k] || []).join(""), extras = soltas.join("");
-    const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), linha: (n) => S.linha(c, n, j("linha")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
+    const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
     const corpo = ids.map((id, i) => comRef(id, montar[id](i + 1))).join("");
     const nav = ids.map((id, i) => `<li><a href="#s-${id}" data-nav="${id}"><i>${String(i + 1).padStart(2, "0")}</i>${esc(t(id))}</a></li>`).join("");
     const nivel = c.nivel ? `<span class="ap-etiqueta">${esc(t("nivel"))}: ${esc(t("nivel_" + c.nivel))}</span>` : "";
@@ -2739,7 +2697,7 @@ L.TERMOS = ["rust","sqlite","postgres","postgresql","mysql","sql","api","apis","
     const pagina = `<div class="ap-ia iso" data-theme="dark" lang="${esc(idioma)}"><a class="ap-pular" href="#conteudo">${esc(t("pular"))}</a>
 <header class="ap-topo"><div class="ap-migalhas"><span>${esc(t(quem))}</span><i aria-hidden="true">/</i><span>${esc(t(quem === "interno" ? "plano_interno" : "plano"))}</span></div><div class="ap-titulo-caixa"><b>${esc(c.titulo)}</b>${c.cliente ? `<span>${esc(c.cliente)}</span>` : ""}</div><div class="ap-topo-acoes">${nivel}<button class="ap-btn" type="button" data-acao="imprimir">${esc(t("imprimir"))}</button></div></header>
 <div class="ap-corpo"><nav class="ap-nav" aria-label="${esc(t("menu"))}"><p class="ap-rot">${esc(t("menu"))}</p><ol>${nav}</ol><p class="ap-dica">${esc(t("nav_dica"))}</p></nav><main id="conteudo" class="ap-principal" tabindex="-1">${corpo}</main></div>
-<footer class="ap-rodape"><span>${esc(t("sim"))}</span><span>${c.data ? esc(t("gerado", { d: L.dataCurta(c.data, idioma) })) : ""}</span></footer></div>`;
+<footer class="ap-rodape"><span>${esc(t("sim"))}</span></footer></div>`;
     return { html: pagina, vivos };
   };
 

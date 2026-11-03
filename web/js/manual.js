@@ -1,9 +1,9 @@
 // ---- modo manual -------------------------------------------------------------------------------
 function htmlItem(t) {
-  return `<div class="item-ed${t.feito ? " feito" : ""}" data-t="${esc(t.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Plano feito")}"${t.feito ? " checked" : ""}><input data-c="texto" placeholder="${tr("Descreva o plano")}" aria-label="${tr("Texto do plano")}" value="${esc(t.texto)}"><input data-c="horas" type="number" min="0" step="any" placeholder="h" aria-label="${tr("Horas estimadas do plano")}" title="${tr("Estimativa de trabalho do agente, em horas")}" value="${t.horas ?? ""}">${responsavelSeletor(t)}<button class="x" data-act="del-plano" type="button" aria-label="${tr("Excluir plano")}">×</button></div>`;
+  return `<div class="item-ed${t.feito ? " feito" : ""}" data-t="${esc(t.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Plano feito")}"${t.feito ? " checked" : ""}><input data-c="texto" placeholder="${tr("Descreva o plano")}" aria-label="${tr("Texto do plano")}" value="${esc(t.texto)}">${responsavelSeletor(t)}<button class="x" data-act="del-plano" type="button" aria-label="${tr("Excluir plano")}">×</button></div>`;
 }
 function htmlCheckpoint(m) {
-  return `<div class="checkpoint-ed" data-m="${esc(m.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Checkpoint feito")}"${m.feito ? " checked" : ""}><input data-c="nome" placeholder="${tr("Nome do checkpoint")}" aria-label="${tr("Nome do checkpoint")}" value="${esc(m.nome)}"><input type="date" data-c="data" aria-label="${tr("Data do checkpoint")}" value="${esc(m.data)}"><button class="x" data-act="del-checkpoint" type="button" aria-label="${tr("Excluir checkpoint")}">×</button></div>`;
+  return `<div class="checkpoint-ed" data-m="${esc(m.id)}"><input type="checkbox" data-c="feito" aria-label="${tr("Checkpoint feito")}"${m.feito ? " checked" : ""}><input data-c="nome" placeholder="${tr("Nome do checkpoint")}" aria-label="${tr("Nome do checkpoint")}" value="${esc(m.nome)}"><button class="x" data-act="del-checkpoint" type="button" aria-label="${tr("Excluir checkpoint")}">×</button></div>`;
 }
 function htmlLinkEd(l) {
   return `<div class="link-ed" data-l="${esc(l.id)}"><input data-c="rotulo" placeholder="${tr("Rótulo (ex.: Site)")}" aria-label="${tr("Rótulo do link")}" value="${esc(l.rotulo)}"><input data-c="url" type="url" placeholder="https://…" aria-label="${tr("Endereço do link")}" value="${esc(l.url)}"><button class="x" data-act="del-link" type="button" aria-label="${tr("Excluir link")}">×</button><p class="erro" hidden>${tr("Endereço inválido: use http:// ou https://")}</p></div>`;
@@ -35,9 +35,7 @@ function htmlDetAcao(p, pi, f, fi) {
   const e = efetiva(f);
   return `<div class="det-topo"><span class="rot" style="margin:0">${tr("Ação")} ${numeroDaAcao(p, f, pi)}</span><div class="acoes-topo"><button class="btn mini perigo" data-act="del-acao" type="button">${tr("Excluir ação")}</button></div></div>
   <label class="f grande">${tr("Nome da ação")}<input data-c="nome" value="${esc(f.nome)}" placeholder="${tr("Ex.: Homologação")}"></label>
-  <div class="card det-acao"><h3>${tr("Período e situação")}<small class="dur">${durTxt(f)}</small></h3>
-    <div class="grade2"><label class="f">${tr("Início")}<input type="date" data-c="inicio" value="${esc(f.inicio)}"></label><label class="f">${tr("Fim")}<input type="date" data-c="fim" value="${esc(f.fim)}"></label></div>
-    <p class="erro" hidden>${tr("A data final é anterior à inicial.")}</p>
+  <div class="card det-acao"><h3>${tr("Situação")}</h3>
     ${htmlProjetoDaAcao(p, f)}
     <div class="seg" role="group" aria-label="${tr("Situação")}">${SIT.map(([v, t]) => `<button type="button" data-set="status" data-v="${v}" aria-pressed="${(e.it[1] ? e.status : f.status) === v}"${v === "concluido" && e.it[1] ? ' disabled title="' + tr("Conclui sozinha quando todos os planos e checkpoints estiverem marcados") + '"' : ""}>${t}</button>`).join("")}</div>
     <div class="prog-bloco">${htmlProg(f)}</div></div>
@@ -49,7 +47,7 @@ function htmlDetAcao(p, pi, f, fi) {
   <div class="card"><h3>${tr("Checkpoints")}<small class="cnt-m">${e.mf[1] ? `${tr("{a} de {b}", { a: e.mf[0], b: e.mf[1] })}` : ""}</small></h3>
     ${f.checkpoints.length ? f.checkpoints.map(htmlCheckpoint).join("") : `<p class="vazio">${tr("Nenhum checkpoint. Use-os para checkpoints verificáveis, como “Homologação aprovada”.")}</p>`}
     <div class="acoes"><button class="btn mini" data-act="add-checkpoint" type="button">${tr("+ Checkpoint")}</button><button class="btn mini" data-act="toggle-varias" data-alvo="m" type="button">${tr("Colar lista…")}</button></div>
-    <div class="varias" hidden><textarea data-varias="m" placeholder="${tr("Um checkpoint por linha (a data será o fim da ação)")}"></textarea><div class="acoes" style="margin:0"><button class="btn mini cheio" data-act="aplicar-varias" data-alvo="m" type="button">${tr("Adicionar checkpoints")}</button></div></div></div>
+    <div class="varias" hidden><textarea data-varias="m" placeholder="${tr("Um checkpoint por linha")}"></textarea><div class="acoes" style="margin:0"><button class="btn mini cheio" data-act="aplicar-varias" data-alvo="m" type="button">${tr("Adicionar checkpoints")}</button></div></div></div>
   <div class="card"><h3>${tr("Instruções da ação")}<small>${tr("o que fazer: o roteiro desta ação")}</small></h3>${mdEdicao('data-c="obs"', f.obs, { rows: 14, placeholder: tr("O que fazer nesta ação, passo a passo: o plano, as decisões, as dependências e os riscos…") })}</div>${f.prototipos?.length ? `
   <div class="card"><h3>${tr("Protótipos")}<small>${tr("anexados pelo agente (MCP)")}</small></h3>${f.prototipos.map((x) => `<div class="acoes" style="margin:0 0 8px"><button class="btn mini cheio" type="button" data-act="ver-proto" data-id="${esc(x.id)}">▶ ${esc(x.titulo)}</button></div>`).join("")}</div>` : ""}`;
 }
@@ -62,14 +60,6 @@ function montaListaManual() {
     return `<button class="mn-item" type="button" data-sel="${esc(f.id)}" aria-current="${edSel === f.id}"><span class="n">${numeroDaAcao(p, f, pi)}</span><span class="nome">${esc(f.nome || tr("Ação sem nome"))}</span><span class="sub"><span class="chip">${ROTULO[e.status]}</span><span>${Math.round(e.pct * 100)}%</span>${nomeDoProjeto(p, f.projetoId) ? `<span>${esc(nomeDoProjeto(p, f.projetoId))}</span>` : ""}${e.it[1] ? `<span>${e.it[0]}/${e.it[1]}</span>` : ""}</span></button>`;
   }).join("");
   $("mn-lista").innerHTML = `<button class="mn-item" type="button" data-sel="blueprint" aria-current="${edSel === "blueprint"}"><span class="n">◈</span><span class="nome">${tr("Dados do blueprint")}</span><span class="sub"><span>${tr("nome · links · observações")}</span></span></button><p class="rot">${tr("Ações ({n})", { n: p.acoes.length })}</p>${acoes || `<p class="vazio">${tr("Nenhuma ação ainda.")}</p>`}<button class="btn" type="button" data-act="add-acao">${tr("+ Nova ação")}</button>`;
-}
-function validarAcao() {
-  const caixa = $("mn-detalhe").querySelector(".det-acao");
-  if (!caixa) return;
-  const a = dia(caixa.querySelector('[data-c="inicio"]').value), b = dia(caixa.querySelector('[data-c="fim"]').value);
-  const ruim = a === a && b === b && b < a;
-  caixa.classList.toggle("invalida", ruim);
-  caixa.querySelector(".erro").hidden = !ruim;
 }
 function montaManual() {
   const p = blueprintEd();
@@ -84,17 +74,15 @@ function montaManual() {
   det.dataset.chave = edSel + p.id; // não pode se chamar data-sel: o clique da lista de ações procura esse atributo
   det.scrollTop = mesma ? topo : 0;
   det.querySelectorAll(".link-ed").forEach(validarLink);
-  validarAcao();
 }
 // atualiza só o que depende das marcações da ação, sem refazer a tela (o foco fica onde está)
 function refrescaAcao(f) {
   const det = $("mn-detalhe"), e = efetiva(f);
   const pb = det.querySelector(".prog-bloco");
   if (pb) pb.innerHTML = htmlProg(f);
-  const t = det.querySelector(".cnt-t"), m = det.querySelector(".cnt-m"), d = det.querySelector(".dur");
+  const t = det.querySelector(".cnt-t"), m = det.querySelector(".cnt-m");
   if (t) t.textContent = e.tf[1] ? `${tr("{a} de {b}", { a: e.tf[0], b: e.tf[1] })}` : "";
   if (m) m.textContent = e.mf[1] ? `${tr("{a} de {b}", { a: e.mf[0], b: e.mf[1] })}` : "";
-  if (d) d.textContent = durTxt(f);
   det.querySelectorAll(".seg [data-set]").forEach((b) => { b.setAttribute("aria-pressed", String(b.dataset.v === (e.it[1] ? e.status : f.status))); b.disabled = b.dataset.v === "concluido" && e.it[1] > 0; });
   montaListaManual();
 }
@@ -122,7 +110,6 @@ pm.addEventListener("input", (e) => {
   if (item) {
     const plano = f.planos.find((x) => x.id === item.dataset.t);
     if (c === "responsavel") { responsavelAtribui(plano, val); return mudou(); }
-    if (c === "horas") { const n = Number(val); if (val === "" || !(Number.isFinite(n) && n > 0)) delete plano.horas; else plano.horas = n; return mudou(); }
     plano[c] = val;
     if (c === "feito") { item.classList.toggle("feito", val); refrescaAcao(f); }
     return mudou();
@@ -142,7 +129,6 @@ pm.addEventListener("input", (e) => {
     return mudou();
   }
   if (c === "projetoId" && !val) delete f.projetoId; else f[c] = val; // Geral = sem o campo
-  if (c === "inicio" || c === "fim") { validarAcao(); const d = $("mn-detalhe").querySelector(".dur"); if (d) d.textContent = durTxt(f); }
   montaListaManual();
   mudou();
 });
@@ -181,7 +167,7 @@ pm.addEventListener("keydown", (e) => {
   const idx = lista.findIndex((x) => x.id === id);
   if (e.key === "Enter") {
     e.preventDefault();
-    const novo = plano ? { id: novoId(), texto: "", feito: false } : { id: novoId(), nome: "", data: f.fim || local(new Date()), feito: false };
+    const novo = plano ? { id: novoId(), texto: "", feito: false } : { id: novoId(), nome: "", feito: false };
     lista.splice(idx + 1, 0, novo);
     montaManual();
     pm.querySelector(`[data-${plano ? "t" : "m"}="${novo.id}"] input[type=text], [data-${plano ? "t" : "m"}="${novo.id}"] input:not([type])`)?.focus();
@@ -216,8 +202,7 @@ pm.addEventListener("click", (e) => {
   const a = b.dataset.act;
   const foca = (sel2) => pm.querySelector(sel2)?.focus();
   if (a === "add-acao") {
-    const ini = local(new Date()), fim = deDia(dia(ini) + 30);
-    const nf = { id: novoId(), nome: "", inicio: ini, fim, status: "andamento", progresso: 0, obs: "", planos: [], checkpoints: [] };
+    const nf = { id: novoId(), nome: "", status: "andamento", progresso: 0, obs: "", planos: [], checkpoints: [] };
     p.acoes.push(nf);
     edSel = nf.id;
     montaManual();
@@ -236,7 +221,7 @@ pm.addEventListener("click", (e) => {
     const id = b.closest(".item-ed").dataset.t, t = f.planos.find((x) => x.id === id);
     apagar(tr("Excluir plano?"), tr(`O plano "{nome}" será apagado.`, { nome: nomeDe(t?.texto, tr("sem texto")) }), () => { f.planos = f.planos.filter((x) => x.id !== id); });
   } else if (a === "add-checkpoint" && f) {
-    const m = { id: novoId(), nome: "", data: f.fim || local(new Date()), feito: false };
+    const m = { id: novoId(), nome: "", feito: false };
     f.checkpoints.push(m);
     montaManual();
     foca(`[data-m="${m.id}"] [data-c=nome]`);
@@ -253,7 +238,7 @@ pm.addEventListener("click", (e) => {
     const linhas = area.value.split("\n").map((l) => l.replace(/^\s*(?:[-*•–]|\d+[.)])\s*/, "").trim()).filter(Boolean);
     if (!linhas.length) return;
     if (b.dataset.alvo === "t") linhas.forEach((texto) => f.planos.push({ id: novoId(), texto, feito: false }));
-    else linhas.forEach((nome) => f.checkpoints.push({ id: novoId(), nome, data: f.fim || local(new Date()), feito: false }));
+    else linhas.forEach((nome) => f.checkpoints.push({ id: novoId(), nome, feito: false }));
     montaManual();
   } else if (a === "add-link") {
     p.links.push({ id: novoId(), rotulo: "", url: "" });

@@ -119,8 +119,6 @@ function abrirOuFecharTudo(id, aberto) {
 $("b-abrir").onclick = () => { if (tela) abrirOuFecharTudo(tela, true); };
 $("b-fechar").onclick = () => { if (tela) abrirOuFecharTudo(tela, false); };
 
-host.addEventListener("click", (e) => { const mes = e.target.closest("[data-mes]"); if (mes) selecionarMes(mes.dataset.mes); });
-host.addEventListener("keydown", (e) => { const mes = e.target.closest("[data-mes]"); if (mes && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); selecionarMes(mes.dataset.mes); } });
 host.addEventListener("pointerover", (e) => {
   const g = e.target.closest(".acao");
   const m = e.target.closest(".chk, .nota, .marca, .checkpoint, .ag");

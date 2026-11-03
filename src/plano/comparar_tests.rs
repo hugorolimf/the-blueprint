@@ -23,16 +23,16 @@ fn acao(id: &str, planos: Vec<PlanoItem>) -> AcaoDoc {
     AcaoDoc { id: id.into(), planos, ..Default::default() }
 }
 
-fn prazo(de: &str, ate: &str, planos: Vec<PlanoItem>, detalhes: Vec<Detalhe>) -> AcaoDoc {
-    AcaoDoc { id: "1".into(), de: Some(de.into()), ate: Some(ate.into()), planos, detalhes, ..Default::default() }
+fn acao_um(planos: Vec<PlanoItem>, detalhes: Vec<Detalhe>) -> AcaoDoc {
+    AcaoDoc { id: "1".into(), planos, detalhes, ..Default::default() }
 }
 
 fn a() -> AcaoDoc {
-    prazo("2026-11-01", "2026-11-05", vec![q("1.1", "Ler"), q("1.2", "Guardar"), q("1.3", "Apagar")], vec![det("01")])
+    acao_um(vec![q("1.1", "Ler"), q("1.2", "Guardar"), q("1.3", "Apagar")], vec![det("01")])
 }
 
 fn b() -> AcaoDoc {
-    prazo("2026-11-01", "2026-11-09", vec![q("1.1", "Ler"), q("1.2", "Guardar tudo"), q("1.4", "Mostrar")], vec![det("01"), det("02")])
+    acao_um(vec![q("1.1", "Ler"), q("1.2", "Guardar tudo"), q("1.4", "Mostrar")], vec![det("01"), det("02")])
 }
 
 fn plano(acoes: Vec<AcaoDoc>) -> PlanoDoc {
@@ -86,12 +86,12 @@ fn diff_de_texto_enorme_nao_monta_a_tabela() {
 
 #[test]
 fn compara_acao_resumo() {
-    assert_eq!(comparar_acao(&a(), &b()).resumo, Resumo { mais: 1, menos: 1, alterados: 2, detalhes: 1, outros: 0 });
+    assert_eq!(comparar_acao(&a(), &b()).resumo, Resumo { mais: 1, menos: 1, alterados: 1, detalhes: 1, outros: 0 });
 }
 
 #[test]
 fn ordem_das_linhas() {
-    assert_eq!(tipos(&comparar_acao(&a(), &b())), vec![TipoLinha::Prazo, TipoLinha::Igual, TipoLinha::Alterado, TipoLinha::Novo, TipoLinha::Removido]);
+    assert_eq!(tipos(&comparar_acao(&a(), &b())), vec![TipoLinha::Igual, TipoLinha::Alterado, TipoLinha::Novo, TipoLinha::Removido]);
 }
 
 #[test]
@@ -181,7 +181,7 @@ fn opcional_ausente_na_nova_nao_muda() {
 fn reordenar_nao_muda() {
     let velha = AcaoDoc {
         planos: vec![q("1.1", "A"), PlanoItem { depende_de: vec!["x".into(), "y".into()], ..q("1.2", "B") }],
-        checkpoints: vec![CheckpointDoc { id: "c1".into(), texto: "k".into(), data: None }, CheckpointDoc { id: "c2".into(), texto: "l".into(), data: None }],
+        checkpoints: vec![CheckpointDoc { id: "c1".into(), texto: "k".into() }, CheckpointDoc { id: "c2".into(), texto: "l".into() }],
         detalhes: vec![det("01"), det("02")],
         ..acao("1", vec![])
     };
@@ -240,7 +240,7 @@ fn outros_campos_da_acao() {
     let nova = AcaoDoc {
         nome: "M".into(),
         texto: Some("u".into()),
-        checkpoints: vec![CheckpointDoc { id: "c".into(), texto: "k".into(), data: None }],
+        checkpoints: vec![CheckpointDoc { id: "c".into(), texto: "k".into() }],
         tabelas: vec![Tabela { colunas: vec!["a".into()], ..Default::default() }],
         ..acao("1", vec![])
     };
@@ -254,14 +254,6 @@ fn outros_campos_da_acao() {
 }
 
 #[test]
-fn sair_de_data_para_sem_data_e_prazo() {
-    let sem = acao("1", vec![]);
-    let com = prazo("2026-01-01", "2026-01-02", vec![], vec![]);
-    assert_eq!(tipos(&comparar_acao(&com, &sem)), [TipoLinha::Prazo]);
-    assert_eq!(tipos(&comparar_acao(&sem, &com)), [TipoLinha::Prazo]);
-}
-
-#[test]
 fn exemplo_monitor_altera_1_2() {
     let anterior = doc(include_str!("fixtures/monitor/anterior.json"));
     let atual = doc(include_str!("fixtures/monitor/plano.json"));
@@ -271,13 +263,13 @@ fn exemplo_monitor_altera_1_2() {
     assert_eq!(r.alteradas.keys().collect::<Vec<_>>(), ["1.2"]);
     assert!(r.removidas.is_empty());
     let c = &r.alteradas["1.2"];
-    assert_eq!(tipos(c), [TipoLinha::Prazo, TipoLinha::Alterado, TipoLinha::Igual, TipoLinha::Novo, TipoLinha::Removido]);
-    assert_eq!(c.resumo, Resumo { mais: 1, menos: 1, alterados: 2, detalhes: 1, outros: 0 });
+    assert_eq!(tipos(c), [TipoLinha::Alterado, TipoLinha::Igual, TipoLinha::Novo, TipoLinha::Removido]);
+    assert_eq!(c.resumo, Resumo { mais: 1, menos: 1, alterados: 1, detalhes: 1, outros: 0 });
     assert_eq!(c.detalhes_novos.iter().map(|d| d.id.as_str()).collect::<Vec<_>>(), ["02"]);
-    assert_eq!(c.linhas[1].plano.as_ref().unwrap().id, "1.2.1");
-    assert_eq!(sem_mais(&c.linhas[1].palavras), "Somar as leituras");
-    assert_eq!(sem_menos(&c.linhas[1].palavras), "Somar as leituras por sala");
-    assert_eq!(c.linhas[4].plano.as_ref().unwrap().id, "1.2.4");
+    assert_eq!(c.linhas[0].plano.as_ref().unwrap().id, "1.2.1");
+    assert_eq!(sem_mais(&c.linhas[0].palavras), "Somar as leituras");
+    assert_eq!(sem_menos(&c.linhas[0].palavras), "Somar as leituras por sala");
+    assert_eq!(c.linhas[3].plano.as_ref().unwrap().id, "1.2.4");
     assert_eq!(planos_travados(&r), ["1.2.1", "1.2.3"]);
 }
 

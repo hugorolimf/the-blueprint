@@ -334,7 +334,7 @@ fn propor_avisa_sem_consumidor() {
     assert_eq!(aviso_sem_consumidor(Some(&via)), "", "por HTTP a página consome a fila");
     let esperado = if cfg!(windows) { "" } else { "\nNo app window consumes this queue: use abrir_plano." };
     assert_eq!(aviso_sem_consumidor(None), esperado);
-    let r = tratar_via(&json!({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "propor_blueprint", "arguments": {"workspace_id": "w2", "blueprint_id": "p9", "acoes": [{"nome": "Nova", "inicio": "2026-12-01", "fim": "2026-12-02"}]}}}), Some(&via)).unwrap();
+    let r = tratar_via(&json!({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "propor_blueprint", "arguments": {"workspace_id": "w2", "blueprint_id": "p9", "acoes": [{"nome": "Nova"}]}}}), Some(&via)).unwrap();
     let texto = r["result"]["content"][0]["text"].as_str().unwrap();
     assert!(texto.contains("Proposal no. 1") && !texto.contains("No app window"), "{texto}");
 }

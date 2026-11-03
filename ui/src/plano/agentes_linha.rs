@@ -1,9 +1,8 @@
 //! Um plano da tela de agentes como cartão: a figura do agente na pose da situação, o plano com a barra de andamento, a situação com o ponto que pulsa,
-//! de quem depende, a área, o ramo, há quanto tempo está assim e os botões. O servidor decide quais botões existem; aqui eles só ficam claros: `Integrar` é o primário.
+//! de quem depende, a área, o ramo e os botões. O servidor decide quais botões existem; aqui eles só ficam claros: `Integrar` é o primário.
 
 use super::super::agentes_movimento as mov;
 use super::super::agentes_pecas::{self as pecas, Modo};
-use super::super::agentes_tempo as tempo;
 use super::super::caixinha::botao_mini;
 use super::super::linha::{Letra, Pincel};
 use super::super::modelo::{PlanoAgente, Situacao};
@@ -18,7 +17,6 @@ pub const ALTO: f32 = 64.0;
 pub const VAO: f32 = 8.0;
 const FIGURA: f32 = 54.0;
 const LARGURA_BOTOES: f32 = 232.0;
-const LARGURA_TEMPO: f32 = 76.0;
 const LARGURA_SITUACAO: f32 = 168.0;
 
 /// Onde começa cada coluna; os títulos da tabela usam os mesmos x.
@@ -28,18 +26,16 @@ pub struct Colunas {
     pub depende: f32,
     pub area: f32,
     pub ramo: f32,
-    pub tempo: f32,
     pub botoes: f32,
 }
 
 pub fn colunas(x0: f32, x1: f32) -> Colunas {
     let w = x1 - x0;
     let botoes = x1 - 14.0 - LARGURA_BOTOES;
-    let tempo = botoes - LARGURA_TEMPO - 6.0;
-    let ramo = tempo - (w * 0.13).clamp(110.0, 200.0);
+    let ramo = botoes - 6.0 - (w * 0.13).clamp(110.0, 200.0);
     let area = ramo - (w * 0.09).clamp(84.0, 150.0);
     let depende = area - (w * 0.07).clamp(70.0, 120.0);
-    Colunas { plano: x0 + FIGURA + 28.0, situacao: depende - LARGURA_SITUACAO, depende, area, ramo, tempo, botoes }
+    Colunas { plano: x0 + FIGURA + 28.0, situacao: depende - LARGURA_SITUACAO, depende, area, ramo, botoes }
 }
 
 /// Escreve cortando em `max`, com o texto inteiro na dica se cortou.
@@ -144,18 +140,12 @@ pub fn desenhar(ui: &mut Ui, c: &Pincel, q: &PlanoAgente, col: &Colunas, indice:
     escrito(ui, c, &vazio(&q.area), col.area, y + 26.0, col.ramo - col.area - 8.0, Letra::nova(10.5, if q.situacao == Situacao::Area { cor } else { MEDIO }), ("area", &q.id));
     match ramo_visivel(q) {
         Some(ramo) => {
-            let (corte, _) = c.cortado(ramo, col.tempo - col.ramo - 28.0, &Letra::nova(9.5, TINTA));
+            let (corte, _) = c.cortado(ramo, col.botoes - 6.0 - col.ramo - 28.0, &Letra::nova(9.5, TINTA));
             pecas::ficha(c, col.ramo, y + 14.0, &corte, if trabalha { AZUL } else { MEDIO });
         }
         None => {
             c.texto("—", col.ramo, y + 26.0, Letra::nova(10.5, MEDIO.gamma_multiply(0.7)));
         }
-    }
-    if !matches!(q.situacao, Situacao::Nao | Situacao::Outra) {
-        let ha = tempo::escrito(tempo::visto_ha(&ctx, (&q.id, format!("{:?}", q.situacao))));
-        c.texto(&ha, col.tempo, y + 26.0, Letra::nova(10.5, TINTA));
-        c.texto(tr("nesta janela"), col.tempo, y + 42.0, Letra::nova(9.0, MEDIO.gamma_multiply(0.8)));
-        let _ = ui.interact(c.caixa(col.tempo, y + 10.0, LARGURA_TEMPO, 40.0), Id::unique(("plano-agentes-tempo", &q.id)), Sense::hover()).on_hover_text(tr("Contado desde que esta janela viu o plano nesta situação."));
     }
     mov::com_opacidade(ui, t, |ui| botoes(ui, c, q, y, x1)).filter(|_| t > 0.6)
 }

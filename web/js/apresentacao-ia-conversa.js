@@ -15,7 +15,7 @@ function apCvAbrir(raiz, { bp, id }) {
   apCv = { raiz, bp, id, escolha: apCv?.bp === bp ? apCv.escolha : null, historico: apCv?.id === id ? apCv.historico : [], ocupado: false };
   raiz.innerHTML = `<p class="ap-dica">${tr("Diga o que mudar. O agente muda só o que você pedir, direto na apresentação, sem refazer o resto. Também dá para digitar o pedido no terminal onde ele está.")}</p>
 <ol class="ap-cv-hist" aria-live="polite" aria-label="${esc(tr("Pedidos desta tela"))}"></ol>
-<label class="ap-ed-c"><span>${tr("Seu pedido")}</span><textarea class="ap-cv-texto" rows="4" maxlength="2000" placeholder="${esc(tr("Ex.: deixe o texto da etapa 3 mais curto e troque a data de fim para 12 de novembro"))}"></textarea></label>
+<label class="ap-ed-c"><span>${tr("Seu pedido")}</span><textarea class="ap-cv-texto" rows="4" maxlength="2000" placeholder="${esc(tr("Ex.: deixe o texto da etapa 3 mais curto e troque o título da etapa 2"))}"></textarea></label>
 <button class="btn cheio" type="button" data-cv="enviar">${tr("Enviar ao agente")}</button><p class="ap-ia-msg" role="status"></p>`;
   raiz.onclick = (e) => { if (e.target.closest('[data-cv="enviar"]')) apCvEnviar(); };
   raiz.onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && e.target.matches(".ap-cv-texto")) { e.preventDefault(); apCvEnviar(); } };

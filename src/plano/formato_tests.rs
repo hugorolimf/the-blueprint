@@ -19,12 +19,12 @@ fn minimo(acao: Value) -> Value {
 fn completo() -> PlanoDoc {
     PlanoDoc::de_json(&json!({
         "formato": FORMATO, "blueprint": "B", "resumo": "", "estilo": "plano.css", "tema": {"papel": "#123"},
-        "projetos": [{"nome": "P", "acoes": [{"id": "1", "nome": "A", "de": "2026-01-01", "ate": "2026-01-02", "texto": "t",
+        "projetos": [{"nome": "P", "acoes": [{"id": "1", "nome": "A", "texto": "t",
             "planos": [{"id": "1.1", "texto": "x", "area": "a/b", "depende_de": ["1.0"], "instrucoes": "i"}],
-            "checkpoints": [{"id": "c", "texto": "k", "data": "2026-01-02"}],
+            "checkpoints": [{"id": "c", "texto": "k"}],
             "detalhes": [{"id": "01", "titulo": "T", "legenda": "L", "grupo": "G", "figura": "f.svg", "pede_aprovacao": true}],
             "tabelas": [{"titulo": "Tb", "colunas": ["a", "b"], "larguras": [0.25, 0.75], "linhas": [["1", "2"]]}]}]}, {"acoes": []}],
-        "decisoes": [{"id": "d", "rotulo": "R", "texto": "t", "data": "2026-01-01", "acoes": ["1"], "pede_aprovacao": true}],
+        "decisoes": [{"id": "d", "rotulo": "R", "texto": "t", "acoes": ["1"], "pede_aprovacao": true}],
         "perguntas": [{"id": "q", "texto": "t", "opcoes": ["a", "b"], "recomendada": "b", "acoes": ["1"]}]
     })).unwrap()
 }
@@ -122,4 +122,14 @@ fn pecas_sozinhas() {
     assert_eq!(Decisao::de_json(&json!({"id": "d", "texto": "t", "pede_aprovacao": true})).unwrap().pede_aprovacao, true);
     assert_eq!(Pergunta::de_json(&json!({"id": "q", "opcoes": ["a"], "recomendada": 0})).unwrap().recomendada.as_deref(), Some("a"));
     assert_eq!(Tabela::de_json(&json!({"colunas": ["a"], "linhas": [[1]]})).unwrap().linhas[0], ["1"]);
+}
+
+#[test]
+fn o_plano_da_peca_vai_e_volta() {
+    let d = Detalhe::de_json(&json!({"id": "01", "plano": "1.2"})).unwrap();
+    assert_eq!(d.para_json()["plano"], "1.2");
+    assert_eq!(Decisao::de_json(&json!({"id": "d", "texto": "X", "plano": "1.2"})).unwrap().para_json()["plano"], "1.2");
+    assert_eq!(Pergunta::de_json(&json!({"id": "q", "plano": "1.2"})).unwrap().para_json()["plano"], "1.2");
+    assert_eq!(Tabela::de_json(&json!({"colunas": ["a"], "plano": "1.2"})).unwrap().para_json()["plano"], "1.2");
+    assert!(Detalhe::de_json(&json!({"id": "01"})).unwrap().para_json().get("plano").is_none());
 }

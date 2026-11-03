@@ -14,7 +14,7 @@ const apDescricoes = () => ({
 function apFigura(p) {
   try { return window.figuraDoBlueprint?.(p, { largura: 640 }) || ""; } catch { return ""; } // sem figura a capa continua boa
 }
-const apMonta = () => montarApresentacao(apBlueprint, { tipo: apTipo, workspace: D.empresa, posicao: D.blueprints.indexOf(apBlueprint), hoje: local(new Date()), figura: apFigura(apBlueprint) });
+const apMonta = () => montarApresentacao(apBlueprint, { tipo: apTipo, workspace: D.empresa, posicao: D.blueprints.indexOf(apBlueprint), figura: apFigura(apBlueprint) });
 
 function apMensagem(texto) { if (apRaiz) apRaiz.querySelector(".ap-msg").textContent = texto || ""; }
 

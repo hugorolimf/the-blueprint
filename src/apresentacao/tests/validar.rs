@@ -109,7 +109,7 @@ fn a_secao_da_figura_e_conferida_e_so_avisa() {
     assert!(!avisos(&conteudo(), json!([com_secao("a", json!("visao")), com_secao("b", json!("riscos")), figura("c")])).contains("secao"), "ids conhecidos e figura sem seção não avisam");
     let desconhecida = avisos(&conteudo(), json!([com_secao("a", json!("nada")), com_secao("b", json!(7))]));
     assert_eq!(desconhecida.matches("secao-desconhecida").count(), 2, "{desconhecida}");
-    assert!(desconhecida.contains("Figure \"a\" has secao \"nada\"") && desconhecida.contains("use visao, recebe, etapas, linha, precisamos, decisoes, riscos"));
+    assert!(desconhecida.contains("Figure \"a\" has secao \"nada\"") && desconhecida.contains("use visao, recebe, etapas, precisamos, decisoes, riscos"));
     let duplicada = avisos(&conteudo(), json!([com_secao("a", json!("visao")), com_secao("b", json!("visao")), com_secao("c", json!("riscos"))]));
     assert!(duplicada.contains("secao-duplicada: Section \"visao\" has 2 figures (a, b)") && !duplicada.contains("\"riscos\" has"), "{duplicada}");
     // `acoes` só existe na página interno

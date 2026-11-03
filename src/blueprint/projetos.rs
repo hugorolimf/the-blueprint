@@ -103,15 +103,7 @@ pub fn numeros_das_acoes(p: &Value, n_blueprint: usize) -> Vec<String> {
             projetos.iter().find(|(_, n)| !nome.is_empty() && igual(n, &nome)).map(|(i, _)| i.clone()).unwrap_or_default()
         })
         .collect();
-    let inicio = |id: &str| acoes.iter().zip(&chaves).filter(|(_, c)| c.as_str() == id).map(|(a, _)| str_de(a, "inicio")).filter(|d| !d.is_empty()).min();
-    let mut ordem: Vec<(usize, &str)> = projetos.iter().enumerate().map(|(i, (id, _))| (i, id.as_str())).collect();
-    ordem.sort_by(|(ia, a), (ib, b)| match (inicio(a), inicio(b)) {
-        (Some(x), Some(y)) => x.cmp(&y).then(ia.cmp(ib)),
-        (Some(_), None) => std::cmp::Ordering::Less,
-        (None, Some(_)) => std::cmp::Ordering::Greater,
-        (None, None) => ia.cmp(ib),
-    });
-    let mut ids: Vec<&str> = ordem.into_iter().map(|(_, id)| id).collect();
+    let mut ids: Vec<&str> = projetos.iter().map(|(id, _)| id.as_str()).collect();
     ids.push(""); // o Geral
     let mut vistas = vec![0usize; ids.len()];
     chaves

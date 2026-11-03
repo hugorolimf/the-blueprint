@@ -21,15 +21,13 @@ function focoOnde(i) {
 function focoCartaoHtml(i, o) {
   const papel = focoPapel()[i.papel] || (i === o.principal ? tr("Agente principal") : tr("Subagente")), nome = esc(i.agente || tr("agente"));
   const evs = o.eventos ? focoEventosDoAgente(o.eventos, i, o.grande ? FOCO_HISTORICO : FOCO_EVENTOS) : null;
-  const desde = i.planoId ? focoDesde(i.inicioEm, o.eventos, i.agente, i.planoId) : 0, min = focoMinutos(desde, i.em);
   const linha = (rotulo, valor) => (valor ? `<p class="foco-linha"><span>${rotulo}</span> ${esc(valor)}</p>` : "");
   const f = D.blueprints.find((x) => x.id === i.blueprintId)?.acoes.find((x) => x.id === i.acaoId);
   const ir = i.acaoId ? `<button type="button" class="btn mini" data-foco-ir="${esc(i.agente)}" data-bp="${esc(i.blueprintId)}" data-acao="${esc(i.acaoId)}" data-plano="${esc(i.planoId)}">${i.planoId ? tr("Ir ao plano na folha") : tr("Ir à ação na folha")}</button>` : "";
   const abrir = o.grande ? `<b class="foco-nome">${nome}</b>` : `<button type="button" class="foco-abrir" data-foco-abrir="${esc(i.agente)}" aria-label="${esc(tr("Ver o histórico de {agente}", { agente: i.agente || tr("agente") }))}"><b class="foco-nome">${nome}</b></button>`;
   return `<article class="foco-cartao${o.grande ? " grande" : ""}${i === o.principal ? " principal" : ""}${o.emFoco && !o.grande ? " em-foco" : ""} est-${esc(i.estado || "")}" data-agente="${esc(i.agente)}"${o.emFoco && !o.grande ? ' aria-current="true"' : ""}>`
     + `${focoFigura(i, o.principal)}<div class="foco-info"><header>${abrir}<span class="foco-chip">${esc(papel)}</span><span class="foco-chip est">${esc(ESTADO_AG[i.estado] || i.estado || tr("Trabalhando"))}${i.percentual != null ? ` · ${i.percentual}%` : ""}</span></header>`
-    + `${focoOnde(i)}${linha(tr("Agora"), i.mensagem ? `${i.mensagem} · ${ldtHora(i.em)}` : tr("sem detalhe"))}${linha(tr("Arquivos"), i.onde.join(" · "))}${i.rotulo && i.rotulo !== i.mensagem ? linha(tr("Progresso"), i.rotulo) : ""}${linha(tr("Tokens"), focoTokens(i.tokens))}`
-    + `${desde ? `<p class="foco-linha"><span>${tr("No plano")}</span> ${esc(tr("desde {hora}", { hora: ldtHora(desde) }))}${min ? ` · ${esc(tr("{n} min de trabalho até o último aviso", { n: min }))}` : ""}</p>` : ""}`
+    + `${focoOnde(i)}${linha(tr("Agora"), i.mensagem || tr("sem detalhe"))}${linha(tr("Arquivos"), i.onde.join(" · "))}${i.rotulo && i.rotulo !== i.mensagem ? linha(tr("Progresso"), i.rotulo) : ""}${linha(tr("Tokens"), focoTokens(i.tokens))}`
     + `${i.acaoId ? `<section class="ldt"><h5>${o.grande ? tr("Histórico do agente neste plano") : tr("Últimos eventos")}</h5>${evs ? ldtLista(evs, f) : `<p class="ldt-vazio">${tr("carregando…")}</p>`}</section>` : ""}`
     + `<div class="foco-acoes">${ir}</div></div></article>`;
 }

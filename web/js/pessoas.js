@@ -5,25 +5,13 @@ import { montarConvites } from "./pessoas-convites.js";
 
 export const PAPEIS_MEMBRO = ["dono", "colaborador", "supervisor"];
 
-// "há 5 min", "há 3 h", "há 2 dias"; sem data: "nunca"
-export function haQuanto(iso, agora = Date.now()) {
-  const t = Date.parse(iso || "");
-  if (!Number.isFinite(t)) return tr("nunca");
-  const min = Math.max(0, Math.floor((agora - t) / 60000));
-  if (min < 2) return tr("agora há pouco");
-  if (min < 60) return tr("há {n} min", { n: min });
-  const h = Math.floor(min / 60);
-  if (h < 24) return tr("há {n} h", { n: h });
-  return trn(Math.floor(h / 24), ["há {n} dia", "há {n} dias"]);
-}
 // as linhas da lista: quem é você vem primeiro; o dono pode mudar e remover os outros (a própria linha não, para não se trancar fora)
-export function linhasPessoas(membros, souDono, agora = Date.now()) {
+export function linhasPessoas(membros, souDono) {
   return [...(membros || [])]
     .sort((a, b) => (b.voce ? 1 : 0) - (a.voce ? 1 : 0) || (PAPEIS_MEMBRO.indexOf(a.papel) - PAPEIS_MEMBRO.indexOf(b.papel)) || String(a.nome).localeCompare(String(b.nome)))
     .map((m) => ({
       id: m.id, nome: m.nome, papel: m.papel, voce: !!m.voce,
       escopo: m.blueprintId ? tr("só um blueprint") : tr("workspace inteiro"),
-      quando: haQuanto(m.ultimaAtividade, agora),
       podeMudar: !!souDono && !m.voce,
     }));
 }
@@ -61,7 +49,7 @@ async function listar() {
   const opcao = (m, p) => `<option value="${p}"${m.papel === p ? " selected" : ""}>${esc(nomeDoPapel(p))}</option>`;
   $("eq-pessoas").innerHTML = `<ul class="eq-lista">${linhasPessoas(membros, souDono).map((m) => `<li data-membro="${esc(m.id)}">
     <span class="eq-avatar" aria-hidden="true">${esc(String(m.nome).slice(0, 1).toUpperCase())}</span>
-    <span class="eq-nome"><strong>${esc(m.nome)}</strong>${m.voce ? ` <small>${tr("(você)")}</small>` : ""}<small>${esc(m.escopo)} · ${esc(m.quando)}</small></span>
+    <span class="eq-nome"><strong>${esc(m.nome)}</strong>${m.voce ? ` <small>${tr("(você)")}</small>` : ""}<small>${esc(m.escopo)}</small></span>
     ${m.podeMudar ? `<select data-papel aria-label="${esc(tr("Papel de {nome}", { nome: m.nome }))}">${PAPEIS_MEMBRO.map((p) => opcao(m, p)).join("")}</select><button class="btn mini perigo" type="button" data-remover>${tr("Remover")}</button>` : `<span class="eq-papel">${esc(nomeDoPapel(m.papel))}</span>`}
   </li>`).join("")}</ul>`;
   $("eq-pessoas").querySelectorAll("[data-papel]").forEach((s) => s.addEventListener("change", () => mudarPapel(s.closest("li").dataset.membro, s.value)));

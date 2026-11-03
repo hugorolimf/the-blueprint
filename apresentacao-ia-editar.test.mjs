@@ -10,7 +10,7 @@ for (const f of ["logica", "ops", "esquema", "salvar"]) vm.runInContext(readFile
 vm.runInContext("this.api = { apOpsAplica, apOpsAplicaLista, apOpsJuntar, apOpsCorpos, apOpsReaplicar, apOpsFraseErro, apOpsFragmento, apOpsFragmentoSecao, apOpsDestino, apIaSalvador, apIaListas, apIaGeral, AP_IA_SECOES_FIGURA, AP_IA_NOVO, apIaCorpoTerminal, apIaCorpoTerminalAjuste, apIaCorpoPedidoAjuste, apIaTextoAjuste, apIaMensagemAjuste, apIaDescNivel, apIaLista };", ctx);
 const api = ctx.api, j = (x) => JSON.parse(JSON.stringify(x)); // o vm tem os seus próprios Object e Array: compara por valor
 const doc = () => ({
-  conteudo: { titulo: "Plano", publico: "cliente", resumo: ["a", "b"], etapas: [{ id: "e1", titulo: "Um", figura: "capa", marcos: [] }, { id: "e2", titulo: "Dois", figura: null, marcos: [{ data: "2026-11-01", nome: "m" }] }], riscos: [] },
+  conteudo: { titulo: "Plano", publico: "cliente", resumo: ["a", "b"], etapas: [{ id: "e1", titulo: "Um", figura: "capa", marcos: [] }, { id: "e2", titulo: "Dois", figura: null, marcos: [{ nome: "m" }] }], riscos: [] },
   figuras: [{ id: "capa", titulo: "Capa", chaves: [], codigo: "function (L) { return { svg: 'x' }; }" }, { id: "outra", titulo: "Outra", codigo: "function (L) { return 1; }" }],
 });
 const aplica = (d, ...ops) => { const r = api.apOpsAplicaLista(d, ops); assert.deepEqual(j(r.falhas), [], "nenhuma operação falhou"); return r; };
@@ -22,7 +22,7 @@ const aplica = (d, ...ops) => { const r = api.apOpsAplicaLista(d, ops); assert.d
     { op: "definir", caminho: "etapas.1.titulo", valor: "Novo" },
     { op: "definir", caminho: "subtitulo", valor: "novo campo" },
     { op: "inserir", caminho: "etapas", indice: 1, valor: { id: "e9", titulo: "Meio", marcos: [] } },
-    { op: "inserir", caminho: "etapas.1.marcos", valor: { data: "2026-11-02", nome: "x" } },
+    { op: "inserir", caminho: "etapas.1.marcos", valor: { nome: "x" } },
     { op: "remover", caminho: "resumo.0" },
     { op: "remover", caminho: "etapas.0.figura" },
     { op: "mover", caminho: "etapas.0", para: 1 },

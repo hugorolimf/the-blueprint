@@ -3,7 +3,7 @@
 //! (como o Windows a desenha): o normal (400, corpo), o médio (500, títulos) e o negrito (700).
 
 use egui::{FontData, FontDefinitions, FontFamily};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 /// O avanço de cada letra, em múltiplos do tamanho (1200/2048).
 pub const AVANCO: f32 = 0.585_937_5;
@@ -19,11 +19,14 @@ pub enum Peso {
     Negrito,
 }
 
+/// A família do peso. Os nomes ficam guardados: cada texto pede a sua a cada quadro, e montar o nome de novo alocaria toda vez (o clone só soma no contador).
 pub fn familia(peso: Peso) -> FontFamily {
+    static MEDIO: OnceLock<FontFamily> = OnceLock::new();
+    static NEGRITO: OnceLock<FontFamily> = OnceLock::new();
     match peso {
         Peso::Normal => FontFamily::Monospace,
-        Peso::Medio => FontFamily::Name("medio".into()),
-        Peso::Negrito => FontFamily::Name("negrito".into()),
+        Peso::Medio => MEDIO.get_or_init(|| FontFamily::Name("medio".into())).clone(),
+        Peso::Negrito => NEGRITO.get_or_init(|| FontFamily::Name("negrito".into())).clone(),
     }
 }
 

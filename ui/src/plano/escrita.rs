@@ -82,9 +82,9 @@ pub fn escrevendo(f: &Folha) -> Option<&str> {
 pub fn assinatura(f: &Folha) -> u64 {
     let mut h = DefaultHasher::new();
     for a in f.projetos.iter().flat_map(|p| &p.acoes) {
-        (&a.referencia, &a.nome, &a.de, &a.ate, &a.texto, a.escrita as u8).hash(&mut h);
+        (&a.referencia, &a.nome, &a.texto, a.escrita as u8).hash(&mut h);
         a.planos.iter().for_each(|q| (&q.referencia, &q.texto, &q.instrucoes, &q.area, &q.depende_de).hash(&mut h));
-        a.checkpoints.iter().for_each(|k| (&k.id, &k.nome, &k.data).hash(&mut h));
+        a.checkpoints.iter().for_each(|k| (&k.id, &k.nome).hash(&mut h));
         a.tabelas.iter().for_each(|t| (&t.titulo, &t.colunas, &t.linhas).hash(&mut h));
         a.detalhes.iter().for_each(|d| (&d.id, &d.titulo, &d.legenda, d.figura.as_ref().map(|x| &x.hash)).hash(&mut h));
     }
@@ -113,24 +113,31 @@ pub fn abrir_agora(aberta: Option<&str>, antes: Option<&Visto>, agora: &Visto) -
 }
 
 /// A cada quadro: mexe a folha quando uma peça chega e abre a ação em que o agente está. Sem escrita, esquece o que viu.
+/// O que foi visto vai junto da geração da folha (`Folha::geracao`): a mesma folha não muda entre um quadro e outro, então a assinatura só é refeita quando chega outra.
 pub fn acompanhar(ctx: &Context, plano: &mut Estado, f: &Folha) {
     let id = Id::unique(("plano-escrita-visto", f.blueprint.id.as_str()));
     if f.escrita.is_none() {
-        ctx.data_mut(|d| d.remove::<Visto>(id));
+        ctx.data_mut(|d| d.remove::<(u64, Visto)>(id));
         return;
     }
-    let antes = ctx.data(|d| d.get_temp::<Visto>(id));
+    let guardado = ctx.data(|d| d.get_temp::<(u64, Visto)>(id));
+    if f.geracao != 0 && guardado.as_ref().is_some_and(|(g, _)| *g == f.geracao) {
+        return;
+    }
+    let antes = guardado.map(|(_, v)| v);
     let agora = Visto { assinatura: assinatura(f), escrevendo: escrevendo(f).map(str::to_string) };
     if antes.as_ref() == Some(&agora) {
+        ctx.data_mut(|d| d.insert_temp(id, (f.geracao, agora)));
         return;
     }
     if let Some(r) = abrir_agora(plano.aberta.as_deref(), antes.as_ref(), &agora) {
         plano.aberta = Some(r);
+        plano.aberta_pelo_agente = true;
     }
     if chegou_peca(antes.as_ref(), &agora) {
         crate::anima::mexer(ctx, MEXER_MS);
     }
-    ctx.data_mut(|d| d.insert_temp(id, agora));
+    ctx.data_mut(|d| d.insert_temp(id, (f.geracao, agora)));
 }
 
 /// Quanto a faixa ocupa nesta folha.

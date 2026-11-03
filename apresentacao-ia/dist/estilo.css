@@ -197,12 +197,10 @@ html,body{margin:0;background:#061d42}
 .ap-resumo li{position:relative;padding-left:20px;line-height:1.6}
 .ap-resumo li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;border:1px solid var(--ink);background:var(--paper)}
 .ap-visao-fig .iso-figure{margin:0}
-.ap-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:22px}
+.ap-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px}
 .ap-kpi{display:grid;gap:4px;padding:12px 14px;border:1px solid var(--lo);background:#082b5ecc}
 .ap-kpi span{color:var(--mid);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
 .ap-kpi b{font-size:15px;font-weight:500;line-height:1.3}
-.ap-barra{height:12px;margin-top:14px;border:1px solid var(--lo);background:#082b5e99}
-.ap-barra i{display:block;height:100%;background:var(--ink)}
 
 /* cartões: o que se recebe e o que se espera do cliente */
 .ap-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
@@ -210,40 +208,22 @@ html,body{margin:0;background:#061d42}
 .ap-cartao h3,.ap-item h4{font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;line-height:1.35}
 .ap-cartao p,.ap-item p,.ap-etapa>p{color:var(--mid);line-height:1.6}
 .ap-pedido{border-color:var(--ink)}
-.ap-ate{justify-self:start;padding:2px 9px;border:1px solid var(--ink);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
 
 /* etapas */
 .ap-etapa{display:grid;gap:12px;padding:16px 18px;border:1px solid var(--lo);background:#082b5e99}
 .ap-etapa+.ap-etapa{margin-top:16px}
 .ap-etapa>header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
 .ap-etapa h3{flex:1 1 220px;font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
-.ap-datas{color:var(--mid);font-size:11.5px;white-space:nowrap}
 .ap-tag{padding:1px 9px;border:1px solid var(--lo);font-size:10px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
 .ap-tag[data-st=andamento]{background:var(--ink);border-color:var(--ink);color:#0c3a78}
 .ap-tag[data-st=concluida]{border-color:var(--ink)}
 .ap-tag[data-st=prevista],.ap-tag[data-estado=aberta]{border-style:dashed;color:var(--mid)}
 .ap-tag[data-estado=decidida]{border-color:var(--ink)}
 .ap-marcos{list-style:none;padding:0;display:grid;gap:6px}
-.ap-marcos li{display:grid;grid-template-columns:12px auto 1fr;gap:10px;align-items:center;font-size:12px}
+.ap-marcos li{display:grid;grid-template-columns:12px 1fr;gap:10px;align-items:center;font-size:12px}
 .ap-marcos i{width:8px;height:8px;border:1px solid var(--ink);background:var(--paper);transform:rotate(45deg)}
-.ap-marcos b{color:var(--mid);font-weight:400;letter-spacing:.06em}
 .ap-etapa-fig .iso-figure{margin:6px 0 0}
 
-/* linha do tempo: barras por etapa sobre os dias do plano */
-.ap-gantt{--gn:clamp(130px,28%,300px);position:relative}
-.ap-g-eixo{display:grid;grid-template-columns:var(--gn) minmax(0,1fr);gap:14px;margin-bottom:6px;color:var(--mid);font-size:10.5px;letter-spacing:.06em}
-.ap-g-eixo>div{position:relative;height:16px;border-bottom:1px solid var(--lo)}
-.ap-g-eixo>div span{position:absolute;bottom:3px;white-space:nowrap}
-.ap-g-lista{list-style:none;padding:0;display:grid}
-.ap-g-linha{display:grid;grid-template-columns:var(--gn) minmax(0,1fr);gap:14px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--faint)}
-.ap-g-nome{display:grid;grid-template-columns:22px minmax(0,1fr);gap:6px;font-size:12px;line-height:1.35}
-.ap-g-nome i{font-style:normal;color:var(--mid)}
-.ap-g-faixa{position:relative;height:18px;background:linear-gradient(90deg,var(--faint) 1px,transparent 1px) 0 0/var(--passo,16.6%) 100%}
-.ap-g-barra{position:absolute;top:3px;bottom:3px;border:1px solid var(--ink);background:var(--ink)}
-.ap-g-barra[data-st=andamento]{background:repeating-linear-gradient(135deg,var(--ink) 0 3px,transparent 3px 6px)}
-.ap-g-barra[data-st=prevista]{background:transparent;border-style:dashed}
-.ap-g-marco{position:absolute;top:50%;width:8px;height:8px;margin-top:-4px;border:1px solid var(--ink);background:var(--paper);transform:translateX(-50%) rotate(45deg)}
-.ap-g-hoje{position:absolute;top:20px;bottom:0;width:0;border-left:1px dashed var(--ink);left:calc(var(--gn) + 14px + (100% - var(--gn) - 14px) * var(--p))}
 
 /* decisões e riscos */
 .ap-duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:start}
@@ -259,9 +239,6 @@ html,body{margin:0;background:#061d42}
 
 @media (max-width:900px){
   .ap-visao,.ap-duas{grid-template-columns:minmax(0,1fr)}
-  .ap-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .ap-g-eixo{grid-template-columns:minmax(0,1fr)}.ap-g-eixo>span{display:none}.ap-g-eixo>div span:nth-child(even){display:none}
-  .ap-g-linha{grid-template-columns:minmax(0,1fr);gap:6px}.ap-g-hoje{display:none}
   .ap-sec-corpo{padding:16px 12px 18px}.ap-sec-cab{padding:10px 12px}
 }
 
@@ -282,7 +259,6 @@ html,body{margin:0;background:#061d42}
 .ap-ref-dica{color:var(--lo)}
 .ap-fig{min-width:0;scroll-margin-top:calc(var(--topo) + 14px)}
 [data-item]:hover,[data-item][data-ativo]{border-color:var(--ink);background:#17539f66;box-shadow:inset 3px 0 0 var(--ink)}
-.ap-g-linha[data-item]:hover,.ap-g-linha[data-item][data-ativo]{background:#17539f66}
 
 /* ---- estilo/impressao.css ---- */
 /* Impressão em A4: o papel vira branco e a tinta, o azul do blueprint. Navegação, botões e barras somem; cada painel evita quebrar no meio. */
@@ -295,7 +271,7 @@ html,body{margin:0;background:#061d42}
     --anatomy-hi:#0a2a5a;--anatomy-mid:#4d78b0;--anatomy-lo:#9db8dc;--anatomy-faint:#d3dff0;--anatomy-lit:#000;--anatomy-lit-top:#fff;--anatomy-lit-shade:#e9f0fa;
     --anatomy-glow:transparent;--anatomy-halo:#8aa6cc;--anatomy-halo-opacity:.3;--anatomy-dot:#0a2a5a;
     background:#fff;color:var(--ink);font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .ap-pular,.ap-nav,.ap-btn,.ap-etiqueta,.ap-g-hoje,.ap-sec-regua{display:none!important}
+  .ap-pular,.ap-nav,.ap-btn,.ap-etiqueta,.ap-sec-regua{display:none!important}
   .ap-topo,.ap-rodape{position:static;background:#fff;border-color:var(--lo)}
   .ap-corpo{display:block}
   .ap-principal{max-width:none;padding:14px 0;gap:14px}

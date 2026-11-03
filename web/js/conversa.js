@@ -100,8 +100,7 @@ async function conversaCarrega() {
 function conversaDesenha(mensagens) {
   const lista = $("conversa")?.querySelector(".cv-lista");
   if (!lista) return;
-  const hora = (ms) => new Date(ms).toLocaleTimeString(I18N.ativo, { hour: "2-digit", minute: "2-digit" });
-  lista.innerHTML = mensagens.length ? mensagens.map((m) => `<li class="cv-msg ${m.de === "agente" ? "agente" : "usuario"}"><span class="cv-quem">${esc(m.de === "agente" ? "Claude" : tr("Você"))} · ${esc(hora(m.em))}</span><p>${esc(m.texto)}</p>${Number.isInteger(m.proposta) ? `<button class="btn mini" type="button" data-cv-proposta="${m.proposta}">${esc(tr("Abrir a proposta nº {numero}", { numero: m.proposta }))}</button>` : ""}</li>`).join("")
+  lista.innerHTML = mensagens.length ? mensagens.map((m) => `<li class="cv-msg ${m.de === "agente" ? "agente" : "usuario"}"><span class="cv-quem">${esc(m.de === "agente" ? "Claude" : tr("Você"))}</span><p>${esc(m.texto)}</p>${Number.isInteger(m.proposta) ? `<button class="btn mini" type="button" data-cv-proposta="${m.proposta}">${esc(tr("Abrir a proposta nº {numero}", { numero: m.proposta }))}</button>` : ""}</li>`).join("")
     : `<li class="cv-vazio">${esc(tr("Nenhuma mensagem ainda. A conversa fica só na memória do app."))}</li>`;
   lista.scrollTop = lista.scrollHeight;
 }

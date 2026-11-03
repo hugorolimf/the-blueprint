@@ -53,11 +53,11 @@ fn nome_de_projeto(nome: &Option<String>) -> Option<&str> {
 
 fn plano_de(v: &Value) -> PlanoItem {
     let depende_de = lista(v, "dependeDe").iter().filter_map(Value::as_str).map(String::from).collect();
-    PlanoItem { id: ref_de(v).into(), texto: texto_de(v, "texto").into(), area: nao_vazio(v, "area"), depende_de, instrucoes: nao_vazio(v, "descricao"), id_gerado: false }
+    PlanoItem { id: ref_de(v).into(), texto: texto_de(v, "texto").into(), area: nao_vazio(v, "area"), depende_de, instrucoes: nao_vazio(v, "descricao"), forma: nao_vazio(v, "forma"), entrega: nao_vazio(v, "entrega"), id_gerado: false }
 }
 
 fn checkpoint_de(v: &Value) -> CheckpointDoc {
-    CheckpointDoc { id: ref_de(v).into(), texto: texto_de(v, "nome").into(), data: nao_vazio(v, "data") }
+    CheckpointDoc { id: ref_de(v).into(), texto: texto_de(v, "nome").into(), plano: v.get("plano").and_then(Value::as_str).map(str::to_string) }
 }
 
 fn detalhe_de(v: &Value) -> Option<Detalhe> {
@@ -67,13 +67,9 @@ fn detalhe_de(v: &Value) -> Option<Detalhe> {
 }
 
 fn acao_de(a: &Value) -> AcaoDoc {
-    let sem_data = a.get("semData").and_then(Value::as_bool) == Some(true);
-    let data = |campo: &str| if sem_data { None } else { nao_vazio(a, campo) };
     AcaoDoc {
         id: ref_de(a).into(),
         nome: texto_de(a, "nome").into(),
-        de: data("inicio"),
-        ate: data("fim"),
         texto: nao_vazio(a, "obs"),
         planos: lista(a, "planos").iter().map(plano_de).collect(),
         checkpoints: lista(a, "checkpoints").iter().map(checkpoint_de).collect(),
@@ -166,38 +162,21 @@ fn plano_para(bp_id: &str, acao_ref: &str, existente: Option<&Value>, q: &PlanoI
         m.insert("descricao".into(), json!(s));
     }
     por_opcional(&mut m, "area", &q.area);
+    por_opcional(&mut m, "forma", &q.forma);
+    por_opcional(&mut m, "entrega", &q.entrega);
     por_ou_tira(&mut m, "dependeDe", q.depende_de.iter().map(|d| json!(d)).collect());
     Value::Object(m)
 }
 
-/// A data vai sempre como o doc diz: `comparar` conta a diferença, e o que foi aprovado tem de ser o que fica.
 fn checkpoint_para(bp_id: &str, acao_ref: &str, existente: Option<&Value>, c: &CheckpointDoc) -> Value {
     let mut m = base_do_item(existente, || json!({"id": id_real(bp_id, "checkpoint", &format!("{acao_ref}/{}", c.id)), "feito": false}));
     m.insert("ref".into(), json!(c.id));
     m.insert("nome".into(), json!(c.texto));
-    match &c.data {
-        Some(d) if !d.is_empty() => drop(m.insert("data".into(), json!(d))),
-        _ => drop(m.remove("data")),
+    match c.plano.as_deref().filter(|q| !q.is_empty()) {
+        Some(q) => drop(m.insert("plano".into(), json!(q))),
+        None => drop(m.remove("plano")),
     }
     Value::Object(m)
-}
-
-/// Sem data: marca `semData` e deixa em `inicio`/`fim` o que já havia (ou hoje), para a web legada não quebrar; a volta ignora os dois.
-fn por_datas(m: &mut Map<String, Value>, a: &AcaoDoc, hoje: &str) {
-    let de = a.de.as_deref().filter(|s| !s.is_empty());
-    let ate = a.ate.as_deref().filter(|s| !s.is_empty());
-    let (Some(inicio), Some(fim)) = (de.or(ate), ate.or(de)) else {
-        m.insert("semData".into(), json!(true));
-        for campo in ["inicio", "fim"] {
-            if m.get(campo).and_then(Value::as_str).unwrap_or("").is_empty() {
-                m.insert(campo.into(), json!(hoje));
-            }
-        }
-        return;
-    };
-    m.remove("semData");
-    m.insert("inicio".into(), json!(inicio));
-    m.insert("fim".into(), json!(fim));
 }
 
 fn filhos_para(existente: Option<&Value>, campo: &str, ids: &[&str], f: impl Fn(Option<&Value>, usize) -> Value) -> Vec<Value> {
@@ -205,13 +184,12 @@ fn filhos_para(existente: Option<&Value>, campo: &str, ids: &[&str], f: impl Fn(
     casar(velhos, ids).into_iter().enumerate().map(|(i, j)| f(j.map(|j| &velhos[j]), i)).collect()
 }
 
-fn acao_para(bp_id: &str, existente: Option<&Value>, a: &AcaoDoc, projeto: Option<String>, hoje: &str) -> Value {
+fn acao_para(bp_id: &str, existente: Option<&Value>, a: &AcaoDoc, projeto: Option<String>) -> Value {
     let mut m = base_do_item(existente, || json!({"id": id_real(bp_id, "acao", &a.id), "status": "planejado", "progresso": 0, "planos": [], "checkpoints": []}));
     m.insert("ref".into(), json!(a.id));
     if !a.nome.is_empty() || !m.contains_key("nome") {
         m.insert("nome".into(), json!(a.nome));
     }
-    por_datas(&mut m, a, hoje);
     if let Some(t) = &a.texto {
         m.insert("obs".into(), json!(t));
     }
@@ -265,7 +243,7 @@ fn por_plano_doc(obj: &mut Map<String, Value>, novo: &PlanoDoc) {
 
 /// Doc para blueprint novo. O que é do blueprint (nome, resumo, tema, decisões, perguntas) entra em qualquer escopo; `escopo` só decide as ações.
 /// Sem nome de projeto, a ação fica sem `projetoId`. `feito` não é mexido aqui: reabrir plano alterado é do gesto de aprovar.
-pub fn projetar(bp: &Value, novo: &PlanoDoc, escopo: Escopo<'_>, hoje: &str) -> Value {
+pub fn projetar(bp: &Value, novo: &PlanoDoc, escopo: Escopo<'_>) -> Value {
     let mut saida = bp.clone();
     let Some(obj) = saida.as_object_mut() else { return saida };
     let bp_id = texto_de(bp, "id");
@@ -289,7 +267,7 @@ pub fn projetar(bp: &Value, novo: &PlanoDoc, escopo: Escopo<'_>, hoje: &str) -> 
         garantir_projeto(&mut projetos, bp_id, &p.nome);
     }
     let mut feitas: Vec<Option<Value>> = doc.iter().zip(&casados).map(|((nome, a), j)| {
-        escopo.entra(&[a.id.as_str()]).then(|| acao_para(bp_id, j.map(|j| &atuais[j]), a, garantir_projeto(&mut projetos, bp_id, nome), hoje))
+        escopo.entra(&[a.id.as_str()]).then(|| acao_para(bp_id, j.map(|j| &atuais[j]), a, garantir_projeto(&mut projetos, bp_id, nome)))
     }).collect();
     if projetos.len() != antes {
         obj.insert("projetos".into(), Value::Array(projetos));

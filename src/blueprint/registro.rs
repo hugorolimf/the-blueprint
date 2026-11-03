@@ -1,5 +1,5 @@
 //! Registro do trabalho feito fora do plano (`registrar_trabalho`): o que o agente já fez, com os planos e checkpoints já marcados como feitos (e a evidência),
-//! mais o que ficou pendente. NÃO é proposta (proposta é trabalho futuro): a validação é a mesma, mas aceita `feito` + `evidencia` e não reclama de datas passadas.
+//! mais o que ficou pendente. NÃO é proposta (proposta é trabalho futuro): a validação é a mesma, mas aceita `feito` + `evidencia`.
 //! Nada aqui altera dados: devolve erros, avisos e o registro normalizado; quem adiciona ao blueprint é o usuário, na tela.
 use super::texto::{campo, lista, truncar};
 use super::validar::{validar, Validacao};
@@ -8,7 +8,7 @@ use serde_json::Value;
 const EVIDENCIA_MAX: usize = 1000;
 
 /// Valida o registro contra o blueprint existente (um registro nunca cria blueprint, remove nem move nada).
-pub fn validar_registro(entrada: &Value, blueprint: &Value, hoje: &str) -> Validacao {
+pub fn validar_registro(entrada: &Value, blueprint: &Value) -> Validacao {
     let mut erros = Vec::new();
     if !lista(entrada.get("remover")).is_empty() || !lista(entrada.get("mover")).is_empty() {
         erros.push(crate::tr!("A record only reports what was done: `remover` and `mover` are not allowed here (use propor_blueprint).", "Um registro só relata o que foi feito: `remover` e `mover` não valem aqui (use propor_blueprint)."));
@@ -38,7 +38,7 @@ pub fn validar_registro(entrada: &Value, blueprint: &Value, hoje: &str) -> Valid
     if feitos == 0 && erros.is_empty() {
         erros.push(crate::tr!("The record has nothing done: mark `feito: true` (with `evidencia`) on what is already done. Future work goes in propor_blueprint.", "O registro não tem nada feito: marque `feito: true` (com `evidencia`) no que já foi feito. Trabalho futuro vai em propor_blueprint."));
     }
-    let mut r = validar(entrada, Some(blueprint), hoje, true);
+    let mut r = validar(entrada, Some(blueprint), true);
     r.erros.splice(0..0, erros);
     if !r.erros.is_empty() {
         r.proposta = None;

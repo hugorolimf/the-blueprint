@@ -1,6 +1,6 @@
 function (L, c) {
   // Fichário de cadastro: 14 fichas em pé numa bandeja, um leitor que desliza no trilho da frente e a ficha escolhida que sobe.
-  // Cada aba da ficha diz a situação (em dia, pendente, atrasada); o mostrador conta a posição. Dados de exemplo, nenhum real.
+  // Cada aba da ficha diz a situação (completa, pendente, em revisão); o mostrador conta a posição. Dados de exemplo, nenhum real.
   const pt = L.idiomaDe(c && c.idioma) === "pt-BR";
   const W = 660, H = 470;
   const N = 14, PITCH = 17.4, X0 = -118, ESP = 3, ALTO = 50, Z0 = 3, LIFT = 12, FRENTE = 18;
@@ -9,7 +9,7 @@ function (L, c) {
   const REACH = [centro(0), centro(N - 1)];
   const situacao = (i) => (i % 5 === 2 ? 2 : i % 4 === 0 ? 1 : 0);
   const ABA_Y = [-33, -15, -1];
-  const textoSit = pt ? ["em dia", "pendente", "atrasada"] : ["on time", "pending", "overdue"];
+  const textoSit = pt ? ["completa", "pendente", "em revisão"] : ["complete", "pending", "in review"];
   const abertas = [0, 1, 2];
 
   const P = L.fitProjection([...L.boxCorners(PLANO, -17, 0), [-132, -44, 82], [170, 56, 82]], W, H, { pad: 14, azimuth: 36 });

@@ -25,9 +25,9 @@ static CONTADOR: AtomicU32 = AtomicU32::new(0);
 
 pub fn fixture() -> Value {
     json!({"blueprints": [{"id": "p1", "nome": "Portal", "descricao": "d", "acoes": [
-        {"id": "f1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "status": "planejado",
+        {"id": "f1", "nome": "Base", "status": "planejado",
          "planos": [{"id": "t1", "texto": "Criar rota", "descricao": "x"}, {"id": "t2", "texto": "Já feita", "descricao": "y", "feito": true}],
-         "checkpoints": [{"id": "m1", "nome": "Rota no ar", "data": "2026-11-20"}, {"id": "m2", "nome": "Já feito", "data": "2026-11-25", "feito": true}]}]}],
+         "checkpoints": [{"id": "m1", "nome": "Rota no ar"}, {"id": "m2", "nome": "Já feito", "feito": true}]}]}],
         "workspaces": [{"id": "w2", "nome": "Outro", "blueprints": [{"id": "p9", "nome": "Dele", "acoes": []}]}]})
 }
 

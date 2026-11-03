@@ -1,6 +1,6 @@
 // ---- os itens do menu do botão direito: o que aparece para cada alvo, em que grupo e com que ícone (quem desenha é contexto-menu.js, quem escuta é contexto.js) ----
-// Grupos, na ordem em que aparecem: abrir (ir e ver), editar (mudar), estado (situação e marcar), prazo (datas), perigo (excluir), geral (voltar e tela cheia).
-const GRUPOS_CONTEXTO = ["abrir", "editar", "estado", "prazo", "perigo", "geral"];
+// Grupos, na ordem em que aparecem: abrir (ir e ver), editar (mudar), estado (situação e marcar), perigo (excluir), geral (voltar e tela cheia).
+const GRUPOS_CONTEXTO = ["abrir", "editar", "estado", "perigo", "geral"];
 
 /** O nome do alvo para o cabeçalho do menu: o mais específico sob o cursor (plano, ação, blueprint, workspace). */
 function tituloDoContexto(alvo, { cartaoWorkspace, linhaBlueprint, acao, plano, idBlueprint }) {

@@ -83,16 +83,16 @@ impl Pincel<'_> {
         Texto::novo(s, l.tam).peso(l.peso).trilha(l.espaco).largura(self.p)
     }
 
-    /// Escreve `s` com a linha de base em `y` e devolve a largura.
+    /// Escreve `s` com a linha de base em `y` e devolve a largura. Mede e pinta com a mesma galeria.
     pub fn texto(&self, s: &str, x: f32, y: f32, l: Letra) -> f32 {
-        let largura = self.largura(s, &l);
-        let esquerda = match l.ancora {
-            Ancora::Inicio => x,
-            Ancora::Meio => x - largura / 2.0,
-            Ancora::Fim => x - largura,
-        };
-        Texto::novo(s, l.tam).peso(l.peso).trilha(l.espaco).cor(l.cor).em(self.p, self.pt(esquerda, y - SUBIDA * l.tam));
-        largura
+        Texto::novo(s, l.tam).peso(l.peso).trilha(l.espaco).cor(l.cor).em_medindo(self.p, |largura| {
+            let esquerda = match l.ancora {
+                Ancora::Inicio => x,
+                Ancora::Meio => x - largura / 2.0,
+                Ancora::Fim => x - largura,
+            };
+            self.pt(esquerda, y - SUBIDA * l.tam)
+        })
     }
 
     /// O mesmo texto em caixa alta (rótulos e títulos de coluna).

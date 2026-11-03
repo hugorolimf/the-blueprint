@@ -17,8 +17,8 @@ fn mcp() -> Mcp {
 fn dados() -> Mutex<Dados> {
     let mut d = Dados::em_memoria().unwrap();
     let arvore = json!({"empresa": "Eu", "blueprints": [{"id": "bp1", "nome": "Monitor", "acoes": [
-        {"id": "ra1", "ref": "1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "planos": [{"id": "rq1", "ref": "1.1", "texto": "Fazer"}, {"id": "rq2", "ref": "1.2", "texto": "Outro"}], "checkpoints": [{"id": "rc1", "ref": "1.c1", "nome": "Marco", "data": "2026-11-10"}]},
-        {"id": "ra2", "ref": "2", "nome": "Fora", "inicio": "2026-12-01", "fim": "2026-12-05", "planos": [], "checkpoints": [{"id": "rc2", "ref": "2.c1", "nome": "Outro marco", "data": "2026-12-02"}]}
+        {"id": "ra1", "ref": "1", "nome": "Base", "planos": [{"id": "rq1", "ref": "1.1", "texto": "Fazer"}, {"id": "rq2", "ref": "1.2", "texto": "Outro"}], "checkpoints": [{"id": "rc1", "ref": "1.c1", "nome": "Marco"}]},
+        {"id": "ra2", "ref": "2", "nome": "Fora", "planos": [], "checkpoints": [{"id": "rc2", "ref": "2.c1", "nome": "Outro marco"}]}
     ]}]});
     d.gravar_tudo(&Contexto::local(), &arvore).unwrap();
     Mutex::new(d)
@@ -65,17 +65,16 @@ fn checkpoint(d: &Mutex<Dados>, acao: usize) -> Value {
 fn concluir_grava_no_servidor() {
     let (m, d) = (mcp(), dados());
     let (id, segredo) = rodando(&d);
-    let revisao = d.lock().unwrap().revisao_tempos();
+    let revisao = d.lock().unwrap().revisao_dados();
     let (status, r) = reenviar(&m, &d, "evento", &evento("concluir", "cargo test: 12 passaram", Some(&segredo)));
     assert_eq!(status, 200, "{r}");
     let q = plano(&d, 0);
     assert_eq!(q["feito"], true);
     assert_eq!(q["agente"]["comentarios"][0]["tipo"], "relatorio");
     assert_eq!(q["agente"]["comentarios"][0]["texto"], "cargo test: 12 passaram");
-    assert!(q["agente"]["feitoEm"].is_string());
     assert_eq!(linha(&d, &id).situacao, "pronta");
     assert!(m.itens().is_empty(), "nada vai à fila");
-    assert!(d.lock().unwrap().revisao_tempos() > revisao, "a versão dos dados sobe");
+    assert!(d.lock().unwrap().revisao_dados() > revisao, "a versão dos dados sobe");
     assert!(d.lock().unwrap().orq_ler("sm").unwrap().motivos.iter().any(|x| x == "pronta:1.1"), "acorda o orquestrador");
     assert_eq!(reenviar(&m, &d, "evento", &evento("concluir", "de novo", Some(&segredo))).0, 409, "plano já feito, sem execução viva: a validação antiga");
 }
@@ -174,7 +173,6 @@ fn checkpoint_grava_e_traduz_id() {
     assert_eq!(r["checkpointId"], "rc1", "ref traduzido");
     let c = checkpoint(&d, 0);
     assert_eq!((c["feito"].clone(), c["evidencia"].as_str()), (json!(true), Some("demonstrado")));
-    assert!(c["feitoEm"].is_string());
     assert!(m.itens().is_empty());
     let (status, r) = reenviar(&m, &d, "evento", &corpo("checkpoint-nao-feito", "1", "rc1", &segredo));
     assert_eq!(status, 200, "{r}");

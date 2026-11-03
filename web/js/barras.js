@@ -1,4 +1,4 @@
-// Anima a barra da ação (contorno, hachura/progresso, losangos dos checkpoints, selo ✓ e cota de dias) ao abrir a folha e ao expandir/recolher.
+// Anima a barra da ação (contorno, hachura/progresso, losangos dos checkpoints, selo ✓ e cota) ao abrir a folha e ao expandir/recolher.
 // Com `reverso`, toca o inverso (as peças somem na ordem contrária, em metade do tempo) e devolve uma Promise que resolve no fim.
 // Só o que está na janela, uma animação curta por peça; não roda nada em repouso.
 const MAX_BARRAS = 40, MAX_MOVIDOS = 220; // tetos: acima disso o resto aparece/muda sem animação
@@ -11,15 +11,6 @@ function desenharBarras(alvo = host.querySelector("svg.desenho"), reverso = fals
     const opc = reverso ? { duration: dur / 2, delay: (TOTAL_BARRAS - ini - atraso - dur) / 2, direction: "reverse", fill: "both", easing: ease } : { duration: dur, delay: ini + atraso, easing: ease, fill: "backwards" };
     fins.push(el.animate(quadros, opc).finished.catch(() => {}));
   };
-  const regua = alvo.querySelector(".regua"); // barra de datas: o eixo corre da esquerda, as guias descem, a linha de hoje desce e a etiqueta HOJE aparece por último
-  if (regua) {
-    const eixo = regua.querySelector(":scope > path.ln"), guias = [...regua.querySelectorAll(":scope > .guia")];
-    if (eixo) mover(eixo, [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], 500, 0);
-    guias.forEach((g, i) => mover(g, [{ opacity: 0, transform: "scaleY(0)" }, { opacity: 1, transform: "scaleY(1)" }], 450, 150 + 350 * (i / Math.max(1, guias.length - 1))));
-    const hoje = regua.querySelector(":scope > .eixo"), chip = regua.querySelector(":scope > .hoje-chip");
-    if (hoje) mover(hoje, [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], 500, 650);
-    if (chip) mover(chip, [{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "scale(1)" }], 280, 1000);
-  }
   // duas fases: primeiro só lê as posições (sem animação criada no meio, que forçaria recalcular o layout a cada leitura), depois cria as animações
   const lote = [];
   for (const a of alvo.querySelectorAll(".acao")) {
@@ -52,7 +43,7 @@ function recolherFolha(alvo = host.querySelector("svg.desenho")) {
   for (const [el, topo] of lidos) fins.push(el.animate([{ fillOpacity: 1, strokeOpacity: 1 }, { fillOpacity: 0, strokeOpacity: 0 }], { duration: 200, delay: (1 - topo / innerHeight) * 250, fill: "both", easing: "ease-in" }).finished.catch(() => {})); // de baixo para cima; fill/stroke-opacity: o texto tem contorno, e opacity criaria uma camada por texto
   return Promise.all(fins);
 }
-// reorganização: antes da troca de período/filtro guarda a geometria de cada ação (peça por peça) e de cada plano/checkpoint da lista; depois do redesenho,
+// reorganização: antes da troca de filtro guarda a geometria de cada ação (peça por peça) e de cada plano/checkpoint da lista; depois do redesenho,
 // o retângulo da barra muda de x e largura, e as demais peças deslizam da posição antiga para a nova (o que sumiu fica de fora; o novo só se escreve)
 const ITENS_FOLHA = ".acao[data-f], .chk[data-id]", chaveFolha = (el) => (el.dataset.id ? "i:" + el.dataset.id : "a:" + el.dataset.f);
 const medidaFolha = (el) => { const r = el.getBoundingClientRect(); return { tag: el.tagName, x: r.left, y: r.top, ax: el.getAttribute("x"), aw: el.getAttribute("width"), cls: el.getAttribute("class") || "" }; };

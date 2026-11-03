@@ -23,7 +23,7 @@ pub const URL: &str = "https://equipe.teste";
 
 pub fn fixture() -> Value {
     json!({"empresa": "Raiz", "usuario": {"nome": "Local"}, "chats": [{"id": "x"}], "blueprints": [{"id": "p1", "nome": "Portal", "acoes": [
-        {"id": "f1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "status": "planejado", "prototipos": [{"id": "0123456789abcdef", "titulo": "t"}],
+        {"id": "f1", "nome": "Base", "status": "planejado", "prototipos": [{"id": "0123456789abcdef", "titulo": "t"}],
          "planos": [{"id": "t1", "texto": "Criar rota", "agente": {"estado": "ok", "comentarios": [{"texto": "segredo do agente"}]}}], "checkpoints": []}]}],
         "workspaces": [{"id": "w2", "nome": "Outro", "blueprints": [{"id": "p9", "nome": "Dele", "acoes": []}, {"id": "p10", "nome": "Público", "acoes": []}]}]})
 }

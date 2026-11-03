@@ -40,7 +40,7 @@ pub struct Dados {
     conn: Connection,
     /// o data.json como a página o lê; None depois de qualquer gravação
     cache: Option<Value>,
-    revisao_tempos: u64,
+    revisao_dados: u64,
 }
 
 impl Dados {
@@ -59,34 +59,19 @@ impl Dados {
     fn preparar(mut conn: Connection) -> Resultado<Dados> {
         conn.execute_batch("PRAGMA foreign_keys = ON; PRAGMA synchronous = NORMAL;")?;
         migracoes::aplicar(&mut conn)?;
-        Ok(Dados { conn, cache: None, revisao_tempos: 0 })
+        Ok(Dados { conn, cache: None, revisao_dados: 0 })
     }
 
     pub fn conexao(&self) -> &Connection {
         &self.conn
     }
 
-    pub fn revisao_tempos(&self) -> u64 { self.revisao_tempos }
+    pub fn revisao_dados(&self) -> u64 { self.revisao_dados }
 
     /// A árvore mudou por fora de `gravar_tudo` numa rota de `rota_estado`: refaz a cópia e sobe a versão dos dados (D4).
     pub fn tocar_revisao(&mut self) {
         self.cache = None;
-        self.revisao_tempos += 1;
-    }
-
-    /// Os avisos são duráveis mesmo quando nenhuma janela está aberta.
-    pub fn registrar_tempo_plano(&mut self, plano_id: &str, tipo: &str, em: &str) -> Resultado<()> {
-        let (inicio, fim) = match tipo {
-            "progresso" => (Some(em), None),
-            "concluir" => (None, Some(em)),
-            _ => return Ok(()),
-        };
-        let n = self.conn.execute(
-            "INSERT INTO tempos_planos (plano_id, inicio_em, fim_em) VALUES (?1, ?2, ?3) ON CONFLICT(plano_id) DO UPDATE SET inicio_em = COALESCE(tempos_planos.inicio_em, excluded.inicio_em), fim_em = COALESCE(tempos_planos.fim_em, excluded.fim_em) WHERE (tempos_planos.inicio_em IS NULL AND tempos_planos.fim_em IS NULL AND excluded.inicio_em IS NOT NULL) OR (tempos_planos.fim_em IS NULL AND excluded.fim_em IS NOT NULL)",
-            (plano_id, inicio, fim),
-        )?;
-        if n > 0 { self.cache = None; self.revisao_tempos += 1; }
-        Ok(())
+        self.revisao_dados += 1;
     }
 
     /// Roda `f` numa transação (as tabelas de acesso: membros, convites, sessões, chaves e atividade). Fora do data.json: não invalida o cache.
@@ -111,21 +96,6 @@ impl Dados {
         ctx.exige_editar()?;
         let tx = self.conn.transaction()?;
         importar::importar(&tx, dados)?;
-        // Substituir dados também substitui os tempos, para uma restauração não herdar medições futuras.
-        tx.execute("DELETE FROM tempos_planos", [])?;
-        {
-            let mut planos = tx.prepare("SELECT id, agente FROM planos WHERE agente IS NOT NULL")?;
-            let linhas = planos.query_map([], |l| Ok((l.get::<_, String>(0)?, l.get::<_, String>(1)?)))?;
-            for linha in linhas {
-                let (id, agente) = linha?;
-                let agente: Value = serde_json::from_str(&agente)?;
-                let inicio = agente.get("inicioEm").and_then(Value::as_str).filter(|s| !s.is_empty());
-                let fim = agente.get("feitoEm").and_then(Value::as_str).filter(|s| !s.is_empty());
-                if inicio.is_some() || fim.is_some() {
-                    tx.execute("INSERT INTO tempos_planos (plano_id, inicio_em, fim_em) VALUES (?1, ?2, ?3)", (&id, inicio, fim))?;
-                }
-            }
-        }
         tx.commit()?;
         self.cache = None;
         self.contagens(ctx)

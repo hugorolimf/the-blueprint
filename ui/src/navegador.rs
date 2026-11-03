@@ -1,5 +1,6 @@
 //! A interface no navegador: abre no canvas `blueprint` da página e tira a mensagem «Carregando…» quando começa (ou diz por que não abriu).
 
+use wasm_bindgen::closure::Closure;
 use wasm_bindgen::JsCast;
 
 const CANVAS: &str = "blueprint";
@@ -7,6 +8,7 @@ const CARREGANDO: &str = "carregando";
 
 pub fn abrir() {
     let _ = eframe::WebLogger::init(log::LevelFilter::Warn);
+    segurar_botoes_laterais();
     wasm_bindgen_futures::spawn_local(async {
         let Some(canvas) = canvas() else {
             dizer("A página veio sem o canvas.");
@@ -25,6 +27,21 @@ pub fn abrir() {
             }
         }
     });
+}
+
+/// Os botões laterais do mouse andam dentro do app (`historico`): sem isto, o navegador também voltaria de página e tiraria a pessoa do The Blueprint.
+fn segurar_botoes_laterais() {
+    let Some(janela) = web_sys::window() else { return };
+    let segurar = Closure::<dyn FnMut(web_sys::MouseEvent)>::new(|e: web_sys::MouseEvent| {
+        if matches!(e.button(), 3 | 4) {
+            e.prevent_default();
+        }
+    });
+    for evento in ["mousedown", "mouseup"] {
+        let _ = janela.add_event_listener_with_callback(evento, segurar.as_ref().unchecked_ref());
+    }
+    // fica ligado enquanto a página existir
+    segurar.forget();
 }
 
 fn documento() -> Option<web_sys::Document> {

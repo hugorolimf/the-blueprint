@@ -12,7 +12,6 @@
         "1.1",
         "1.2"
       ],
-      "data": "2026-10-30",
       "hash": "659cef0cbf0573b694ee91bf413706b97f175ed50666f16c7c431ab0604dee4b",
       "id": "banco",
       "pedeAprovacao": true,
@@ -26,7 +25,6 @@
     }
   ],
   "escrita": null,
-  "hoje": "2026-11-01",
   "limite": 4,
   "numeros": {
     "aprovar": 2,
@@ -58,16 +56,13 @@
       "acoes": [
         {
           "agentes": 0,
-          "ate": "2026-11-09",
           "checkpoints": [
             {
-              "data": "2026-11-09",
               "feito": false,
               "id": "id-2",
               "nome": "Primeira semana de dados"
             }
           ],
-          "de": "2026-11-02",
           "detalhes": [],
           "diff": null,
           "escrita": "pronta",
@@ -122,7 +117,6 @@
           ],
           "recados": [],
           "ref": "1.1",
-          "semData": false,
           "status": "planejado",
           "tabelas": [],
           "temNota": false,
@@ -130,16 +124,13 @@
         },
         {
           "agentes": 1,
-          "ate": "2026-11-17",
           "checkpoints": [
             {
-              "data": "2026-11-20",
               "feito": false,
               "id": "id-8",
               "nome": "Painel no ar"
             }
           ],
-          "de": "2026-11-10",
           "detalhes": [
             {
               "figura": {
@@ -178,15 +169,6 @@
             ],
             "hash": "eb93d50a831bf1b1690bd4d1f7fd7fc2bb76db9ade1226d19ed90b412b82f49c",
             "linhas": [
-              {
-                "antes": "",
-                "campos": [],
-                "palavras": [],
-                "ref": "",
-                "situacao": "",
-                "texto": "",
-                "tipo": "prazo"
-              },
               {
                 "antes": "Somar as leituras",
                 "campos": [],
@@ -235,19 +217,16 @@
             ],
             "numero": 2,
             "outros": [],
-            "prazo": {
-              "antes": "2026-11-10 → 2026-11-17",
-              "depois": "2026-11-10 → 2026-11-20"
-            },
             "removida": false,
             "resumo": {
-              "alterados": 2,
+              "alterados": 1,
               "detalhes": 1,
               "mais": 1,
               "menos": 1,
               "outros": 0
             },
-            "revisao": null
+            "revisao": null,
+            "tabelasNovas": []
           },
           "escrita": "pronta",
           "id": "id-9",
@@ -257,7 +236,7 @@
           "numeros": {
             "aprovar": 2,
             "decisoes": 1,
-            "detalhes": 1,
+            "detalhes": 2,
             "planos": 3,
             "prontos": 0
           },
@@ -320,7 +299,6 @@
           ],
           "recados": [],
           "ref": "1.2",
-          "semData": false,
           "status": "planejado",
           "tabelas": [],
           "temNota": true,
@@ -328,9 +306,7 @@
         },
         {
           "agentes": 0,
-          "ate": "2026-11-28",
           "checkpoints": [],
-          "de": "2026-11-21",
           "detalhes": [],
           "diff": null,
           "escrita": "pronta",
@@ -387,7 +363,6 @@
           ],
           "recados": [],
           "ref": "1.3",
-          "semData": false,
           "status": "planejado",
           "tabelas": [],
           "temNota": false,

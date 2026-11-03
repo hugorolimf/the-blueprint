@@ -10,7 +10,7 @@ const MAX_CELULAS: usize = 4_000_000;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Pedaco { Igual(String), Menos(String), Mais(String) }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TipoLinha { Prazo, Novo, Alterado, Igual, Removido }
+pub enum TipoLinha { Novo, Alterado, Igual, Removido }
 /// `campos`: `area`, `depende_de`, `instrucoes`.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Linha { pub tipo: TipoLinha, pub plano: Option<PlanoItem>, pub antes: Option<PlanoItem>, pub palavras: Vec<Pedaco>, pub campos: Vec<&'static str> }
@@ -117,6 +117,12 @@ fn campos_mudados(antes: &PlanoItem, depois: &PlanoItem) -> Vec<&'static str> {
     if opcional_mudou(&antes.instrucoes, &depois.instrucoes) {
         campos.push("instrucoes");
     }
+    if opcional_mudou(&antes.forma, &depois.forma) {
+        campos.push("forma");
+    }
+    if opcional_mudou(&antes.entrega, &depois.entrega) {
+        campos.push("entrega");
+    }
     campos
 }
 
@@ -140,7 +146,7 @@ fn detalhe_mudou(a: &Detalhe, b: &Detalhe) -> bool {
         (Some(x), Some(y)) => x.hash != y.hash,
         _ => a.figura != b.figura,
     };
-    figura || a.titulo != b.titulo || a.legenda != b.legenda || a.grupo != b.grupo || a.pede_aprovacao != b.pede_aprovacao
+    figura || a.titulo != b.titulo || a.legenda != b.legenda || a.grupo != b.grupo || a.plano != b.plano || a.variante != b.variante || a.pede_aprovacao != b.pede_aprovacao
 }
 
 fn por_id(c: &[CheckpointDoc]) -> Vec<&CheckpointDoc> {
@@ -166,12 +172,9 @@ fn outros_mudados(antiga: &AcaoDoc, nova: &AcaoDoc) -> Vec<&'static str> {
     outros
 }
 
-/// As linhas do diff de uma ação: prazo, planos na ordem da versão nova, removidos no fim.
+/// As linhas do diff de uma ação: planos na ordem da versão nova, removidos no fim.
 pub fn comparar_acao(antiga: &AcaoDoc, nova: &AcaoDoc) -> CompAcao {
     let mut linhas = Vec::new();
-    if (&antiga.de, &antiga.ate) != (&nova.de, &nova.ate) {
-        linhas.push(linha(TipoLinha::Prazo, None));
-    }
     let antes: HashMap<&str, &PlanoItem> = antiga.planos.iter().map(|q| (q.id.as_str(), q)).collect();
     linhas.extend(nova.planos.iter().map(|q| linha_do_plano(antes.get(q.id.as_str()).copied(), q)));
     let ids: HashSet<&str> = nova.planos.iter().map(|q| q.id.as_str()).collect();
@@ -188,7 +191,7 @@ pub fn comparar_acao(antiga: &AcaoDoc, nova: &AcaoDoc) -> CompAcao {
     let resumo = Resumo {
         mais: conta(TipoLinha::Novo),
         menos: conta(TipoLinha::Removido),
-        alterados: conta(TipoLinha::Alterado) + conta(TipoLinha::Prazo),
+        alterados: conta(TipoLinha::Alterado),
         detalhes: detalhes_novos.len() + detalhes_mudados.len() + detalhes_removidos.len(),
         outros: outros.len(),
     };

@@ -1,18 +1,18 @@
 // ---- a tela dos registros no Planejar: o que o agente já fez, com os checks marcados (editáveis) e o que ficou pendente (registros.js guarda o estado) ----
 // Todo texto do agente passa por esc(). Os botões são "Adicionar ao blueprint" e "Descartar" (registro não é proposta: nunca "aplicar").
 function htmlRegistroItem(item, tipo, j, ex) {
-  const titulo = tipo === "cp" ? `◇ ${esc(item.nome)} · ${esc(pvData(item.data))}` : esc(item.texto);
+  const titulo = tipo === "cp" ? `◇ ${esc(item.nome)}` : esc(item.texto);
   const jaFeito = ex?.feito;
   const marca = jaFeito ? `<span class="badge">${tr("já estava feito")}</span>` : `<input type="checkbox" data-rc="${tipo}" data-j="${j}" aria-label="${tr("Marcar como feito")}"${item.feito ? " checked" : ""}>`;
   const evidencia = item.evidencia && !jaFeito ? `<p class="rg-evid"><b>${tr("Evidência:")}</b> ${esc(item.evidencia)}</p>` : "";
   const desc = tipo === "plano" && item.descricao && !ex ? `<p class="pv-desc">${esc(item.descricao)}</p>` : "";
-  return `<div class="rg-item${item.feito ? " feito" : ""}"><label>${marca}<span class="rg-tit">${titulo}</span>${ex ? "" : `<span class="badge nova">${tr("novo")}</span>`}${item.horas ? etiquetaHoras(item) : ""}</label>${desc}${evidencia}</div>`;
+  return `<div class="rg-item${item.feito ? " feito" : ""}"><label>${marca}<span class="rg-tit">${titulo}</span>${ex ? "" : `<span class="badge nova">${tr("novo")}</span>`}</label>${desc}${evidencia}</div>`;
 }
 function htmlRegistroAcao(a, i, p) {
   const ex = a.id && p.acoes.find((x) => x.id === a.id);
   const lista = (itens, tipo, rot) => itens.length ? `<div class="pv-bloco"><p class="sub2"><span>${rot}</span><span>${tr("{feitos}/{total} feitos", { feitos: itens.filter((x) => x.feito).length, total: itens.length })}</span></p>${itens.map((it, j) => htmlRegistroItem(it, tipo, j, ex && (tipo === "cp" ? ex.checkpoints : ex.planos).find((y) => y.id === it.id))).join("")}</div>` : "";
   return `<div class="pf pv${a.inc ? "" : " off"}" data-ra="${i}"><div class="pv-topo"><input type="checkbox" data-rc="acao" aria-label="${tr("Incluir esta ação")}"${a.inc ? " checked" : ""}><span class="badge${ex ? "" : " nova"}">${ex ? tr("Ação existente") : tr("Ação nova")}</span><b class="pv-nome">${esc(a.nome)}</b></div>
-    <p class="pv-meta">${esc(pvData(a.inicio))} → ${esc(pvData(a.fim))}</p>${lista(a.planos, "plano", tr("Planos"))}${lista(a.checkpoints, "cp", tr("Checkpoints"))}</div>`;
+    ${lista(a.planos, "plano", tr("Planos"))}${lista(a.checkpoints, "cp", tr("Checkpoints"))}</div>`;
 }
 function htmlRegistro(r, p) {
   const incluidas = r.acoes.filter((a) => a.inc), feitos = incluidas.reduce((n, a) => n + a.planos.filter((t) => t.feito).length + a.checkpoints.filter((m) => m.feito).length, 0);

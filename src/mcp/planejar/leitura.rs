@@ -15,7 +15,7 @@ use crate::plano::comparar::comparar_planos;
 use crate::plano::escalonar::{EstadoEsc, Situacao};
 use crate::plano::formato::AcaoDoc;
 use crate::plano::frases;
-use crate::tempo::{agora_ms, hoje_local};
+use crate::tempo::agora_ms;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
@@ -233,5 +233,5 @@ fn agentes(mcp: &Mcp, dados: &Mutex<Dados>, ws: &str) -> Result<Value, ErroHttp>
 
 fn workspace(mcp: &Mcp, dados: &Mutex<Dados>, ws: &str) -> Result<Value, ErroHttp> {
     let l = ler_workspace(mcp, dados, ws)?;
-    Ok(json!({"blueprints": l.blueprints, "agentes": l.linhas, "avisos": l.avisos, "recados": l.recados.iter().map(recado_json).collect::<Vec<_>>(), "hoje": hoje_local()}))
+    Ok(json!({"blueprints": l.blueprints, "agentes": l.linhas, "avisos": l.avisos, "recados": l.recados.iter().map(recado_json).collect::<Vec<_>>()}))
 }

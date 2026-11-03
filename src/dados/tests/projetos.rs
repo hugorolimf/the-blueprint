@@ -12,7 +12,7 @@ fn volta(entrada: &Value) -> Value {
 }
 
 fn acao(id: &str, extra: Value) -> Value {
-    let mut a = json!({"id": id, "nome": id, "inicio": "2026-11-01", "fim": "2026-11-30", "status": "planejado", "progresso": 0, "obs": "",
+    let mut a = json!({"id": id, "nome": id, "status": "planejado", "progresso": 0, "obs": "",
         "planos": [{"id": format!("{id}-t"), "texto": "Fazer", "feito": false}], "checkpoints": []});
     a.as_object_mut().unwrap().extend(extra.as_object().unwrap().clone());
     a

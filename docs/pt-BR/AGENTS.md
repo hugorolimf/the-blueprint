@@ -9,14 +9,16 @@ The Blueprint (beta), roadmap local-first em Rust (`blueprint.exe`) com interfac
 | Onde | O quê |
 | --- | --- |
 | `src/dados/` | única camada que fala com o SQLite (migrações em `src/dados/migracoes/NNN_*.sql`; `formato.rs` mapeia o JSON para tabelas) |
-| `src/blueprint/` | validação das propostas do agente (`validar_proposta`), prazos, resumos para `ler_blueprint` |
+| `src/blueprint/` | validação das propostas do agente (`validar_proposta`), resumos para `ler_blueprint` |
 | `src/mcp/` | fila (lida da memória, guardada no banco), ações do MCP, atividade dos agentes, SSE, `ferramentas.json` e `instrucoes.txt` (a fonte da verdade do MCP) |
 | `src/http/` | servidor HTTP síncrono (`tiny_http`), rotas puras, estáticos com ETag e gzip |
 | `src/janela/` | janela WebView2, bandeja e instância única (só Windows) |
 | `ui/` | a interface nativa (egui): um crate que roda como janela no Windows e no Linux e no navegador como WebAssembly; veja [ui/README.md](../../ui/README.md). Substitui o `web/` tela por tela |
+| `ui/src/anatomia/` | o nosso motor Anatomy em Rust: câmera com perspectiva, malha de faces e arestas, sólidos, tinta em faixas de luz, cena com teste de clique; veja [skills/blueprint-anatomia/SKILL.md](../../skills/blueprint-anatomia/SKILL.md) |
 | `web/`, `blueprint.html` | a interface web antiga, até cada tela migrar para `ui/`: CSS em `web/css`, scripts clássicos em `web/js` na ordem listada em `blueprint.html` |
 | `kit/`, `emblemas.mjs`, `agentes-figura.mjs`, `agentes-claude.mjs` | kit isométrico (anatomy) e figuras; rodam no navegador |
 | `skills/blueprint-planejamento/` | o guia que o agente lê pelo MCP (`guia_de_planejamento`) |
+| `skills/blueprint-anatomia/` | a skill da planta: o motor Anatomy, o palco da ação, o componente Tela e as variantes, e como planejar para a planta dizer algo (com link em `.claude/skills/`) |
 | `scripts/` | verificações de ponta a ponta (contrato HTTP, e2e com Edge, mutações, medições, instalador) |
 
 ## Comandos
@@ -32,7 +34,7 @@ node scripts/capturas.mjs --comparar
 
 ## Regras
 
-- Execute testes e compilações somente quando puderem terminar em menos de um minuto; interrompa os que atingirem o limite e informe o que não foi verificado.
+- **Não execute testes nem compilações do programa, a não ser que o usuário peça na tarefa atual.** Isso vale para `cargo test`, `cargo build`, `cargo run`, `trunk`, as verificações em Node, os scripts e2e e abrir o app para conferir algo. O trabalho dos agentes aqui é escrever código: corrigir bugs, mudar e alterar o que for preciso, colocar em produção. Escrever testes pode e é bem-vindo; só rodá-los depende de o usuário pedir. O usuário roda depois. Diga claramente que a mudança não foi compilada nem testada. Quando o usuário pedir, interrompa o que passar de um minuto e informe o que não foi verificado.
 
 - Arquivos de até 350 linhas (teto 500 com motivo no topo). Um arquivo, uma responsabilidade.
 - Poucas dependências. A interface é nativa (`ui/`, egui, o mesmo código em todo sistema); `web/` é legado: nenhuma tela nova ali e sem framework nem bundler nele.

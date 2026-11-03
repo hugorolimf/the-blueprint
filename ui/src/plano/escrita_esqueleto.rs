@@ -4,6 +4,7 @@
 use super::super::agentes_movimento as mov;
 use super::super::agentes_pecas as pecas;
 use super::super::escala::{Escala, LINHA};
+use super::super::linha::bloco::{DESCE_PECAS, X_TEXTO};
 use super::super::linha::{Letra, Pincel};
 use super::super::modelo::{Acao, EstadoEscrita, Folha};
 use super::marca;
@@ -44,7 +45,8 @@ fn desvio(a: &Acao) -> f32 {
 
 /// Aguardando plano: a caixa tracejada da folha ganha o brilho que passa e o texto respira.
 fn aguardando(regua: &Pincel, e: &Escala, a: &Acao, y: f32) {
-    let x = e.x(e.hoje) + 12.0;
+    let x = e.trecho(a).map_or(e.x0, |t| t.0) + X_TEXTO;
+    let y = y + DESCE_PECAS;
     let caixa = regua.caixa(x, y - 8.0, 96.0, 16.0);
     regua.p.rect_filled(caixa, 0, MEDIO.gamma_multiply(0.07));
     mov::varredura(regua.p, caixa, (mov::fase(regua.p.ctx(), 1.9) + desvio(a)) % 1.0, TINTA.gamma_multiply(0.2));

@@ -30,21 +30,14 @@ fn mudancas_aplica_sobe_a_versao_e_a_leitura_ve_o_novo() {
 }
 
 #[test]
-fn aviso_de_plano_invalida_a_copia_e_a_versao_das_janelas() {
+fn aviso_de_plano_nao_muda_a_versao_dos_dados() {
     let e = estado(false);
     let v0 = versao(&e);
     let aviso = pedido("POST", "/api/mcp/evento", &[], Some(json!({"tipo":"progresso", "texto":"comecei", "workspaceId":"sm", "blueprintId":"p1", "acaoId":"f1", "planoId":"t1"})));
     assert_eq!(despachar(&e, &aviso).status, 200);
-    assert_eq!(versao(&e), v0 + 1);
+    assert_eq!(versao(&e), v0, "o aviso vai à fila e à linha do tempo: a árvore fica igual");
     let dados = json_de(&despachar(&e, &pedido("GET", "/api/dados", &[], None)));
-    assert!(dados["blueprints"][0]["acoes"][0]["planos"][0]["agente"]["inicioEm"].as_str().is_some());
-    let velho = pedido("PUT", "/api/dados", &[("if-match", &v0.to_string())], Some(dados));
-    assert_eq!(despachar(&e, &velho).status, 409);
-    assert_eq!(despachar(&e, &aviso).status, 200);
-    assert_eq!(versao(&e), v0 + 1, "outro aviso não altera o primeiro horário");
-    let terminado = pedido("POST", "/api/mcp/evento", &[], Some(json!({"tipo":"progresso", "texto":"leitura posterior", "workspaceId":"sm", "blueprintId":"p1", "acaoId":"f1", "planoId":"t2"})));
-    assert_eq!(despachar(&e, &terminado).status, 200);
-    assert_eq!(versao(&e), v0 + 1, "um aviso sobre plano já concluído não inventa horário de início");
+    assert!(dados["blueprints"][0]["acoes"][0]["planos"][0]["agente"].get("inicioEm").is_none());
 }
 
 #[test]

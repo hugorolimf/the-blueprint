@@ -17,7 +17,7 @@ An honest comparison, with what could be verified on the projects' own pages on 
 
 - **The agent proposes, you apply.** Everything the agent sends is a proposal in a numbered queue; nothing changes in your data before you apply it on the **Plan** screen.
 - **Completion needs evidence.** A plan is only marked done with the command or test that was run and its result, which becomes a comment on the plan.
-- **A sheet, not just a list.** Workspace → Blueprint → Project → Action → Plan and Checkpoint, with deadlines at AI pace and measured real time.
+- **A sheet, not just a list.** Workspace → Blueprint → Project → Action → Plan and Checkpoint, with progress taken only from what is ticked.
 - **You see the agent working.** Claude appears on the sheet, on the plan it is working on, with its subagents.
 - **Small and local.** An executable of about 2.5 MB, no telemetry and no account.
 

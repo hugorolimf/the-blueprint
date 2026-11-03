@@ -1,12 +1,11 @@
 // Inglês: "Gerar com IA" na tela Apresentação (web/js/apresentacao-ia.js e apresentacao-ia-logica.js). Chave = texto-fonte em português (web/js/i18n.js).
 Object.assign(I18N.catalogos.en, {
   "Cliente": "Client", "Interno": "Internal", "Rápido": "Quick", "Padrão": "Standard", "Completo": "Complete",
-  "Plano de projeto: o que o cliente recebe, etapas, datas e o que esperamos dele. Sem termos técnicos.": "Project plan: what the client receives, stages, dates and what we expect from them. No technical terms.",
+  "Plano de projeto: o que o cliente recebe, etapas e o que esperamos dele. Sem termos técnicos.": "Project plan: what the client receives, stages and what we expect from them. No technical terms.",
   "Visão técnica completa, para quem constrói.": "The full technical view, for whoever builds it.",
   "Uma figura da IA na visão geral e as páginas do plano.": "One AI figure in the overview and the pages of the plan.",
   "Uma figura diferente por sessão da página.": "A different figure for each section of the page.",
   "O Padrão, mais uma máquina densa do sistema e uma figura por etapa.": "Standard, plus one dense machine of the whole system and one figure per stage.",
-  "{de} a {ate} h": "{de} to {ate} h", "até {ate} h": "up to {ate} h",
   "Pedido enviado à sessão: o Claude vai montar a apresentação.": "Request sent to the session: Claude will build the presentation.",
   "Terminal aberto: o Claude vai montar a apresentação.": "Terminal opened: Claude will build the presentation.",
   "Ela aparece na lista quando ele terminar.": "It shows up in the list when it finishes.",
@@ -22,7 +21,7 @@ Object.assign(I18N.catalogos.en, {
   "Apresentação removida.": "Presentation removed.", "Não foi possível remover. Tente de novo.": "Could not remove it. Try again.",
   "Gerar com IA só funciona no app local, não na janela da equipe.": "Generate with AI only works in the local app, not in the team window.",
   "O seu papel só lê este workspace: não dá para pedir uma apresentação daqui.": "Your role can only read this workspace: you cannot request a presentation from here.",
-  "Público: {publico}. Nível: {nivel} ({tempo}).": "Audience: {publico}. Level: {nivel} ({tempo}).",
+  "Público: {publico}. Nível: {nivel}.": "Audience: {publico}. Level: {nivel}.",
   "Gerar a apresentação com o Claude?": "Generate the presentation with Claude?",
   "Pedido copiado: cole na sessão para o Claude montar a apresentação.": "Request copied: paste it into the session so Claude builds the presentation.",
 });

@@ -66,9 +66,8 @@ try {
   await mcp.iniciar();
   const lista = await mcp.chamar("listar_blueprints", {});
   assert(!lista.erro && lista.texto.includes(ex.blueprints[0].nome), "o agente vê o blueprint do exemplo: " + lista.texto.slice(0, 200));
-  const hoje = await p.js(`hoje`), depois = await p.js(`deDia(dia(hoje) + 2)`);
   const proposta = await mcp.chamar("propor_blueprint", { workspace_id: "sm", mensagem: "O primeiro plano.", blueprint: { nome: "Meu primeiro blueprint", descricao: "Criado pelo agente no primeiro uso." },
-    acoes: [{ nome: "Primeira entrega", inicio: hoje, fim: depois, observacao: "Objetivo: chegar à primeira entrega.", planos: [{ texto: "Escrever o primeiro plano", descricao: "Escopo: um plano\nResultado esperado: um plano escrito\nValidação: aparece na folha" }] }] });
+    acoes: [{ nome: "Primeira entrega", observacao: "Objetivo: chegar à primeira entrega.", planos: [{ texto: "Escrever o primeiro plano", descricao: "Escopo: um plano\nResultado esperado: um plano escrito\nValidação: aparece na folha" }] }] });
   assert(!proposta.erro, proposta.texto);
 
   // 5. aplicar na tela Planejar do workspace raiz (proposta de blueprint novo espera o clique)

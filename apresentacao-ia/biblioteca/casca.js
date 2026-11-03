@@ -1,6 +1,6 @@
 // A casca da apresentação: monta a interface (barra superior, navegação por seções, painéis) a partir de `conteudo` e roda as figuras.
 // L.casca.html(conteudo, figuras) devolve { html, vivos } sem tocar no DOM (serve aos testes e à prévia); L.casca.montar(raiz, ...) a põe na página.
-// Cada figura vai para o painel da sua seção (`figura.secao`: visao, recebe, etapas, linha, precisamos, decisoes, riscos, acoes), ao lado do texto; a que uma etapa
+// Cada figura vai para o painel da sua seção (`figura.secao`: visao, recebe, etapas, precisamos, decisoes, riscos, acoes), ao lado do texto; a que uma etapa
 // cita (`etapas[].figura`) fica dentro da etapa; a sem seção e sem etapa vai ao fim de Etapas. Uma figura que lança erro vira um cartão de erro; o resto da página segue.
 (function (L) {
   const { esc } = L.secoes, S = L.secoes;
@@ -32,8 +32,8 @@
 
   // o nome da figura no conteúdo -> o id da seção da página (riscos mora na seção Decisões e riscos); desconhecido = sem seção
   // a seção da página onde a figura está -> o grupo de itens do texto que ela comanda pela ponte (biblioteca/ponte.js); visao e acoes não têm itens
-  const GRUPO_DA_SECAO = { entregas: "recebe", etapas: "etapas", linha: "linha", voce: "precisamos", decisoes: "decisoes", riscos: "riscos" };
-  const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", linha: "linha", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
+  const GRUPO_DA_SECAO = { entregas: "recebe", etapas: "etapas", voce: "precisamos", decisoes: "decisoes", riscos: "riscos" };
+  const SECAO_DA_FIGURA = { visao: "visao", recebe: "entregas", entregas: "entregas", etapas: "etapas", precisamos: "voce", voce: "voce", decisoes: "decisoes", riscos: "riscos", acoes: "acoes" };
   const secaoDaFigura = (f) => SECAO_DA_FIGURA[f && f.secao];
   const usadasPorEtapas = (c) => new Set((c.etapas || []).map((e) => e.figura).filter(Boolean));
 
@@ -43,7 +43,7 @@
     return (livres.find((f) => secaoDaFigura(f) === "visao") || livres.find((f) => f.id === "capa") || livres.find((f) => !f.secao) || {}).id;
   };
 
-  const secoesDe = (c) => ["visao", c.entregas && c.entregas.length ? "entregas" : null, "etapas", "linha", c.precisamosDeVoce && c.precisamosDeVoce.length ? "voce" : null, "decisoes", c.publico === "interno" ? "acoes" : null].filter(Boolean);
+  const secoesDe = (c) => ["visao", c.entregas && c.entregas.length ? "entregas" : null, "etapas", c.precisamosDeVoce && c.precisamosDeVoce.length ? "voce" : null, "decisoes", c.publico === "interno" ? "acoes" : null].filter(Boolean);
 
   const html = (c, figuras = []) => {
     c = { ...c, idioma: L.idiomaDe(c.idioma) };
@@ -71,7 +71,7 @@
     };
     const comRef = (id, secaoHtml) => secaoHtml.replace('<div class="ap-sec-corpo">', (m) => m + refLinha(id)); // função: a dica da figura pode ter "$&"
     const j = (k) => (porSecao[k] || []).join(""), extras = soltas.join("");
-    const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), linha: (n) => S.linha(c, n, j("linha")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
+    const montar = { visao: (n) => S.visao(c, { capa: j("visao") }, n), entregas: (n) => S.entregas(c, n, j("entregas")), etapas: (n) => S.etapas(c, cartoes, n, extras, j("etapas")), voce: (n) => S.voce(c, n, j("voce")), decisoes: (n) => S.decisoes(c, n, j("decisoes"), j("riscos")), acoes: (n) => S.acoes(c, n, j("acoes")) };
     const corpo = ids.map((id, i) => comRef(id, montar[id](i + 1))).join("");
     const nav = ids.map((id, i) => `<li><a href="#s-${id}" data-nav="${id}"><i>${String(i + 1).padStart(2, "0")}</i>${esc(t(id))}</a></li>`).join("");
     const nivel = c.nivel ? `<span class="ap-etiqueta">${esc(t("nivel"))}: ${esc(t("nivel_" + c.nivel))}</span>` : "";
@@ -79,7 +79,7 @@
     const pagina = `<div class="ap-ia iso" data-theme="dark" lang="${esc(idioma)}"><a class="ap-pular" href="#conteudo">${esc(t("pular"))}</a>
 <header class="ap-topo"><div class="ap-migalhas"><span>${esc(t(quem))}</span><i aria-hidden="true">/</i><span>${esc(t(quem === "interno" ? "plano_interno" : "plano"))}</span></div><div class="ap-titulo-caixa"><b>${esc(c.titulo)}</b>${c.cliente ? `<span>${esc(c.cliente)}</span>` : ""}</div><div class="ap-topo-acoes">${nivel}<button class="ap-btn" type="button" data-acao="imprimir">${esc(t("imprimir"))}</button></div></header>
 <div class="ap-corpo"><nav class="ap-nav" aria-label="${esc(t("menu"))}"><p class="ap-rot">${esc(t("menu"))}</p><ol>${nav}</ol><p class="ap-dica">${esc(t("nav_dica"))}</p></nav><main id="conteudo" class="ap-principal" tabindex="-1">${corpo}</main></div>
-<footer class="ap-rodape"><span>${esc(t("sim"))}</span><span>${c.data ? esc(t("gerado", { d: L.dataCurta(c.data, idioma) })) : ""}</span></footer></div>`;
+<footer class="ap-rodape"><span>${esc(t("sim"))}</span></footer></div>`;
     return { html: pagina, vivos };
   };
 

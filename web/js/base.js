@@ -1,15 +1,9 @@
-const MESES = tr("JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ").split("|");
 const ROTULO = { concluido: tr("concluído"), andamento: tr("em desenvolvimento"), planejado: tr("planejado") };
-const BARRA_MIN = 220; // largura mínima da barra da ação quando aberta (a escala real da régua deixaria ações curtas com ~100 px)
+const BARRA_MIN = 220; // largura mínima da barra da ação quando aberta (o degrau da escada deixaria blueprints longos com barras curtas)
 const CHAR = 6.9; // largura de um caractere de 11 px no tipo mono
 
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const norm = (s) => String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-const ISO = /^\d{4}-\d{2}-\d{2}$/;
-const dia = (iso) => (ISO.test(iso) ? Date.parse(iso + "T00:00:00Z") / 864e5 : NaN);
-const deDia = (d) => new Date(d * 864e5).toISOString().slice(0, 10);
-const fmt = (iso) => iso.slice(8, 10) + "/" + iso.slice(5, 7);
-const local = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const novoId = () => Math.random().toString(36).slice(2, 9);
 // só http e https viram link: um endereço digitado nunca vira javascript: ou data:
 const urlSegura = (u) => {

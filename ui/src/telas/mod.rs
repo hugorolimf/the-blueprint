@@ -16,22 +16,12 @@ use crate::documento::Documento;
 pub use novo::Novo;
 pub use novo_bp::NovoBp;
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Tela {
     Entrada,
     Workspace(String),
     /// um blueprint aberto: (workspace, blueprint)
     Blueprint(String, String),
-}
-
-/// O período escolhido na régua de um blueprint (`periodos` de dados.js): `aguardando` é o 1º clique, que só marca o mês inicial.
-#[derive(Clone, Debug)]
-pub struct Periodo {
-    pub inicio: String,
-    pub fim: String,
-    pub aguardando: bool,
-    /// a janela que estava na tela antes do 1º clique (enquanto se espera o 2º)
-    pub anterior: Option<(String, String)>,
 }
 
 /// O que a tela pede que mude nos dados.
@@ -53,8 +43,6 @@ pub enum Acao {
     Marcar(String, String, String, &'static str, String),
     /// a situação de uma ação sem depender dos itens: (workspace, blueprint, ação, `planejado`/`andamento`/`concluido`)
     Situacao(String, String, String, &'static str),
-    /// empurra o fim da ação: (workspace, blueprint, ação, dias)
-    Prorrogar(String, String, String, i64),
     ExcluirAcao(String, String, String),
     ExcluirBlueprint(String, String),
     /// abrir a folha de observações do blueprint (sem ação) ou da ação: (workspace, blueprint, ação)
@@ -95,11 +83,8 @@ pub struct Vista {
     pub focar_busca: bool,
     /// as seções abertas ou recolhidas (`blueprint|projeto`); sem entrada vale o padrão: o blueprint sem projetos nasce aberto, o projeto nasce fechado
     pub abertas: std::collections::HashMap<String, bool>,
-    /// o período escolhido por blueprint e os que estão no filtro «Pendentes»
-    pub periodos: std::collections::HashMap<String, Periodo>,
+    /// os blueprints que estão no filtro «Pendentes»
     pub pendentes: std::collections::HashSet<String>,
-    /// a janela de meses desenhada por último em cada blueprint (`janelasRenderizadas`)
-    pub janelas: std::collections::HashMap<String, (String, String)>,
     /// os agentes que o servidor conhece e quanto tempo sem aviso leva ao repouso; os que o usuário já viu (`concluidosVistos`)
     pub agentes: Vec<crate::agentes::Agente>,
     pub agentes_vida: i64,
@@ -108,6 +93,10 @@ pub struct Vista {
     pub agente_aberto: Option<String>,
     /// só nos testes: um clique de ponteiro de verdade a injetar (roteiro `clicar:x/y` e `direito:x/y`)
     pub clique_pedido: Option<(egui::Pos2, egui::PointerButton)>,
+    /// o passo `roda:x/y/d` do roteiro: onde e quanto girar a roda do mouse
+    pub roda_pedida: Option<(egui::Pos2, f32)>,
+    /// só nos testes: um arrasto de ponteiro de verdade a injetar (roteiro `arrastar:x0/y0/x1/y1`)
+    pub arrasto_pedido: Option<(egui::Pos2, egui::Pos2, egui::PointerButton)>,
     /// só nos testes: o plano (`id` ou `ref`) que o roteiro `marcar-plano` manda marcar, assim que a folha chegar
     pub marcar_pedido: Option<String>,
     /// a folha de observações aberta e o texto que está sendo editado
@@ -115,7 +104,7 @@ pub struct Vista {
     pub nota_texto: String,
     /// o Planejar do blueprint aberto: a folha nova, o que chegou e o canal com o servidor
     pub plano: crate::plano::Estado,
-    /// os blueprints em que o usuário pediu a folha antiga (período, Pendentes e busca só existem lá)
+    /// os blueprints em que o usuário pediu a folha antiga (Pendentes e busca só existem lá)
     pub folha_antiga: std::collections::HashSet<String>,
 }
 
@@ -146,7 +135,7 @@ impl Vista {
     }
 
     pub fn nova() -> Vista {
-        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, novo_bp: None, excluir: None, excluir_item: None, menu: None, ir_para: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), periodos: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), janelas: std::collections::HashMap::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None, marcar_pedido: None, nota: None, nota_texto: String::new(), plano: crate::plano::Estado::default(), folha_antiga: std::collections::HashSet::new() }
+        Vista { tela: Tela::Entrada, nome: String::new(), trocando_nome: false, novo: None, novo_bp: None, excluir: None, excluir_item: None, menu: None, arrasto_pedido: None, ir_para: None, depois: None, aviso: String::new(), erro: String::new(), consulta: String::new(), rolagem: None, busca_aberta: false, focar_busca: false, abertas: std::collections::HashMap::new(), pendentes: std::collections::HashSet::new(), agentes: Vec::new(), agentes_vida: 600_000, vistos: std::collections::HashSet::new(), agente_aberto: None, clique_pedido: None, roda_pedida: None, marcar_pedido: None, nota: None, nota_texto: String::new(), plano: crate::plano::Estado::default(), folha_antiga: std::collections::HashSet::new() }
     }
 }
 

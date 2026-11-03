@@ -29,7 +29,7 @@ pub fn abrir(vista: &mut Vista) {
 
 impl Roteiro {
     /// O próximo passo, se houver. `excluir:Nome` procura o workspace pelo nome.
-    pub fn proximo(&mut self, doc: &Documento, vista: &mut Vista) -> Option<Acao> {
+    pub fn proximo(&mut self, ctx: &egui::Context, doc: &Documento, vista: &mut Vista) -> Option<Acao> {
         if let Some(ate) = self.1 {
             if std::time::Instant::now() < ate {
                 return None;
@@ -67,14 +67,6 @@ impl Roteiro {
                 vista.pendentes.insert(arg.into());
                 None
             }
-            "periodo" => {
-                // periodo:blueprint/aaaa-mm/aaaa-mm
-                let p: Vec<&str> = arg.split('/').collect();
-                if let [bp, a, b] = p.as_slice() {
-                    vista.periodos.insert((*bp).into(), crate::telas::Periodo { inicio: (*a).into(), fim: (*b).into(), aguardando: false, anterior: None });
-                }
-                None
-            }
             "buscar" => {
                 vista.consulta = arg.into();
                 None
@@ -86,6 +78,23 @@ impl Roteiro {
                 }
                 None
             }
+            "roda" => {
+                // roda:x/y/d gira a roda do mouse em x/y, d pontos: para cima, positivo (a mesma conta do mouse de verdade)
+                let v: Vec<f32> = arg.split('/').filter_map(|n| n.parse().ok()).collect();
+                if let [x, y, d] = v[..] {
+                    vista.roda_pedida = Some((egui::pos2(x, y), d));
+                }
+                None
+            }
+            "arrastar" | "arrastar-direito" => {
+                // arrastar:x0/y0/x1/y1 aperta em x0/y0, anda até x1/y1 e solta
+                let n: Vec<f32> = arg.split('/').filter_map(|v| v.parse().ok()).collect();
+                if let [x0, y0, x1, y1] = n[..] {
+                    let botao = if verbo == "arrastar" { egui::PointerButton::Primary } else { egui::PointerButton::Secondary };
+                    vista.arrasto_pedido = Some((egui::pos2(x0, y0), egui::pos2(x1, y1), botao));
+                }
+                None
+            }
             "direito" => {
                 // direito:x/y clica com o botão direito (abre o menu)
                 if let Some((x, y)) = arg.split_once('/') {
@@ -93,17 +102,16 @@ impl Roteiro {
                 }
                 None
             }
+            "mouse-voltar" | "mouse-avancar" => {
+                // o botão lateral do mouse, como um clique de verdade no meio da janela
+                let botao = if verbo == "mouse-voltar" { egui::PointerButton::Extra1 } else { egui::PointerButton::Extra2 };
+                vista.clique_pedido = Some((egui::pos2(480.0, 300.0), botao));
+                None
+            }
             "abrir-acao" => {
                 // abrir-acao:ref abre a ação na folha nova
                 vista.plano.tela = crate::plano::Sub::Folha;
                 vista.plano.aberta = Some(arg.into());
-                None
-            }
-            "abrir-detalhe" => {
-                // abrir-detalhe:ref-da-ação/id-do-detalhe abre a ação e a prévia do detalhe na folha
-                if let Some((acao, det)) = arg.split_once('/') {
-                    vista.plano.pedir_detalhe = Some((acao.into(), det.into()));
-                }
                 None
             }
             "marcar-plano" => {
@@ -124,6 +132,31 @@ impl Roteiro {
                 let (etapa, parada) = arg.split_once('/').unwrap_or((arg, "0"));
                 if let (Some(f), true) = (vista.plano.folha.as_mut(), crate::plano::agentes::demo::ativo("escrita")) {
                     crate::plano::agentes::demo::escrita(f, etapa.parse().unwrap_or(0), parada.parse().unwrap_or(0));
+                }
+                None
+            }
+            "demo-obra" => {
+                // demo-obra:n deixa n planos feitos e o seguinte em andamento, para ver a obra subir (só com BLUEPRINT_UI_DEMO; nunca grava)
+                if let (Some(f), true) = (vista.plano.folha.as_mut(), crate::plano::agentes::demo::ativo("obra")) {
+                    crate::plano::agentes::demo::obra(f, arg.parse().unwrap_or(0));
+                }
+                None
+            }
+            "demo-depende" => {
+                // demo-depende:4.1/1.2 faz o plano 4.1 depender do 1.2, para ver a ligação entre ações (só com BLUEPRINT_UI_DEMO; nunca grava)
+                if let (Some(f), true, Some((q, d))) = (vista.plano.folha.as_mut(), crate::plano::agentes::demo::ativo("obra"), arg.split_once('/')) {
+                    if let Some(p) = f.projetos.iter_mut().flat_map(|p| &mut p.acoes).flat_map(|a| &mut a.planos).find(|p| p.referencia == q) {
+                        p.depende_de.push(d.to_string());
+                    }
+                    // a folha mudou na memória: o que a tela guardou dela (esteiras, miniaturas) é refeito
+                    f.renovar();
+                }
+                None
+            }
+            "obra-orbita" => {
+                // obra-orbita:az/el gira a obra da aba Planta, como o arrastar do mouse
+                if let Some((x, y)) = arg.split_once('/') {
+                    crate::plano::acao::girar_obra(ctx, x.parse().unwrap_or(0.0), y.parse().unwrap_or(0.0));
                 }
                 None
             }

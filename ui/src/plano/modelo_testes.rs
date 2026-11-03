@@ -17,7 +17,7 @@ fn sem_perder_campo<T: serde::de::DeserializeOwned + Serialize>(texto: &str) -> 
 #[test]
 fn folha_decodifica() {
     let f: Folha = sem_perder_campo(FOLHA);
-    assert_eq!((f.blueprint.nome.as_str(), f.hoje.as_str(), f.limite, f.sem_pasta), ("Monitor de consumo", "2026-11-01", 4, false));
+    assert_eq!((f.blueprint.nome.as_str(), f.limite, f.sem_pasta), ("Monitor de consumo", 4, false));
     assert!(f.escrita.is_none());
     assert_eq!(f.pendente, Some(Pendente { numero: 2, agente: "exemplo".into() }));
     assert_eq!(f.numeros, NumerosFolha { aprovar: 2, diffs: 1, novas: 1 });
@@ -34,10 +34,9 @@ fn folha_decodifica() {
     assert_eq!(painel.planos[1].por, "1.2.1");
     assert_eq!(painel.detalhes[0].figura.as_ref().map(|x| (x.largura, x.altura)), Some((Some(900), Some(420))));
     let diff = painel.diff.as_ref().unwrap();
-    assert_eq!(diff.resumo, Resumo { mais: 1, menos: 1, alterados: 2, detalhes: 1, outros: 0 });
-    assert_eq!(diff.linhas.iter().map(|l| l.tipo).collect::<Vec<_>>(), [TipoLinha::Prazo, TipoLinha::Alterado, TipoLinha::Igual, TipoLinha::Novo, TipoLinha::Removido]);
-    assert_eq!(diff.linhas[1].palavras[1], Palavra { t: TipoPalavra::Mais, s: " por sala".into() });
-    assert_eq!(diff.prazo.as_ref().unwrap().depois, "2026-11-10 → 2026-11-20");
+    assert_eq!(diff.resumo, Resumo { mais: 1, menos: 1, alterados: 1, detalhes: 1, outros: 0 });
+    assert_eq!(diff.linhas.iter().map(|l| l.tipo).collect::<Vec<_>>(), [TipoLinha::Alterado, TipoLinha::Igual, TipoLinha::Novo, TipoLinha::Removido]);
+    assert_eq!(diff.linhas[0].palavras[1], Palavra { t: TipoPalavra::Mais, s: " por sala".into() });
     assert_eq!(diff.detalhes_novos[0].id, "02");
 }
 

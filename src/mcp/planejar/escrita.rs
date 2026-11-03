@@ -16,7 +16,7 @@ use crate::plano::formato::{AcaoDoc, Decisao, FiguraInfo, Pergunta, PlanoDoc, Pr
 use crate::plano::ids::id_real;
 use crate::plano::svg::{css_seguro, MAX_FIGURAS};
 use crate::plano::validar::{achar_ciclo, avisos, validar, validar_peca};
-use crate::tempo::{agora_ms, hoje_local};
+use crate::tempo::agora_ms;
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -158,16 +158,10 @@ fn sem_conteudo(a: &AcaoDoc) -> bool {
     a.texto.is_none() && a.planos.is_empty() && a.checkpoints.is_empty() && a.detalhes.is_empty() && a.tabelas.is_empty()
 }
 
-/// Nome e prazo, se vieram. `""` no prazo apaga: é como a ação fica sem data.
+/// O nome, se veio.
 fn por_cabecalho(a: &mut AcaoDoc, nova: &AcaoDoc) {
     if !nova.nome.is_empty() {
         a.nome = nova.nome.clone();
-    }
-    if let Some(de) = &nova.de {
-        a.de = Some(de.clone()).filter(|s| !s.is_empty());
-    }
-    if let Some(ate) = &nova.ate {
-        a.ate = Some(ate.clone()).filter(|s| !s.is_empty());
     }
 }
 
@@ -209,7 +203,7 @@ fn mesclar(antes: Option<&AcaoDoc>, nova: AcaoDoc, bruta: &Value) -> AcaoDoc {
     a
 }
 
-/// As ações que o `abrir` declarou entram no doc: só nome e prazo, o conteúdo vem em `escrever`. Devolve os erros das que mudaram: declarar sem mudar não valida o que o agente não mandou.
+/// As ações que o `abrir` declarou entram no doc: só o nome, o conteúdo vem em `escrever`. Devolve os erros das que mudaram: declarar sem mudar não valida o que o agente não mandou.
 fn declarar(doc: &mut PlanoDoc, tocadas: &mut Vec<String>, aguardando: &mut Vec<String>, declaradas: &PlanoDoc) -> Vec<String> {
     let mut mudadas = Vec::new();
     for pr in &declaradas.projetos {
@@ -445,7 +439,7 @@ fn fechar(d: &mut Dados, corpo: &Value) -> Result<Value, Recusa> {
 
     let comp = comparar_planos(Some(&arvore), &doc);
     let colocadas = if salvar { Vec::new() } else { comp.novas.clone() };
-    let projetado = projetar(&bp, &doc, Escopo::So(&colocadas), &hoje_local());
+    let projetado = projetar(&bp, &doc, Escopo::So(&colocadas));
     let depois = do_blueprint(&projetado);
     let planos: Vec<_> = depois.projetos.iter().flat_map(|p| &p.acoes).flat_map(|a| &a.planos).collect();
     if let Some(ciclo) = achar_ciclo(&planos) {

@@ -26,6 +26,8 @@ pub struct App {
     servidor: String,
     estado: Estado,
     vista: Vista,
+    /// por onde a pessoa passou: os botões laterais do mouse andam por aqui
+    historico: crate::historico::Historico,
     /// o documento de antes da gravação em curso: volta se ela falhar
     gravando: Option<Value>,
     /// a busca do documento em curso é uma recarga no lugar: a tela segue à vista e falha não vira a tela de erro
@@ -38,6 +40,8 @@ pub struct App {
     ultima_tela: String,
     /// o clique de teste em curso: posição, botão e se já é a hora de soltar
     clique: Option<(egui::Pos2, egui::PointerButton, bool)>,
+    /// o arrasto de teste em curso: um evento por quadro
+    arrasto: std::collections::VecDeque<egui::Event>,
     /// a última busca de agentes (a cada poucos segundos, só com a janela aberta)
     agentes_em: Option<web_time::Instant>,
     #[cfg(not(target_arch = "wasm32"))]
@@ -62,6 +66,7 @@ impl App {
             servidor,
             estado: Estado::Carregando,
             vista: Vista::nova(),
+            historico: Default::default(),
             gravando: None,
             recarga_em_curso: false,
             envio,
@@ -69,6 +74,7 @@ impl App {
             mostrar,
             ultima_tela: String::new(),
             clique: None,
+            arrasto: Default::default(),
             agentes_em: None,
             #[cfg(not(target_arch = "wasm32"))]
             captura: crate::captura::do_ambiente(),
@@ -163,6 +169,21 @@ impl eframe::App for App {
 
     /// Só nos testes: transforma o passo `clicar:x/y` do roteiro num clique de ponteiro de verdade (mover, apertar; no quadro seguinte, soltar).
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
+        if let Some((de, para, button)) = self.vista.arrasto_pedido.take() {
+            self.arrasto.push_back(egui::Event::PointerMoved(de));
+            self.arrasto.push_back(egui::Event::PointerButton { pos: de, button, pressed: true, modifiers: Default::default() });
+            self.arrasto.extend((1..=12).map(|i| egui::Event::PointerMoved(de.lerp(para, i as f32 / 12.0))));
+            self.arrasto.push_back(egui::Event::PointerButton { pos: para, button, pressed: false, modifiers: Default::default() });
+        }
+        if let Some(e) = self.arrasto.pop_front() {
+            raw.events.push(e);
+            ctx.request_repaint();
+        }
+        if let Some((pos, d)) = self.vista.roda_pedida.take() {
+            raw.events.push(egui::Event::PointerMoved(pos));
+            raw.events.push(egui::Event::MouseWheel { unit: egui::MouseWheelUnit::Point, delta: egui::vec2(0.0, d), phase: egui::TouchPhase::Move, source: egui::MouseWheelSource::Unknown, modifiers: Default::default() });
+            ctx.request_repaint();
+        }
         if let Some((pos, button, solta)) = self.clique.take() {
             if solta {
                 raw.events.push(egui::Event::PointerButton { pos, button, pressed: false, modifiers: Default::default() });
@@ -202,6 +223,9 @@ impl eframe::App for App {
         }
         self.receber(&ctx);
         self.recarregar_no_lugar(&ctx);
+        if let Estado::Pronto(doc) = &self.estado {
+            self.historico.passo(&ctx, &mut self.vista, doc);
+        }
         #[cfg(not(target_arch = "wasm32"))]
         if std::env::var_os("BLUEPRINT_UI_LOG").is_some() {
             let tela = format!("{:?}", self.vista.tela);
@@ -248,7 +272,7 @@ impl eframe::App for App {
         #[cfg(not(target_arch = "wasm32"))]
         if pedida.is_none() && self.gravando.is_none() {
             if let (Some(roteiro), Estado::Pronto(doc)) = (&mut self.roteiro, &self.estado) {
-                pedida = roteiro.proximo(doc, &mut self.vista);
+                pedida = roteiro.proximo(ui.ctx(), doc, &mut self.vista);
                 ctx.request_repaint_after(std::time::Duration::from_millis(400));
             }
         }

@@ -11,12 +11,15 @@ pub const EASE: [f32; 4] = [0.32, 0.72, 0.0, 1.0];
 const PASSO_MS: f32 = 70.0;
 const CHEGADA_MS: f32 = 340.0;
 
-/// `BLUEPRINT_UI_SEM_ANIMACAO=1`: tudo aparece pronto.
+/// `BLUEPRINT_UI_SEM_ANIMACAO=1`: tudo aparece pronto. Lida uma vez, como `folha_estilo::ligado`: o ambiente não muda com o app aberto.
 pub fn desligado() -> bool {
-    #[cfg(not(target_arch = "wasm32"))]
-    return std::env::var_os("BLUEPRINT_UI_SEM_ANIMACAO").is_some();
-    #[cfg(target_arch = "wasm32")]
-    false
+    static DESLIGADO: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *DESLIGADO.get_or_init(|| {
+        #[cfg(not(target_arch = "wasm32"))]
+        return std::env::var_os("BLUEPRINT_UI_SEM_ANIMACAO").is_some();
+        #[cfg(target_arch = "wasm32")]
+        false
+    })
 }
 
 /// `EASE` como função solta, para o `animate_bool_with_time_and_easing` do egui.

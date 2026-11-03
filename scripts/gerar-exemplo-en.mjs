@@ -1,5 +1,5 @@
 // Gera data.exemplo.en.json (os dados de exemplo em inglês) a partir de data.exemplo.json, trocando cada texto humano pela tradução da tabela abaixo.
-// Os ids, as datas e os números ficam iguais, então os dois exemplos têm a mesma estrutura. Uso: node scripts/gerar-exemplo-en.mjs [--conferir]
+// Os ids e os números ficam iguais, então os dois exemplos têm a mesma estrutura. Uso: node scripts/gerar-exemplo-en.mjs [--conferir]
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
@@ -8,7 +8,7 @@ const T = {
   "Estúdio Aurora": "Aurora Studio",
   "Aplicativo de entregas": "Delivery app",
   "App para o entregador receber pedidos, seguir a rota e confirmar a entrega.": "An app for the courier to receive orders, follow the route and confirm the delivery.",
-  "Exemplo fictício. Metas: primeira versão para o piloto em novembro; sem dados reais de clientes.": "Fictional example. Goals: first version for the pilot in November; no real customer data.",
+  "Exemplo fictício. Metas: primeira versão para o piloto; sem dados reais de clientes.": "Fictional example. Goals: first version for the pilot; no real customer data.",
   "Repositório": "Repository",
   "Protótipo navegável": "Clickable prototype",
   "Objetivo: validar o fluxo com três entregadores antes de escrever código de produção.\nEntrega: protótipo clicável com as telas de pedido, rota e confirmação.": "Goal: validate the flow with three couriers before writing production code.\nDeliverable: a clickable prototype with the order, route and confirmation screens.",
@@ -20,7 +20,7 @@ const T = {
   "Testar com três entregadores": "Test with three couriers",
   "Escopo: sessão de 20 minutos por pessoa\nResultado esperado: lista de ajustes\nValidação: relatório com as observações": "Scope: a 20-minute session per person\nExpected result: a list of adjustments\nValidation: a report with the observations",
   "Fluxo aprovado pela operação": "Flow approved by operations",
-  "Reunião de 12/10: fluxo aprovado sem ressalvas.": "Meeting on 12/10: flow approved with no reservations.",
+  "Reunião com a operação: fluxo aprovado sem ressalvas.": "Meeting with operations: flow approved with no reservations.",
   "API de pedidos": "Orders API",
   "Objetivo: serviço que recebe pedidos e entrega ao app a lista do dia.\nEntrega: endpoints de listar, aceitar e concluir pedido, com testes automáticos.\nRiscos: instabilidade do provedor de mapas (mitigação: cache da última rota).": "Goal: a service that receives orders and gives the app the day's list.\nDeliverable: endpoints to list, accept and complete an order, with automated tests.\nRisks: instability of the maps provider (mitigation: cache the last route).",
   "Modelar pedidos e entregadores": "Model orders and couriers",
@@ -74,7 +74,7 @@ const T = {
   "Escopo: tabela de série temporal\nResultado esperado: histórico de sete dias\nValidação: consulta de um dia em menos de 1 s": "Scope: a time-series table\nExpected result: a seven-day history\nValidation: a one-day query in under 1 s",
   "Mostrar o consumo por sala": "Show consumption by room",
   "Escopo: gráfico de barras do dia\nResultado esperado: painel simples\nValidação: comparação com a conta de energia": "Scope: a bar chart for the day\nExpected result: a simple dashboard\nValidation: comparison with the electricity bill",
-  "Primeira semana de dados": "First week of data",
+  "Primeiros dados coletados": "First data collected",
 };
 const entrada = join(raiz, "data.exemplo.json"), saida = join(raiz, "data.exemplo.en.json");
 const naoTraduzidos = new Set();

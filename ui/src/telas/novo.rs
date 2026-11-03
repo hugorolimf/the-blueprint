@@ -46,7 +46,7 @@ impl Novo {
 pub fn tela(ui: &mut Ui, vista: &mut Vista, ocupado: bool) -> Option<Acao> {
     let mut acao = None;
     let (viewport, largura) = (ui.available_height(), ui.available_width());
-    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+    crate::rolagem::mostrar(ui, egui::ScrollArea::vertical().auto_shrink([false, false]), |ui| {
         let altura = viewport.max(ALTURA_MIN);
         let (pagina, _) = ui.allocate_exact_size(vec2(largura, altura), Sense::hover());
         let (p, o) = (ui.painter().clone(), pagina.min);

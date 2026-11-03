@@ -7,7 +7,7 @@ When the user asks to bring issues from a GitHub repository into the blueprint, 
 1. Ask which repository (`owner/name`) and, if the user did not say, whether to import all open issues or only a label or milestone. Do not guess the repository.
 2. Read: `gh issue list --repo <owner/name> --state open --limit 50 --json number,title,body,labels,milestone,url`. Never request the `assignees` or `author` fields, and never copy a person's name or e-mail into the blueprint. If `gh` is missing or not signed in, say so and stop; do not try another way in.
 3. `ler_blueprint` first: skip an issue whose `#number` already appears in an action's `observacao` (the import is safe to repeat, and nothing is imported twice).
-4. Map and send **one** proposal for all the issues (topic `planejar` has the format and the deadline rules):
+4. Map and send **one** proposal for all the issues (topic `planejar` has the format):
 
 | Issue | Blueprint |
 | --- | --- |
@@ -15,11 +15,11 @@ When the user asks to bring issues from a GitHub repository into the blueprint, 
 | Body | Action `observacao`: a summary of at most 600 characters, then `GitHub issue <owner/name>#<number>` |
 | Task list in the body (`- [ ] ...`) | One plan per item, up to 6; an item already ticked (`- [x]`) is ignored (only plan what is not done) |
 | No task list | One plan: "Implement #<number>" |
-| Milestone | The `projeto` of the action (id or name); a milestone that is not a project yet goes in `blueprint.projetos` (`[{ "nome": "<milestone>" }]`). Its due date, if any, only hints the end date |
+| Milestone | The `projeto` of the action (id or name); a milestone that is not a project yet goes in `blueprint.projetos` (`[{ "nome": "<milestone>" }]`). Its due date is ignored |
 | Labels | Written in the note; they do not change the status |
 | Closed issue | Not imported |
 
-5. Dates and hours follow the AI-pace rules of `planejar` (actions of 1 to 3 days, plans of 0.5 to 4 hours), counted from today, in the order of the milestones. Do not copy the issue's own dates.
+5. Keep the actions in the order of the milestones. The blueprint has no dates: do not copy the issue's own dates.
 6. Tell the user how many issues you imported, which you skipped (already there, closed) and what you assumed.
 
 ## Safety

@@ -30,13 +30,21 @@ pub fn soltas(f: &Folha) -> impl Iterator<Item = &Decisao> {
 
 /// Empilha os projetos e as ações a partir do topo `y0`. `painel`: a altura que a ação ocupa além da linha (a ação aberta soma o painel dela aqui, e a que abre ou fecha, parte dele). `notas`: o que as observações das decisões soltas ocupam.
 pub fn empilhar(f: &Folha, y0: f32, painel: &dyn Fn(&AcaoPlano) -> f32, notas: f32) -> Disposicao {
+    let alturas: Vec<f32> = f.projetos.iter().flat_map(|p| &p.acoes).map(painel).collect();
+    empilhar_por(f, y0, &alturas, notas)
+}
+
+/// `empilhar` com o que cada ação ocupa já medido, na ordem das linhas (todas as ações de todos os projetos): a folha mede uma vez por quadro e passa aqui.
+pub fn empilhar_por(f: &Folha, y0: f32, painel: &[f32], notas: f32) -> Disposicao {
     let (mut projetos, mut linhas, mut y) = (Vec::with_capacity(f.projetos.len()), Vec::new(), y0);
     for (i, p) in f.projetos.iter().enumerate() {
         projetos.push(y + ALTO_PROJETO / 2.0);
         y += ALTO_PROJETO;
-        for (k, a) in p.acoes.iter().enumerate() {
+        for k in 0..p.acoes.len() {
+            // o índice da linha é o da ação na folha inteira
+            let extra = painel.get(linhas.len()).copied().unwrap_or(0.0);
             linhas.push((i, k, y + LINHA / 2.0));
-            y += LINHA + painel(a);
+            y += LINHA + extra;
         }
         y += VAO_PROJETO;
     }
@@ -89,7 +97,7 @@ pub fn decisoes(ui: &mut Ui, c: &Pincel, f: &Folha, lugar: revisao::Alvo, y0: f3
         let forte = Letra::nova(11.5, TINTA).forte();
         c.texto(&c.cortado(&k.rotulo, largura - 270.0, &forte).0, X_DECISAO, y + 6.0, forte);
         if k.pede_aprovacao {
-            revisao::canto(lapis(), ui, lugar, x1, y + 6.0, &peca, Meio::Revisar);
+            revisao::canto(lapis(), ui, lugar, x1, y + 6.0, &peca, Meio::Decisao);
         }
         let (t, cortou) = c.cortado(&k.texto, largura, &letra);
         c.texto(&t, X_DECISAO, y + 22.0, letra);

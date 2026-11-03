@@ -24,7 +24,6 @@ const acaoEd = (p) => p.acoes.find((f) => f.id === edSel);
 const SIT = [["planejado", tr("Planejada")], ["andamento", tr("Em desenvolvimento")], ["concluido", tr("Concluída")]];
 const progEditavel = (f) => f.status === "andamento" && !efetiva(f).it[1];
 const ultimoDe = (el, sel) => [...el.querySelectorAll(sel)].pop();
-const durTxt = (f) => (dia(f.inicio) === dia(f.inicio) && dia(f.fim) === dia(f.fim) && dia(f.fim) >= dia(f.inicio) ? trn(dia(f.fim) - dia(f.inicio) + 1, ["{n} dia", "{n} dias"]) : "");
 
 // tela cheia: as telas abrem em tela cheia (dá para desligar em Dados gerais)
 const telaCheiaPref = () => { try { return localStorage.getItem("blueprint.telaCheia") !== "0"; } catch { return true; } };

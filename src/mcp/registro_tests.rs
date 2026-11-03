@@ -9,7 +9,7 @@ fn mcp() -> Mcp {
 }
 
 fn dados() -> Value {
-    json!({"blueprints": [{"id": "p1", "nome": "Portal", "acoes": [{"id": "f1", "nome": "Base", "inicio": "2030-01-01", "fim": "2030-03-01", "status": "andamento", "obs": "", "planos": [{"id": "t1", "texto": "Criar rota", "descricao": "Escopo x. Validação: roda.", "feito": false}], "checkpoints": []}]}]})
+    json!({"blueprints": [{"id": "p1", "nome": "Portal", "acoes": [{"id": "f1", "nome": "Base", "status": "andamento", "obs": "", "planos": [{"id": "t1", "texto": "Criar rota", "descricao": "Escopo x. Validação: roda.", "feito": false}], "checkpoints": []}]}]})
 }
 
 fn corpo_registro() -> Value {
@@ -19,7 +19,7 @@ fn corpo_registro() -> Value {
 }
 
 fn corpo_proposta() -> Value {
-    json!({"workspaceId": "sm", "blueprintId": "p1", "mensagem": "m", "acoes": [{"nome": "Nova ação", "inicio": "2030-04-01", "fim": "2030-04-30", "planos": [
+    json!({"workspaceId": "sm", "blueprintId": "p1", "mensagem": "m", "acoes": [{"nome": "Nova ação", "planos": [
         {"texto": "Criar a tela", "descricao": "Escopo: x. Validação: o teste passa."}, {"texto": "Criar a rota", "descricao": "Escopo: x. Validação: o teste passa."}], "checkpoints": []}]})
 }
 

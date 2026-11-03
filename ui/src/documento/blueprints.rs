@@ -1,6 +1,6 @@
 //! O que muda dentro de um workspace: criar blueprint, marcar plano ou checkpoint e as observações.
 
-use super::{dia, iso_do_dia, lista, novo_id, texto, Documento, RAIZ};
+use super::{lista, novo_id, texto, Documento, RAIZ};
 use serde_json::{json, Value};
 
 impl Documento {
@@ -55,14 +55,6 @@ impl Documento {
             "planejado" => a.insert("progresso".into(), json!(0)),
             _ => None,
         };
-        true
-    }
-
-    /// Empurra o fim da ação (`prorrogarAcao`): só o fim se afasta, e os checkpoints continuam dentro do período. `false` se o fim não é uma data.
-    pub fn prorrogar(&mut self, workspace: &str, blueprint: &str, acao: &str, dias: i64) -> bool {
-        let Some(a) = self.acao_mut(workspace, blueprint, acao) else { return false };
-        let Some(fim) = a.get("fim").and_then(Value::as_str).and_then(dia) else { return false };
-        a.insert("fim".into(), json!(iso_do_dia(fim + dias)));
         true
     }
 

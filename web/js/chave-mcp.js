@@ -8,7 +8,6 @@ export function comandosDaChave(url, chave) {
   const env = `--env BLUEPRINT_URL=${url} --env BLUEPRINT_CHAVE=${chave}`;
   return { conectar: `blueprint conectar ${url} ${chave}`, claude: `claude mcp add blueprint-equipe ${env} -- blueprint --mcp`, codex: `codex mcp add blueprint-equipe ${env} -- blueprint --mcp` };
 }
-const dataCurta = (iso) => { const d = new Date(iso || ""); return Number.isFinite(d.getTime()) ? d.toLocaleString(I18N.ativo, { dateStyle: "short", timeStyle: "short" }) : tr("nunca"); };
 
 export async function abrirChave() {
   $("equipe-titulo").textContent = tr("Minha chave de MCP");
@@ -26,7 +25,7 @@ async function estado() {
   try {
     const { chave } = await equipeApi("/api/chave");
     $("eq-chave-status").textContent = chave
-      ? tr("Chave {prefixo}… criada em {criada}; último uso: {usada}.", { prefixo: chave.prefixo, criada: dataCurta(chave.criadaEm), usada: dataCurta(chave.usadaEm) })
+      ? tr("Chave {prefixo}…", { prefixo: chave.prefixo })
       : tr("Você ainda não tem chave.");
     $("eq-chave-gerar").textContent = chave ? tr("Trocar chave") : tr("Gerar chave");
     $("eq-chave-revogar").hidden = !chave;

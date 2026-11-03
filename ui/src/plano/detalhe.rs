@@ -1,187 +1,265 @@
-//! A prévia de um detalhe, na própria folha do blueprint: um clique numa figura da ação aberta troca a grade por ela, sem sair da folha.
-//! A figura manda; ao lado ficam a decisão e a legenda, e embaixo a fita com as vizinhas. O que está aberto mora na memória do egui, porque a folha é refeita
-//! a cada resposta do servidor, e a altura sai da mesma conta que `empilhar` soma.
+//! As telas e os detalhes da ação, embutidos no bloco do texto: o número, o título, a legenda e a figura já renderizada, sem cartão.
+//! A figura começa pequena: com a legenda ao lado, se couber; numa coluna estreita, com a legenda embaixo. O clique a amplia na largura do bloco e outro clique a reduz.
+//! Quem usa: `acao_blocos.rs`, com as telas de cada plano. A altura sai das medidas que o servidor mandou, sem rasterizar antes.
 
-use super::acao_estilo::CORPO;
-use super::acao_movimento::{cascata, com_alfa, desde_que_abriu};
-use super::cartao_ladrilho::RODAPE;
+use super::acao_estilo::{CORPO, LETRA, LETRA_MENOR, LETRA_TITULO, PASSO_LETRA};
+use super::acao_movimento::com_alfa;
+use super::caixinha::Lapis;
 use super::figura;
-use super::linha::Pincel;
-use super::modelo::{Acao as AcaoPlano, Detalhe, Figura, Folha};
-use super::revisao::{self, Alvo, Peca};
+use super::linha::{Letra, Pincel};
+use super::modelo::{Acao as AcaoPlano, Detalhe, Diff, Figura, Folha};
+use super::revisao::{self, Alvo, EstadoPeca, Meio, Peca};
+use crate::i18n::tr;
 use crate::planta::Texto;
-use egui::{Align, Context, Id, Painter, Ui};
-use std::ops::Range;
+use crate::tema::{MEDIO, TINTA};
+use egui::{Context, CursorIcon, Id, Painter, Sense, Stroke, StrokeKind, Ui};
 
-#[path = "detalhe_blocos.rs"]
-mod blocos;
-#[path = "detalhe_figura.rs"]
-mod grande;
-#[path = "detalhe_nav.rs"]
-mod nav;
+/// Figura alta não toma a janela inteira: passa disso, fica mais estreita e encostada à esquerda.
+const FIGURA_MAX: f32 = 720.0;
+/// A figura reduzida: larga o bastante para reconhecer a tela, baixa o bastante para vários planos caberem na janela.
+const MINI_L: f32 = 300.0;
+const MINI_COLUNA: f32 = 440.0;
+const MINI_A: f32 = 190.0;
+/// Abaixo disso a legenda não cabe ao lado da figura.
+const LADO_A_LADO: f32 = 640.0;
+/// Abaixo disso os botões de revisão não cabem na linha do título.
+const CONTROLES_NA_LINHA: f32 = 500.0;
+const ALTO_CONTROLES: f32 = 34.0;
+/// O vão entre a figura reduzida e a legenda ao lado dela.
+const VAO_MINI: f32 = 18.0;
+const CABECA: f32 = 32.0;
+const VAO_LEGENDA: f32 = 8.0;
+const VAO_NOTA: f32 = 8.0;
+/// O vão entre uma tela e a seguinte.
+const VAO: f32 = 26.0;
+const ALFA_REPROVADA: f32 = 0.4;
 
-pub const TEXTOS: &[(&str, &str)] = &[("‹ Anterior", "‹ Previous"), ("Próximo ›", "Next ›")];
-
-const ALTO_CABECA: f32 = 27.0;
-const VAO_CABECA: f32 = 14.0;
-/// Baixa o bastante para a figura, a decisão e a fita caberem juntas numa janela de notebook.
-const FIGURA_MAX: f32 = 460.0;
-const CAMPO_MIN: f32 = 240.0;
-const LADO_MIN: f32 = 260.0;
-const LADO_MAX: f32 = 360.0;
-const VAO_LADO: f32 = 28.0;
-const ALTO_CONTROLE: f32 = 24.0;
-const VAO_CONTROLE: f32 = 18.0;
-const PASSO_LEGENDA: f32 = 18.0;
-const LINHAS_LEGENDA: usize = 16;
-const VAO_FITA: f32 = 20.0;
-const ALTO_MINIATURA: f32 = 76.0;
-
-fn id_aberto(acao: &str) -> Id {
-    Id::unique(("plano-detalhe-aberto", acao))
+/// O que a versão pendente traz para a ação; reprovada, nada disso entra e sai da tela.
+pub fn diff_vivo(a: &AcaoPlano) -> Option<&Diff> {
+    a.diff.as_ref().filter(|d| revisao::estado_de(d.revisao.as_ref()) != EstadoPeca::Reprovada)
 }
 
-fn id_rolar(acao: &str) -> Id {
-    Id::unique(("plano-detalhe-rolar", acao))
+/// Os detalhes da ação como ficariam ao aprovar: os da árvore, com a versão nova dos que mudaram, e os que chegam.
+pub fn detalhes_da(a: &AcaoPlano) -> Vec<&Detalhe> {
+    let diff = diff_vivo(a);
+    let mudado = |id: &str| diff.and_then(|d| d.detalhes_mudados.iter().find(|m| m.id == id));
+    let novos = diff.into_iter().flat_map(|d| &d.detalhes_novos).filter(|n| !a.detalhes.iter().any(|d| d.id == n.id));
+    a.detalhes.iter().map(|d| mudado(&d.id).unwrap_or(d)).chain(novos).collect()
 }
 
-/// Mostra este detalhe na folha e leva a folha até ele.
-pub fn abrir(ctx: &Context, acao: &str, det: &str) {
-    ctx.data_mut(|d| {
-        d.insert_temp(id_aberto(acao), Some(det.to_string()));
-        d.insert_temp(id_rolar(acao), true);
-    });
-    ctx.request_repaint();
-}
-
-/// Volta à grade de figuras.
-pub fn fechar(ctx: &Context, acao: &str) {
-    ctx.data_mut(|d| d.insert_temp(id_aberto(acao), None::<String>));
-    ctx.request_repaint();
-}
-
-/// (altura da figura, altura do campo). A figura vem das medidas do servidor, com teto; figura baixa fica num campo de altura mínima. Sem figura, 16:9.
+/// (largura, altura) da figura nesta largura. Sem figura, o detalhe é só texto e nada é reservado.
 pub fn medidas_figura(f: Option<&Figura>, largura: f32) -> (f32, f32) {
-    let alta = f.map_or(largura * 9.0 / 16.0, |f| figura::altura_para(Some(f), largura)).round();
-    let fig = alta.min(FIGURA_MAX);
-    (fig, fig.max(CAMPO_MIN))
+    let Some(f) = f else { return (0.0, 0.0) };
+    let alta = figura::altura_para(Some(f), largura).round();
+    if alta <= FIGURA_MAX {
+        return (largura, alta);
+    }
+    (FIGURA_MAX * figura::proporcao(Some(f)), FIGURA_MAX)
 }
 
-/// O anterior e o próximo de `i` numa lista de `n`.
-pub fn vizinhos(i: usize, n: usize) -> (Option<usize>, Option<usize>) {
-    (i.checked_sub(1), Some(i + 1).filter(|k| *k < n))
+/// (largura, altura) da figura reduzida. Figura alta fica mais estreita, para não passar da altura.
+pub fn medidas_mini(f: Option<&Figura>, w: f32) -> (f32, f32) {
+    let Some(f) = f else { return (0.0, 0.0) };
+    let l = if em_coluna(w) { w.min(MINI_COLUNA) } else { MINI_L };
+    let alta = figura::altura_para(Some(f), l).round();
+    if alta <= MINI_A {
+        return (l, alta);
+    }
+    (MINI_A * figura::proporcao(Some(f)), MINI_A)
 }
 
-/// Quais detalhes a fita mostra: dois antes e quatro depois do atual.
-pub fn trecho_fita(i: usize, n: usize) -> Range<usize> {
-    i.saturating_sub(2)..(i + 5).min(n)
+fn id_ampliada(a: &AcaoPlano, d: &Detalhe) -> Id {
+    Id::unique(("plano-tela-ampliada", &a.referencia, &d.id))
 }
 
-/// Os detalhes da ação: os da árvore e os que chegam na versão pendente.
-fn detalhes_da(a: &AcaoPlano) -> Vec<&Detalhe> {
-    let novos = a.diff.iter().flat_map(|d| &d.detalhes_novos).filter(|n| !a.detalhes.iter().any(|d| d.id == n.id));
-    a.detalhes.iter().chain(novos).collect()
+fn em_coluna(w: f32) -> bool {
+    w < LADO_A_LADO
 }
 
-/// A posição do detalhe aberto; `None` também quando ele saiu do plano.
-fn indice(ctx: &Context, a: &AcaoPlano, lista: &[&Detalhe]) -> Option<usize> {
-    let det = ctx.data(|d| d.get_temp::<Option<String>>(id_aberto(&a.referencia))).flatten()?;
-    lista.iter().position(|d| d.id == det)
+fn alto_controles(d: &Detalhe, w: f32) -> f32 {
+    if d.pede_aprovacao && w < CONTROLES_NA_LINHA { ALTO_CONTROLES } else { 0.0 }
 }
 
-/// As medidas da figura e da coluna ao lado dela.
-struct Medidas {
-    w_fig: f32,
-    w_lado: f32,
-    x_lado: f32,
-    fig: f32,
-    campo: f32,
-    alto: f32,
+pub fn ampliada(ctx: &Context, a: &AcaoPlano, d: &Detalhe) -> bool {
+    ctx.data(|m| m.get_temp::<bool>(id_ampliada(a, d))).unwrap_or(false)
+}
+
+/// Sem figura ou ampliada, a legenda ocupa a largura toda.
+fn reduzida(ctx: &Context, a: &AcaoPlano, d: &Detalhe) -> bool {
+    d.figura.is_some() && !ampliada(ctx, a, d)
+}
+
+fn largura_legenda(ctx: &Context, a: &AcaoPlano, d: &Detalhe, w: f32) -> f32 {
+    if reduzida(ctx, a, d) && !em_coluna(w) { w - medidas_mini(d.figura.as_ref(), w).0 - VAO_MINI } else { w }
 }
 
 fn texto_legenda(d: &Detalhe, w: f32) -> Texto<'_> {
-    Texto::novo(&d.legenda, 11.5).trilha(0.03).caixa(w).lh(PASSO_LEGENDA).linhas(LINHAS_LEGENDA).cor(CORPO)
+    Texto::novo(&d.legenda, LETRA).trilha(0.03).caixa(w).lh(PASSO_LETRA).cor(CORPO)
 }
 
-/// Onde a legenda começa, abaixo da decisão.
-fn y_legenda(p: &Painter, d: &Detalhe, peca: &Peca, w_lado: f32) -> f32 {
-    if !d.pede_aprovacao {
+fn alto_legenda(p: &Painter, d: &Detalhe, w: f32) -> f32 {
+    if d.legenda.is_empty() {
         return 0.0;
     }
-    let nota = revisao::altura_nota(p, peca, w_lado);
-    ALTO_CONTROLE + if nota > 0.0 { VAO_CONTROLE + nota } else { 0.0 } + VAO_CONTROLE
+    texto_legenda(d, w).galeria(p).rows.len() as f32 * PASSO_LETRA + VAO_LEGENDA
 }
 
-fn medir(p: &Painter, d: &Detalhe, peca: &Peca, x: f32, w: f32) -> Medidas {
-    let w_lado = (w * 0.26).clamp(LADO_MIN, LADO_MAX);
-    let w_fig = w - w_lado - VAO_LADO;
-    let (fig, campo) = medidas_figura(d.figura.as_ref(), w_fig);
-    let legenda = if d.legenda.is_empty() { 0.0 } else { texto_legenda(d, w_lado).galeria(p).rows.len() as f32 * PASSO_LEGENDA };
-    let alto = campo.max(y_legenda(p, d, peca, w_lado) + legenda);
-    Medidas { w_fig, w_lado, x_lado: x + w_fig + VAO_LADO, fig, campo, alto }
+fn alto_nota(p: &Painter, d: &Detalhe, peca: &Peca, w: f32) -> f32 {
+    let nota = if d.pede_aprovacao { revisao::altura_nota(p, peca, w) } else { 0.0 };
+    if nota > 0.0 { nota + VAO_NOTA } else { 0.0 }
 }
 
-fn alto_fita(n: usize) -> f32 {
-    if n > 1 {
-        VAO_FITA + ALTO_MINIATURA + RODAPE
+fn altura_de(p: &Painter, f: &Folha, a: &AcaoPlano, d: &Detalhe, w: f32) -> f32 {
+    let peca = Peca::detalhe(f, &a.referencia, d);
+    let legenda = alto_legenda(p, d, largura_legenda(p.ctx(), a, d, w));
+    let corpo = if reduzida(p.ctx(), a, d) {
+        let mini = medidas_mini(d.figura.as_ref(), w).1;
+        if em_coluna(w) { mini + if legenda > 0.0 { VAO_LEGENDA + legenda } else { 0.0 } } else { legenda.max(mini) }
     } else {
-        0.0
-    }
-}
-
-/// Quanto a prévia ocupa; `None` quando a ação está mostrando a grade.
-pub fn altura(p: &Painter, f: &Folha, a: &AcaoPlano, w: f32) -> Option<f32> {
-    let lista = detalhes_da(a);
-    let d = lista[indice(p.ctx(), a, &lista)?];
-    let peca = Peca::detalhe(f, &a.referencia, d);
-    Some(ALTO_CABECA + VAO_CABECA + medir(p, d, &peca, 0.0, w).alto + alto_fita(lista.len()))
-}
-
-/// A prévia em `(x, y)`, se houver uma aberta. Devolve se desenhou; `y_secao` é o topo da seção, aonde a folha rola ao abrir.
-#[allow(clippy::too_many_arguments)]
-pub fn desenhar(ui: &mut Ui, c: &Pincel, lugar: Alvo, f: &Folha, a: &AcaoPlano, x: f32, y: f32, w: f32, y_secao: f32) -> bool {
-    let ctx = ui.ctx().clone();
-    let lista = detalhes_da(a);
-    let Some(i) = indice(&ctx, a, &lista) else {
-        return false;
+        legenda + medidas_figura(d.figura.as_ref(), w).1
     };
-    if ctx.data_mut(|d| d.remove_temp::<bool>(id_rolar(&a.referencia))).is_some() {
-        ui.scroll_to_rect(c.caixa(x, y_secao - 12.0, w, 1.0), Some(Align::Min));
+    CABECA + alto_controles(d, w) + alto_nota(p, d, &peca, w) + corpo + VAO
+}
+
+/// Quanto estas telas ocupam, para empilhar antes de desenhar. Zero sem telas.
+pub fn altura(p: &Painter, f: &Folha, a: &AcaoPlano, lista: &[&Detalhe], w: f32) -> f32 {
+    lista.iter().map(|d| altura_de(p, f, a, d, w)).sum()
+}
+
+/// As telas a partir de `(x, y)`, na largura `w`, uma embaixo da outra.
+#[allow(clippy::too_many_arguments)]
+pub fn desenhar(ui: &mut Ui, c: &Pincel, alvo: Alvo, f: &Folha, a: &AcaoPlano, lista: &[&Detalhe], x: f32, y: f32, w: f32) {
+    let mut yy = y;
+    for d in lista {
+        tela(ui, c, alvo, f, a, d, x, yy, w);
+        yy += altura_de(c.p, f, a, d, w);
     }
-    let d = lista[i];
+}
+
+/// O número e o grupo à esquerda, o título ao lado e o controle de revisão à direita. O «+» é o mesmo do diff: esta tela ainda não foi aprovada.
+#[allow(clippy::too_many_arguments)]
+fn cabeca(ui: &mut Ui, c: &Pincel, alvo: Alvo, a: &AcaoPlano, d: &Detalhe, peca: &Peca, x: f32, y: f32, w: f32) {
+    let sinal = if a.detalhes.iter().any(|v| v.id == d.id) { "" } else { "+ " };
+    let grupo = if d.grupo.is_empty() { String::new() } else { format!("{} · ", d.grupo) };
+    let w_id = c.texto(&format!("{sinal}{grupo}{}-{}", a.referencia, d.id), x, y + 19.0, Letra::nova(LETRA_MENOR, MEDIO));
+    let reprovada = d.pede_aprovacao && peca.estado() == EstadoPeca::Reprovada;
+    let na_linha = d.pede_aprovacao && alto_controles(d, w) == 0.0;
+    let reserva = if na_linha { revisao::medir_partes(c.p, Meio::Tela).1 + 16.0 } else { 0.0 };
+    let x_titulo = x + w_id + 10.0;
+    let letra = Letra::nova(LETRA_TITULO, if reprovada { MEDIO } else { TINTA }).forte();
+    let (titulo, cortou) = c.cortado(&d.titulo, (x + w - reserva - x_titulo).max(40.0), &letra);
+    let w_titulo = c.texto(&titulo, x_titulo, y + 19.0, letra);
+    let lapis = Lapis { p: c.p, o: c.o };
+    if reprovada {
+        revisao::risco(lapis, x_titulo, x_titulo + w_titulo, y + 14.0);
+    }
+    if cortou {
+        let _ = ui.interact(c.caixa(x_titulo, y, w_titulo, CABECA), Id::unique(("plano-detalhe-titulo", &a.referencia, &d.id)), Sense::hover()).on_hover_text(d.titulo.as_str());
+    }
+    if d.pede_aprovacao {
+        revisao::canto(lapis, ui, alvo, x + w, if na_linha { y + 19.0 } else { y + CABECA + 18.0 }, peca, Meio::Tela);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn tela(ui: &mut Ui, c: &Pincel, alvo: Alvo, f: &Folha, a: &AcaoPlano, d: &Detalhe, x: f32, y: f32, w: f32) {
     let peca = Peca::detalhe(f, &a.referencia, d);
-    let m = medir(c.p, d, &peca, x, w);
-    nav::cabecalho(ui, c, a, d, &lista, i, &peca, x, y, w);
-    let y_palco = y + ALTO_CABECA + VAO_CABECA;
-    // só o que muda entra de novo ao trocar de detalhe: a figura e a coluna ao lado
-    let ms = desde_que_abriu(&ctx, ("detalhe", &a.referencia, &d.id));
-    let pintor = com_alfa(c.p, cascata(&ctx, ms, 0, 0.0));
-    let palco = Pincel { p: &pintor, o: c.o };
-    grande::figura_grande(&palco, lugar.servidor, d, &m, x, y_palco);
-    blocos::lado(ui, &palco, lugar, d, &peca, &m, y_palco);
-    blocos::fita(ui, c, lugar.servidor, a, &lista, i, x, y_palco + m.alto + VAO_FITA, w);
-    true
+    cabeca(ui, c, alvo, a, d, &peca, x, y, w);
+    let mut yy = y + CABECA + alto_controles(d, w);
+    let nota = alto_nota(c.p, d, &peca, w);
+    if nota > 0.0 {
+        revisao::nota(Lapis { p: c.p, o: c.o }, ui, alvo, x, yy, w, &peca);
+        yy += nota;
+    }
+    let pequena = reduzida(ui.ctx(), a, d);
+    let w_legenda = largura_legenda(ui.ctx(), a, d, w);
+    let (w_fig, alto) = if pequena { medidas_mini(d.figura.as_ref(), w) } else { medidas_figura(d.figura.as_ref(), w) };
+    // a legenda vem ao lado da figura reduzida, embaixo dela numa coluna estreita e acima da figura ampliada
+    let (x_legenda, y_legenda, y_figura) = match (pequena, em_coluna(w)) {
+        (true, true) => (x, yy + alto + VAO_LEGENDA, yy),
+        (true, false) => (x + w_fig + VAO_MINI, yy, yy),
+        (false, _) => (x, yy, yy + alto_legenda(c.p, d, w_legenda)),
+    };
+    if !d.legenda.is_empty() {
+        texto_legenda(d, w_legenda).em(c.p, c.pt(x_legenda, y_legenda));
+    }
+    if alto > 0.0 {
+        figura_clicavel(ui, c, alvo, a, d, &peca, (x, y_figura, w_fig, alto), pequena);
+    }
+}
+
+/// A figura e o clique que a amplia ou reduz. As linhas de baixo andam junto, como ao abrir a ação.
+#[allow(clippy::too_many_arguments)]
+fn figura_clicavel(ui: &mut Ui, c: &Pincel, alvo: Alvo, a: &AcaoPlano, d: &Detalhe, peca: &Peca, (x, y, w, h): (f32, f32, f32, f32), pequena: bool) {
+    let nome = if d.titulo.is_empty() { &d.id } else { &d.titulo };
+    let area = c.caixa(x, y, w, h);
+    if d.pede_aprovacao && peca.estado() == EstadoPeca::Reprovada {
+        figura::desenhar(&com_alfa(c.p, ALFA_REPROVADA), alvo.servidor, d.figura.as_ref(), nome, area);
+    } else {
+        figura::desenhar(c.p, alvo.servidor, d.figura.as_ref(), nome, area);
+    }
+    let id = id_ampliada(a, d);
+    let resposta = ui.interact(area, id.with("clique"), Sense::click());
+    if resposta.hovered() {
+        c.p.rect_stroke(area, 0, Stroke::new(1.0, MEDIO), StrokeKind::Inside);
+        ui.ctx().set_cursor_icon(CursorIcon::PointingHand);
+    }
+    if resposta.clicked() {
+        ui.ctx().data_mut(|m| m.insert_temp(id, pequena));
+        crate::anima::mexer(ui.ctx(), 350.0);
+    }
+    let _ = resposta.on_hover_text(tr(if pequena { "Clique para ampliar" } else { "Clique para reduzir" }));
 }
 
 #[cfg(test)]
 mod tests {
+    use super::super::modelo::{EstadoRevisao, Revisao};
     use super::*;
 
-    #[test]
-    fn os_vizinhos_param_nas_pontas() {
-        assert_eq!(vizinhos(0, 3), (None, Some(1)));
-        assert_eq!(vizinhos(2, 3), (Some(1), None));
+    fn det(id: &str, titulo: &str) -> Detalhe {
+        Detalhe { id: id.into(), titulo: titulo.into(), ..Detalhe::default() }
+    }
+
+    fn acao(estado: Option<EstadoRevisao>) -> AcaoPlano {
+        let revisao = estado.map(|estado| Revisao { estado, ..Revisao::default() });
+        let diff = Diff { detalhes_novos: vec![det("02", "nova")], detalhes_mudados: vec![det("01", "refeita")], revisao, ..Diff::default() };
+        AcaoPlano { detalhes: vec![det("01", "antiga")], diff: Some(diff), ..AcaoPlano::default() }
+    }
+
+    fn titulos(a: &AcaoPlano) -> Vec<String> {
+        detalhes_da(a).iter().map(|d| d.titulo.clone()).collect()
     }
 
     #[test]
-    fn a_fita_mostra_dois_antes_e_quatro_depois() {
-        assert_eq!(trecho_fita(0, 3), 0..3);
-        assert_eq!(trecho_fita(5, 20), 3..10);
+    fn a_versao_pendente_ja_aparece_na_acao() {
+        assert_eq!(titulos(&acao(None)), ["refeita", "nova"]);
     }
 
     #[test]
-    fn a_figura_tem_teto_e_o_campo_tem_piso() {
-        assert_eq!(medidas_figura(None, 1600.0), (FIGURA_MAX, FIGURA_MAX));
-        assert_eq!(medidas_figura(None, 320.0), (180.0, CAMPO_MIN));
+    fn reprovada_volta_ao_que_estava() {
+        assert_eq!(titulos(&acao(Some(EstadoRevisao::Reprovada))), ["antiga"]);
+    }
+
+    #[test]
+    fn sem_figura_nada_e_reservado() {
+        assert_eq!(medidas_figura(None, 800.0), (0.0, 0.0));
+    }
+
+    #[test]
+    fn a_figura_reduzida_nao_passa_da_altura() {
+        assert_eq!(medidas_mini(None, 800.0), (0.0, 0.0));
+        let larga = Figura { largura: Some(1000), altura: Some(500), ..Figura::default() };
+        assert_eq!(medidas_mini(Some(&larga), 800.0), (MINI_L, 150.0));
+        assert_eq!(medidas_mini(Some(&larga), 500.0), (MINI_A * 2.0, MINI_A), "numa coluna, ocupa a coluna até o teto");
+        let alta = Figura { largura: Some(500), altura: Some(1000), ..Figura::default() };
+        assert_eq!(medidas_mini(Some(&alta), 800.0), (MINI_A * 0.5, MINI_A));
+    }
+
+    #[test]
+    fn a_figura_alta_tem_teto_e_mantem_a_proporcao() {
+        let baixa = Figura { largura: Some(1000), altura: Some(500), ..Figura::default() };
+        assert_eq!(medidas_figura(Some(&baixa), 800.0), (800.0, 400.0));
+        let alta = Figura { largura: Some(500), altura: Some(1000), ..Figura::default() };
+        assert_eq!(medidas_figura(Some(&alta), 800.0), (FIGURA_MAX * 0.5, FIGURA_MAX));
     }
 }

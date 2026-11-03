@@ -11,7 +11,7 @@ pub fn registro(mcp: &Mcp, dados: &Value, chamada: &Value) -> Result<(u16, Value
     let (workspace_id, blueprint_id) = (texto_js(chamada.get("workspaceId")), texto_js(chamada.get("blueprintId")));
     let (_, blueprint) = localizar(dados, &workspace_id, &blueprint_id)?;
     let Some(blueprint) = blueprint else { return Err(falha(400, crate::tr!("registrar_trabalho needs blueprint_id (a record is about a blueprint that already exists; see listar_blueprints).", "registrar_trabalho precisa de blueprint_id (um registro é sobre um blueprint que já existe; veja listar_blueprints).")).codigo("falta-blueprint")) };
-    let r = validar_registro(chamada, blueprint, &crate::tempo::hoje_local());
+    let r = validar_registro(chamada, blueprint);
     if !r.erros.is_empty() {
         return Ok((422, json!({"erros": r.erros, "avisos": r.avisos})));
     }

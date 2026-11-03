@@ -70,16 +70,16 @@ pub fn linhas_do_plano(texto: &str, largura: usize) -> Vec<String> {
 /// Dispõe as ações de uma seção. `aberto`: com planos e checkpoints (senão só as barras compactas); `numero` dá o `1.2` de cada ação; `colw` é a largura de uma coluna de planos.
 pub fn dispor(acoes: &[&Acao], aberto: bool, numero: impl Fn(&Acao) -> String, j: &Janela, l: f32, r: f32, colw: f32) -> Disposicao {
     let x = |d: i64| l + (d - j.t0) as f32 / (j.t1 - j.t0).max(1) as f32 * (r - l);
-    let mut posicoes: Vec<Posicao> = acoes.iter().enumerate().filter(|(_, f)| f.a < j.t1 && f.b >= j.t0).map(|(i, f)| {
+    let mut posicoes: Vec<Posicao> = acoes.iter().enumerate().map(|(i, f)| {
         let rotulo = format!("{} · {}", numero(f), if f.nome.is_empty() { tr("SEM NOME") } else { &f.nome });
         let lw = rotulo.chars().count() as f32 * (CHAR + 0.35) + 34.0;
-        let (x0, x1) = (x(f.a.max(j.t0)), x(f.b.saturating_add(1).min(j.t1)));
+        let (x0, x1) = (x(f.idx as i64), x(f.idx as i64 + 1));
         let (nt, nm) = (f.planos.len(), f.checkpoints.len());
         let ncol = usize::from(nt > 0) + usize::from(nm > 0);
         let bloco_w = if ncol > 0 { ncol as f32 * colw + (ncol - 1) as f32 * 30.0 } else { 0.0 };
         let bw = (x1 - x0).max(BARRA_MIN);
         let bx0 = l.max(x0.min(r - bw));
-        // título, planos e checkpoints formam um bloco alinhado à esquerda, ao centro ou à direita, conforme o terço do tempo em que a barra está
+        // título, planos e checkpoints formam um bloco alinhado à esquerda, ao centro ou à direita, conforme o terço da folha em que a barra está
         let bloco3 = lw.max(bloco_w).min(r - l - 8.0);
         let terco = (bx0 + bw / 2.0 - l) / (r - l);
         let lx = if terco < 1.0 / 3.0 { l + 4.0 } else if terco > 2.0 / 3.0 { r - bloco3 } else { (l + r - bloco3) / 2.0 };
@@ -88,24 +88,9 @@ pub fn dispor(acoes: &[&Acao], aberto: bool, numero: impl Fn(&Acao) -> String, j
         let alt = if ncol > 0 { 100.0 + 34.0 + altura_planos.max(nm as f32 * 22.0) + 44.0 } else { RH };
         Posicao { i, rotulo, x0, x1: x1.max(x0), bw, bx0, lx, lw, bloco_w, linhas_planos, alt, linha: 0 }
     }).collect();
-    // a linha de cada ação: a primeira cujo fim ficou antes do começo dela (`linhas`)
-    let de = |p: &Posicao| if aberto { p.lx.min(p.bx0) } else { p.x0 };
-    let ate = |p: &Posicao| if aberto { (p.lx + p.lw).max(p.bx0 + p.bw + 56.0).max(p.lx + p.bloco_w) + 24.0 } else { p.x1 + 6.0 };
-    let mut ordem: Vec<usize> = (0..posicoes.len()).collect();
-    ordem.sort_by(|&a, &b| de(&posicoes[a]).total_cmp(&de(&posicoes[b])));
-    let mut fins: Vec<f32> = Vec::new();
-    for k in ordem {
-        let inicio = de(&posicoes[k]);
-        let linha = fins.iter().position(|&e| e < inicio).unwrap_or(fins.len());
-        let fim = ate(&posicoes[k]);
-        if linha == fins.len() {
-            fins.push(fim);
-        } else {
-            fins[linha] = fim;
-        }
-        posicoes[k].linha = linha;
-    }
-    let mut alturas = vec![if aberto { RH } else { 24.0 }; fins.len()];
+    // a escada: cada ação na sua própria linha, na ordem do blueprint
+    posicoes.iter_mut().enumerate().for_each(|(k, p)| p.linha = k);
+    let mut alturas = vec![if aberto { RH } else { 24.0 }; posicoes.len()];
     if aberto {
         for p in &posicoes {
             alturas[p.linha] = alturas[p.linha].max(p.alt);
@@ -137,7 +122,7 @@ mod testes {
     fn exemplo_dispoe_uma_acao_por_linha() {
         let dados: serde_json::Value = serde_json::from_str(include_str!("../../../data.exemplo.json")).unwrap();
         let acoes = crate::dominio::acoes_de(&dados["blueprints"][0]);
-        let j = crate::dominio::janela(&acoes, crate::documento::dia("2026-10-31").unwrap());
+        let j = crate::dominio::janela(&acoes);
         let refs: Vec<&Acao> = acoes.iter().collect();
         let d = dispor(&refs, true, |f| format!("1.{}", f.idx + 1), &j, 70.0, 1194.0, 430.0);
         let fechada = dispor(&refs, false, |f| format!("1.{}", f.idx + 1), &j, 70.0, 1194.0, 430.0);

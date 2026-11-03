@@ -1,10 +1,9 @@
-//! A linha de uma ação na folha, com o bloco dela na linha do tempo (`linha_bloco.rs`), e o cabeçalho do projeto, o mesmo da folha original (`folha/secao.rs`).
+//! A linha de uma ação na folha, com o bloco dela na escada (`linha_bloco.rs`), e o cabeçalho do projeto, o mesmo da folha original (`folha/secao.rs`).
 //! A barra fina de «O que chegou» e as formas ficam em `barra_*.rs`.
 
-use super::escala::{curta, Escala, LINHA_FOLHA};
+use super::escala::{Escala, LINHA_FOLHA};
 use super::folha::estilo::{com_alfa, sobre};
-use super::modelo::{Acao, Projeto};
-use crate::documento::{dia, iso_do_dia};
+use super::modelo::{Acao, Folha, Projeto};
 use crate::dominio::Situacao;
 use crate::folha::cena::{Ancora, Cena};
 use crate::folha::pagina::corta;
@@ -15,6 +14,8 @@ use egui::{Id, Sense, Stroke, Ui};
 
 #[path = "linha_bloco.rs"]
 pub mod bloco;
+#[path = "linha_esteiras.rs"]
+pub mod esteiras;
 #[path = "barra_cronograma.rs"]
 mod cronograma;
 #[path = "barra_formas.rs"]
@@ -27,7 +28,6 @@ pub use cronograma::barra;
 pub use pincel::{Letra, Pincel};
 
 pub const TEXTOS: &[(&str, &str)] = &[
-    ("sem data", "no date"),
     ("Aguardando plano", "Awaiting plan"),
     ("×{n}", "×{n}"),
 ];
@@ -35,7 +35,7 @@ pub const TEXTOS: &[(&str, &str)] = &[
 /// A altura do cabeçalho de um projeto: os 58 px até o fio e o respiro até a primeira ação.
 pub const ALTO_PROJETO: f32 = 76.0;
 
-/// O cabeçalho de um projeto: o círculo com o número, o nome em caixa alta, o período e o fio. `y` é o meio do cabeçalho.
+/// O cabeçalho de um projeto: o círculo com o número, o nome em caixa alta e o fio. `y` é o meio do cabeçalho.
 pub fn cabecalho(p: &Pincel, regua: &Pincel, e: &Escala, projeto: &Projeto, nome_padrao: &str, numero: usize, y: f32) {
     let c = Cena { p: p.p, o: p.o };
     let (l, topo) = (e.x0, y - ALTO_PROJETO / 2.0);
@@ -43,12 +43,6 @@ pub fn cabecalho(p: &Pincel, regua: &Pincel, e: &Escala, projeto: &Projeto, nome
     c.texto(&format!("{numero:02}"), l + 14.0, topo + 25.0, 13.0, Peso::Negrito, TINTA, Ancora::Meio, false);
     let nome = if projeto.nome.is_empty() { nome_padrao } else { &projeto.nome };
     c.texto(&corta(nome, 48), l + 40.0, topo + 19.0, 17.0, Peso::Negrito, TINTA, Ancora::Inicio, true);
-    let datas = projeto.acoes.iter().filter(|a| !a.sem_data).filter_map(|a| Some((dia(&a.de)?, dia(&a.ate)?)));
-    let extremos = datas.fold(None, |t: Option<(i64, i64)>, (a, b)| Some(t.map_or((a.min(b), a.max(b)), |(m, x)| (m.min(a).min(b), x.max(a).max(b)))));
-    if let Some((a, b)) = extremos {
-        let periodo = format!("{} → {}", curta(&iso_do_dia(a)), curta(&iso_do_dia(b)));
-        c.texto(&periodo, l + 40.0, topo + 38.0, 11.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
-    }
     regua.fio(l, topo + 58.0, e.x1, topo + 58.0, MEDIO, 1.0);
 }
 
@@ -71,21 +65,30 @@ pub fn alvo(ws: &str, bp: &str, a: &Acao) -> Alvo {
     Alvo::Acao { ws: ws.into(), bp: bp.into(), id: a.id.clone(), rotulo: a.referencia.clone(), status: situacao(a), itens: (feitos, total) }
 }
 
-/// Uma ação fechada, centrada em `y`: toda a linha responde ao mouse. `regua` é o pincel do cronograma, que se traça na entrada. Devolve se foi clicada.
+/// Uma ação, centrada em `y`: toda a linha responde ao mouse. Devolve se pediu para abrir ou fechar.
 #[allow(clippy::too_many_arguments)]
-pub fn desenhar(ui: &Ui, c: &Pincel, regua: &Pincel, e: &Escala, a: &Acao, ws: &str, bp: &str, y: f32, aberta: f32) -> bool {
+pub fn desenhar(ui: &mut Ui, c: &Pincel, f: &Folha, e: &Escala, a: &Acao, servidor: &str, ws: &str, bp: &str, y: f32, aberta: f32) -> bool {
     let (topo, largura) = (y - LINHA_FOLHA / 2.0, e.x1 - e.x0);
     let area = c.caixa(e.x0, topo, largura, LINHA_FOLHA);
     let resposta = ui.interact(area, ui.scope_id().with(("plano-linha", a.id.as_str())), Sense::click());
     menu::marcar(ui, area, || alvo(ws, bp, a));
     let luz = sobre(ui.ctx(), Id::unique(("plano-linha-sobre", a.id.as_str())), resposta.hovered());
-    bloco::desenhar(regua, e, a, y, luz, aberta > 0.5);
+    let na_peca = bloco::desenhar(ui, c, f, e, a, servidor, y, luz);
     if resposta.hovered() {
         ui.ctx().set_cursor_icon(egui::CursorIcon::PointingHand);
     }
     let clicou = resposta.clicked();
-    let _ = resposta.on_hover_text(bloco::dica(a));
-    clicou
+    // o `on_hover_text` do egui 0.37, com a dica escrita só quando aparece: montar o texto em toda linha a cada quadro custava, e a acessibilidade continua com ele quando há nó
+    if ui.ctx().has_accesskit_node(resposta.id) {
+        let _ = resposta.on_hover_text(bloco::dica(a));
+    } else {
+        let _ = resposta.on_hover_ui(|ui| {
+            ui.set_max_width(ui.spacing().tooltip_width);
+            ui.add(egui::Label::new(bloco::dica(a)));
+        });
+    }
+    // o clique numa peça abre a ação, mas nunca fecha a que já está aberta
+    clicou || (na_peca && aberta <= 0.5)
 }
 
 /// A divisória entre duas ações de «O que chegou»: um fio de cabelo.

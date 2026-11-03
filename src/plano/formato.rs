@@ -7,30 +7,31 @@ use std::collections::BTreeMap;
 
 pub const FORMATO: &str = "blueprint.plano/1";
 
+/// `plano` em detalhe, tabela, checkpoint, decisão e pergunta: o id do plano da ação a que a peça pertence. Sem ele, a peça é da ação inteira.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct PlanoDoc { pub formato: String, pub blueprint: String, pub resumo: Option<String>, pub estilo: Option<String>, pub tema: BTreeMap<String, String>, pub projetos: Vec<ProjetoDoc>, pub decisoes: Vec<Decisao>, pub perguntas: Vec<Pergunta> }
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct ProjetoDoc { pub nome: Option<String>, pub acoes: Vec<AcaoDoc> }
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct AcaoDoc { pub id: String, pub nome: String, pub de: Option<String>, pub ate: Option<String>, pub texto: Option<String>, pub planos: Vec<PlanoItem>, pub checkpoints: Vec<CheckpointDoc>, pub detalhes: Vec<Detalhe>, pub tabelas: Vec<Tabela> }
+pub struct AcaoDoc { pub id: String, pub nome: String, pub texto: Option<String>, pub planos: Vec<PlanoItem>, pub checkpoints: Vec<CheckpointDoc>, pub detalhes: Vec<Detalhe>, pub tabelas: Vec<Tabela> }
 /// `id_gerado`: o plano veio sem id e ganhou `<acao>.<i+1>`; não vai para o JSON (inserir no meio desloca os ids, e `validar::avisos` avisa).
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct PlanoItem { pub id: String, pub texto: String, pub area: Option<String>, pub depende_de: Vec<String>, pub instrucoes: Option<String>, pub id_gerado: bool }
+pub struct PlanoItem { pub id: String, pub texto: String, pub area: Option<String>, pub depende_de: Vec<String>, pub instrucoes: Option<String>, pub forma: Option<String>, pub entrega: Option<String>, pub id_gerado: bool }
 /// O id é opcional no JSON; o padrão é `<acao>.c<i+1>`.
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct CheckpointDoc { pub id: String, pub texto: String, pub data: Option<String> }
+pub struct CheckpointDoc { pub id: String, pub texto: String, pub plano: Option<String> }
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct Detalhe { pub id: String, pub titulo: Option<String>, pub legenda: Option<String>, pub grupo: Option<String>, pub figura: Option<String>, pub figura_info: Option<FiguraInfo>, pub pede_aprovacao: bool }
+pub struct Detalhe { pub id: String, pub titulo: Option<String>, pub legenda: Option<String>, pub grupo: Option<String>, pub figura: Option<String>, pub plano: Option<String>, pub variante: Option<String>, pub figura_info: Option<FiguraInfo>, pub pede_aprovacao: bool }
 /// Só em `extra.detalhes`: as medidas para a prancha.
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct FiguraInfo { pub hash: String, pub tipo: String, pub largura: Option<u32>, pub altura: Option<u32> }
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct Tabela { pub titulo: Option<String>, pub colunas: Vec<String>, pub larguras: Vec<f64>, pub linhas: Vec<Vec<String>> }
+pub struct Tabela { pub plano: Option<String>, pub titulo: Option<String>, pub colunas: Vec<String>, pub larguras: Vec<f64>, pub linhas: Vec<Vec<String>> }
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct Decisao { pub id: String, pub rotulo: Option<String>, pub texto: String, pub data: Option<String>, pub acoes: Vec<String>, pub pede_aprovacao: bool }
+pub struct Decisao { pub id: String, pub rotulo: Option<String>, pub texto: String, pub acoes: Vec<String>, pub plano: Option<String>, pub pede_aprovacao: bool }
 /// `recomendada` é o texto da opção; no JSON também vale o índice dela em `opcoes`, como escrevem os exemplos do protótipo.
 #[derive(Debug, Clone, PartialEq, Default)]
-pub struct Pergunta { pub id: String, pub texto: String, pub opcoes: Vec<String>, pub recomendada: Option<String>, pub acoes: Vec<String> }
+pub struct Pergunta { pub id: String, pub texto: String, pub opcoes: Vec<String>, pub recomendada: Option<String>, pub acoes: Vec<String>, pub plano: Option<String> }
 
 fn por(m: &mut Map<String, Value>, campo: &str, valor: &Option<String>) {
     if let Some(s) = valor {
@@ -58,6 +59,8 @@ impl PlanoItem {
         por(&mut m, "area", &self.area);
         por_lista(&mut m, "depende_de", &self.depende_de, |d| json!(d));
         por(&mut m, "instrucoes", &self.instrucoes);
+        por(&mut m, "forma", &self.forma);
+        por(&mut m, "entrega", &self.entrega);
         Value::Object(m)
     }
 }
@@ -67,7 +70,7 @@ impl CheckpointDoc {
         let mut m = Map::new();
         m.insert("id".into(), json!(self.id));
         m.insert("texto".into(), json!(self.texto));
-        por(&mut m, "data", &self.data);
+        por(&mut m, "plano", &self.plano);
         Value::Object(m)
     }
 }
@@ -98,6 +101,8 @@ impl Detalhe {
         por(&mut m, "legenda", &self.legenda);
         por(&mut m, "grupo", &self.grupo);
         por(&mut m, "figura", &self.figura);
+        por(&mut m, "plano", &self.plano);
+        por(&mut m, "variante", &self.variante);
         if let Some(info) = &self.figura_info {
             m.insert("figura_info".into(), info.para_json());
         }
@@ -119,6 +124,7 @@ impl Tabela {
         m.insert("colunas".into(), json!(self.colunas));
         por_lista(&mut m, "larguras", &self.larguras, |l| json!(l));
         m.insert("linhas".into(), json!(self.linhas));
+        por(&mut m, "plano", &self.plano);
         Value::Object(m)
     }
 }
@@ -135,8 +141,6 @@ impl AcaoDoc {
         let mut m = Map::new();
         m.insert("id".into(), json!(self.id));
         m.insert("nome".into(), json!(self.nome));
-        por(&mut m, "de", &self.de);
-        por(&mut m, "ate", &self.ate);
         por(&mut m, "texto", &self.texto);
         por_lista(&mut m, "planos", &self.planos, PlanoItem::para_json);
         por_lista(&mut m, "checkpoints", &self.checkpoints, CheckpointDoc::para_json);
@@ -158,8 +162,8 @@ impl Decisao {
         m.insert("id".into(), json!(self.id));
         por(&mut m, "rotulo", &self.rotulo);
         m.insert("texto".into(), json!(self.texto));
-        por(&mut m, "data", &self.data);
         por_lista(&mut m, "acoes", &self.acoes, |a| json!(a));
+        por(&mut m, "plano", &self.plano);
         por_verdade(&mut m, "pede_aprovacao", self.pede_aprovacao);
         Value::Object(m)
     }
@@ -179,6 +183,7 @@ impl Pergunta {
         por_lista(&mut m, "opcoes", &self.opcoes, |o| json!(o));
         por(&mut m, "recomendada", &self.recomendada);
         por_lista(&mut m, "acoes", &self.acoes, |a| json!(a));
+        por(&mut m, "plano", &self.plano);
         Value::Object(m)
     }
 }

@@ -72,7 +72,6 @@ pub fn montar(alvos: &[Alvo], agentes: &[Agente], tela_cheia: bool, criando: boo
                 add(Grupo::Perigo, Icone::Lixo, tr("Excluir ação…"), Comando::ExcluirItem(ws.clone(), bp.clone(), Some(id.clone())));
                 let dados = |campo: Campo| match campo {
                     Campo::Situacao(s) => Comando::Dados(Acao::Situacao(ws.clone(), bp.clone(), id.clone(), s)),
-                    Campo::Prorrogar(d) => Comando::Dados(Acao::Prorrogar(ws.clone(), bp.clone(), id.clone(), d)),
                 };
                 // concluída por planos e checkpoints: só desmarcá-los muda isso
                 if !(*status == Situacao::Concluido && *total > 0) {
@@ -90,8 +89,6 @@ pub fn montar(alvos: &[Alvo], agentes: &[Agente], tela_cheia: bool, criando: boo
                         } else {
                             add(Grupo::Estado, Icone::Check, tr("Marcar como concluída"), dados(Campo::Situacao("concluido")));
                         }
-                        add(Grupo::Prazo, Icone::Calendario, tr("Prorrogar o fim em 1 dia"), dados(Campo::Prorrogar(1)));
-                        add(Grupo::Prazo, Icone::Calendario, tr("Prorrogar o fim em 1 semana"), dados(Campo::Prorrogar(7)));
                     }
                 }
             }
@@ -135,7 +132,6 @@ pub fn trocar_folha(itens: &mut Vec<Item>, bp: &str, antiga: bool) {
 
 enum Campo {
     Situacao(&'static str),
-    Prorrogar(i64),
 }
 
 fn nome_ou_vazio(nome: &str) -> &str {
@@ -161,7 +157,7 @@ mod testes {
     #[test]
     fn concluida_por_itens_nao_muda_de_situacao() {
         let l = rotulos(&[acao(Situacao::Concluido, (2, 2))]);
-        assert!(!l.iter().any(|r| r.starts_with("Marcar") || r.starts_with("Prorrogar")), "{l:?}");
+        assert!(!l.iter().any(|r| r.starts_with("Marcar")), "{l:?}");
     }
 
     #[test]

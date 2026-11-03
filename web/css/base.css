@@ -24,7 +24,6 @@ text{font-family:var(--mono);letter-spacing:.06em;fill:var(--ink)}
 .mid{fill:var(--mid)}.cap{text-transform:uppercase}
 .ln{fill:none;stroke:var(--ink);stroke-width:1;stroke-linecap:round}
 .ln.m{stroke:var(--mid)}.ln.l{stroke:var(--lo)}
-.guia{stroke:var(--faint);stroke-width:1;stroke-dasharray:2 5}
 .eixo{stroke:var(--ink);stroke-width:1;stroke-dasharray:16 4 2 4}
 .acao{cursor:default;outline:none}
 .acao .caixa{fill:var(--paper);stroke:var(--ink);stroke-width:1.2;transition:stroke-width .2s}
@@ -52,4 +51,3 @@ text{font-family:var(--mono);letter-spacing:.06em;fill:var(--ink)}
 .chk .foco2{fill:none;stroke:var(--ink);stroke-width:1;opacity:0}
 .chk:focus-visible .foco2{opacity:1}
 .acao .dm,.acao .selo{transform-box:fill-box;transform-origin:center} /* o losango e o selo "surgem" crescendo do próprio centro (barras.js) */
-.regua>path.ln:first-child{transform-box:fill-box;transform-origin:left center}.regua>.guia,.regua>.eixo{transform-box:fill-box;transform-origin:center top}.regua>.hoje-chip{transform-box:fill-box;transform-origin:center}

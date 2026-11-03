@@ -4,7 +4,6 @@
 use super::cena::{Ancora, Cena};
 use super::disposicao::{Disposicao, CHAR};
 use super::pagina::corta;
-use super::regua::Regua;
 use crate::dominio::{self, Acao};
 use crate::fonte::Peso;
 use crate::i18n::{tr, tr_com, trn};
@@ -27,8 +26,6 @@ pub struct Secao<'a> {
     /// a seção do blueprint sem projetos tem a nota e os links; a de um projeto não
     pub principal: bool,
     pub resumo: dominio::Resumo,
-    /// o filtro «Pendentes» está ligado (muda a mensagem de seção sem ações visíveis)
-    pub pendentes: bool,
     /// a consulta e o que casou (só pesquisando): o que não casou esmaece
     pub pesq: Option<(&'a ResBlueprint, &'a [String])>,
     /// onde ficam as linhas dos planos e as barras (a camada do Claude as procura)
@@ -36,7 +33,6 @@ pub struct Secao<'a> {
     /// o pedido de abrir a folha de observações (clique no ícone de nota)
     pub aberta: &'a std::cell::RefCell<Option<crate::telas::Acao>>,
     pub disp: &'a Disposicao,
-    pub regua: &'a Regua<'a>,
     /// o topo da seção (`y0`)
     pub y: f32,
     pub colw: f32,
@@ -76,8 +72,7 @@ pub fn cabecalho(c: &Cena, ui: &mut Ui, s: &Secao) -> bool {
     }
     let (resumo, total, ok) = (&s.resumo, s.total, s.ok);
     let px = (l + 40.0 + (nome.chars().count() as f32 * 11.6 + if obs { 30.0 } else { 0.0 }).max(descricao.chars().count() as f32 * 7.2) + 64.0).min(r - 330.0);
-    let horas = if resumo.horas > 0.0 { format!(" · {}", tr_com("{horas} h de desenvolvimento", &[("horas", &resumo.horas.to_string())])) } else { String::new() };
-    let contagem = format!("{}{horas}", tr_com("{concl}/{total} ações concluídas", &[("concl", &resumo.concl.to_string()), ("total", &total.to_string())]));
+    let contagem = tr_com("{concl}/{total} ações concluídas", &[("concl", &resumo.concl.to_string()), ("total", &total.to_string())]);
     if total == 0 {
         c.texto(&tr("Situação"), px, yb + 14.0, 9.0, Peso::Normal, MEDIO, Ancora::Inicio, true);
         c.texto(&tr("SEM AÇÕES AINDA"), px, yb + 32.0, 12.0, Peso::Negrito, TINTA, Ancora::Inicio, false);

@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 fn dados() -> Value {
     json!({"blueprints": [{"id": "p1", "nome": "Portal", "descricao": "", "projetos": [{"id": "pr1", "nome": "Interface"}], "acoes": [
-        {"id": "a1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-05", "status": "planejado", "planos": [], "checkpoints": []}]}]})
+        {"id": "a1", "nome": "Base", "status": "planejado", "planos": [], "checkpoints": []}]}]})
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn a_ferramenta_conhece_projetos_e_o_guia_explica() {
 fn a_proposta_com_projeto_chega_resolvida_e_o_projeto_desconhecido_volta_422() {
     let m = Mcp::novo("127.0.0.1", false, "blueprint.exe", "http://127.0.0.1:3000", std::env::temp_dir());
     let corpo = json!({"workspaceId": "sm", "blueprintId": "p1", "blueprint": {"projetos": ["Dados"]}, "acoes": [
-        {"id": "a1", "projeto": "interface"}, {"nome": "Nova", "inicio": "2026-12-01", "fim": "2026-12-02", "projeto": "Dados", "planos": [{"texto": "Criar tabela", "descricao": "Escopo: x. Resultado: y. Validação: cargo test passa."}], "checkpoints": []}]});
+        {"id": "a1", "projeto": "interface"}, {"nome": "Nova", "projeto": "Dados", "planos": [{"texto": "Criar tabela", "descricao": "Escopo: x. Resultado: y. Validação: cargo test passa."}], "checkpoints": []}]});
     let (status, _) = acoes::proposta(&m, &dados(), &corpo).unwrap();
     assert_eq!(status, 200);
     let proposta = &m.itens()[0]["proposta"];

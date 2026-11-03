@@ -2,7 +2,7 @@
 // Um aviso por vez, num quadro fixo (#sinc-aviso) com botões opcionais (Desfazer, Copiar); some sozinho depois de alguns segundos.
 let sincAvisoT = 0;
 // cada rótulo é um tr() literal, para o verificador de catálogos (scripts/i18n-completude.mjs) enxergar a chave
-const SINC_CAMPOS = { texto: () => tr("o título"), nome: () => tr("o nome"), descricao: () => tr("a descrição"), obs: () => tr("as instruções"), inicio: () => tr("o início"), fim: () => tr("o fim"), feito: () => tr("a marcação"), status: () => tr("a situação"), data: () => tr("a data"), horas: () => tr("as horas") };
+const SINC_CAMPOS = { texto: () => tr("o título"), nome: () => tr("o nome"), descricao: () => tr("a descrição"), obs: () => tr("as instruções"), feito: () => tr("a marcação"), status: () => tr("a situação") };
 const sincCampo = (k) => (Object.hasOwn(SINC_CAMPOS, k) ? SINC_CAMPOS[k]() : tr("um campo"));
 
 function sincAviso(texto, botoes = []) {

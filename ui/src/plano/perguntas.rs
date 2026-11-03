@@ -21,13 +21,13 @@ pub const TEXTOS: &[(&str, &str)] = &[
     ("Resposta: {r}", "Answer: {r}"),
 ];
 
-const PASSO: f32 = 16.0;
+const PASSO: f32 = super::acao_estilo::PASSO_LETRA;
 /// Uma fileira de botões: os 24 do botão e a linha de «recomendado» embaixo.
 const FILEIRA: f32 = 40.0;
 const VAO_BOTOES: f32 = 6.0;
 const X_TEXTO: f32 = 30.0;
-const ALTO_RESPOSTA: f32 = 18.0;
-const ALTO_CAMPO: f32 = 34.0;
+const ALTO_RESPOSTA: f32 = 22.0;
+pub const ALTO_CAMPO: f32 = 34.0;
 const ALTO_ROTULO: f32 = 18.0;
 const PAD_X: f32 = 14.0;
 const PAD_TOPO: f32 = 24.0;
@@ -65,7 +65,7 @@ pub fn recomendada(q: &Pergunta, opcao: &str) -> bool {
 }
 
 /// A resposta que não está entre as opções: as outras ficam cheias no próprio botão, esta precisa ser escrita.
-fn resposta_livre(q: &Pergunta) -> Option<&str> {
+pub fn resposta_livre(q: &Pergunta) -> Option<&str> {
     (!q.resposta.is_empty() && !q.opcoes.contains(&q.resposta)).then_some(q.resposta.as_str())
 }
 
@@ -96,7 +96,7 @@ fn larguras(p: &Painter, q: &Pergunta, w: f32) -> Vec<f32> {
 }
 
 fn texto_da(q: &Pergunta, w: f32) -> crate::planta::Texto<'_> {
-    bloco(&q.texto, 11.5, w - X_TEXTO, PASSO, 2)
+    bloco(&q.texto, super::acao_estilo::LETRA, w - X_TEXTO, PASSO)
 }
 
 /// O que cabe dentro do cartão da pergunta: o texto, os botões, a resposta livre e o campo.
@@ -113,18 +113,36 @@ fn altura_pergunta(p: &Painter, q: &Pergunta, w: f32) -> f32 {
     PAD_TOPO + miolo(p, q, w - 2.0 * PAD_X) + PAD_BAIXO + VAO_CARTAO
 }
 
-/// Quanto as perguntas da ação ocupam, para empilhar antes de desenhar. Zero sem perguntas.
-pub fn altura(p: &Painter, f: &Folha, a: &Acao, w: f32) -> f32 {
-    let lista = da_acao(f, a);
+/// Quanto estas perguntas ocupam, para empilhar antes de desenhar. Zero sem perguntas.
+pub fn altura(p: &Painter, lista: &[&Pergunta], w: f32) -> f32 {
     if lista.is_empty() {
         return 0.0;
     }
     ALTO_ROTULO + lista.iter().map(|q| altura_pergunta(p, q, w)).sum::<f32>()
 }
 
+/// O campo de «Outra…» está aberto?
+pub fn outra_aberta(ctx: &egui::Context, pergunta: &str) -> bool {
+    outra(ctx, pergunta).aberta
+}
+
+pub fn alternar_outra(ctx: &egui::Context, pergunta: &str) {
+    let mut r = outra(ctx, pergunta);
+    r.aberta = !r.aberta;
+    r.focada = false;
+    ctx.data_mut(|d| d.insert_temp(id_outra(pergunta), r));
+}
+
+/// O campo de «Outra…» para quem desenha as opções por conta própria.
+pub fn campo_outra(ui: &mut Ui, c: &Pincel, alvo: Alvo, q: &Pergunta, x: f32, y: f32, w: f32) {
+    let ctx = ui.ctx().clone();
+    let mut r = outra(&ctx, &q.id);
+    campo(ui, c, alvo, q, &mut r, x, y, w);
+    ctx.data_mut(|d| d.insert_temp(id_outra(&q.id), r));
+}
+
 /// Desenha as perguntas com o rótulo em `(x, y)`, na largura `w`.
-pub fn desenhar(ui: &mut Ui, c: &Pincel, alvo: Alvo, f: &Folha, a: &Acao, x: f32, y: f32, w: f32) {
-    let lista = da_acao(f, a);
+pub fn desenhar(ui: &mut Ui, c: &Pincel, alvo: Alvo, lista: &[&Pergunta], x: f32, y: f32, w: f32) {
     if lista.is_empty() {
         return;
     }
@@ -146,7 +164,7 @@ fn pergunta(ui: &mut Ui, c: &Pincel, alvo: Alvo, q: &Pergunta, x: f32, y: f32, w
     }
     let t = texto_da(q, w);
     let g = t.galeria(c.p);
-    t.em(c.p, c.pt(x + X_TEXTO, y - SUBIDA * 11.5));
+    t.em(c.p, c.pt(x + X_TEXTO, y - SUBIDA * super::acao_estilo::LETRA));
     if g.elided {
         let _ = ui.interact(c.caixa(x + X_TEXTO, y - 12.0, w - X_TEXTO, g.rows.len() as f32 * PASSO), ui.scope_id().with(("plano-pergunta-dica", &q.id)), egui::Sense::hover()).on_hover_text(q.texto.as_str());
     }
@@ -179,7 +197,7 @@ fn pergunta(ui: &mut Ui, c: &Pincel, alvo: Alvo, q: &Pergunta, x: f32, y: f32, w
     }
     let mut abaixo = topo + (fileira + 1) as f32 * FILEIRA + 10.0;
     if let Some(livre) = resposta_livre(q) {
-        let letra = Letra::nova(10.5, TINTA);
+        let letra = Letra::nova(super::acao_estilo::LETRA_MENOR, TINTA);
         let frase = tr_com("Resposta: {r}", &[("r", livre)]);
         let (corte, cortou) = c.cortado(&frase, w - X_TEXTO, &letra);
         c.texto(&corte, x + X_TEXTO, abaixo + 8.0, letra);

@@ -44,9 +44,9 @@ try {
     const rpc = (method, params) => new Promise((ok) => { esp.set(++id, ok); filho.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"); });
     try {
       await rpc("initialize", { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "registro-e2e", version: "1" } });
-      const r = await rpc("tools/call", { name: "registrar_trabalho", arguments: { workspace_id: "sm", blueprint_id: blueprint.id, mensagem, acoes: [{ nome, inicio: "2026-10-20", fim: "2026-10-23", planos: [
+      const r = await rpc("tools/call", { name: "registrar_trabalho", arguments: { workspace_id: "sm", blueprint_id: blueprint.id, mensagem, acoes: [{ nome, planos: [
         { texto: "Corrigir o botão", descricao: "Escopo: o menu. Validação: o teste passa.", feito: true, evidencia: EVIDENCIA },
-        { texto: "Cobrir com teste", descricao: "Escopo: o menu. Validação: roda." }], checkpoints: [{ nome: "Revisão", data: "2026-10-22" }] }] } });
+        { texto: "Cobrir com teste", descricao: "Escopo: o menu. Validação: roda." }], checkpoints: [{ nome: "Revisão" }] }] } });
       return { isError: !!(r.error || r.result?.isError), texto: r.result?.content?.map((x) => x.text).join("\n") ?? JSON.stringify(r.error) };
     } finally { filho.kill(); }
   };

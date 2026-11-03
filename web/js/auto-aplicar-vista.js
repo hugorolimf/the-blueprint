@@ -3,7 +3,6 @@
 // "precisa da sua confirmação" na proposta que apaga ou move. Regras em auto-aplicar-logica.js, aplicação em auto-aplicar.js. Texto de agente nunca entra como HTML.
 // Zero trabalho em repouso: o único timer existe enquanto o aviso está na tela (a janela do Desfazer).
 let autoAvisoEl = null, autoAvisoTimer = 0, autoAvisoChave = "";
-const autoHora = (ms) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 const autoTextoDe = (e) => (e.desfeito ? tr("Desfeito: {texto}", { texto: e.texto }) : e.texto);
 
 function autoAvisoCria() {
@@ -63,5 +62,5 @@ function montaAutoAplicados() {
   caixa.hidden = !lista.length;
   if (!lista.length) return void caixa.replaceChildren();
   const agora = Date.now();
-  caixa.innerHTML = `<div class="cl-prop-topo rg-cab"><b>${esc(tr("Aplicado sozinho"))} · ${lista.length}</b></div>${lista.map((e) => `<div class="aa-item"><span class="aa-hora">${esc(autoHora(e.em))}</span><span class="aa-texto">${esc(autoTextoDe(e))}</span>${autoPodeDesfazer(e, agora) ? `<button class="btn mini" type="button" data-aa="${esc(e.chave)}">${esc(tr("Desfazer"))}</button>` : e.desfeito ? `<span class="badge">${esc(tr("desfeito"))}</span>` : ""}</div>`).join("")}`;
+  caixa.innerHTML = `<div class="cl-prop-topo rg-cab"><b>${esc(tr("Aplicado sozinho"))} · ${lista.length}</b></div>${lista.map((e) => `<div class="aa-item"><span class="aa-texto">${esc(autoTextoDe(e))}</span>${autoPodeDesfazer(e, agora) ? `<button class="btn mini" type="button" data-aa="${esc(e.chave)}">${esc(tr("Desfazer"))}</button>` : e.desfeito ? `<span class="badge">${esc(tr("desfeito"))}</span>` : ""}</div>`).join("")}`;
 }

@@ -15,7 +15,7 @@ fn a_status_line_e_o_status_seguem_o_idioma() {
     let en = com(Idioma::En, || status(&m, &d, &json!({"cwd": "C:/Proj"})).unwrap());
     assert_eq!(en["linha"], "Blueprint · Eu › Portal · action 1.2 · Tela · 0/1");
     let t = en["texto"].as_str().unwrap();
-    assert!(t.contains("Action 1.2: Tela (01/12 to 05/12) · 0/1 plans") && t.contains("No pending checkpoints."), "{t}");
+    assert!(t.contains("Action 1.2: Tela · 0/1 plans") && t.contains("No pending checkpoints."), "{t}");
     let pt = com(Idioma::Pt, || status(&m, &d, &json!({"cwd": "C:/Proj"})).unwrap());
     assert_eq!(pt["linha"], "Blueprint · Eu › Portal · ação 1.2 · Tela · 0/1");
 }

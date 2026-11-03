@@ -45,10 +45,10 @@ fn intervalos() {
 fn resposta_de_rodada_velha_e_descartada() {
     let mut e = Estado::default();
     e.canal.rodada = 5;
-    tratar(&mut e, Msg::Folha(4, Ok(Folha { hoje: "velha".into(), ..Folha::default() })));
+    tratar(&mut e, Msg::Folha(4, Ok(Folha { limite: 1, ..Folha::default() })));
     assert!(e.folha.is_none());
-    tratar(&mut e, Msg::Folha(5, Ok(Folha { hoje: "nova".into(), ..Folha::default() })));
-    assert_eq!(e.folha.unwrap().hoje, "nova");
+    tratar(&mut e, Msg::Folha(5, Ok(Folha { limite: 2, ..Folha::default() })));
+    assert_eq!(e.folha.unwrap().limite, 2);
 }
 
 #[test]

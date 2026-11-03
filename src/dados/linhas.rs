@@ -1,5 +1,5 @@
 //! Conversão entre um objeto JSON e uma linha de tabela, igual para todas as tabelas (guiada por `formato.rs`).
-use super::formato::{Coluna, Tabela, Tipo};
+use super::formato::{sem_datas, Coluna, Tabela, Tipo};
 use crate::erro::Resultado;
 use rusqlite::{params_from_iter, types::Value as Sql, Connection};
 use serde_json::{Map, Value};
@@ -60,6 +60,7 @@ pub fn montar(extra: &str, colunas: &[Coluna], valores: Vec<Sql>) -> Resultado<O
 
 /// Insere uma linha. `id` é None nas tabelas sem id (o banco numera). `listas` = listas filhas que existiam no JSON.
 pub fn inserir(conn: &Connection, t: &Tabela, id: Option<&str>, pai: Option<&str>, ordem: i64, mut obj: Objeto, listas: &[&str]) -> Resultado<()> {
+    sem_datas(t, &mut obj);
     let valores = extrair(&mut obj, t.colunas);
     let mut nomes: Vec<&str> = Vec::new();
     let mut params: Vec<Sql> = Vec::new();

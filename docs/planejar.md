@@ -29,6 +29,7 @@ Only the blueprint's name and its actions are required. Actions can also carry `
 - **`id`** links one version of the plan to the next. Keep it stable.
 - **`area`** says what part of the project a plan touches. Two plans whose areas overlap (`app` and `app/bar`) never run at the same time, even in different blueprints of the workspace.
 - **`depende_de`** holds a plan until those plans are done.
+- **`plano`**, on a detail, table, checkpoint, decision or question, places it inside that plan of the action. You review plan by plan; without `plano`, the piece belongs to the whole action.
 
 ## The agent's tools
 
@@ -44,7 +45,7 @@ No tool approves a change, ticks a plan, integrates a branch or turns on an agen
 ## What you decide
 
 - **New actions.** Written piece by piece, they enter the sheet when the writing closes. From `salvar_plano`, they wait for **Place** on the "What arrived" screen.
-- **Changed actions.** Your approved content stays on the sheet, with the change as a word-level diff inside the action. **Approve** applies it, **Edit** changes the text first, **Reject** leaves everything as it was. A plan changed while you were looking (409) asks you to review again.
+- **Changed actions.** Your approved content stays on the sheet, with the change as a word-level diff inside the action. New screens, details and tables appear in the action too, marked with `+`, before you decide. **Approve** applies it, **Edit** changes the text first, **Reject** leaves everything as it was. A plan changed while you were looking (409) asks you to review again.
 - **Decisions and details** that ask for approval get their own control. Rewriting one drops its approval.
 - **A plan that is done** and whose text, instructions or area changed goes back to not done when you approve; the diff warns you on that line.
 - **While an agent runs** on a changed or removed plan, approval is refused until you cancel it or it finishes.

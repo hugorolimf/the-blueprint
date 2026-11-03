@@ -20,16 +20,16 @@ function apIaMsg(texto, erro) {
   el.textContent = texto || "";
   el.classList.toggle("erro", !!erro);
 }
-const apIaMeta = (a) => { const rp = apIaRotuloPublico(), rn = apIaRotuloNivel(); return [rp[a.publico], rn[a.nivel], a.em, a.editadoEm ? tr("editada") : ""].filter(Boolean).map(esc).join(" · "); };
+const apIaMeta = (a) => { const rp = apIaRotuloPublico(), rn = apIaRotuloNivel(); return [rp[a.publico], rn[a.nivel], a.editadoEm ? tr("editada") : ""].filter(Boolean).map(esc).join(" · "); };
 
-function apIaOpcao(grupo, valor, rotulo, descricao, extra) {
+function apIaOpcao(grupo, valor, rotulo, descricao) {
   const marcado = apIaEscolha[grupo] === valor ? " checked" : "";
-  return `<label class="ap-ia-op"><input type="radio" name="ap-ia-${grupo}" value="${valor}"${marcado}><span><b>${rotulo}</b>${extra ? `<em>${extra}</em>` : ""}<small>${descricao}</small></span></label>`;
+  return `<label class="ap-ia-op"><input type="radio" name="ap-ia-${grupo}" value="${valor}"${marcado}><span><b>${rotulo}</b><small>${descricao}</small></span></label>`;
 }
 function apIaHtmlGrupo() {
   const rp = apIaRotuloPublico(), dp = apIaDescPublico(), rn = apIaRotuloNivel(), dn = apIaDescNivel();
   const publicos = AP_IA_PUBLICOS.map((p) => apIaOpcao("publico", p, rp[p], dp[p])).join("");
-  const niveis = AP_IA_NIVEIS.map((n) => apIaOpcao("nivel", n.id, rn[n.id], dn[n.id], apIaEstimativa(n.id))).join("");
+  const niveis = AP_IA_NIVEIS.map((n) => apIaOpcao("nivel", n.id, rn[n.id], dn[n.id])).join("");
   return `<div class="ap-ia-lista"></div><div class="ap-ia-gerar-grupo"><p class="rot">${tr("Gerar com IA")}</p>
 <fieldset class="ap-ia-grupo"><legend>${tr("Público")}</legend>${publicos}</fieldset>
 <fieldset class="ap-ia-grupo"><legend>${tr("Nível")}</legend>${niveis}</fieldset>
@@ -125,7 +125,7 @@ async function apIaGerar() {
   if (typeof poderesDaSessao === "function" && poderesDaSessao(sessao).soLeitura) return apIaMsg(tr("O seu papel só lê este workspace: não dá para pedir uma apresentação daqui."), true);
   const { publico, nivel } = apIaEscolha, ws = workspaceAtual?.id || "sm";
   const sessoes = await sessoesAbertas(apIaBp);
-  const texto = `${tr("Gasta tokens.")} ${tr("Público: {publico}. Nível: {nivel} ({tempo}).", { publico: apIaRotuloPublico()[publico], nivel: apIaRotuloNivel()[nivel], tempo: apIaEstimativa(nivel) })}`;
+  const texto = `${tr("Gasta tokens.")} ${tr("Público: {publico}. Nível: {nivel}.", { publico: apIaRotuloPublico()[publico], nivel: apIaRotuloNivel()[nivel] })}`;
   const escolha = await escolherSessao({ titulo: tr("Gerar a apresentação com o Claude?"), texto, sessoes, padrao: "app", rotulo: tr("Gerar") });
   if (!escolha) return;
   apIaOcupado = true;

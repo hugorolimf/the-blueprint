@@ -7,7 +7,6 @@ const apEdBotao = (ed, caminho, texto, extra = "") => `<button class="btn mini" 
 function apEdControle(tipo, ligacao, valor, { opcoes = [], rotOp = {}, doc, obrigatorio = false, vazio = "" } = {}) {
   const v = valor ?? "", base = `${ligacao} data-tipo="${tipo}"${obrigatorio ? " required" : ""}`;
   if (tipo === "area") return `<textarea ${base} rows="3">${esc(v)}</textarea>`;
-  if (tipo === "data") return `<input type="date" ${base} value="${esc(v)}">`;
   if (tipo === "opcoes" || tipo === "secao") {
     const lista = tipo === "secao" ? AP_IA_SECOES_FIGURA : opcoes;
     return `<select ${base}><option value="">${vazio || tr("Nenhuma")}</option>${lista.map((o) => `<option value="${esc(o)}"${o === v ? " selected" : ""}>${esc(rotOp[o] || o)}</option>`).join("")}</select>`;

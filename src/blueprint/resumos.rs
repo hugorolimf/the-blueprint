@@ -1,6 +1,5 @@
 //! O blueprint como o agente o enxerga, com os ids que ele precisa reaproveitar: porte de contextoBlueprint, estruturaBlueprint, resumoBlueprint e
-//! contextoAcao do antigo plano.mjs, mais a estimativa (`horas`) de cada plano e a média do tempo real medido.
-use super::datas::ms_do_iso;
+//! contextoAcao do antigo plano.mjs.
 use super::decisoes::{decisoes_do, resumo_das_decisoes};
 use super::impressao::impressao_do_projeto;
 use super::projetos::{nome_do_projeto, projetos_do};
@@ -24,12 +23,6 @@ fn itens(acao: &Value, chave: &str, campos: &[&str], descricao: bool) -> Vec<Val
             if descricao {
                 o.insert("descricao".into(), Value::String(str_de(x, "descricao")));
                 o.insert("feito".into(), Value::Bool(marcado(x)));
-                if chave == "planos" {
-                    let tempo = pegar(&x["agente"], &["inicioEm", "feitoEm"]);
-                    if !tempo.is_empty() {
-                        o.insert("tempoReal".into(), Value::Object(tempo));
-                    }
-                }
             }
             Value::Object(o)
         })
@@ -37,14 +30,14 @@ fn itens(acao: &Value, chave: &str, campos: &[&str], descricao: bool) -> Vec<Val
 }
 
 fn acao_completa(p: &Value, f: &Value) -> Value {
-    let mut o = pegar(f, &["id", "nome", "inicio", "fim", "status"]);
+    let mut o = pegar(f, &["id", "nome", "status"]);
     if let Some(projeto) = nome_do_projeto(p, f) {
         o.insert("projeto".into(), Value::String(projeto));
     }
     o.insert("observacao".into(), Value::String(str_de(f, "obs")));
-    o.insert("planos".into(), Value::Array(itens(f, "planos", &["id", "texto", "horas", "responsavel"], true)));
+    o.insert("planos".into(), Value::Array(itens(f, "planos", &["id", "texto", "responsavel"], true)));
     let checkpoints = lista(f.get("checkpoints")).iter().map(|m| {
-        let mut c = pegar(m, &["id", "nome", "data"]);
+        let mut c = pegar(m, &["id", "nome"]);
         c.insert("feito".into(), Value::Bool(marcado(m)));
         Value::Object(c)
     });
@@ -78,12 +71,12 @@ pub fn estrutura_blueprint(p: &Value) -> Value {
         Value::Object(o)
     };
     let acoes = lista(p.get("acoes")).iter().map(|f| {
-        let mut o = pegar(f, &["id", "nome", "inicio", "fim", "status"]);
+        let mut o = pegar(f, &["id", "nome", "status"]);
         if let Some(projeto) = nome_do_projeto(p, f) {
             o.insert("projeto".into(), Value::String(projeto));
         }
-        o.insert("planos".into(), Value::Array(lista(f.get("planos")).iter().map(|t| marca(t, pegar(t, &["id", "texto", "horas", "responsavel"]))).collect()));
-        o.insert("checkpoints".into(), Value::Array(lista(f.get("checkpoints")).iter().map(|m| marca(m, pegar(m, &["id", "nome", "data"]))).collect()));
+        o.insert("planos".into(), Value::Array(lista(f.get("planos")).iter().map(|t| marca(t, pegar(t, &["id", "texto", "responsavel"]))).collect()));
+        o.insert("checkpoints".into(), Value::Array(lista(f.get("checkpoints")).iter().map(|m| marca(m, pegar(m, &["id", "nome"]))).collect()));
         Value::Object(o)
     });
     let mut o = pegar(p, &["id", "nome"]);
@@ -100,31 +93,7 @@ pub fn estrutura_blueprint(p: &Value) -> Value {
     if let Some(url) = p.pointer("/repositorio/url").and_then(Value::as_str).filter(|u| !u.is_empty()) {
         o.insert("repositorio".into(), json!({"url": truncar(url, 200)})); // como foi guardada: quem roda algo com ela valida antes (src/repositorio)
     }
-    if let Some(real) = tempo_real(p) {
-        o.insert("tempoReal".into(), real);
-    }
     Value::Object(o)
-}
-
-/// Poucos planos medidos não dizem nada: só devolve a média com ao menos esta quantidade.
-const MEDIDOS_MINIMO: usize = 3;
-
-/// Média real de horas por plano, medida entre o primeiro aviso de progresso (`agente.inicioEm`) e a conclusão (`agente.feitoEm`) dos planos feitos.
-fn tempo_real(p: &Value) -> Option<Value> {
-    let mut horas: Vec<f64> = Vec::new();
-    for acao in lista(p.get("acoes")) {
-        for plano in lista(acao.get("planos")).iter().filter(|x| marcado(x)) {
-            let (Some(ini), Some(fim)) = (plano.pointer("/agente/inicioEm").and_then(Value::as_str).and_then(ms_do_iso), plano.pointer("/agente/feitoEm").and_then(Value::as_str).and_then(ms_do_iso)) else { continue };
-            if fim >= ini {
-                horas.push((fim - ini) as f64 / 3_600_000.0);
-            }
-        }
-    }
-    if horas.len() < MEDIDOS_MINIMO {
-        return None;
-    }
-    let media = horas.iter().sum::<f64>() / horas.len() as f64;
-    Some(json!({"planosMedidos": horas.len(), "horasPorPlano": (media * 1000.0).round() / 1000.0}))
 }
 
 pub fn contexto_acao(p: &Value, acao_id: &str) -> Option<Value> {

@@ -3,13 +3,13 @@ Object.assign(I18N.catalogos.en, {
   // contagens (pvPlural monta a chave "{n} " + singular)
   "{n} item novo": ["{n} new item", "{n} new items"], "{n} alterado": ["{n} changed", "{n} changed"], "{n} movido": ["{n} moved", "{n} moved"],
   "{n} item sem mudança": ["{n} unchanged item", "{n} unchanged items"], "{n} ação sem mudança": ["{n} unchanged action", "{n} unchanged actions"],
-  "{n} dia": ["{n} day", "{n} days"], "{n} plano": ["{n} plan", "{n} plans"], "{n} checkpoint": ["{n} checkpoint", "{n} checkpoints"],
+  "{n} plano": ["{n} plan", "{n} plans"], "{n} checkpoint": ["{n} checkpoint", "{n} checkpoints"],
   "{n} feito": ["{n} done", "{n} done"], "{n} pendente": ["{n} pending", "{n} pending"], "{n} ação": ["{n} action", "{n} actions"],
   "{n} ação de outro blueprint": ["{n} action from another blueprint", "{n} actions from another blueprint"], "{n} para apagar": "{n} to delete",
   "{n} item para apagar": ["{n} item to delete", "{n} items to delete"],
   "{n} ação vem de outro blueprint": ["{n} action comes from another blueprint", "{n} actions come from another blueprint"],
   // revisão em modo leitura
-  "{campos} da ação": "{campos} of the action", "nome": "name", "datas": "dates", "projeto": "project", "instruções": "instructions",
+  "{campos} da ação": "{campos} of the action", "nome": "name", "projeto": "project", "instruções": "instructions",
   "novo": "new", "alterado": "changed", "movido": "moved", "Descrição anterior": "Previous description", "Movido de “{nome}”": "Moved from “{nome}”",
   "Nova": "New", "Alterada": "Changed", "Sem mudança": "No change", "vazias": "empty", "alteradas": "changed", "novas": "new", "sem mudança": "no change",
   "Incluir esta ação": "Include this action", "Editar": "Edit", "Planos": "Plans", "Sem instruções.": "No instructions.", "Mensagem do agente": "Agent message",
@@ -28,10 +28,10 @@ Object.assign(I18N.catalogos.en, {
   "Prévia da marca da folha": "Sheet mark preview", "Prévia indisponível.": "Preview unavailable.", "<pasta do app>": "<app folder>", "este blueprint": "this blueprint",
   "O app não abre agentes: o seu agente (Claude Code, Codex…) é quem propõe, pelo MCP.\n\n1. Registre o servidor uma vez:\nClaude Code (plugin com skill, agente, MCP e hooks):  blueprint registrar\nClaude Code (só o MCP):  claude mcp add blueprint {urlA}-- {comando}\nCodex:  codex mcp add blueprint {urlB}-- {comando}\n\n2. No agente, peça para planejar {alvo}. Ids deste pedido: workspace_id {ws}{bpid}.\n\n3. A proposta aparece ao lado: você edita, desmarca o que não quer e só então aplica. Planos concluídos pelo agente (com evidência) são marcados aqui.":
     "The app does not run agents: your agent (Claude Code, Codex…) is the one that proposes, over MCP.\n\n1. Register the server once:\nClaude Code (plugin with skill, agent, MCP and hooks):  blueprint registrar\nClaude Code (MCP only):  claude mcp add blueprint {urlA}-- {comando}\nCodex:  codex mcp add blueprint {urlB}-- {comando}\n\n2. In the agent, ask it to plan {alvo}. Ids for this request: workspace_id {ws}{bpid}.\n\n3. The proposal appears alongside: you edit it, untick what you do not want and only then apply. Plans completed by the agent (with evidence) are ticked here.",
-  "Estimativa de trabalho do agente": "Agent work estimate", "Nome da ação": "Action name", "Leitura": "Read", "Início": "Start", "Fim": "End",
+  "Nome da ação": "Action name", "Leitura": "Read", "Fim": "End",
   "Planejada": "Planned", "Em desenvolvimento": "In progress", "Visualizar": "Preview", "Sem instruções ainda.": "No instructions yet.",
   "O que fazer nesta ação: o roteiro": "What to do in this action: the outline", "Remover plano": "Remove plan", "+ plano": "+ plan",
-  "Data do checkpoint": "Checkpoint date", "Remover checkpoint": "Remove checkpoint", "+ checkpoint": "+ checkpoint",
+  "Remover checkpoint": "Remove checkpoint", "+ checkpoint": "+ checkpoint",
   "Plano “{nome}”": "Plan “{nome}”", "Checkpoint “{nome}”": "Checkpoint “{nome}”", "Ação inteira “{nome}”": "Whole action “{nome}”",
   "na ação “{acao}”": "in action “{acao}”", "leva junto {planos} e {cps} que ficarem nela": "takes along {planos} and {cps} left in it",
   "Apagar": "Delete", "Nada é apagado sem você marcar aqui e aplicar.": "Nothing is deleted unless you tick it here and apply.", "Marcar": "Select", "Nenhum": "None",

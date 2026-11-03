@@ -8,7 +8,7 @@ fn mcp() -> Mcp {
 }
 
 fn dados() -> Value {
-    json!({"blueprints": [{"id": "p1", "nome": "Portal", "acoes": [{"id": "f1", "nome": "Base", "inicio": "2030-01-01", "fim": "2030-03-01", "status": "planejado", "obs": "", "planos": [{"id": "t1", "texto": "Criar rota", "descricao": "Escopo x. Validação: roda.", "feito": false}], "checkpoints": []}]}]})
+    json!({"blueprints": [{"id": "p1", "nome": "Portal", "acoes": [{"id": "f1", "nome": "Base", "status": "planejado", "obs": "", "planos": [{"id": "t1", "texto": "Criar rota", "descricao": "Escopo x. Validação: roda.", "feito": false}], "checkpoints": []}]}]})
 }
 
 fn plano(texto: &str) -> Value {
@@ -16,7 +16,7 @@ fn plano(texto: &str) -> Value {
 }
 
 fn nova(m: &Mcp) -> Value {
-    let corpo = json!({"workspaceId": "sm", "blueprintId": "p1", "mensagem": "m", "acoes": [{"nome": "Nova ação", "inicio": "2030-04-01", "fim": "2030-04-30", "planos": [plano("Criar a tela"), plano("Criar a rota")], "checkpoints": [{"nome": "Pronto", "data": "2030-04-29"}]}]});
+    let corpo = json!({"workspaceId": "sm", "blueprintId": "p1", "mensagem": "m", "acoes": [{"nome": "Nova ação", "planos": [plano("Criar a tela"), plano("Criar a rota")], "checkpoints": [{"nome": "Pronto"}]}]});
     proposta(m, &dados(), &corpo).unwrap().1
 }
 
@@ -65,12 +65,12 @@ fn ajustar_o_titulo_muda_so_ele_e_revalida_a_proposta_inteira() {
 fn ajustar_pode_acrescentar_plano_e_mexer_numa_acao_existente() {
     let m = mcp();
     nova(&m);
-    let r = ajusta(&m, json!({"ajustar": 1, "mensagem": "Com mais um plano", "acoes": [{"id": "+a1", "planos": [plano("Cobrir erros")]}, {"id": "f1", "fim": "2030-03-10"}]})).unwrap().1;
+    let r = ajusta(&m, json!({"ajustar": 1, "mensagem": "Com mais um plano", "acoes": [{"id": "+a1", "planos": [plano("Cobrir erros")]}, {"id": "f1"}]})).unwrap().1;
     let p = &na_fila(&m, 1)["proposta"];
     assert_eq!(p["mensagem"], "Com mais um plano");
     assert_eq!(p["acoes"].as_array().unwrap().len(), 2);
     assert_eq!(p["acoes"][0]["planos"].as_array().unwrap().len(), 3, "o plano entra no fim, os outros ficam");
-    assert_eq!((p["acoes"][1]["id"].as_str(), p["acoes"][1]["fim"].as_str(), p["acoes"][1]["nome"].as_str()), (Some("f1"), Some("2030-03-10"), Some("Base")));
+    assert_eq!((p["acoes"][1]["id"].as_str(), p["acoes"][1]["nome"].as_str()), (Some("f1"), Some("Base")));
     assert_eq!(r["ids"][0]["planos"][2], json!({"id": "+a1.p3", "texto": "Cobrir erros"}), "o id provisório novo segue o último");
     // os ids que já existiam não mudam depois de outro ajuste
     let r = ajusta(&m, json!({"ajustar": 1, "acoes": [{"id": "+a1", "nome": "Outra"}]})).unwrap().1;
@@ -102,7 +102,7 @@ fn substituir_troca_a_proposta_inteira_e_fica_com_o_numero() {
     let m = mcp();
     nova(&m);
     nova(&m);
-    let corpo = json!({"workspaceId": "sm", "blueprintId": "p1", "substituir": 1, "acoes": [{"nome": "Só esta", "inicio": "2030-05-01", "fim": "2030-05-20", "planos": [plano("Criar o mínimo")]}]});
+    let corpo = json!({"workspaceId": "sm", "blueprintId": "p1", "substituir": 1, "acoes": [{"nome": "Só esta", "planos": [plano("Criar o mínimo")]}]});
     let r = proposta(&m, &dados(), &corpo).unwrap().1;
     assert_eq!(r["numero"], 1);
     assert_eq!(na_fila(&m, 1)["proposta"]["acoes"].as_array().unwrap().len(), 1);

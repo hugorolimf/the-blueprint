@@ -15,21 +15,22 @@ const CARTAO: egui::Vec2 = vec2(320.0, 360.0);
 const FOLGA: f32 = 24.0;
 
 /// O que aparece entre o título e a grade.
-enum Bloco {
+enum Bloco<'a> {
     Nada,
     /// a linha «O workspace X é o exemplo»
-    Exemplo(Resumo),
+    Exemplo(&'a Resumo),
 }
 
 pub fn tela(ui: &mut Ui, vista: &mut Vista, doc: &Documento, servidor: &str, ocupado: bool) -> Option<Acao> {
     let mut acao = None;
     let viewport = ui.available_height();
     let largura = ui.available_width();
-    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+    crate::rolagem::mostrar(ui, egui::ScrollArea::vertical().auto_shrink([false, false]), |ui| {
         let util = (largura - 2.0 * PAD_X).max(320.0);
         let ws = doc.workspaces();
         let p = ui.painter().clone();
-        let bloco = doc.exemplo().map_or(Bloco::Nada, Bloco::Exemplo);
+        // o exemplo sai da mesma lista (`doc.exemplo()` montaria e ordenaria todos os workspaces de novo)
+        let bloco = ws.iter().find(|w| w.exemplo).map_or(Bloco::Nada, Bloco::Exemplo);
         // alturas, de cima para baixo (medidas da tela web)
         let (topo_bloco, altura_bloco) = match &bloco {
             Bloco::Nada => (0.0, 0.0),
@@ -117,7 +118,10 @@ fn grade(ui: &mut Ui, vista: &mut Vista, ws: &[Resumo], origem: Pos2, colunas: u
         let resposta = ui.interact(r, ui.scope_id().with(("ws", &w.id)), Sense::click_and_drag());
         let arrastando = resposta.dragged() && resposta.drag_delta().length() >= 0.0 && ui.input(|i| i.pointer.is_decidedly_dragging());
         let realce = ui.ctx().animate_bool_with_time(resposta.id, resposta.hovered() || resposta.has_focus(), 0.2);
-        cartao(ui, r, w, realce, arrastando);
+        // só desenha o cartão que aparece na janela (sobe até 3 px no realce); clique, arrasto, teclado e menu valem para todos
+        if ui.is_rect_visible(r.expand(4.0)) {
+            cartao(ui, r, w, realce, arrastando);
+        }
         if resposta.clicked() {
             vista.tela = Tela::Workspace(w.id.clone());
         }
@@ -153,7 +157,10 @@ fn grade(ui: &mut Ui, vista: &mut Vista, ws: &[Resumo], origem: Pos2, colunas: u
     }
     let r = slot(ws.len());
     let resposta = ui.interact(r, ui.scope_id().with("novo"), Sense::click());
-    adicionar(ui, r, ui.ctx().animate_bool_with_time(resposta.id, resposta.hovered() || resposta.has_focus(), 0.2));
+    let realce = ui.ctx().animate_bool_with_time(resposta.id, resposta.hovered() || resposta.has_focus(), 0.2);
+    if ui.is_rect_visible(r.expand(4.0)) {
+        adicionar(ui, r, realce);
+    }
     if resposta.clicked() && !ocupado {
         vista.novo = Some(super::Novo::vazio());
     }

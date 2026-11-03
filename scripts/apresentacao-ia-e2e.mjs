@@ -18,7 +18,7 @@ assert(edgeExe, "o teste precisa do Microsoft Edge");
 const BP = "bp1a2b3";
 const novoDoc = () => ({
   conteudo: { versao: 1, publico: "cliente", nivel: "padrao", idioma: "pt-BR", titulo: "Plano do cliente", resumo: ["Uma frase."], entregas: [{ titulo: "Atendimento", texto: "no WhatsApp" }],
-    etapas: [{ id: "e1", titulo: "Cadastro", inicio: "2026-10-26", fim: "2026-10-27", texto: "Base de usuários.", figura: "capa", marcos: [] }, { id: "e2", titulo: "Canal", inicio: "2026-10-28", fim: "2026-10-29", texto: "Mensagens.", figura: null, marcos: [] }],
+    etapas: [{ id: "e1", titulo: "Cadastro", texto: "Base de usuários.", figura: "capa", marcos: [] }, { id: "e2", titulo: "Canal", texto: "Mensagens.", figura: null, marcos: [] }],
     precisamosDeVoce: [], decisoes: [], riscos: [] },
   figuras: [{ id: "capa", titulo: "Mesa", dica: "d", leitura: "l", chaves: [{ marca: "lit", rotulo: "acesa" }], legenda: "leg", rotulo: "r", impressao: "x", codigo: "function (L) { return { svg: '<svg></svg>' }; }" }],
 });
@@ -161,10 +161,8 @@ try {
   assert(await salvo());
   assert.deepEqual(posts.editar.at(-1).operacoes.map((o) => [o.op, o.caminho, o.valor.id]), [["inserir", "etapas", "e3"]], "o item novo vem do esquema, com id que não repete");
   await digita('[data-c="etapas.2.titulo"]', "Painel");
-  await digita('[data-c="etapas.2.inicio"]', "2026-11-02", "change");
   assert(await salvo());
   assert.equal(DOC.conteudo.etapas[2].titulo, "Painel");
-  assert.equal(DOC.conteudo.etapas[2].inicio, "2026-11-02");
   await clica('[data-ed="sobe"][data-caminho="etapas.2"]');
   assert(await salvo());
   assert.deepEqual(DOC.conteudo.etapas.map((e) => e.titulo), ["Cadastro", "Painel", "Canal"], "subiu uma casa");
@@ -175,11 +173,11 @@ try {
   // Sessão da figura (lista fechada com "nenhuma") e o aviso do servidor ao lado
   await clica('.ap-ed-sec[data-sec="figuras"] > summary');
   const secoes = await js(`[...document.querySelectorAll('[data-fig="capa"][data-campo="secao"] option')].map((o) => o.value)`);
-  assert.deepEqual(secoes, ["", "visao", "recebe", "etapas", "linha", "precisamos", "decisoes", "riscos", "acoes"], "Sessão: nenhuma e os ids do contrato");
-  await digita('[data-fig="capa"][data-campo="secao"]', "linha", "change");
+  assert.deepEqual(secoes, ["", "visao", "recebe", "etapas", "precisamos", "decisoes", "riscos", "acoes"], "Sessão: nenhuma e os ids do contrato");
+  await digita('[data-fig="capa"][data-campo="secao"]', "recebe", "change");
   assert(await salvo());
-  assert.deepEqual(posts.editar.at(-1).operacoes, [{ op: "figura_definir", figura: "capa", campo: "secao", valor: "linha" }]);
-  assert(await espera(`/s-linha$/.test(document.querySelector(".ap-ia-quadro").getAttribute("src"))`, 4000), "o visor recarrega na sessão da figura");
+  assert.deepEqual(posts.editar.at(-1).operacoes, [{ op: "figura_definir", figura: "capa", campo: "secao", valor: "recebe" }]);
+  assert(await espera(`/s-entregas$/.test(document.querySelector(".ap-ia-quadro").getAttribute("src"))`, 4000), "o visor recarrega na sessão da figura");
   await digita('[data-c="resumo.0"]', "Frase com webhook");
   assert(await salvo());
   assert(await espera(`/webhook/.test(document.querySelector(".ap-ed-avisos").textContent)`), "os avisos do servidor aparecem no painel");
@@ -232,13 +230,13 @@ try {
   assert.deepEqual(posts.terminal[0], { workspaceId: "sm", blueprintId: BP, apresentacaoId: "ap-nova", ajuste: "deixe o texto da etapa 2 mais curto", titulo: "Ajuste: " + (await js("apIaBp.nome")) });
   assert(await espera(`/Terminal do app aberto/.test(document.querySelector(".ap-cv-hist").textContent)`), "o histórico mostra o resultado");
   SESSOES = [{ id: "s1", pasta: "C:/projeto/atendimento", canal: true }];
-  await digita(".ap-cv-texto", "troque a data de fim para 12 de novembro");
+  await digita(".ap-cv-texto", "troque o título da etapa 2 para Canal novo");
   await clica('[data-cv="enviar"]');
   assert(await espera(`!!document.querySelector("dialog.escolher-sessao[open]")`));
   assert.equal(await js(`document.querySelector('dialog.escolher-sessao input[name="sessao"]:checked').value`), "0", "a sessão com canal já vem marcada");
   await clica('dialog.escolher-sessao [data-r="1"]');
   assert(await espera(`document.querySelectorAll(".ap-cv-hist li").length >= 2 && /enviado à sessão/.test(document.querySelector(".ap-cv-hist").textContent)`));
-  assert.deepEqual(posts.pedido[0], { workspaceId: "sm", blueprintId: BP, apresentacaoId: "ap-nova", texto: "troque a data de fim para 12 de novembro", sessaoId: "s1" });
+  assert.deepEqual(posts.pedido[0], { workspaceId: "sm", blueprintId: BP, apresentacaoId: "ap-nova", texto: "troque o título da etapa 2 para Canal novo", sessaoId: "s1" });
   await digita(".ap-cv-texto", "mais um ajuste");
   await clica('[data-cv="enviar"]');
   assert(await espera(`document.querySelectorAll(".ap-cv-hist li").length >= 3`), "a sessão lembrada não pergunta de novo");

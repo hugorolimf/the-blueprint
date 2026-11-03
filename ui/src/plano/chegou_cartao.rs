@@ -3,7 +3,6 @@
 
 use super::super::agentes_movimento as mov;
 use super::super::agentes_pecas as pecas;
-use super::super::agentes_tempo as tempo;
 use super::super::caixinha::botao_mini;
 use super::super::linha::{Letra, Pincel};
 use super::lista::{Item, Oferta, Tipo};
@@ -45,7 +44,7 @@ pub fn cor_da_ficha(texto: &str) -> Color32 {
 
 /// O cartão com o topo em `y`, de `x` a `x + w`; `indice` é a vez dele na cascata. Devolve o botão clicado.
 #[allow(clippy::too_many_arguments)]
-pub fn desenhar(ui: &mut Ui, c: &Pincel, item: &Item, tipo: Tipo, indice: usize, agente: &str, numero: i64, x: f32, y: f32, w: f32) -> Option<Oferta> {
+pub fn desenhar(ui: &mut Ui, c: &Pincel, item: &Item, tipo: Tipo, indice: usize, agente: &str, x: f32, y: f32, w: f32) -> Option<Oferta> {
     let ctx = ui.ctx().clone();
     let t = mov::entrada(&ctx, "chegou", 1 + indice);
     let sobre = ui.rect_contains_pointer(c.caixa(x, y, w, alto(tipo)));
@@ -77,8 +76,7 @@ pub fn desenhar(ui: &mut Ui, c: &Pincel, item: &Item, tipo: Tipo, indice: usize,
     }
     if tipo == Tipo::Novo {
         let quem = if agente.is_empty() { tr("O agente").to_string() } else { agente.to_string() };
-        let visto = tempo::escrito(tempo::visto_ha(&ctx, ("chegou", numero)));
-        let frase = tr_com("enviado por {agente} · visto há {tempo}", &[("agente", &quem), ("tempo", &visto)]);
+        let frase = tr_com("enviado por {agente}", &[("agente", &quem)]);
         let letra = Letra::nova(9.5, MEDIO);
         c.texto(&c.cortado(&frase, w - 28.0, &letra).0, x + 14.0, y + 70.0, letra);
     }

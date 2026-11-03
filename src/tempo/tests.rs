@@ -10,11 +10,8 @@ fn iso_igual_ao_to_iso_string_do_js() {
 }
 
 #[test]
-fn o_formato_de_agora_e_o_de_hoje() {
+fn o_formato_de_agora() {
     let agora = iso_utc_agora();
     assert_eq!(agora.len(), 24);
     assert!(agora.ends_with('Z') && agora.as_bytes()[10] == b'T');
-    let hoje = hoje_local();
-    assert_eq!(hoje.len(), 10);
-    assert!(crate::blueprint::dia_valido(&hoje), "{hoje}");
 }

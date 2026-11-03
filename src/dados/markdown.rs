@@ -44,7 +44,7 @@ fn evidencia(plano: &Value) -> Option<&str> {
 /// O arquivo de uma ação: cabeçalho com id e datas, instruções, planos e checkpoints.
 pub fn acao(a: &Value) -> String {
     let mut s = format!("# {}\n\n", texto(a, "nome"));
-    s += &format!("- id: `{}`\n- dates: {} to {}\n- status: {}\n\n", texto(a, "id"), texto(a, "inicio"), texto(a, "fim"), estado(a));
+    s += &format!("- id: `{}`\n- status: {}\n\n", texto(a, "id"), estado(a));
     if !texto(a, "obs").is_empty() {
         s += &format!("{}\n\n", texto(a, "obs"));
     }
@@ -59,7 +59,7 @@ pub fn acao(a: &Value) -> String {
     s += "\n## Checkpoints\n\n";
     for c in lista(a, "checkpoints") {
         let feito = c.get("feito").and_then(Value::as_bool).unwrap_or(false);
-        s += &format!("- {} {} ({})\n", marca(feito), texto(c, "nome"), texto(c, "data"));
+        s += &format!("- {} {}\n", marca(feito), texto(c, "nome"));
     }
     s
 }

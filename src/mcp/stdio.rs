@@ -15,8 +15,9 @@ const INSTRUCOES_PLANEJAR: &str = include_str!("instrucoes_planejar.txt");
 const FERRAMENTAS: &str = include_str!("ferramentas.json");
 pub(super) const VERSOES: [&str; 3] = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const GUIA: &str = include_str!("../../skills/blueprint-planejamento/SKILL.md");
-const TOPICOS: [(&str, &str); 11] = [
+const TOPICOS: [(&str, &str); 12] = [
     ("planejar", include_str!("../../skills/blueprint-planejamento/topicos/planejar.md")),
+    ("anatomia", include_str!("../../skills/blueprint-planejamento/topicos/anatomia.md")),
     ("plano", include_str!("../../skills/blueprint-planejamento/topicos/plano.md")),
     ("editar", include_str!("../../skills/blueprint-planejamento/topicos/editar.md")),
     ("executar", include_str!("../../skills/blueprint-planejamento/topicos/executar.md")),
@@ -137,7 +138,7 @@ fn chamar(via: Via, nome: &str, a: &Value) -> R {
                 let corpo = if blueprints.is_empty() { "  (no blueprints)".to_string() } else { blueprints.iter().map(|p| format!("  - {} (blueprint_id: {}) · {} action(s)", p["nome"].as_str().unwrap_or(""), p["id"].as_str().unwrap_or(""), p["acoes"])).collect::<Vec<_>>().join("\n") };
                 format!("Workspace {} (workspace_id: {})\n{corpo}", w["nome"].as_str().unwrap_or(""), w["id"].as_str().unwrap_or(""))
             }).collect();
-            Ok(format!("Today: {}\n{}", r["hoje"].as_str().unwrap_or(""), linhas.join("\n")))
+            Ok(linhas.join("\n"))
         }
         "guia_de_planejamento" => {
             let t = opcional(a, "topico");

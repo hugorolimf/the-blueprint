@@ -4,7 +4,6 @@
 use super::Mcp;
 use crate::http::pedido::{falha, ErroHttp};
 use crate::blueprint::{contexto_acao, estrutura_lida, mover_acoes, resumo_blueprint, validar_proposta};
-use crate::tempo::hoje_local;
 use serde_json::{json, Map, Value};
 use std::collections::hash_map::RandomState;
 use std::hash::{BuildHasher, Hasher};
@@ -92,7 +91,7 @@ pub fn numero_do_blueprint(dados: &Value, workspace_id: &str, blueprint_id: &str
 
 pub fn blueprints(dados: &Value) -> Value {
     let ws: Vec<Value> = workspaces_de(dados).iter().map(|w| json!({"id": w.id, "nome": w.nome, "blueprints": w.blueprints.iter().map(resumo_blueprint).collect::<Vec<_>>()})).collect();
-    json!({"hoje": hoje_local(), "workspaces": ws})
+    json!({"workspaces": ws})
 }
 
 /// Sem `acao_id`: só a estrutura COMPLETA (quem usa por dentro, como os hooks, precisa de todas as ações); com `acao_id`: aquela ação inteira.
@@ -106,10 +105,10 @@ pub fn blueprint_lido(dados: &Value, workspace_id: &str, blueprint_id: &str, aca
     let p = p.ok_or_else(|| falha(400, crate::tr!("Send blueprint_id.", "Informe o blueprint_id.")).codigo("falta-blueprint"))?;
     if let Some(acao_id) = acao_id.filter(|f| !f.is_empty()) {
         let acao = contexto_acao(p, acao_id).ok_or_else(|| falha(404, crate::tr!("Action not found in this blueprint (see ler_blueprint without acao_id).", "Ação não encontrada neste blueprint (veja ler_blueprint sem acao_id).")).codigo("acao-nao-encontrada"))?;
-        return Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprintId": str_de(p, "id"), "acao": acao}));
+        return Ok(json!({"workspaceId": ws.id, "blueprintId": str_de(p, "id"), "acao": acao}));
     }
     let outros: Vec<Value> = ws.blueprints.iter().filter(|x| x.get("id") != p.get("id")).map(|x| json!({"id": x.get("id"), "nome": x.get("nome")})).collect();
-    Ok(json!({"hoje": hoje_local(), "workspaceId": ws.id, "blueprint": estrutura_lida(p, incluir, projeto).map_err(|m| falha(400, m).codigo("parametro-invalido"))?, "outros": outros}))
+    Ok(json!({"workspaceId": ws.id, "blueprint": estrutura_lida(p, incluir, projeto).map_err(|m| falha(400, m).codigo("parametro-invalido"))?, "outros": outros}))
 }
 
 /// Valida e guarda; o usuário revisa e aplica na página. Cada alvo tem uma fila de propostas numeradas: a nova entra no fim e não apaga outra.
@@ -119,7 +118,7 @@ pub fn proposta(mcp: &Mcp, dados: &Value, chamada: &Value) -> R<(u16, Value)> {
     let (ws, p) = localizar(dados, &workspace_id, &blueprint_id)?;
     let (entrada, numero) = super::ajuste::preparar(mcp, chamada, &workspace_id, &blueprint_id)?;
     let corpo = &super::ajuste::corpo_validavel(&entrada, chamada);
-    let mut r = validar_proposta(corpo, p, &hoje_local());
+    let mut r = validar_proposta(corpo, p);
     let apagando: Vec<String> = lista(corpo.get("remover")).iter().filter(|x| str_de(x, "plano_id").is_empty() && str_de(x, "checkpoint_id").is_empty()).map(|x| str_de(x, "acao_id")).collect();
     let mover = mover_acoes(lista(corpo.get("mover")), p, ws.blueprints, &apagando, &mut r.erros, &mut r.avisos);
     if !r.erros.is_empty() {

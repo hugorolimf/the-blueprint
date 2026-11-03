@@ -14,7 +14,7 @@ function focoCartoes(ags, blueprints) {
     const repouso = !!a.repouso || a.estado === "ocioso";
     const p = repouso ? null : (blueprints || []).find((x) => x.id === a.blueprintId), f = p?.acoes?.find((x) => x.id === a.acaoId) || null, t = f && a.planoId ? (f.planos || []).find((x) => x.id === a.planoId) || null : null;
     return { agente: a.agente || "", papel: a.papel || "", estado: repouso ? "ocioso" : a.estado, repouso, blueprintId: p ? p.id : a.blueprintId || "", acaoId: f ? f.id : "", planoId: t ? t.id : "", acaoNome: f?.nome || "", planoTexto: t?.texto || "", feito: !!t?.feito,
-      em: Date.parse(a.em) || 0, mensagem: a.mensagem || "", onde: Array.isArray(a.onde) ? a.onde : [], percentual: Number.isFinite(a.percentual) ? a.percentual : null, tokens: Number.isFinite(a.tokens) && a.tokens >= 0 ? a.tokens : null, rotulo: typeof a.rotulo === "string" ? a.rotulo : "", inicioEm: Date.parse(t?.agente?.inicioEm) || Number(t?.agente?.inicioEm) || 0 };
+      em: Date.parse(a.em) || 0, mensagem: a.mensagem || "", onde: Array.isArray(a.onde) ? a.onde : [], percentual: Number.isFinite(a.percentual) ? a.percentual : null, tokens: Number.isFinite(a.tokens) && a.tokens >= 0 ? a.tokens : null, rotulo: typeof a.rotulo === "string" ? a.rotulo : "" };
   });
   const principal = claudePrincipal(itens), rank = (i) => FOCO_ORDEM[i.estado] ?? 2;
   itens.sort((a, b) => (b === principal) - (a === principal) || rank(a) - rank(b) || b.em - a.em || a.agente.localeCompare(b.agente));
@@ -40,20 +40,6 @@ const focoDeveRolar = (caixa, alto) => !caixa || caixa.top < alto * FOCO_ENTRE[0
 const focoEsc = (fixo) => (fixo ? "lista" : "fechar");
 // O agente fixado sumiu (concluiu e o usuário fechou a mensagem, ou o servidor o esqueceu): volta à lista.
 const focoFixoSumiu = (cartoes, fixo) => !!fixo && !cartoes.itens.some((i) => i.agente === fixo);
-
-// Desde quando o agente trabalha neste plano: o início medido do plano (`inicioEm`) ou, sem ele, o evento mais antigo da sequência dele neste plano (os eventos vêm do mais novo ao mais antigo).
-// Devolve ms, ou 0 se não dá para saber.
-function focoDesde(inicioEm, eventos, agente, planoId) {
-  if (inicioEm) return inicioEm;
-  let desde = 0;
-  for (const e of eventos || []) {
-    if (e.alvo !== planoId || (e.agente && e.agente !== agente)) { if (desde) break; continue; }
-    desde = Date.parse(e.em) || desde;
-  }
-  return desde;
-}
-// Quanto trabalhou: do começo no plano até o ÚLTIMO AVISO (não até agora, para o texto não envelhecer sem aviso novo: nada corre em repouso). Em minutos, arredondado; 0 se não dá.
-const focoMinutos = (desde, ate) => (desde && ate > desde ? Math.max(1, Math.round((ate - desde) / 60000)) : 0);
 
 // Os eventos da linha do tempo que são deste agente neste plano (o evento geral da ação, sem plano, também conta), do mais novo ao mais antigo.
 const focoEventosDoAgente = (eventos, i, n = FOCO_EVENTOS) => (eventos || []).filter((e) => (!e.agente || e.agente === i.agente) && (!e.alvo || !i.planoId || e.alvo === i.planoId)).slice(0, n);

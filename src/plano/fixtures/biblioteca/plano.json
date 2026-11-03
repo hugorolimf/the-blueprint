@@ -9,8 +9,6 @@
         {
           "id": "1",
           "nome": "Nova API de fusos",
-          "de": "2026-11-03",
-          "ate": "2026-11-14",
           "planos": [
             {
               "id": "1.1",
@@ -36,8 +34,7 @@
           ],
           "checkpoints": [
             {
-              "texto": "Todos os testes antigos passando",
-              "data": "2026-11-14"
+              "texto": "Todos os testes antigos passando"
             }
           ],
           "tabelas": [

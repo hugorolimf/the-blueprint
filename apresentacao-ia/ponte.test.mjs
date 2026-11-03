@@ -17,7 +17,7 @@ const ev = (alvo, extra = {}) => ({ target: alvo, relatedTarget: null, pointerTy
 // o total vem do conteúdo; grupo desconhecido ou sem itens: ponte que não faz nada (e não quebra)
 {
   const raiz = montaRaiz(), c = L.ponte.ligar(raiz, conteudo);
-  assert.deepEqual([c.criar("recebe").total, c.criar("etapas").total, c.criar("linha").total, c.criar("precisamos").total, c.criar("decisoes").total, c.criar("riscos").total], [3, 4, 4, 2, 2, 2]);
+  assert.deepEqual([c.criar("recebe").total, c.criar("etapas").total, c.criar("precisamos").total, c.criar("decisoes").total, c.criar("riscos").total], [3, 4, 2, 2, 2]);
   for (const g of [undefined, "visao", "acoes", "banana"]) {
     const p = c.criar(g);
     assert.equal(p.total, 0);

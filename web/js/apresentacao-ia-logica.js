@@ -1,13 +1,13 @@
 // ---- apresentação com IA: níveis, públicos, o corpo do pedido e as frases do resultado; só lógica, sem DOM (apresentacao-ia.js desenha) ----
 // Contrato em docs/interno/apresentacao-ia.md. O nível "epico" não existe aqui de propósito: só vale quando o usuário o pede pelo nome na conversa com o agente.
-const AP_IA_NIVEIS = [{ id: "rapido", horas: [0, 1] }, { id: "padrao", horas: [1, 3] }, { id: "completo", horas: [2, 4] }];
+const AP_IA_NIVEIS = [{ id: "rapido" }, { id: "padrao" }, { id: "completo" }];
 const AP_IA_PUBLICOS = ["cliente", "interno"];
 const AP_IA_ID = /^[A-Za-z0-9_-]{1,64}$/; // o id vira parte de uma URL e de um atributo: só o que o servidor gera
 
 const apIaRotuloPublico = () => ({ cliente: tr("Cliente"), interno: tr("Interno") });
 const apIaRotuloNivel = () => ({ rapido: tr("Rápido"), padrao: tr("Padrão"), completo: tr("Completo") });
 const apIaDescPublico = () => ({
-  cliente: tr("Plano de projeto: o que o cliente recebe, etapas, datas e o que esperamos dele. Sem termos técnicos."),
+  cliente: tr("Plano de projeto: o que o cliente recebe, etapas e o que esperamos dele. Sem termos técnicos."),
   interno: tr("Visão técnica completa, para quem constrói."),
 });
 const apIaDescNivel = () => ({
@@ -16,14 +16,6 @@ const apIaDescNivel = () => ({
   completo: tr("O Padrão, mais uma máquina densa do sistema e uma figura por etapa."),
 });
 
-// a estimativa que o contrato anuncia antes de começar ("até 1 h", "1 a 3 h")
-function apIaEstimativa(nivel) {
-  const n = AP_IA_NIVEIS.find((x) => x.id === nivel);
-  if (!n) return "";
-  return n.horas[0] ? tr("{de} a {ate} h", { de: n.horas[0], ate: n.horas[1] }) : tr("até {ate} h", { ate: n.horas[1] });
-}
-
-// o corpo de POST /api/mcp/apresentar; null quando algo não vale (nível fora da lista, como o Épico, ou ids vazios). `sessao` é a escolhida no diálogo (ou nada: terminal novo)
 function apIaCorpoPedido({ workspaceId, blueprintId, publico, nivel, sessao } = {}) {
   if (!workspaceId || !blueprintId || !AP_IA_PUBLICOS.includes(publico) || !AP_IA_NIVEIS.some((n) => n.id === nivel)) return null;
   const corpo = { workspaceId, blueprintId, publico, nivel };
@@ -51,7 +43,7 @@ function apIaLista(apresentacoes, ocultas = new Set()) {
       titulo: String(a.titulo || "").slice(0, 120),
       publico: AP_IA_PUBLICOS.includes(a.publico) ? a.publico : "",
       nivel: AP_IA_NIVEIS.some((n) => n.id === a.nivel) ? a.nivel : "", // um "epico" gravado pelo agente aparece sem rótulo de nível, não some
-      em: typeof a.em === "string" ? a.em.slice(0, 10) : "",
+      em: typeof a.em === "string" ? a.em : "", // só para a ordem: a mais nova primeiro; não aparece na tela
       editadoEm: typeof a.editadoEm === "string" ? a.editadoEm : "", // preenchido quando alguém editou à mão: gerar de novo pede confirmação
     }))
     .sort((x, y) => (y.em > x.em ? 1 : y.em < x.em ? -1 : 0));

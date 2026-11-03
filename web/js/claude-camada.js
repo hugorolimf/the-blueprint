@@ -31,7 +31,7 @@ function claudeAncoras(svg) {
   return {
     plano: (id) => caixa(q(`.robo-linha[data-plano="${CSS.escape(id)}"]`)),
     barra: (id) => caixa(q(`.acao[data-f="${CSS.escape(id)}"] .caixa`)), // a barra da ação, aberta ou compacta (o agente fica ao lado dela quando a linha do plano não está desenhada)
-    // a chave da seção (o projeto) da ação: a da seção em que a ação está desenhada ou, se ela não está à vista (filtro, período), a do projeto dela nos dados
+    // a chave da seção (o projeto) da ação: a da seção em que a ação está desenhada ou, se ela não está à vista (filtro), a do projeto dela nos dados
     secao: (id) => {
       const g = q(`.acao[data-f="${CSS.escape(id)}"]`)?.closest("[data-proj]")?.querySelector("[data-projeto], [data-toggle]");
       if (g) return g.dataset.projeto ?? g.dataset.toggle;

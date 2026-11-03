@@ -33,7 +33,7 @@ try {
   const js = async (expression) => { const d = await cdp("Runtime.evaluate", { expression, returnByValue: true, awaitPromise: true, replMode: true }); assert(!d.result.exceptionDetails, JSON.stringify(d.result.exceptionDetails)); return d.result.result.value; };
   await cdp("Runtime.enable"); await cdp("Page.navigate", { url: `${url}/#/c/sm` }); await dormir(1500);
   const projeto = join(tmp, "nova"); mkdirSync(projeto);
-  const proposta = { workspace_id: "sm", blueprint: { nome: "Novo automático", descricao: "Teste" }, acoes: [{ nome: "Criar", inicio: "2026-12-01", fim: "2026-12-02", planos: [{ texto: "Entregar", descricao: "Escopo: criar. Resultado: entrega. Validação: teste." }], checkpoints: [] }] };
+  const proposta = { workspace_id: "sm", blueprint: { nome: "Novo automático", descricao: "Teste" }, acoes: [{ nome: "Criar", planos: [{ texto: "Entregar", descricao: "Escopo: criar. Resultado: entrega. Validação: teste." }], checkpoints: [] }] };
   const mensagem = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "propor_blueprint", arguments: proposta } };
   const chamada = spawnSync(exe, ["--mcp"], { cwd: projeto, env, input: JSON.stringify(mensagem) + "\n", encoding: "utf8" });
   assert.equal(chamada.status, 0, chamada.stderr); assert(!JSON.parse(chamada.stdout).result.isError, chamada.stdout);

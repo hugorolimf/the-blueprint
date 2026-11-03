@@ -29,6 +29,7 @@ Só o nome do blueprint e as ações são obrigatórios. A ação também pode t
 - **`id`** liga uma versão do plano à seguinte. Mantenha estável.
 - **`area`** diz que parte do projeto o plano toca. Dois planos com áreas que se sobrepõem (`app` e `app/barra`) nunca rodam ao mesmo tempo, mesmo em blueprints diferentes do workspace.
 - **`depende_de`** segura o plano até aqueles planos ficarem prontos.
+- **`plano`**, numa tela, tabela, checkpoint, decisão ou pergunta, coloca a peça dentro daquele plano da ação. A revisão anda plano por plano; sem `plano`, a peça é da ação inteira.
 
 ## As ferramentas do agente
 
@@ -44,7 +45,7 @@ Nenhuma ferramenta aprova mudança, marca plano, integra ramo ou liga agente, em
 ## O que você decide
 
 - **Ações novas.** Escritas peça por peça, entram na folha quando a escrita fecha. Vindas de `salvar_plano`, esperam **Colocar** na tela "O que chegou".
-- **Ações alteradas.** O conteúdo aprovado fica na folha, com a mudança como diff por palavra dentro da ação. **Aprovar** aplica, **Editar** muda o texto antes, **Reprovar** deixa tudo como estava. Plano que mudou enquanto você olhava (409) pede nova revisão.
+- **Ações alteradas.** O conteúdo aprovado fica na folha, com a mudança como diff por palavra dentro da ação. Telas, detalhes e tabelas novos também aparecem na ação, marcados com `+`, antes de você decidir. **Aprovar** aplica, **Editar** muda o texto antes, **Reprovar** deixa tudo como estava. Plano que mudou enquanto você olhava (409) pede nova revisão.
 - **Decisões e detalhes** que pedem aprovação têm controle próprio. Reescrever um deles derruba a aprovação.
 - **Plano pronto** cujo texto, instruções ou área mudou volta a não feito quando você aprova; o diff avisa naquela linha.
 - **Com agente rodando** em plano alterado ou removido, a aprovação é recusada até você cancelar ou ele terminar.

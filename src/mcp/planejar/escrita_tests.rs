@@ -68,12 +68,11 @@ fn t1_alterado(e: &Estado, escrita: &str) {
 #[test]
 fn abrir_cria_aguardando() {
     let e = janela();
-    let r = abrir_em(&e, "w2", "p9", "escrita", json!([{"id": "1", "nome": "Um"}, {"id": "2", "nome": "Dois", "de": "2026-11-01", "ate": "2026-11-02"}]));
+    let r = abrir_em(&e, "w2", "p9", "escrita", json!([{"id": "1", "nome": "Um"}, {"id": "2", "nome": "Dois"}]));
     assert_eq!((&r["aguardando"], &r["continuacao"], &r["numero"], &r["blueprintId"]), (&json!(["1", "2"]), &json!(false), &json!(1), &json!("p9")));
     assert!(blueprint(&e, "w2", "p9")["acoes"].as_array().unwrap().is_empty(), "a árvore só muda ao fechar");
     let linha = versao(&e, r["escritaId"].as_str().unwrap());
     assert_eq!((linha.situacao.as_str(), linha.agente.as_str(), linha.aguardando.len()), ("escrevendo", "Claude", 2));
-    assert_eq!(linha.plano["projetos"][0]["acoes"][1]["ate"], "2026-11-02");
 
     // sem blueprintId: o blueprint nasce na hora, com a pasta, e a versão dos dados sobe
     let pasta = std::env::temp_dir().join(format!("bp-escrita-{}", crate::tempo::agora_ms()));
@@ -150,7 +149,6 @@ fn peca_invalida_422() {
         json!({"id": "a/b", "nome": "N"}),
         json!({"id": "1", "nome": "N", "planos": ["Sem id"]}),
         json!({"id": "1", "nome": "N", "planos": [{"id": "x", "texto": "A"}, {"id": "x", "texto": "B"}]}),
-        json!({"id": "1", "nome": "N", "de": "2026-11-09", "ate": "2026-11-01"}),
         json!({"id": "1", "nome": "N", "planos": [{"id": "x", "texto": "A", "depende_de": ["y"]}, {"id": "y", "texto": "B", "depende_de": ["x"]}]}),
         json!({"id": "1"}),
     ];
@@ -183,14 +181,14 @@ fn depende_inexistente_so_no_fechar() {
 fn fechar_novas_entram_na_escrita() {
     let e = janela();
     let escrita = abrir_em(&e, "w2", "p9", "escrita", json!([{"id": "1", "nome": "Um"}]))["escritaId"].as_str().unwrap().to_string();
-    ok(&e, "escrever", json!({"escritaId": escrita, "acao": {"id": "1", "texto": "T", "projeto": "Grupo", "planos": [{"id": "1.1", "texto": "A", "area": "app"}], "checkpoints": [{"texto": "C", "data": "2026-11-03"}]}, "decisoes": [{"id": "q", "texto": "D", "acoes": ["1"]}]}));
+    ok(&e, "escrever", json!({"escritaId": escrita, "acao": {"id": "1", "texto": "T", "projeto": "Grupo", "planos": [{"id": "1.1", "texto": "A", "area": "app"}], "checkpoints": [{"texto": "C"}]}, "decisoes": [{"id": "q", "texto": "D", "acoes": ["1"]}]}));
     let antes = e.versao_dados.load(Ordering::SeqCst);
     let r = fechar(&e, &escrita);
     assert_eq!((&r["novas"], &r["colocadas"], &r["alteradas"], &r["removidas"], &r["iguais"]), (&json!(["1"]), &json!(["1"]), &json!([]), &json!([]), &json!(0)));
     assert!(e.versao_dados.load(Ordering::SeqCst) > antes, "fechar com árvore mudada sobe a versão");
     let bp = blueprint(&e, "w2", "p9");
     let a = &bp["acoes"][0];
-    assert_eq!((&a["ref"], &a["nome"], &a["obs"], &a["semData"]), (&json!("1"), &json!("Um"), &json!("T"), &json!(true)));
+    assert_eq!((&a["ref"], &a["nome"], &a["obs"]), (&json!("1"), &json!("Um"), &json!("T")));
     assert_eq!((&a["planos"][0]["ref"], &a["planos"][0]["extra"], &a["planos"][0]["area"]), (&json!("1.1"), &Value::Null, &json!("app")));
     assert_eq!(a["id"].as_str().unwrap(), crate::plano::ids::id_real("p9", "acao", "1"));
     assert_eq!(bp["projetos"][0]["nome"], "Grupo");
@@ -358,26 +356,12 @@ fn segunda_versao_nao_pede_figura_antiga() {
 }
 
 #[test]
-fn fechar_blueprint_antigo_com_datas_invertidas() {
-    let e = janela();
-    editar_arvore(&e, |t| {
-        t["blueprints"][0]["acoes"][0]["inicio"] = json!("2026-12-30");
-        t["blueprints"][0]["acoes"][0]["fim"] = json!("2026-01-01");
-    });
-    let escrita = abrir_vazio(&e, "sm", "p1");
-    escrever(&e, &escrita, json!({"id": "n", "nome": "Nova", "planos": [{"id": "n.1", "texto": "A"}]}));
-    let r = fechar(&e, &escrita);
-    assert_eq!((&r["novas"], &r["iguais"]), (&json!(["n"]), &json!(1)), "o agente não corrige o que não mandou");
-    assert_eq!(blueprint(&e, "sm", "p1")["acoes"][0]["inicio"], "2026-12-30");
-}
-
-#[test]
 fn acao_criada_durante_escrita_nao_some() {
     let e = janela();
     let escrita = abrir_vazio(&e, "sm", "p1");
     t1_alterado(&e, &escrita);
     editar_arvore(&e, |t| {
-        t["blueprints"][0]["acoes"].as_array_mut().unwrap().push(json!({"id": "f9", "nome": "Do usuário", "inicio": "2026-11-01", "fim": "2026-11-02", "status": "planejado", "planos": [], "checkpoints": []}));
+        t["blueprints"][0]["acoes"].as_array_mut().unwrap().push(json!({"id": "f9", "nome": "Do usuário", "status": "planejado", "planos": [], "checkpoints": []}));
     });
     let r = fechar(&e, &escrita);
     assert_eq!((&r["removidas"], &r["iguais"]), (&json!([]), &json!(1)), "{r}");

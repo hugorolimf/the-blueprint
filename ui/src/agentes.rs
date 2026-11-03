@@ -1,7 +1,6 @@
 //! Os agentes que trabalham no workspace e onde a folha os põe (`agentes.js` e `claude-logica.js` da página): quem é o principal, o papel e a pose de cada
 //! figura, o lugar (a linha do plano, a barra, o cabeçalho da seção ou do blueprint, o cartão) e a posição lado a lado. Só lógica: o desenho é de `folha/claude.rs`.
 
-use crate::documento::dia;
 use serde::Deserialize;
 use std::collections::HashSet;
 
@@ -32,6 +31,20 @@ const MAX_SUB: usize = 7;
 /// O subagente que concluiu some da folha depois disto.
 const SUB_SOME_MS: i64 = 10_000;
 const PAPEIS: [&str; 3] = ["explorador", "construtor", "revisor"];
+
+/// Dias desde 1970 de `aaaa-mm-dd` (algoritmo de Howard Hinnant), só para a idade do sinal de vida do agente; `None` se não for esse formato.
+fn dia(iso: &str) -> Option<i64> {
+    let b = iso.as_bytes();
+    if b.len() != 10 || b[4] != b'-' || b[7] != b'-' || !iso.bytes().enumerate().all(|(i, c)| i == 4 || i == 7 || c.is_ascii_digit()) {
+        return None;
+    }
+    let (a, m, d) = (iso[..4].parse::<i64>().ok()?, iso[5..7].parse::<i64>().ok()?, iso[8..].parse::<i64>().ok()?);
+    let a = if m <= 2 { a - 1 } else { a };
+    let era = a.div_euclid(400);
+    let ya = a - era * 400;
+    let doa = (153 * (m + if m > 2 { -3 } else { 9 }) + 2) / 5 + d - 1;
+    Some(era * 146_097 + ya * 365 + ya / 4 - ya / 100 + doa - 719_468)
+}
 
 /// `aaaa-mm-ddThh:mm:ss.mmmZ` em milissegundos desde 1970 (0 se não entender).
 pub fn em_ms(iso: &str) -> i64 {

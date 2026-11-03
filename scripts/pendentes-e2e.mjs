@@ -17,7 +17,7 @@ try {
   const a = await mcp.chamar("registrar_progresso", { ...ids, texto: "Comecei o plano com o app fechado", agente: "Claude" });
   const b = await mcp.chamar("marcar_concluido", { ...ids, evidencia: "cargo test: 10 passaram" });
   const ruim = await mcp.chamar("marcar_concluido", { ...ids, plano_id: "nao-existe", evidencia: "x" });
-  const proposta = await mcp.chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: "p1", mensagem: "m", acoes: [{ nome: "Nova", inicio: "2026-11-06", fim: "2026-11-07", planos: [{ texto: "Criar algo", descricao: "d" }] }] });
+  const proposta = await mcp.chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: "p1", mensagem: "m", acoes: [{ nome: "Nova", planos: [{ texto: "Criar algo", descricao: "d" }] }] });
   const leitura = await mcp.chamar("ler_blueprint", { workspace_id: "sm", blueprint_id: "p1" });
   mcp.fechar();
   for (const r of [a, b, ruim, proposta]) { assert.equal(r.erro, false); assert.match(r.texto, /closed|saved/i, r.texto); }

@@ -9,7 +9,7 @@ use std::collections::HashSet;
 
 /// Acima disto (caracteres do JSON compacto) o padrão `ativas` passa a resumir.
 pub const LIMITE: usize = 20_000;
-/// Quantas planejadas, pela data de início, ficam completas junto com as em andamento.
+/// Quantas planejadas, na ordem do blueprint, ficam completas junto com as em andamento.
 const PROXIMAS: usize = 4;
 const COMO: &str = "Summarized actions carry no plans or checkpoints. Read one in full with acao_id, call again with incluir: \"tudo\" for everything (large), or with projeto: <id or name> for one project.";
 
@@ -36,18 +36,16 @@ fn projeto_pedido(p: &Value, pedido: &str) -> Result<Option<String>, String> {
 
 /// Concluídas e planejadas distantes viram uma linha; devolve quantas de cada.
 fn resumir(acoes: Vec<Value>) -> (Vec<Value>, usize, usize) {
-    let mut planejadas: Vec<usize> = (0..acoes.len()).filter(|&i| status(&acoes[i]) == "planejado").collect();
-    planejadas.sort_by_key(|&i| str_de(&acoes[i], "inicio")); // yyyy-mm-dd ordena como texto
-    let proximas: HashSet<usize> = planejadas.into_iter().take(PROXIMAS).collect();
+    let proximas: HashSet<usize> = (0..acoes.len()).filter(|&i| status(&acoes[i]) == "planejado").take(PROXIMAS).collect();
     let (mut concluidas, mut distantes) = (0, 0);
     let novas = acoes.into_iter().enumerate().map(|(i, a)| match status(&a).as_str() {
         "concluido" => {
             concluidas += 1;
-            Value::Object(linha(&a, &["id", "nome", "fim", "status", "projeto"]))
+            Value::Object(linha(&a, &["id", "nome", "status", "projeto"]))
         }
         "planejado" if !proximas.contains(&i) => {
             distantes += 1;
-            let mut o = linha(&a, &["id", "nome", "inicio", "fim", "status", "projeto"]);
+            let mut o = linha(&a, &["id", "nome", "status", "projeto"]);
             o.insert("nPlanos".into(), json!(lista(a.get("planos")).len()));
             o.insert("nCheckpoints".into(), json!(lista(a.get("checkpoints")).len()));
             Value::Object(o)

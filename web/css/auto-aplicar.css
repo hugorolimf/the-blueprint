@@ -8,7 +8,6 @@
 #cl-auto{flex:0 1 auto;max-height:30%;overflow:auto}
 #cl-auto[hidden]{display:none}
 .aa-item{display:flex;align-items:center;gap:12px;padding:6px 14px;border-bottom:1px dashed var(--faint);font-size:12px}
-.aa-item .aa-hora{flex:none;color:var(--mid)}
 .aa-item .aa-texto{flex:1;min-width:0;overflow-wrap:anywhere}
 .aa-nota{margin:0 0 10px;color:var(--mid)}
 @media (max-width:650px){#auto-aviso{left:8px;right:8px;bottom:10px;transform:none;max-width:none}}

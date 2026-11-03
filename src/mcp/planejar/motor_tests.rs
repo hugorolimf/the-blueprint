@@ -49,7 +49,7 @@ fn plano(id: &str, area: &str, depende: &[&str]) -> Value {
 }
 
 fn blueprint(id: &str, planos: Vec<Value>) -> Value {
-    json!({"id": id, "nome": id, "acoes": [{"id": format!("{id}a"), "ref": "1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "planos": planos}]})
+    json!({"id": id, "nome": id, "acoes": [{"id": format!("{id}a"), "ref": "1", "nome": "Base", "planos": planos}]})
 }
 
 impl Cena {

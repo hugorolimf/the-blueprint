@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 fn dados() -> Value {
     let acoes: Vec<Value> = (0..80)
-        .map(|i| json!({"id": format!("f{i}"), "nome": format!("Ação {i} com um nome de tamanho comum"), "inicio": "2030-01-01", "fim": "2030-02-01", "status": if i < 60 { "concluido" } else { "planejado" }, "obs": "instruções",
+        .map(|i| json!({"id": format!("f{i}"), "nome": format!("Ação {i} com um nome de tamanho comum"), "status": if i < 60 { "concluido" } else { "planejado" }, "obs": "instruções",
             "planos": (0..5).map(|k| json!({"id": format!("t{i}-{k}"), "texto": "Implementar o módulo com validação e teste de ponta a ponta, cobrindo os erros", "descricao": "d", "feito": i < 60})).collect::<Vec<_>>(), "checkpoints": []}))
         .collect();
     json!({"blueprints": [{"id": "p1", "nome": "Portal", "descricao": "d", "obs": "", "projetos": [{"id": "pr1", "nome": "Interface"}], "acoes": acoes}]})

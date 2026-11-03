@@ -75,25 +75,6 @@ fn ciclo() {
 }
 
 #[test]
-fn de_sem_ate() {
-    let so_de = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "de": "2026-11-02"}]}]}));
-    assert!(tem(&erros_de(&so_de), &["action 1", "de and ate together"]));
-    let so_ate = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "ate": "2026-11-02"}]}]}));
-    assert!(tem(&erros_de(&so_ate), &["de and ate together"]));
-    let invertidas = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "de": "2026-11-09", "ate": "2026-11-02"}]}]}));
-    assert!(tem(&erros_de(&invertidas), &["is after"]));
-    for ruim in ["2026-02-30", "2026-13-01", "02/11/2026", "2026-1-01", "2026-00-10", "2025-02-29"] {
-        let p = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "de": ruim, "ate": ruim}]}]}));
-        assert!(tem(&erros_de(&p), &["YYYY-MM-DD"]), "{ruim}");
-    }
-    let bissexto = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "de": "2028-02-29", "ate": "2028-02-29"}]}]}));
-    assert_eq!(erros_de(&bissexto), Vec::<String>::new());
-    let peca = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "checkpoints": [{"texto": "c", "data": "ontem"}]}]}], "decisoes": [{"id": "d", "texto": "t", "data": "hoje"}]}));
-    let e = erros_de(&peca);
-    assert!(tem(&e, &["checkpoint 1.c1", "YYYY-MM-DD"]) && tem(&e, &["decision d", "YYYY-MM-DD"]), "{e:?}");
-}
-
-#[test]
 fn formato_futuro_recusado() {
     let v = json!({"formato": "blueprint.plano/2", "blueprint": "B", "projetos": [{"acoes": []}]});
     assert!(PlanoDoc::de_json(&v).unwrap_err().iter().any(|e| e.contains("blueprint.plano/2") && e.contains(FORMATO)));
@@ -146,9 +127,9 @@ fn projeto_vazio_so_avisa() {
 }
 
 #[test]
-fn acao_nao_tocada_com_datas_invertidas_passa() {
+fn acao_nao_tocada_com_campos_ruins_passa() {
     let p = doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [
-        {"id": "velha", "nome": "Antiga", "de": "2026-11-09", "ate": "2026-11-02", "planos": [{"id": "v1", "texto": "t", "area": "../x"}], "tabelas": [{"linhas": []}]},
+        {"id": "velha", "nome": "Antiga", "planos": [{"id": "v1", "texto": "t", "area": "../x"}], "tabelas": [{"linhas": []}]},
         {"id": "nova", "nome": "Nova", "planos": [{"id": "n1", "texto": "t", "depende_de": ["z"]}]}
     ]}]}));
     let tocadas = ["nova".to_string()];
@@ -156,7 +137,7 @@ fn acao_nao_tocada_com_datas_invertidas_passa() {
     assert_eq!(e.len(), 1, "só a dependência, que vale para tudo: {e:?}");
     assert!(tem(&e, &["n1", "does not exist"]));
     let velha = ["velha".to_string()];
-    assert!(tem(&validar(&p, Some(&velha), &sem_figura), &["action velha", "is after"]), "a mesma ação, tocada, passa pelas regras de campo");
+    assert!(tem(&validar(&p, Some(&velha), &sem_figura), &["action velha", "colunas is required"]), "a mesma ação, tocada, passa pelas regras de campo");
     assert!(tem(&erros_de(&p), &["table 1: colunas is required"]), "None = todas as ações");
     assert_eq!(validar(&doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": []})), Some(&[]), &sem_figura), Vec::<String>::new(), "escrita num blueprint ainda sem ação");
 }
@@ -217,4 +198,68 @@ fn peca_sem_nome_usa_o_do_plano_e_substitui_a_antiga() {
     assert_eq!(validar_peca(&p, &peca), Vec::<String>::new(), "`plano/escrever` pode omitir o nome de uma ação que já tem");
     let nova = super::formato::AcaoDoc { id: "2".into(), ..Default::default() };
     assert!(tem(&validar_peca(&p, &nova), &["action 2", "nome"]));
+}
+
+/// Uma ação `1` com o plano `1.1` e a peça dada no campo dado.
+fn com_peca(campo: &str, peca: Value) -> PlanoDoc {
+    let mut acao = json!({"id": "1", "nome": "Um", "planos": [{"id": "1.1", "texto": "T"}]});
+    acao[campo] = json!([peca]);
+    doc(json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [acao]}]}))
+}
+
+#[test]
+fn a_peca_so_aponta_para_um_plano_da_propria_acao() {
+    assert!(erros_de(&com_peca("detalhes", json!({"id": "01", "plano": "1.1"}))).is_empty());
+    assert!(erros_de(&com_peca("detalhes", json!({"id": "01", "plano": ""}))).is_empty(), "vazio tira a peça do plano");
+    assert!(tem(&erros_de(&com_peca("detalhes", json!({"id": "01", "plano": "9"}))), &["detail 01", "the plan 9"]));
+    assert!(tem(&erros_de(&com_peca("checkpoints", json!({"id": "c1", "texto": "K", "plano": "9"}))), &["checkpoint c1", "the plan 9"]));
+    assert!(tem(&erros_de(&com_peca("tabelas", json!({"colunas": ["A"], "linhas": [], "plano": "9"}))), &["table 1", "the plan 9"]));
+}
+
+#[test]
+fn decisao_e_pergunta_apontam_para_um_plano_das_suas_acoes() {
+    let com = |campo: &str, peca: Value| {
+        let mut v = json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "planos": [{"id": "1.1", "texto": "T"}]}]}]});
+        v[campo] = json!([peca]);
+        doc(v)
+    };
+    assert!(erros_de(&com("decisoes", json!({"id": "d", "texto": "X", "acoes": ["1"], "plano": "1.1"}))).is_empty());
+    assert!(tem(&erros_de(&com("decisoes", json!({"id": "d", "texto": "X", "plano": "1.1"}))), &["decision d", "the plan 1.1"]), "sem a ação em acoes, não aparece no plano");
+    assert!(tem(&erros_de(&com("perguntas", json!({"id": "q", "texto": "X", "acoes": ["1"], "plano": "9"}))), &["question q", "the plan 9"]));
+}
+
+#[test]
+fn o_numero_do_plano_segue_o_da_acao() {
+    assert_eq!(numero_fora_da_acao("1", "1.1"), None);
+    assert_eq!(numero_fora_da_acao("2.3", "2.3.1"), None);
+    assert!(numero_fora_da_acao("1", "2.1").unwrap().contains("1.1"));
+    assert!(numero_fora_da_acao("1", "11.1").is_some(), "11.1 começa com 1, mas não é da ação 1");
+    assert!(numero_fora_da_acao("1", "1").is_some());
+    assert_eq!(numero_fora_da_acao("velha", "v1"), None, "id de letras é de planos antigos");
+}
+
+#[test]
+fn forma_desconhecida_e_entrega_longa_sao_erro() {
+    let com = |campos: serde_json::Value| {
+        let mut plano = json!({"id": "1.1", "texto": "T"});
+        plano.as_object_mut().unwrap().extend(campos.as_object().unwrap().clone());
+        let a = AcaoDoc::de_json(&json!({"id": "1", "nome": "Um", "planos": [plano]})).unwrap();
+        let mut erros = Vec::new();
+        regras_da_acao(&a, true, &mut erros);
+        erros
+    };
+    assert!(com(json!({"forma": "tela", "entrega": "Seletor de modelo no cartão"})).is_empty());
+    assert!(com(json!({"forma": ""})).is_empty(), "vazio apaga o campo");
+    assert!(com(json!({"forma": "castelo"}))[0].contains("forma"));
+    assert!(com(json!({"entrega": "x".repeat(81)}))[0].contains("entrega"));
+}
+
+#[test]
+fn variante_fora_do_catalogo_so_avisa() {
+    let detalhe = |v: &str| json!({"formato": FORMATO, "blueprint": "B", "projetos": [{"acoes": [{"id": "1", "nome": "Um", "planos": [{"id": "1.1", "texto": "t"}], "detalhes": [{"id": "01", "plano": "1.1", "variante": v}]}]}]});
+    let estranha = doc(detalhe("tablet"));
+    assert_eq!(erros_de(&estranha), Vec::<String>::new());
+    assert!(tem(&avisos(&estranha), &["detail 01", "\"tablet\"", "janela"]), "{:?}", avisos(&estranha));
+    let conhecida = doc(detalhe("celular"));
+    assert!(!tem(&avisos(&conhecida), &["variante"]), "{:?}", avisos(&conhecida));
 }

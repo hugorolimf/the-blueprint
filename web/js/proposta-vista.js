@@ -1,7 +1,6 @@
 // ---- revisão da proposta em modo leitura: mostra o que MUDA em cada ação (novo, alterado, movido, sem mudança), sem campos de edição ----
 // A edição (htmlPropAcao, em proposta.js) continua a um clique: "Editar". Aqui só se monta HTML; todo texto do agente passa por esc() ou mdHtml().
 const pvNorm = (s) => String(s ?? "").replace(/\s+/g, " ").trim();
-const pvData = (iso) => (ISO.test(iso) ? iso.split("-").reverse().slice(0, 2).join("/") : String(iso || "?"));
 const pvPlural = (n, um, varios) => trn(n, ["{n} " + um, "{n} " + varios]); // as chaves do catálogo são "{n} item novo", "{n} itens novos"…
 
 // compara a ação da proposta (pf) com a que já existe (ex); sem `ex`, tudo é novo. O servidor completa o que o agente omitiu, então "sem mudança" é de verdade.
@@ -10,16 +9,16 @@ function propostaDiff(pf, ex) {
     if (t.de) return { ...t, mud: "movido" };
     const x = t.id && ex?.planos.find((y) => y.id === t.id);
     if (!x) return { ...t, mud: "novo" };
-    const titulo = pvNorm(x.texto) !== pvNorm(t.texto), desc = !!t.descricao && pvNorm(x.descricao) !== pvNorm(t.descricao), horas = t.horas != null && t.horas !== x.horas;
-    return { ...t, mud: titulo || desc || horas ? "alterado" : "", antes: x, titulo, desc };
+    const titulo = pvNorm(x.texto) !== pvNorm(t.texto), desc = !!t.descricao && pvNorm(x.descricao) !== pvNorm(t.descricao);
+    return { ...t, mud: titulo || desc ? "alterado" : "", antes: x, titulo, desc };
   });
   const cps = pf.checkpoints.filter((m) => m.nome.trim()).map((m) => {
     if (m.de) return { ...m, mud: "movido" };
     const x = m.id && ex?.checkpoints.find((y) => y.id === m.id);
     if (!x) return { ...m, mud: "novo" };
-    return { ...m, mud: pvNorm(x.nome) !== pvNorm(m.nome) || x.data !== m.data ? "alterado" : "", antes: x };
+    return { ...m, mud: pvNorm(x.nome) !== pvNorm(m.nome) ? "alterado" : "", antes: x };
   });
-  const campos = ex ? [pvNorm(pf.nome) !== pvNorm(ex.nome) && "nome", (pf.inicio !== ex.inicio || pf.fim !== ex.fim) && "datas", (ex.projetoId || "") !== (pf.projeto || "") && "projeto", !!pf.obs && pvNorm(pf.obs) !== pvNorm(ex.obs) && "instruções"].filter(Boolean) : [];
+  const campos = ex ? [pvNorm(pf.nome) !== pvNorm(ex.nome) && "nome", (ex.projetoId || "") !== (pf.projeto || "") && "projeto", !!pf.obs && pvNorm(pf.obs) !== pvNorm(ex.obs) && "instruções"].filter(Boolean) : [];
   const conta = (l, m) => l.filter((x) => x.mud === m).length;
   return { planos, cps, campos, novos: conta(planos, "novo") + conta(cps, "novo"), alterados: conta(planos, "alterado") + conta(cps, "alterado"), movidos: conta(planos, "movido") + conta(cps, "movido"), mudancas: planos.filter((t) => t.mud).length + cps.filter((m) => m.mud).length + campos.length };
 }
@@ -29,9 +28,9 @@ const PV_MARCA = { novo: "+", alterado: "~", movido: "↦" }, PV_ROTULO = { novo
 function pvLinha(t, p, tipo) {
   const mud = t.mud, origem = mud === "movido" && p.acoes.find((y) => y.id === t.de);
   const velho = mud === "alterado" && pvNorm(t.antes[tipo === "cp" ? "nome" : "texto"]) !== pvNorm(t[tipo === "cp" ? "nome" : "texto"]) ? `<s class="pv-antes">${esc(t.antes[tipo === "cp" ? "nome" : "texto"])}</s>` : "";
-  const tit = tipo === "cp" ? `◇ ${esc(t.nome)} · ${esc(pvData(t.data))}${mud === "alterado" && t.antes.data !== t.data ? ` <s class="pv-antes">${esc(pvData(t.antes.data))}</s>` : ""}` : esc(t.texto);
+  const tit = tipo === "cp" ? `◇ ${esc(t.nome)}` : esc(t.texto);
   const desc = tipo === "plano" && t.descricao ? `<p class="pv-desc">${esc(t.descricao)}</p>${t.desc && t.antes.descricao ? `<details class="pv-ant"><summary>${tr("Descrição anterior")}</summary><p class="pv-desc">${esc(t.antes.descricao)}</p></details>` : ""}` : "";
-  return `<details class="pv-plano ${mud}"${mud ? " open" : ""}><summary><span class="pv-marca" aria-hidden="true">${PV_MARCA[mud] || "·"}</span><span class="pv-tit">${velho}${tit}</span>${mud ? `<span class="badge ${mud === "movido" ? "mov" : mud}">${PV_ROTULO[mud]}</span>` : ""}${origem ? `<span class="badge mov" title="${tr("Movido de “{nome}”", { nome: esc(origem.nome) })}">← ${esc(origem.nome)}</span>` : ""}${tipo === "plano" ? etiquetaHoras(t) : ""}</summary>${desc}</details>`;
+  return `<details class="pv-plano ${mud}"${mud ? " open" : ""}><summary><span class="pv-marca" aria-hidden="true">${PV_MARCA[mud] || "·"}</span><span class="pv-tit">${velho}${tit}</span>${mud ? `<span class="badge ${mud === "movido" ? "mov" : mud}">${PV_ROTULO[mud]}</span>` : ""}${origem ? `<span class="badge mov" title="${tr("Movido de “{nome}”", { nome: esc(origem.nome) })}">← ${esc(origem.nome)}</span>` : ""}</summary>${desc}</details>`;
 }
 function pvLista(titulo, itens, p, tipo) {
   if (!itens.length) return "";
@@ -42,8 +41,7 @@ function pvLista(titulo, itens, p, tipo) {
 function htmlVistaAcao(pf, i, p) {
   const ex = p.acoes.find((x) => x.id === pf.id), d = propostaDiff(pf, ex);
   const badge = !ex ? `<span class="badge nova">${tr("Nova")}</span>` : d.mudancas ? `<span class="badge alt">${tr("Alterada")}</span>` : `<span class="badge">${tr("Sem mudança")}</span>`;
-  const dias = dia(pf.fim) - dia(pf.inicio) + 1, velhas = d.campos.includes("datas") ? ` <s class="pv-antes">${pvData(ex.inicio)} → ${pvData(ex.fim)}</s>` : "";
-  const meta = [`${pvData(pf.inicio)} → ${pvData(pf.fim)}${velhas}`, Number.isFinite(dias) && pvPlural(dias, "dia", "dias"), pvPlural(d.planos.length, "plano", "planos"), pvPlural(d.cps.length, "checkpoint", "checkpoints")].filter(Boolean).join(" · ");
+  const meta = [pvPlural(d.planos.length, "plano", "planos"), pvPlural(d.cps.length, "checkpoint", "checkpoints")].filter(Boolean).join(" · ");
   const frase = pvFrase(d), obsRot = !pf.obs ? tr("vazias") : !ex || d.campos.includes("instruções") ? (ex ? tr("alteradas") : tr("novas")) : tr("sem mudança");
   return `<div class="pf pv${pf.inc ? "" : " off"}" data-i="${i}">
     <div class="pv-topo"><input type="checkbox" data-pc="inc" aria-label="${tr("Incluir esta ação")}"${pf.inc ? " checked" : ""}>${badge}<b class="pv-nome">${esc(pf.nome)}</b><button class="btn mini" data-pact="editar-acao" type="button">${tr("Editar")}</button></div>

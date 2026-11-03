@@ -13,18 +13,11 @@ process.emitWarning = (w, ...r) => (/MODULE_TYPELESS/.test(JSON.stringify(r)) ? 
 // tr/trn do i18n.js no escopo global, como no navegador (os módulos os usam ao serem chamados)
 vm.runInThisContext(readFileSync(join(import.meta.dirname, "web", "js", "i18n.js"), "utf8"), { filename: "i18n.js" });
 vm.runInThisContext(`I18N.ativo = "pt-BR"`);
-const { haQuanto, linhasPessoas } = await import("./web/js/pessoas.js");
+const { linhasPessoas } = await import("./web/js/pessoas.js");
 const { corpoDoConvite, estadoDoConvite } = await import("./web/js/pessoas-convites.js");
 const { comandosDaChave } = await import("./web/js/chave-mcp.js");
 
-// última atividade em texto curto
 const agora = Date.parse("2027-01-15T12:00:00Z");
-assert.equal(haQuanto(null, agora), "nunca");
-assert.equal(haQuanto("2027-01-15T11:59:30Z", agora), "agora há pouco");
-assert.equal(haQuanto("2027-01-15T11:30:00Z", agora), "há 30 min");
-assert.equal(haQuanto("2027-01-15T07:00:00Z", agora), "há 5 h");
-assert.equal(haQuanto("2027-01-14T11:00:00Z", agora), "há 1 dia");
-assert.equal(haQuanto("2027-01-10T12:00:00Z", agora), "há 5 dias");
 
 // lista: você primeiro, depois por papel e nome; o dono muda e remove os outros, nunca a própria linha
 const membros = [
@@ -33,13 +26,13 @@ const membros = [
   { id: "m1", nome: "Ana", papel: "dono", blueprintId: "", ultimaAtividade: "2027-01-15T11:59:00Z", voce: true },
   { id: "m4", nome: "Abel", papel: "colaborador", blueprintId: "", ultimaAtividade: null, voce: false },
 ];
-const l = linhasPessoas(membros, true, agora);
+const l = linhasPessoas(membros, true);
 assert.deepEqual(l.map((m) => m.nome), ["Ana", "Abel", "Bruno", "Carla"]);
 assert.deepEqual(l.map((m) => m.podeMudar), [false, true, true, true], "o dono não mexe na própria linha");
 assert.equal(l[2].escopo, "só um blueprint");
 assert.equal(l[1].escopo, "workspace inteiro");
 assert.equal(l[2].quando, "há 30 min");
-assert.ok(linhasPessoas(membros, false, agora).every((m) => !m.podeMudar), "supervisor só lista");
+assert.ok(linhasPessoas(membros, false).every((m) => !m.podeMudar), "supervisor só lista");
 
 // corpo do convite: valida como o servidor (seção 5) e manda só o que vale
 assert.deepEqual(corpoDoConvite({ workspaceId: "w1", papel: "colaborador" }), { workspaceId: "w1", papel: "colaborador", validadeHoras: 168, usosMax: 1 }, "padrão: 7 dias, uma pessoa");
@@ -70,7 +63,5 @@ assert.equal(k.conectar, "blueprint conectar https://equipe.exemplo.com bpk_abc"
 vm.runInThisContext(readFileSync(join(import.meta.dirname, "web", "i18n", "en-pessoas.js"), "utf8"));
 vm.runInThisContext(readFileSync(join(import.meta.dirname, "web", "i18n", "en-resto.js"), "utf8"));
 vm.runInThisContext(`I18N.ativo = "en"`);
-assert.equal(haQuanto("2027-01-10T12:00:00Z", agora), "5 days ago");
-assert.equal(haQuanto("2027-01-15T11:30:00Z", agora), "30 min ago");
-assert.equal(linhasPessoas(membros, true, agora)[2].escopo, "one blueprint only");
-console.log("pessoas: ok (última atividade, ordem e permissões da lista, corpo e estado dos convites, comandos da chave, inglês)");
+assert.equal(linhasPessoas(membros, true)[2].escopo, "one blueprint only");
+console.log("pessoas: ok (ordem e permissões da lista, corpo e estado dos convites, comandos da chave, inglês)");

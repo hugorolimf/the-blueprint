@@ -2,24 +2,22 @@
 use super::{contexto_acao, estrutura_blueprint, validar_proposta, Validacao};
 use serde_json::{json, Value};
 
-const HOJE: &str = "2026-10-21";
-
 fn blueprint() -> Value {
     json!({"id": "p", "nome": "Portal", "descricao": "d", "obs": "", "projetos": [{"id": "pr1", "nome": "Interface"}, {"id": "pr2", "nome": "Servidor"}], "acoes": [
-        {"id": "f1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "status": "andamento", "obs": "", "projetoId": "pr1",
+        {"id": "f1", "nome": "Base", "status": "andamento", "obs": "", "projetoId": "pr1",
          "planos": [{"id": "t1", "texto": "Criar rota", "descricao": "x", "feito": true}], "checkpoints": []},
-        {"id": "f2", "nome": "Solta", "inicio": "2026-12-01", "fim": "2026-12-10", "status": "planejado", "obs": "", "planos": [], "checkpoints": []}]})
+        {"id": "f2", "nome": "Solta", "status": "planejado", "obs": "", "planos": [], "checkpoints": []}]})
 }
 
 fn acao(extra: Value) -> Value {
-    let mut a = json!({"nome": "Ação nova", "inicio": "2026-12-11", "fim": "2026-12-31", "status": "planejado", "observacao": "",
-        "planos": [{"texto": "Criar item", "descricao": "Escopo: x. Resultado: y. Validação: node x.test.mjs passa."}], "checkpoints": [{"nome": "Entrega validada", "data": "2026-12-30"}]});
+    let mut a = json!({"nome": "Ação nova", "status": "planejado", "observacao": "",
+        "planos": [{"texto": "Criar item", "descricao": "Escopo: x. Resultado: y. Validação: node x.test.mjs passa."}], "checkpoints": [{"nome": "Entrega validada"}]});
     a.as_object_mut().unwrap().extend(extra.as_object().unwrap().clone());
     a
 }
 
 fn valida(entrada: Value, p: Option<&Value>) -> Validacao {
-    validar_proposta(&entrada, p, HOJE)
+    validar_proposta(&entrada, p)
 }
 
 fn erro_com(entrada: Value, p: Option<&Value>, trecho: &str) {
@@ -109,7 +107,7 @@ fn o_agente_le_o_projeto_de_cada_acao() {
 
 #[test]
 fn blueprint_sem_projetos_nao_traz_campo_novo() {
-    let p = json!({"id": "p", "nome": "P", "descricao": "", "acoes": [{"id": "f", "nome": "A", "inicio": "2026-11-01", "fim": "2026-11-02", "status": "planejado", "planos": [], "checkpoints": []}]});
+    let p = json!({"id": "p", "nome": "P", "descricao": "", "acoes": [{"id": "f", "nome": "A", "status": "planejado", "planos": [], "checkpoints": []}]});
     let e = estrutura_blueprint(&p);
     assert!(e.get("projetos").is_none() && e["acoes"][0].get("projeto").is_none());
 }

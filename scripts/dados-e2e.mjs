@@ -22,7 +22,7 @@ try {
   servidor = await ligarServidor(exe, d);
   const mcp = mcpStdio(exe, d.env);
   await mcp.iniciar();
-  const proposta = await mcp.chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: "p1", mensagem: "m", acoes: [{ nome: "Nova", inicio: "2026-11-06", fim: "2026-11-07", planos: [{ texto: "Criar algo", descricao: "d" }] }] });
+  const proposta = await mcp.chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: "p1", mensagem: "m", acoes: [{ nome: "Nova", planos: [{ texto: "Criar algo", descricao: "d" }] }] });
   const aviso = await mcp.chamar("registrar_progresso", { workspace_id: "sm", blueprint_id: "p1", acao_id: "f1", plano_id: "t1", texto: "Comecei", agente: "Claude" });
   mcp.fechar();
   assert.equal(proposta.erro, false, proposta.texto);

@@ -3,10 +3,10 @@
 ## Anatomy (kit isométrico e figuras)
 
 As pastas `kit/` (`kit/iso-kit/`, `kit/lathe/`) e partes de `emblemas.mjs` e `agentes-figura.mjs` descendem do kit da skill
-**Anatomy** (https://github.com/wheresryan22/anatomy), reorganizado em módulos menores. O aviso de licença original segue abaixo.
+**Anatomy** (https://github.com/wheresryan22/anatomy), reorganizado em módulos menores. O motor `ui/src/anatomia/` é um porte para Rust das mesmas ideias, com malha, câmera viva e cena. O aviso de licença original segue abaixo.
 
 The `kit/` folder (`kit/iso-kit/`, `kit/lathe/`) and parts of `emblemas.mjs` and `agentes-figura.mjs` derive from the kit of the
-**Anatomy** skill (https://github.com/wheresryan22/anatomy), split into smaller modules. The original license notice follows.
+**Anatomy** skill (https://github.com/wheresryan22/anatomy), split into smaller modules. The `ui/src/anatomia/` engine is a Rust port of the same ideas, with a mesh, a live camera and a scene. The original license notice follows.
 
     MIT License
     

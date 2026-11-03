@@ -14,8 +14,8 @@ pub(super) fn mcp() -> Mcp {
 pub(super) fn dados() -> Mutex<Dados> {
     let mut d = Dados::em_memoria().unwrap();
     let json = json!({"empresa": "Eu", "blueprints": [{"id": "p1", "nome": "Portal", "acoes": [
-        {"id": "f1", "nome": "Base", "inicio": "2026-11-01", "fim": "2026-11-30", "status": "concluido", "planos": [{"id": "t1", "texto": "Feito", "feito": true}]},
-        {"id": "f2", "nome": "Tela", "inicio": "2026-12-01", "fim": "2026-12-05", "status": "andamento", "planos": [{"id": "t2", "texto": "Criar tela", "feito": false}], "checkpoints": []}
+        {"id": "f1", "nome": "Base", "status": "concluido", "planos": [{"id": "t1", "texto": "Feito", "feito": true}]},
+        {"id": "f2", "nome": "Tela", "status": "andamento", "planos": [{"id": "t2", "texto": "Criar tela", "feito": false}], "checkpoints": []}
     ]}]});
     d.gravar_tudo(&Contexto::local(), &json).unwrap();
     Mutex::new(d)
@@ -234,7 +234,7 @@ fn pasta_solta_avisa_uma_vez_e_vinculo_pode_ser_listado_e_removido() {
 #[test]
 fn proposta_nova_so_guarda_a_pasta_ate_usuario_aplicar() {
     let (m, d) = (mcp(), dados());
-    let proposta = json!({"workspaceId":"sm", "pasta":"C:/Nova", "blueprint":{"nome":"Novo", "descricao":"Teste"}, "acoes":[{"nome":"Criar", "inicio":"2026-12-01", "fim":"2026-12-02", "planos":[{"texto":"Entregar", "descricao":"Escopo: criar. Resultado: entrega. Validação: teste."}], "checkpoints":[]}]});
+    let proposta = json!({"workspaceId":"sm", "pasta":"C:/Nova", "blueprint":{"nome":"Novo", "descricao":"Teste"}, "acoes":[{"nome":"Criar", "planos":[{"texto":"Entregar", "descricao":"Escopo: criar. Resultado: entrega. Validação: teste."}], "checkpoints":[]}]});
     let (codigo, resposta) = super::acoes::proposta(&m, super::hooks::travado(&d).ler_tudo(&Contexto::local()).unwrap(), &proposta).unwrap();
     assert_eq!(codigo, 200, "{resposta}");
     assert_eq!(m.itens()[0]["pasta"], "C:/Nova");

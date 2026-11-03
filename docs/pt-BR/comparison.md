@@ -17,7 +17,7 @@ Uma comparação honesta, com o que foi possível verificar nas páginas dos pro
 
 - **O agente propõe, você aplica.** Tudo o que o agente envia é uma proposta numa fila numerada; nada muda nos seus dados antes de você aplicar na tela **Planejar**.
 - **Concluir exige evidência.** Um plano só é marcado como feito com o comando ou o teste rodado e o resultado, que vira comentário do plano.
-- **Uma folha, não só uma lista.** Workspace → Blueprint → Projeto → Ação → Plano e Checkpoint, com prazos no ritmo da IA e tempo real medido.
+- **Uma folha, não só uma lista.** Workspace → Blueprint → Projeto → Ação → Plano e Checkpoint, com o andamento vindo só do que está marcado.
 - **Você vê o agente trabalhando.** O Claude aparece na folha, no plano em que está, com os subagentes.
 - **Pequeno e local.** Um executável de cerca de 2,5 MB, sem telemetria e sem conta.
 

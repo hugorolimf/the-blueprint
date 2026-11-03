@@ -8,7 +8,7 @@ import vm from "node:vm";
 const raiz = resolve(import.meta.dirname, "..");
 const jsDir = join(raiz, "web", "js"), i18nDir = join(raiz, "web", "i18n");
 // chaves que o código monta em tempo de execução (ver os comentários nos arquivos)
-const DINAMICAS = ["JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ", "nome", "datas", "projeto", "instruções", "concluído", "em desenvolvimento", "planejado"];
+const DINAMICAS = ["nome", "projeto", "instruções", "concluído", "em desenvolvimento", "planejado"];
 const LIT = String.raw`"((?:\\.|[^"\\\n])*)"|'((?:\\.|[^'\\\n])*)'|` + "`((?:\\\\.|[^`\\\\])*)`";
 const desescapa = (s) => s.replace(/\\(.)/g, (_, c) => ({ n: "\n", t: "\t" })[c] ?? c);
 const literal = (m) => desescapa(m[1] ?? m[2] ?? m[3] ?? "");

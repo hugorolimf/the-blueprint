@@ -22,7 +22,7 @@ try {
   const alvo = lista.workspaces.find((w) => w.blueprints.length);
   const config = join(dir, "mcp.json");
   await writeFile(config, JSON.stringify({ mcpServers: { blueprint: { command: exe, args: ["--mcp"], env: { BLUEPRINT_URL: url } } } }));
-  const pedido = `Use SOMENTE as ferramentas do servidor MCP "blueprint". 1) Chame listar_blueprints. 2) Chame propor_blueprint com workspace_id "${alvo.id}", blueprint_id "${alvo.blueprints[0].id}", mensagem "plano do agente real" e UMA ação nova chamada "Ação do agente real" de 2030-01-01 a 2030-01-31 com 3 planos (texto começando com verbo no infinitivo e descrição contendo "Validação: ...") e 1 checkpoint em 2030-01-30. 3) Responda em uma frase dizendo o que o servidor respondeu.`;
+  const pedido = `Use SOMENTE as ferramentas do servidor MCP "blueprint". 1) Chame listar_blueprints. 2) Chame propor_blueprint com workspace_id "${alvo.id}", blueprint_id "${alvo.blueprints[0].id}", mensagem "plano do agente real" e UMA ação nova chamada "Ação do agente real" com 3 planos (texto começando com verbo no infinitivo e descrição contendo "Validação: ...") e 1 checkpoint. 3) Responda em uma frase dizendo o que o servidor respondeu.`;
   const r = spawnSync("claude", ["-p", pedido, "--mcp-config", config, "--strict-mcp-config", "--allowedTools", "mcp__blueprint__listar_blueprints,mcp__blueprint__propor_blueprint", "--permission-mode", "dontAsk", "--output-format", "text"], { encoding: "utf8", timeout: 240000, cwd: dir });
   console.log("saída do agente:", (r.stdout || "").trim().slice(0, 600), r.stderr ? `\n(stderr: ${r.stderr.slice(0, 300)})` : "");
   const fila = await (await fetch(url + "/api/mcp/fila")).json();

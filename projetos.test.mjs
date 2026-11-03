@@ -18,49 +18,49 @@ const carrega = (arquivo) => vm.runInContext(readFileSync(join(import.meta.dirna
 vm.runInContext("this.api = { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe, linhasDoPlano };", ctx);
 const { gruposDoBlueprint, disposicaoFolha, projetosOrdenados, numeroDaAcao, abrirTodosProjetos, alternarProjeto, abrirProjetoDaAcao, projetosAbertos, chaveProjeto, acoesDe } = ctx.api;
 
-const acao = (id, inicio, fim, extra = {}) => ({ id, nome: id.toUpperCase(), inicio, fim, status: "planejado", progresso: 0, obs: "", planos: [], checkpoints: [], ...extra });
-const feita = (id, inicio, fim, extra = {}) => acao(id, inicio, fim, { status: "concluido", planos: [{ id: id + "t", texto: "x", feito: true }], ...extra });
+const acao = (id, extra = {}) => ({ id, nome: id.toUpperCase(), status: "planejado", progresso: 0, obs: "", planos: [], checkpoints: [], ...extra });
+const feita = (id, extra = {}) => acao(id, { status: "concluido", planos: [{ id: id + "t", texto: "x", feito: true }], ...extra });
 const blueprint = (extra = {}) => ({ id: "b1", nome: "B", descricao: "", obs: "", links: [], acoes: [
-  feita("a1", "2026-11-01", "2026-11-05", { projetoId: "pr1" }), acao("a2", "2026-11-06", "2026-11-10", { projetoId: "pr1" }), acao("a3", "2026-11-11", "2026-11-12", { projetoId: "pr2" }),
-  acao("a4", "2026-11-13", "2026-11-14"), acao("a5", "2026-11-15", "2026-11-16", { projetoId: "apagado" })], ...extra });
+  feita("a1", { projetoId: "pr1" }), acao("a2", { projetoId: "pr1" }), acao("a3", { projetoId: "pr2" }),
+  acao("a4"), acao("a5", { projetoId: "apagado" })], ...extra });
 const comProjetos = () => blueprint({ projetos: [{ id: "pr1", nome: "Interface" }, { id: "pr2", nome: "Servidor" }, { id: "pr3", nome: "Vazio" }] });
-// a geometria que o render.js põe em cada ação (aqui só o que o layout lê)
-const geometria = (lista) => lista.map((f) => ({ ...f, x0: 100 + (f.a - 20000) * 4, x1: 120 + (f.a - 20000) * 4, alt: 200 }));
+// a escada que o render.js põe em cada ação (aqui só o que o layout lê)
+const geometria = (lista) => lista.map((f, i) => ({ ...f, x0: 100 + i * 20, x1: 120 + i * 20, alt: 200 }));
 const json = (x) => JSON.parse(JSON.stringify(x)); // os objetos do contexto isolado têm outros prototypes
 assert.deepEqual(json(ctx.api.linhasDoPlano("Mostrar um plano com título comprido", 12)), ["Mostrar um", "plano com", "título", "comprido"]);
 assert.deepEqual(json(ctx.api.linhasDoPlano("abcdefghijk", 4)), ["abcd", "efgh", "ijk"]);
 assert.deepEqual(json(ctx.api.linhasDoPlano("primeira\nsegunda", 20)), ["primeira", "segunda"]);
-const op = (aberto) => ({ aberto, RH: 124, PH: 96, FOLGA: 76, de: (f) => f.x0, ate: (f) => f.x1 + 6 });
+const op = (aberto) => ({ aberto, RH: 124, PH: 96, FOLGA: 76 });
 
-// sem projetos nada muda: sem grupos, a numeração é <blueprint>.<posição>, uma linha por ação que não cabe ao lado e a altura de sempre
+// sem projetos nada muda: sem grupos, a numeração é <blueprint>.<posição>, uma linha por ação (a escada) e a altura de sempre
 {
   const p = blueprint(), acoes = geometria(acoesDe(p));
   assert.equal(gruposDoBlueprint(p, acoes, acoesDe(p)), null);
   assert.deepEqual(p.acoes.map((f) => numeroDaAcao(p, f, 2)), ["3.1", "3.2", "3.3", "3.4", "3.5"]);
   const d = disposicaoFolha(acoes, op(false));
   assert.equal(d.acoes.length, 5);
-  assert.deepEqual(json(d.rowY), json(d.rowY).map((_, i) => i * 24), "compacto: 24 px por linha");
+  assert.deepEqual(json(d.rowY), [0, 24, 48, 72, 96], "compacto: uma linha de 24 px por ação");
+  assert.deepEqual(json(d.acoes.map((f) => f.linha)), [0, 1, 2, 3, 4], "cada ação na sua linha, na ordem do blueprint");
   assert.equal(d.alto, 96 + d.rowY.length * 24 + 10 + 76);
   assert.equal(disposicaoFolha([], op(false)).alto, 96 + 36 + 76, "sem ações");
   const aberta = disposicaoFolha(geometria(acoesDe(p)), op(true));
   assert.equal(aberta.alto, 96 + aberta.rowY.length * 200 + 76, "aberta: altura = soma das linhas (cada uma tão alta quanto a ação)");
 }
 
-// com projetos: cada projeto é uma seção; a ordem segue o início da primeira ação (empate: a ordem de criação); sem ações vai depois; o Geral é o último
+// com projetos: cada projeto é uma seção; a ordem é a de criação; o Geral é o último
 {
   projetosAbertos.clear();
   const p = comProjetos(), acoes = geometria(acoesDe(p)), grupos = gruposDoBlueprint(p, acoes, acoesDe(p));
   assert.deepEqual(json(grupos.map((g) => [g.numero, g.nome, g.total, g.aberto])), [[1, "Interface", 2, false], [2, "Servidor", 1, false], [3, "Vazio", 0, false], [4, "Geral", 2, false]], "nasce recolhido");
-  assert.deepEqual(json(projetosOrdenados({ ...p, projetos: [p.projetos[1], p.projetos[0], p.projetos[2]] }).map((x) => x.id)), ["pr1", "pr2", "pr3"], "o que começa antes vem antes, mesmo criado depois");
+  assert.deepEqual(json(projetosOrdenados({ ...p, projetos: [p.projetos[1], p.projetos[0], p.projetos[2]] }).map((x) => x.id)), ["pr2", "pr1", "pr3"], "a ordem de criação manda");
   // o número da ação é <projeto>.<posição no projeto>; o Geral é o último projeto
   assert.deepEqual(p.acoes.map((f) => numeroDaAcao(p, f, 0)), ["1.1", "1.2", "2.1", "4.1", "4.2"]);
-  // o resumo da seção: início da primeira ação ao fim da última, progresso agregado
+  // o resumo da seção: progresso agregado, sem datas
   const g = grupos[0];
-  assert.equal(g.ini, acoesDe(p)[0].a);
-  assert.equal(g.fim, acoesDe(p)[1].b);
+  assert.ok(!("ini" in g) && !("fim" in g), "a seção não leva datas");
   assert.equal(g.concl, 1);
   assert.ok(g.geral > 0 && g.geral < 1, "uma de duas concluída");
-  assert.equal(g.descricao, "", "sem descrição própria, a seção mostra o resumo das datas (o render monta)");
+  assert.equal(g.descricao, "", "sem descrição própria, o render monta o resumo");
   // cada seção tem a sua disposição: compacta ou aberta conforme o próprio estado
   const d = disposicaoFolha(grupos[0].acoes, op(false));
   assert.equal(d.acoes.length, 2);
@@ -75,7 +75,7 @@ const op = (aberto) => ({ aberto, RH: 124, PH: 96, FOLGA: 76, de: (f) => f.x0, a
 // a numeração ignora projeto desconhecido e usa a ordem das ações dentro do projeto
 {
   const p = comProjetos();
-  p.acoes.push(acao("a6", "2026-11-02", "2026-11-03", { projetoId: "pr1" }));
+  p.acoes.push(acao("a6", { projetoId: "pr1" }));
   assert.equal(numeroDaAcao(p, p.acoes[5], 0), "1.3", "a posição é a da ação na lista do blueprint, dentro do projeto");
   assert.equal(numeroDaAcao(p, p.acoes[4], 0), "4.2");
 }

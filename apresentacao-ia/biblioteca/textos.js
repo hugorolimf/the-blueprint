@@ -5,48 +5,42 @@
     "pt-BR": {
       plano: "Plano de projeto", plano_interno: "Plano de projeto, visão interna", sim: "Simulação com dados de exemplo. O sistema final pode diferir.",
       menu: "Seções", pular: "Ir para o conteúdo", imprimir: "Imprimir",
-      visao: "Visão geral", entregas: "O que você recebe", etapas: "Etapas", linha: "Linha do tempo",
+      visao: "Visão geral", entregas: "O que você recebe", etapas: "Etapas",
       voce: "O que precisamos de você", decisoes: "Decisões e riscos", acoes: "Ações",
-      riscos: "Riscos", decisoes_t: "Decisões", aberta: "a definir", decidida: "decidida", ate: "até",
-      periodo: "Período", etapa: "Etapa", etapas_n: "etapas", dias: "dias", dia_de: "Dia {n} de {total}",
+      riscos: "Riscos", decisoes_t: "Decisões", aberta: "a definir", decidida: "decidida",
+      etapa: "Etapa", etapas_n: "etapas",
       marcos: "Marcos", fig: "Fig", figura_erro: "Esta figura não pôde ser desenhada.", codigo_nao_carregou: "O código desta figura não carregou.", figura_erro_det: "Detalhe",
       st_prevista: "prevista", st_andamento: "em andamento", st_concluida: "concluída",
-      comeca: "começa em {d}", hoje: "hoje", nada: "Nada a informar nesta seção.",
+      nada: "Nada a informar nesta seção.",
       nav_dica: "Teclas: [ e ] trocam de seção, Home e End vão ao começo e ao fim.",
       ref_item: "Aponte um item do texto para vê-lo na figura.", ir_fig: "Ir para a figura {n}",
-      gerado: "Gerado em {d}", nivel: "Nível", publico: "Público", cliente: "Cliente", interno: "Interno",
+      nivel: "Nível", publico: "Público", cliente: "Cliente", interno: "Interno",
       nivel_rapido: "Rápido", nivel_padrao: "Padrão", nivel_completo: "Completo", nivel_epico: "Épico",
-      inicio: "Início", fim: "Fim", progresso: "Dia do plano", sem_figura: "Sem figura nesta etapa.",
+      sem_figura: "Sem figura nesta etapa.",
     },
     en: {
       plano: "Project plan", plano_interno: "Project plan, internal view", sim: "Simulation with sample data. The final system may differ.",
       menu: "Sections", pular: "Skip to content", imprimir: "Print",
-      visao: "Overview", entregas: "What you receive", etapas: "Stages", linha: "Timeline",
+      visao: "Overview", entregas: "What you receive", etapas: "Stages",
       voce: "What we need from you", decisoes: "Decisions and risks", acoes: "Actions",
-      riscos: "Risks", decisoes_t: "Decisions", aberta: "to be decided", decidida: "decided", ate: "by",
-      periodo: "Period", etapa: "Stage", etapas_n: "stages", dias: "days", dia_de: "Day {n} of {total}",
+      riscos: "Risks", decisoes_t: "Decisions", aberta: "to be decided", decidida: "decided",
+      etapa: "Stage", etapas_n: "stages",
       marcos: "Milestones", fig: "Fig", figura_erro: "This figure could not be drawn.", codigo_nao_carregou: "This figure's code did not load.", figura_erro_det: "Detail",
       st_prevista: "planned", st_andamento: "in progress", st_concluida: "done",
-      comeca: "starts {d}", hoje: "today", nada: "Nothing to report in this section.",
+      nada: "Nothing to report in this section.",
       nav_dica: "Keys: [ and ] switch section, Home and End jump to the start and the end.",
       ref_item: "Point at an item of the text to see it in the figure.", ir_fig: "Go to figure {n}",
-      gerado: "Generated {d}", nivel: "Level", publico: "Audience", cliente: "Client", interno: "Internal",
+      nivel: "Level", publico: "Audience", cliente: "Client", interno: "Internal",
       nivel_rapido: "Quick", nivel_padrao: "Standard", nivel_completo: "Complete", nivel_epico: "Epic",
-      inicio: "Start", fim: "End", progresso: "Plan day", sem_figura: "No figure for this stage.",
+      sem_figura: "No figure for this stage.",
     },
   };
   const dicionario = (idioma) => TEXTOS[idioma] || TEXTOS[String(idioma || "").startsWith("pt") ? "pt-BR" : "en"];
-  // t("dia_de", "pt-BR", { n: 3, total: 20 }) -> "Dia 3 de 20"
+  // t("ir_fig", "pt-BR", { n: 3 }) -> "Ir para a figura 3"
   L.t = (chave, idioma, parametros) => {
     const texto = dicionario(idioma)[chave] ?? chave;
     return parametros ? texto.replace(/\{(\w+)\}/g, (_, nome) => (parametros[nome] ?? "")) : texto;
   };
   L.idiomaDe = (idioma) => (dicionario(idioma) === TEXTOS["pt-BR"] ? "pt-BR" : "en");
-  // yyyy-mm-dd -> "26 out" / "Oct 26", em UTC para a data não andar com o fuso
-  L.dataCurta = (iso, idioma) => {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return "";
-    const d = new Date(iso + "T00:00:00Z");
-    return new Intl.DateTimeFormat(L.idiomaDe(idioma), { day: "numeric", month: "short", timeZone: "UTC" }).format(d).replace(/\.$/, "");
-  };
   L.TEXTOS = TEXTOS;
 })(L);

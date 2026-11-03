@@ -2,7 +2,6 @@
 Object.assign(I18N.catalogos.en, {
   // estados e meses (base.js)
   "concluído": "done", "em desenvolvimento": "in progress", "planejado": "planned",
-  "JAN|FEV|MAR|ABR|MAI|JUN|JUL|AGO|SET|OUT|NOV|DEZ": "JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC",
   // entrada
   "Fig. 01 · Do plano à próxima entrega": "Fig. 01 · From plan to next delivery",
   "Seu próximo blueprint começa aqui": "Your next blueprint starts here",
@@ -22,7 +21,7 @@ Object.assign(I18N.catalogos.en, {
   "Peças da arte (JSON)": "Art parts (JSON)", "Prévia da arte": "Art preview", "Marca pronta": "Ready-made mark", "Texto (sigla)": "Text (acronym)",
   "Criar workspace": "Create workspace",
   "Expandir tudo": "Expand all", "Recolher tudo": "Collapse all", "✦ Planejar": "✦ Plan",
-  "Todo o blueprint": "Whole blueprint", "Hoje": "Today", "Pendentes": "Pending", "Em andamento ·": "In progress ·",
+  "Todo o blueprint": "Whole blueprint", "Pendentes": "Pending", "Em andamento ·": "In progress ·",
   "Pesquisar blueprint ou ação…": "Search blueprint or action…", "Pesquisar por nome de blueprint ou ação": "Search by blueprint or action name",
   "Rolagem do blueprint": "Blueprint scroll", "Menu do workspace": "Workspace menu", "Editar blueprint": "Edit blueprint",
   "← Voltar ao blueprint": "← Back to blueprint", "+ Novo blueprint (outra tela)": "+ New blueprint (another screen)",

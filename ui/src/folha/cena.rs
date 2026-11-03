@@ -5,12 +5,15 @@ use crate::fonte::{ALTURA, SUBIDA};
 use crate::fonte::Peso;
 use crate::planta::Texto;
 use crate::tema::{BAIXO, MEDIO, PAPEL, TINTA};
-
+use std::borrow::Cow;
 
 use egui::{pos2, vec2, Color32, Painter, Pos2, Rect, Shape, Stroke, StrokeKind};
 
 /// A cor `--lo` das linhas leves (`.ln.l`).
 pub const BAIXO_COR: Color32 = BAIXO;
+
+/// Os 8 deslocamentos do contorno de 3 px na cor do papel em volta das letras.
+const CONTORNO: [(f32, f32); 8] = [(-1.5, 0.0), (1.5, 0.0), (0.0, -1.5), (0.0, 1.5), (-1.1, -1.1), (1.1, -1.1), (-1.1, 1.1), (1.1, 1.1)];
 
 
 #[derive(Clone, Copy, PartialEq)]
@@ -80,7 +83,7 @@ impl Cena<'_> {
         self.escrever(s, x, y, tam, peso, cor, ancora, cap, true)
     }
 
-    /// O mesmo texto sem o contorno do papel (`.hoje-t`, `.botao-t`: texto sobre fundo cheio).
+    /// O mesmo texto sem o contorno do papel (`.botao-t`: texto sobre fundo cheio).
     #[allow(clippy::too_many_arguments)]
     pub fn texto_liso(&self, s: &str, x: f32, y: f32, tam: f32, peso: Peso, cor: Color32, ancora: Ancora) -> f32 {
         self.escrever(s, x, y, tam, peso, cor, ancora, false, false)
@@ -98,15 +101,36 @@ impl Cena<'_> {
         largura
     }
 
-    /// Traço com um padrão de tracos e vãos que se repete (`stroke-dasharray`, ex.: `16 4 2 4` do eixo de «hoje»).
+    /// Traço com um padrão de tracos e vãos que se repete (`stroke-dasharray`). Só pinta o trecho que cruza o recorte do pincel:
+    /// os guias da régua descem a página inteira e o resto não aparece.
     pub fn tracejado(&self, cor: Color32, largura: f32, de: (f32, f32), ate: (f32, f32), padrao: &[f32]) {
         let comprimento = ((ate.0 - de.0).powi(2) + (ate.1 - de.1).powi(2)).sqrt();
-        if comprimento <= 0.0 {
+        let periodo: f32 = padrao.iter().sum();
+        if comprimento <= 0.0 || periodo <= 0.0 {
             return;
         }
         let (dx, dy) = ((ate.0 - de.0) / comprimento, (ate.1 - de.1) / comprimento);
-        let (mut pos, mut i) = (0.0, 0);
-        while pos < comprimento {
+        // o trecho do fio (em distância desde `de`) que cai no recorte, em coordenadas da página
+        let recorte = self.p.clip_rect().expand(largura).translate(-self.o.to_vec2());
+        let (mut t0, mut t1) = (0.0f32, comprimento);
+        for (o, d, lo, hi) in [(de.0, dx, recorte.min.x, recorte.max.x), (de.1, dy, recorte.min.y, recorte.max.y)] {
+            if d.abs() < 1e-6 {
+                if o < lo || o > hi {
+                    return;
+                }
+            } else {
+                let (a, b) = ((lo - o) / d, (hi - o) / d);
+                t0 = t0.max(a.min(b));
+                t1 = t1.min(a.max(b));
+            }
+        }
+        if t0 > t1 {
+            return;
+        }
+        // começa no período em que o trecho visível começa: cada traço fica no mesmo lugar de quando se contava desde o começo
+        let k = (t0 / periodo).floor().max(0.0);
+        let (mut pos, mut i) = (k * periodo, k as usize * padrao.len());
+        while pos < comprimento && pos <= t1 {
             let passo = padrao[i % padrao.len()].min(comprimento - pos);
             if i % 2 == 0 {
                 self.fio(cor, largura, (de.0 + dx * pos, de.1 + dy * pos), (de.0 + dx * (pos + passo), de.1 + dy * (pos + passo)));
@@ -118,18 +142,28 @@ impl Cena<'_> {
 
     #[allow(clippy::too_many_arguments)]
     fn escrever(&self, s: &str, x: f32, y: f32, tam: f32, peso: Peso, cor: Color32, ancora: Ancora, cap: bool, contorno: bool) -> f32 {
-        let s = if cap { s.to_uppercase() } else { s.to_string() };
-        let largura = Texto::novo(s.as_str(), tam).peso(peso).trilha(0.06).largura(self.p);
+        let s: Cow<str> = if cap { Cow::Owned(s.to_uppercase()) } else { Cow::Borrowed(s) };
+        // uma galeria só, na cor de reserva: mede, faz o contorno e o texto (o tessellator troca PLACEHOLDER pela cor de cada pintura)
+        let g = Texto::novo(&*s, tam).peso(peso).trilha(0.06).cor(Color32::PLACEHOLDER).galeria(self.p);
+        // a largura do CSS: o espaçamento também vem depois da última letra (`Texto::largura`)
+        let largura = g.size().x + 0.06 * tam;
         let esquerda = match ancora {
             Ancora::Inicio => x,
             Ancora::Meio => x - largura / 2.0,
             Ancora::Fim => x - largura,
         };
         let topo = self.pt(esquerda, y - SUBIDA * tam);
+        // fora do recorte nada disso aparece (o tessellator já descartava): basta a largura
+        if s.is_empty() || !self.p.clip_rect().intersects(Rect::from_min_size(topo, g.size()).expand(tam)) {
+            return largura;
+        }
         // abrindo a tela: o texto se escreve em três trechos, cada um chegando na sua vez (anima.rs)
         let escrita = crate::anima::atual(self.p.ctx()).and_then(|a| a.escrita(&s, topo.x, topo.y, topo.y + ALTURA * tam));
         let Some(alfas) = escrita.filter(|a| a.iter().any(|v| *v < 1.0)) else {
-            self.pintar(&s, topo, tam, peso, cor, contorno, 1.0);
+            if contorno {
+                self.p.extend(CONTORNO.iter().map(|&(dx, dy)| Shape::galley(topo + vec2(dx, dy), g.clone(), PAPEL)));
+            }
+            self.p.galley(topo, g, cor);
             return largura;
         };
         let letras: Vec<char> = s.chars().collect();
@@ -153,7 +187,7 @@ impl Cena<'_> {
         if contorno {
             let papel = PAPEL.gamma_multiply(alfa);
             let g = Texto::novo(s, tam).peso(peso).trilha(0.06).cor(papel).galeria(self.p);
-            for (dx, dy) in [(-1.5, 0.0), (1.5, 0.0), (0.0, -1.5), (0.0, 1.5), (-1.1, -1.1), (1.1, -1.1), (-1.1, 1.1), (1.1, 1.1)] {
+            for (dx, dy) in CONTORNO {
                 self.p.galley(topo + vec2(dx, dy), g.clone(), papel);
             }
         }
@@ -184,7 +218,12 @@ impl Cena<'_> {
     /// O hachurado de `pattern#hach`: linhas a 45° espaçadas de 6 px, em `#9cc4ee` com 1,5 px.
     pub fn hachura(&self, x: f32, y: f32, w: f32, h: f32) {
         let r = Rect::from_min_size(self.pt(x, y), vec2(w, h));
-        let p = self.p.with_clip_rect(r.intersect(self.p.clip_rect()));
+        let recorte = r.intersect(self.p.clip_rect());
+        // fora da janela as linhas seriam todas cortadas
+        if !recorte.is_positive() {
+            return;
+        }
+        let p = self.p.with_clip_rect(recorte);
         let passo = 6.0 * 2f32.sqrt();
         let mut k = -h;
         while k < w + h {

@@ -1,7 +1,7 @@
 //! O que as telas pedem (`Acao`) vira mudança no documento e gravação no servidor.
 
 use super::{App, Estado};
-use crate::documento::{self, Documento};
+use crate::documento::Documento;
 use crate::i18n::tr;
 use crate::rede;
 use crate::telas::{Acao, Tela};
@@ -68,10 +68,6 @@ impl App {
                 crate::anima::mexer(ctx, 350.0);
                 self.mutar(ctx, |d| if d.definir_situacao(&ws, &bp, &acao, status) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) });
             }
-            Acao::Prorrogar(ws, bp, acao, dias) => {
-                crate::anima::mexer(ctx, 350.0);
-                self.mutar(ctx, |d| if d.prorrogar(&ws, &bp, &acao, dias) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) });
-            }
             Acao::ExcluirAcao(ws, bp, acao) => {
                 crate::anima::mexer(ctx, 350.0);
                 self.mutar(ctx, |d| if d.excluir_acao(&ws, &bp, &acao) { Ok(None) } else { Err(tr("Não foi possível salvar.").to_string()) });
@@ -85,7 +81,7 @@ impl App {
                 self.vista.aviso = tr("Abrindo o exemplo…").to_string();
                 rede::exemplo(&self.servidor, ctx, self.envio.clone());
             }
-            Acao::ExemploPronto(modelo) => self.mutar(ctx, |d| Ok(Some(Tela::Workspace(d.adicionar_exemplo(&modelo, &documento::hoje()))))),
+            Acao::ExemploPronto(modelo) => self.mutar(ctx, |d| Ok(Some(Tela::Workspace(d.adicionar_exemplo(&modelo))))),
         }
     }
 }

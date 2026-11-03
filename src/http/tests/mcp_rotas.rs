@@ -17,7 +17,7 @@ fn com(mut base: Value, extra: Value) -> Value {
 
 fn proposta_valida() -> Value {
     let planos: Vec<Value> = [1, 2, 3].iter().map(|n| json!({"texto": format!("Criar item {n}"), "descricao": "Validação: roda."})).collect();
-    json!({"workspaceId": "sm", "blueprintId": "p1", "mensagem": "pelo teste", "acoes": [{"nome": "Nova", "inicio": "2030-01-01", "fim": "2030-01-31", "planos": planos, "checkpoints": [{"nome": "Pronto", "data": "2030-01-30"}]}]})
+    json!({"workspaceId": "sm", "blueprintId": "p1", "mensagem": "pelo teste", "acoes": [{"nome": "Nova", "planos": planos, "checkpoints": [{"nome": "Pronto"}]}]})
 }
 
 fn com_cabecalhos(metodo: &str, url: &str, cabecalhos: &[(&str, &str)]) -> Pedido {
@@ -74,7 +74,6 @@ fn listar_e_ler_blueprints() {
     assert_eq!(lista["workspaces"][0]["id"], "sm");
     assert_eq!(lista["workspaces"][0]["blueprints"][0], json!({"id": "p1", "nome": "Portal", "descricao": "d", "acoes": 1}));
     assert_eq!(lista["workspaces"][1]["id"], "w2");
-    assert_eq!(lista["hoje"].as_str().unwrap().len(), 10);
     let estrutura = json_de(&despachar(&e, &pedido("GET", "/api/mcp/blueprint?workspace=sm&blueprint=p1", &[], None)));
     assert_eq!(estrutura["blueprint"]["acoes"][0]["planos"][1], json!({"id": "t2", "texto": "Já feita", "feito": true}));
     assert!(estrutura["blueprint"]["acoes"][0].get("observacao").is_none(), "a estrutura é enxuta");
@@ -97,9 +96,9 @@ fn listar_e_ler_blueprints() {
 #[test]
 fn proposta_invalida_volta_com_erros_e_nao_entra_na_fila() {
     let e = estado(false);
-    let r = post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "p1", "acoes": [{"nome": "x", "inicio": "2026-12-01", "fim": "2026-11-01", "planos": [], "checkpoints": []}]}));
+    let r = post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "p1", "acoes": [{"nome": "", "planos": [], "checkpoints": []}]}));
     assert_eq!(r.status, 422);
-    assert!(json_de(&r)["erros"][0].as_str().unwrap().contains("anterior"));
+    assert!(json_de(&r)["erros"][0].as_str().unwrap().contains("falta o nome"));
     assert_eq!(post(&e, "proposta", json!({"workspaceId": "nao", "blueprintId": "p1", "acoes": []})).status, 404);
     assert_eq!(post(&e, "proposta", json!({"workspaceId": "sm", "blueprintId": "", "acoes": proposta_valida()["acoes"]})).status, 422, "blueprint novo exige nome");
     assert_eq!(json_de(&despachar(&e, &pedido("GET", "/api/mcp/fila", &[], None)))["itens"], json!([]));

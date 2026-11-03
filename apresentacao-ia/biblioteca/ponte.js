@@ -8,7 +8,7 @@
 // Toque: o toque num item o seleciona (e o foco que ele recebe também); toque fora o solta. Sem figura registrada nada quebra. Os ouvintes são delegados na raiz (um só conjunto,
 // desfeito por desligar()) e nada roda em repouso: só os eventos e, ao sair de um item, um único adiamento de 0 ms que junta "saiu de um" com "entrou no outro".
 (function (L) {
-  const GRUPOS = { recebe: (c) => c.entregas, etapas: (c) => c.etapas, linha: (c) => c.etapas, precisamos: (c) => c.precisamosDeVoce, decisoes: (c) => c.decisoes, riscos: (c) => c.riscos };
+  const GRUPOS = { recebe: (c) => c.entregas, etapas: (c) => c.etapas, precisamos: (c) => c.precisamosDeVoce, decisoes: (c) => c.decisoes, riscos: (c) => c.riscos };
   const ITEM = "[data-item][data-sessao]";
   const inteiro = (i) => (Number.isInteger(i) && i >= 0 ? i : null);
 

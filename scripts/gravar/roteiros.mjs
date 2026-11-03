@@ -54,10 +54,10 @@ export const ROTEIROS = {
     await A.gravar(async () => {
       await dormir(1500);
       await A.post("/api/mcp/proposta", { workspaceId: ws, blueprintId: c.bp, mensagem: L(A, "Proposta do agente: uma ação para a revisão final, com dois planos e um checkpoint.", "Agent proposal: one action for the final review, with two plans and one checkpoint."),
-        acoes: [{ nome: L(A, "Revisão final", "Final review"), inicio: "2026-12-14", fim: "2026-12-15", status: "planejado", observacao: L(A, "Revisar o que foi entregue e fechar as pendências.", "Review what was delivered and close the open items."),
-          planos: [{ texto: L(A, "Revisar os textos da entrega", "Review the delivery texts"), horas: 1.5, descricao: d(["ler os textos", "read the texts"], ["lista de ajustes", "a list of adjustments"], ["lista revisada", "the list reviewed"]) },
-                   { texto: L(A, "Corrigir as pendências da revisão", "Fix the review findings"), horas: 2, descricao: d(["aplicar os ajustes", "apply the adjustments"], ["entrega limpa", "a clean delivery"], ["nenhuma pendência", "no open items"]) }],
-          checkpoints: [{ nome: L(A, "Entrega revisada", "Delivery reviewed"), data: "2026-12-15" }] }] });
+        acoes: [{ nome: L(A, "Revisão final", "Final review"), status: "planejado", observacao: L(A, "Revisar o que foi entregue e fechar as pendências.", "Review what was delivered and close the open items."),
+          planos: [{ texto: L(A, "Revisar os textos da entrega", "Review the delivery texts"), descricao: d(["ler os textos", "read the texts"], ["lista de ajustes", "a list of adjustments"], ["lista revisada", "the list reviewed"]) },
+                   { texto: L(A, "Corrigir as pendências da revisão", "Fix the review findings"), descricao: d(["aplicar os ajustes", "apply the adjustments"], ["entrega limpa", "a clean delivery"], ["nenhuma pendência", "no open items"]) }],
+          checkpoints: [{ nome: L(A, "Entrega revisada", "Delivery reviewed") }] }] });
       await dormir(2200);
       // o aviso do agente (notificacao.js) aparece sobre a folha: o botão "Abrir o plano" dele leva ao Planejar; sem aviso, o botão da barra
       await tentar("abrir Planejar", async () => { try { await A.clicarEm(".notif-ir"); } catch { await A.clicarEm("#b-ia"); } }); await dormir(2400);

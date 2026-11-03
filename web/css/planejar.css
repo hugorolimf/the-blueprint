@@ -35,7 +35,6 @@
 .pf .sub2{margin:4px 0 0;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mid);display:flex;justify-content:space-between}
 .pi{display:flex;gap:8px;align-items:center;margin-top:7px}
 .pi input[data-pc="plano"],.pi input[data-pc="cp-nome"]{flex:1;min-width:0}
-.pi input[type=date]{width:150px!important;flex:none}
 .pi .pt{color:var(--mid);flex:none;width:12px;text-align:center}
 .badge.mov{border-style:dashed;color:var(--mid);border-color:var(--lo);max-width:46%;overflow:hidden;text-overflow:ellipsis}
 .pf.rem{border-color:var(--erro)}.pf.rem .badge{border-color:var(--erro);color:var(--erro)}

@@ -3,7 +3,7 @@ Object.assign(I18N.catalogos.en, {
   // conversar com o agente
   "App": "App", "Conversar": "Talk", "Editar e conversar": "Edit and talk", "Pedidos desta tela": "Requests from this screen", "Seu pedido": "Your request",
   "Diga o que mudar. O agente muda só o que você pedir, direto na apresentação, sem refazer o resto. Também dá para digitar o pedido no terminal onde ele está.": "Say what to change. The agent changes only what you ask, straight in the presentation, without redoing the rest. You can also type the request in the terminal where it is running.",
-  "Ex.: deixe o texto da etapa 3 mais curto e troque a data de fim para 12 de novembro": "E.g. make the text of stage 3 shorter and change its end date to November 12",
+  "Ex.: deixe o texto da etapa 3 mais curto e troque o título da etapa 2": "E.g. make the text of stage 3 shorter and change the title of stage 2",
   "Enviar ao agente": "Send to the agent", "O agente atualizou a apresentação.": "The agent updated the presentation.", "Enviar o pedido ao agente?": "Send the request to the agent?",
   "Escreva o que você quer mudar.": "Write what you want to change.",
   "Conversar com o agente só funciona no app local, não na janela da equipe.": "Talking to the agent only works in the local app, not in the team window.",
@@ -33,9 +33,9 @@ Object.assign(I18N.catalogos.en, {
   "Etapas": "Stages", "Etapa": "Stage", "Adicionar etapa": "Add stage", "Marcos": "Milestones", "Marco": "Milestone", "Adicionar marco": "Add milestone",
   "O que precisamos de você": "What we need from you", "Pedido": "Request", "Adicionar pedido": "Add request", "Decisão": "Decision", "Adicionar decisão": "Add decision",
   "Riscos": "Risks", "Risco": "Risk", "Adicionar risco": "Add risk", "Ações (só na visão interna)": "Actions (internal view only)", "Adicionar ação": "Add action",
-  "Título": "Title", "Subtítulo": "Subtitle", "Texto": "Text", "Até": "Until", "Estado": "State", "Nome": "Name", "Número": "Number", "Dica": "Hint", "Leitura inicial": "Initial readout",
+  "Título": "Title", "Subtítulo": "Subtitle", "Texto": "Text", "Estado": "State", "Nome": "Name", "Número": "Number", "Dica": "Hint", "Leitura inicial": "Initial readout",
   "Legenda": "Caption", "Descrição para leitor de tela": "Description for screen readers", "Sessão": "Section",
-  "Português": "Portuguese", "Inglês": "English", "Prevista": "Planned", "Em andamento": "In progress", "Aberta": "Open", "Visão geral": "Overview", "Linha do tempo": "Timeline",
+  "Português": "Portuguese", "Inglês": "English", "Prevista": "Planned", "Em andamento": "In progress", "Aberta": "Open", "Visão geral": "Overview",
   "Decisões e riscos: decisões": "Decisions and risks: decisions", "Decisões e riscos: riscos": "Decisions and risks: risks", "Acesa": "Lit", "Em relevo": "Raised", "Plana": "Flat",
   // frases de erro do servidor
   "Esta apresentação não existe mais. Volte à lista.": "This presentation no longer exists. Go back to the list.",

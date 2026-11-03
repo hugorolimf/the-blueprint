@@ -23,6 +23,7 @@ pub fn validar(p: &PlanoDoc, tocadas: Option<&[String]>, figura: &dyn Fn(&str, &
     let acoes = acoes_de(p);
     for a in acoes.iter().copied().filter(|a| tocadas.is_none_or(|t| t.contains(&a.id))) {
         regras_da_acao(a, !a.nome.trim().is_empty(), &mut erros);
+        regras_das_pecas(a, &mut erros);
         for d in a.detalhes.iter().filter(|d| d.figura.is_some() && d.figura_info.is_none()) {
             erros.extend(figura(&a.id, d));
         }
@@ -43,6 +44,12 @@ pub fn validar(p: &PlanoDoc, tocadas: Option<&[String]>, figura: &dyn Fn(&str, &
     }
     for q in &p.perguntas {
         erros.extend(q.acoes.iter().filter(|a| !refs.contains(a.as_str())).map(|a| format!("question {}: the action {a} does not exist", q.id)));
+    }
+    for d in &p.decisoes {
+        erros.extend(plano_fora(d.plano.as_deref(), &d.acoes, &acoes).map(|q| format!("decision {}: the plan {q} is not in its acoes", d.id)));
+    }
+    for q in &p.perguntas {
+        erros.extend(plano_fora(q.plano.as_deref(), &q.acoes, &acoes).map(|x| format!("question {}: the plan {x} is not in its acoes", q.id)));
     }
     erros
 }
@@ -109,10 +116,41 @@ pub fn avisos(p: &PlanoDoc) -> Vec<String> {
     if acoes.len() > MUITAS_ACOES {
         saida.push(format!("plan: {} actions; more than {MUITAS_ACOES} is hard to read and to review", acoes.len()));
     }
+    for a in &acoes {
+        for d in &a.detalhes {
+            if !a.planos.is_empty() && d.plano.as_deref().is_none_or(str::is_empty) {
+                saida.push(format!("action {}, detail {}: no plano, so the app has to guess which plan shows this screen. Write the plan it belongs to", a.id, d.id));
+            }
+            if let Some(v) = d.variante.as_deref().filter(|v| !v.is_empty() && !VARIANTES.contains(v)) {
+                saida.push(format!("action {}, detail {}: the variante \"{v}\" is not in the catalog yet, so the app chooses by the figure's proportion. Known: {}", a.id, d.id, VARIANTES.join(", ")));
+            }
+        }
+    }
     for q in planos_de(&acoes).iter().filter(|q| q.id_gerado) {
         saida.push(format!("plan {}: no id, so it got one from its position; inserting a plan before it shifts the ids and shows as a change. Write the id", q.id));
     }
     saida
+}
+
+/// `plano` só aponta para um plano da própria ação. `""` é como o agente tira a peça do plano: volta a ser da ação inteira.
+fn regras_das_pecas(a: &AcaoDoc, erros: &mut Vec<String>) {
+    let existe = |q: &str| q.is_empty() || a.planos.iter().any(|x| x.id == q);
+    for d in a.detalhes.iter().filter(|d| !d.plano.as_deref().is_none_or(existe)) {
+        erros.push(format!("action {}, detail {}: the plan {} is not in this action", a.id, d.id, d.plano.as_deref().unwrap_or("")));
+    }
+    for k in a.checkpoints.iter().filter(|k| !k.plano.as_deref().is_none_or(existe)) {
+        erros.push(format!("action {}, checkpoint {}: the plan {} is not in this action", a.id, k.id, k.plano.as_deref().unwrap_or("")));
+    }
+    for (i, t) in a.tabelas.iter().enumerate().filter(|(_, t)| !t.plano.as_deref().is_none_or(existe)) {
+        erros.push(format!("action {}, table {}: the plan {} is not in this action", a.id, i + 1, t.plano.as_deref().unwrap_or("")));
+    }
+}
+
+/// O plano citado por decisão ou pergunta, se não estiver em nenhuma das ações dela.
+fn plano_fora<'a>(plano: Option<&'a str>, acoes_da_peca: &[String], acoes: &[&AcaoDoc]) -> Option<&'a str> {
+    let q = plano.filter(|q| !q.is_empty())?;
+    let achou = acoes.iter().filter(|a| acoes_da_peca.contains(&a.id)).flat_map(|a| &a.planos).any(|x| x.id == q);
+    (!achou).then_some(q)
 }
 
 fn acoes_de(p: &PlanoDoc) -> Vec<&AcaoDoc> {
@@ -123,22 +161,29 @@ fn planos_de<'a>(acoes: &[&'a AcaoDoc]) -> Vec<&'a PlanoItem> {
     acoes.iter().flat_map(|a| &a.planos).collect()
 }
 
-/// Regras de campo de uma ação: id, nome, datas, planos, checkpoints, detalhes e tabelas. Figura não: quem confere é o `figura` de `validar`, no fechamento.
+/// Regras de campo de uma ação: id, nome, planos, checkpoints, detalhes e tabelas. Figura não: quem confere é o `figura` de `validar`, no fechamento.
+/// As figuras que a planta sabe desenhar (`ui/src/plano/acao_obra_formas.rs`).
+const FORMAS: [&str; 8] = ["tela", "dados", "servico", "integracao", "ia", "teste", "documento", "infra"];
+const ENTREGA_MAX: usize = 80;
+/// Os moldes do componente Tela (`CATALOGO`, em `ui/src/plano/acao_obra_tela.rs`).
+const VARIANTES: [&str; 5] = ["janela", "celular", "dialogo", "faixa", "quadro"];
+
+fn numerico(id: &str) -> bool {
+    !id.is_empty() && id.split('.').all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
+}
+
+/// O número do plano segue o da ação: na ação 1 são 1.1, 1.2; na 2.3 são 2.3.1, 2.3.2. Só vale entre números: id de letras é de planos antigos.
+fn numero_fora_da_acao(acao: &str, plano: &str) -> Option<String> {
+    let segue = plano.strip_prefix(acao).and_then(|r| r.strip_prefix('.')).is_some_and(numerico);
+    (numerico(acao) && numerico(plano) && !segue).then(|| format!("plan {plano}: the number follows its action; in action {acao} use {acao}.1, {acao}.2 and so on"))
+}
+
 fn regras_da_acao(a: &AcaoDoc, tem_nome: bool, erros: &mut Vec<String>) {
     if a.id.is_empty() || !tem_nome {
         erros.push(format!("action {}: id and nome are required", if a.id.is_empty() { "?" } else { &a.id }));
     }
     if !a.id.is_empty() && !ref_valido(&a.id) {
         erros.push(erro_de_ref(&format!("action {}", a.id)));
-    }
-    if a.de.is_some() != a.ate.is_some() {
-        erros.push(format!("action {}: use de and ate together, or neither", a.id));
-    }
-    let (de_ok, ate_ok) = (data_de(a.de.as_deref(), "de", &format!("action {}", a.id), erros), data_de(a.ate.as_deref(), "ate", &format!("action {}", a.id), erros));
-    if let (Some(de), Some(ate), true, true) = (&a.de, &a.ate, de_ok, ate_ok) {
-        if de > ate {
-            erros.push(format!("action {}: de ({de}) is after ate ({ate})", a.id));
-        }
     }
     for q in &a.planos {
         if q.texto.trim().is_empty() {
@@ -147,13 +192,17 @@ fn regras_da_acao(a: &AcaoDoc, tem_nome: bool, erros: &mut Vec<String>) {
         if !ref_valido(&q.id) {
             erros.push(erro_de_ref(&format!("plan {}", q.id)));
         }
+        erros.extend(numero_fora_da_acao(&a.id, &q.id));
+        if let Some(forma) = q.forma.as_deref().filter(|f| !f.is_empty() && !FORMAS.contains(f)) {
+            erros.push(format!("plan {}: forma \"{forma}\" is not valid; use one of {}", q.id, FORMAS.join(", ")));
+        }
+        if q.entrega.as_deref().is_some_and(|e| e.chars().count() > ENTREGA_MAX || e.contains('\n')) {
+            erros.push(format!("plan {}: entrega is one line of up to {ENTREGA_MAX} characters: what exists when the plan is done", q.id));
+        }
         // `""` é como o agente apaga um campo opcional: não é área inválida.
         if let Some(area) = q.area.as_deref().filter(|s| !s.is_empty() && !area_valida(s)) {
             erros.push(format!("plan {}: area \"{area}\" is not valid; use a relative path of letters, digits, spaces and . _ - /, up to 120 characters, with no \"..\"", q.id));
         }
-    }
-    for c in &a.checkpoints {
-        data_de(c.data.as_deref(), "data", &format!("checkpoint {}", c.id), erros);
     }
     for d in &a.detalhes {
         if !ref_valido(&d.id) {
@@ -187,7 +236,6 @@ fn regras_de_decisoes(decisoes: &[Decisao], erros: &mut Vec<String>) {
         if !ref_valido(&d.id) {
             erros.push(erro_de_ref(&format!("decision {}", d.id)));
         }
-        data_de(d.data.as_deref(), "data", &format!("decision {}", d.id), erros);
     }
 }
 
@@ -212,33 +260,4 @@ fn unicos<'a>(ids: impl Iterator<Item = &'a str>, tipo: &str, porque: &str, erro
             None => drop(vistos.insert(id.to_lowercase(), id)),
         }
     }
-}
-
-/// Registra o erro de data e diz se a data é boa. Sem data é bom.
-fn data_de(data: Option<&str>, campo: &str, onde: &str, erros: &mut Vec<String>) -> bool {
-    match data {
-        Some(s) if !data_valida(s) => {
-            erros.push(format!("{onde}: {campo} \"{s}\" is not a valid YYYY-MM-DD date"));
-            false
-        }
-        _ => true,
-    }
-}
-
-fn data_valida(s: &str) -> bool {
-    let b = s.as_bytes();
-    if b.len() != 10 || b[4] != b'-' || b[7] != b'-' || !b.iter().enumerate().all(|(i, c)| i == 4 || i == 7 || c.is_ascii_digit()) {
-        return false;
-    }
-    let numero = |faixa: std::ops::Range<usize>| s[faixa].parse::<u32>().unwrap_or(0);
-    let (ano, mes, dia) = (numero(0..4), numero(5..7), numero(8..10));
-    let bissexto = ano % 4 == 0 && (ano % 100 != 0 || ano % 400 == 0);
-    let dias = match mes {
-        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
-        4 | 6 | 9 | 11 => 30,
-        2 if bissexto => 29,
-        2 => 28,
-        _ => return false,
-    };
-    (1..=dias).contains(&dia)
 }

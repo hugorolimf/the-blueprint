@@ -3,7 +3,6 @@
 
 use super::super::agentes_movimento as mov;
 use super::super::agentes_pecas as pecas;
-use super::super::agentes_tempo as tempo;
 use super::super::linha::{Letra, Pincel};
 use super::super::modelo::{Chegou, Resumo};
 use super::super::vazio_figuras::{self, BANDEJA_TAM};
@@ -107,14 +106,13 @@ fn folha_nova(c: &Pincel, x: f32, y: f32) {
     pecas::ponto(c, x + 20.0, y + 1.0, AZUL, true);
 }
 
-/// Quem mandou, a versão e há quanto esta janela a viu, o título e os números.
+/// Quem mandou, a versão, o título e os números.
 fn cabeca(ui: &Ui, c: &Pincel, d: &Chegou, x: f32, y: f32, wi: f32) {
     folha_nova(c, x, y + 8.0);
     let letra = Letra::nova(10.0, MEDIO).trilha(0.12);
     let agente = if d.agente.is_empty() { tr("O agente").to_string() } else { d.agente.clone() };
     c.rotulo(&c.cortado(&agente.to_uppercase(), wi - 40.0, &letra).0, x + 32.0, y + 17.0, letra);
-    let visto = tempo::escrito(tempo::visto_ha(ui.ctx(), ("chegou", d.numero)));
-    let versao = tr_com("Versão {n} · visto há {tempo}", &[("n", &d.numero.to_string()), ("tempo", &visto)]);
+    let versao = tr_com("Versão {n}", &[("n", &d.numero.to_string())]);
     c.texto(&c.cortado(&versao, wi - 40.0, &Letra::nova(9.5, MEDIO)).0, x + 32.0, y + 31.0, Letra::nova(9.5, MEDIO));
     c.texto(tr("O plano mudou"), x, y + 62.0, Letra::nova(15.0, TINTA).forte());
     numeros(ui, c, d, x, y + 76.0, wi);
@@ -183,7 +181,7 @@ pub fn painel(ui: &mut Ui, c: &Pincel, d: &Chegou, carregou: bool, tem: bool, xp
         rotulo_da_secao(cp, tr(rotulo), itens.len(), cor(tipo), x, y, wi);
         y += ROTULO - 10.0;
         for item in itens {
-            if let Some(o) = cartao::desenhar(ui, c, &item, tipo, indice, &d.agente, d.numero, x, y, wi) {
+            if let Some(o) = cartao::desenhar(ui, c, &item, tipo, indice, &d.agente, x, y, wi) {
                 clicado = Some((o, item.referencia.clone()));
             }
             y += cartao::alto(tipo) + VAO;

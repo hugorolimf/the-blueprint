@@ -5,6 +5,7 @@ use serde::Deserialize;
 #[cfg(test)]
 use serde::Serialize;
 use serde_json::Value;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 macro_rules! modelo {
     ($($(#[$m:meta])* pub struct $nome:ident { $($corpo:tt)* })*) => {$(
@@ -51,7 +52,6 @@ pub enum EstadoEscrita {
 #[cfg_attr(test, derive(Serialize))]
 #[serde(rename_all = "lowercase")]
 pub enum TipoLinha {
-    Prazo,
     Novo,
     Alterado,
     #[default]
@@ -86,9 +86,11 @@ modelo! {
 
     /// `GET planejar/folha`
     pub struct Folha {
+        /// a vez desta folha na memória (`renovar`): nunca vem do servidor, e é a chave do que a tela guarda de um quadro para o outro; zero não guarda nada
+        #[serde(skip)]
+        pub geracao: u64,
         pub versao_dados: u64,
         pub revisao: u64,
-        pub hoje: String,
         pub blueprint: BlueprintInfo,
         pub escrita: Option<Escrita>,
         pub pendente: Option<Pendente>,
@@ -111,9 +113,6 @@ modelo! {
         #[serde(rename = "ref")]
         pub referencia: String,
         pub nome: String,
-        pub de: String,
-        pub ate: String,
-        pub sem_data: bool,
         pub texto: String,
         pub status: String,
         pub links: Vec<Value>,
@@ -139,6 +138,10 @@ modelo! {
         pub texto: String,
         pub instrucoes: String,
         pub area: String,
+        /// a figura do plano na planta: `tela`, `dados`, `servico`, `integracao`, `ia`, `teste`, `documento` ou `infra`; vazio: sai da `area`
+        pub forma: String,
+        /// o que passa a existir quando o plano fica pronto, numa linha, para a pessoa; é o nome dele na planta
+        pub entrega: String,
         pub depende_de: Vec<String>,
         pub feito: bool,
         pub situacao: Situacao,
@@ -152,8 +155,8 @@ modelo! {
         pub motivo: String,
     }
 
-    pub struct Checkpoint { pub id: String, pub nome: String, pub data: String, pub feito: bool }
-    pub struct Tabela { pub titulo: String, pub colunas: Vec<String>, pub larguras: Vec<f64>, pub linhas: Vec<Vec<String>> }
+    pub struct Checkpoint { pub id: String, pub nome: String, pub feito: bool, pub plano: String }
+    pub struct Tabela { pub plano: String, pub titulo: String, pub colunas: Vec<String>, pub larguras: Vec<f64>, pub linhas: Vec<Vec<String>> }
     pub struct Recado { pub de: String, pub texto: String, pub em: i64 }
     pub struct Revisao { pub estado: EstadoRevisao, pub observacao: String, pub em: i64 }
     pub struct Figura { pub hash: String, pub tipo: String, pub largura: Option<u32>, pub altura: Option<u32> }
@@ -163,6 +166,10 @@ modelo! {
         pub titulo: String,
         pub legenda: String,
         pub grupo: String,
+        /// o plano da ação a que a peça pertence; vazio: a ação inteira
+        pub plano: String,
+        /// o molde na planta (`obra_tela::CATALOGO`); vazio: a proporção da figura escolhe
+        pub variante: String,
         pub figura: Option<Figura>,
         pub pede_aprovacao: bool,
         pub hash: String,
@@ -173,14 +180,14 @@ modelo! {
         pub id: String,
         pub rotulo: String,
         pub texto: String,
-        pub data: String,
         pub acoes: Vec<String>,
+        pub plano: String,
         pub pede_aprovacao: bool,
         pub hash: String,
         pub revisao: Option<Revisao>,
     }
 
-    pub struct Pergunta { pub id: String, pub texto: String, pub opcoes: Vec<String>, pub recomendada: String, pub acoes: Vec<String>, pub resposta: String }
+    pub struct Pergunta { pub id: String, pub texto: String, pub opcoes: Vec<String>, pub recomendada: String, pub acoes: Vec<String>, pub plano: String, pub resposta: String }
 
     pub struct Diff {
         pub numero: i64,
@@ -188,15 +195,17 @@ modelo! {
         pub hash: String,
         pub resumo: Resumo,
         pub removida: bool,
-        pub prazo: Option<Prazo>,
         pub linhas: Vec<LinhaDiff>,
         pub detalhes_novos: Vec<Detalhe>,
+        /// a versão nova dos detalhes que já existem e mudaram; a antiga continua em `Acao::detalhes`
+        pub detalhes_mudados: Vec<Detalhe>,
+        /// as tabelas que a versão pendente traz ou refaz; as aprovadas continuam em `Acao::tabelas`
+        pub tabelas_novas: Vec<Tabela>,
         pub outros: Vec<String>,
         pub revisao: Option<Revisao>,
     }
 
     pub struct Resumo { pub mais: u32, pub menos: u32, pub alterados: u32, pub detalhes: u32, pub outros: u32 }
-    pub struct Prazo { pub antes: String, pub depois: String }
 
     pub struct LinhaDiff {
         pub tipo: TipoLinha,
@@ -277,6 +286,14 @@ modelo! {
 
     /// `GET planejar/config`
     pub struct Config { pub comando_agente: Vec<String>, pub comando_orquestrador: Vec<String> }
+}
+
+impl Folha {
+    /// Uma geração nova, que nenhuma outra folha teve: o que foi medido e desenhado da anterior é refeito no próximo quadro. Chame quando a folha chega ou muda na memória.
+    pub fn renovar(&mut self) {
+        static PROXIMA: AtomicU64 = AtomicU64::new(1);
+        self.geracao = PROXIMA.fetch_add(1, Ordering::Relaxed);
+    }
 }
 
 #[cfg(test)]

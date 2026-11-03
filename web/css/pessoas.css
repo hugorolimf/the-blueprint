@@ -28,7 +28,6 @@
 .eq-acoes{display:flex;gap:10px;margin:10px 0}
 .eq-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
 .eq-bp{display:flex;flex-direction:column;gap:4px;padding:12px;border:1px solid var(--lo);background:#0c3a7899}
-.eq-bp.atrasado{border-color:var(--erro)}.eq-bp.atrasado small:nth-of-type(2){color:var(--erro)}
 .eq-bp progress{width:100%;height:4px;accent-color:var(--ink)}
 .eq-bp small{color:var(--mid);font-size:11px}.eq-bp .btn{align-self:flex-start;margin-top:6px}
 .eq-duas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}

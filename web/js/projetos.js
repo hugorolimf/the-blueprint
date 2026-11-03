@@ -1,6 +1,6 @@
 // ---- projetos dentro do blueprint (decisão de 2026-10-22): cada projeto é uma SEÇÃO da folha, igual a um blueprint -------------------------------
 // Número (01, 02, 03), nome, descrição, progresso geral e botão Recolher/Abrir (cabecalho.js), com as ações do projeto logo abaixo: compactas quando a seção
-// está fechada (nasce fechada) e com planos e checkpoints quando aberta. As seções seguem a data de início da primeira ação de cada projeto; o "Geral"
+// está fechada (nasce fechada) e com planos e checkpoints quando aberta. As seções seguem a ordem em que os projetos foram criados; o "Geral"
 // (ações sem projeto ou com um projeto que não existe mais) vem por último. As ações são numeradas POR PROJETO (02.3 = projeto 2, ação 3); blueprint sem
 // `projetos` é desenhado e numerado como sempre foi (1.5 = blueprint 1, ação 5). O que o usuário abre fica só neste navegador; não há timer nem animação.
 const CHAVE_PROJETOS = "blueprint.projetosAbertos";
@@ -46,12 +46,8 @@ function abrirProjetoDaAcao(p, acaoId) {
   guardaProjetosAbertos();
 }
 
-// Os projetos na ordem das seções: pela data de início da primeira ação de cada um (empate: a ordem em que foram criados); projeto sem ações vai depois dos
-// que têm. O Geral não entra aqui (é sempre o último).
-function projetosOrdenados(p) {
-  const inicio = (id) => Math.min(Infinity, ...p.acoes.filter((f) => projetoDaAcao(p, f) === id).map((f) => dia(f.inicio)).filter(Number.isFinite));
-  return (p.projetos || []).map((x, i) => ({ x, i, ini: inicio(x.id) })).sort((a, b) => (a.ini === b.ini ? a.i - b.i : a.ini - b.ini)).map((o) => o.x);
-}
+// Os projetos na ordem das seções: a ordem em que foram criados. O Geral não entra aqui (é sempre o último).
+const projetosOrdenados = (p) => p.projetos || [];
 // O número da ação na folha: <projeto>.<posição da ação no projeto> quando o blueprint tem projetos (o Geral é o último projeto), senão <blueprint>.<posição>.
 function numeroDaAcao(p, f, pi = D.blueprints.indexOf(p)) {
   if (!p.projetos?.length) return `${pi + 1}.${p.acoes.findIndex((x) => x.id === f.id) + 1}`;
@@ -60,7 +56,7 @@ function numeroDaAcao(p, f, pi = D.blueprints.indexOf(p)) {
 }
 
 // Os grupos do blueprint (as seções): os projetos na ordem acima e, por último, o Geral se tiver ações; null se o blueprint não tem projetos.
-// `visiveis`: as ações que a folha desenha (com o filtro e o período); `todas`: as do blueprint inteiro, de onde vêm o resumo e as datas da seção.
+// `visiveis`: as ações que a folha desenha (com o filtro); `todas`: as do blueprint inteiro, de onde vem o resumo da seção.
 function gruposDoBlueprint(p, visiveis, todas) {
   if (!p.projetos?.length) return null;
   const ag = agenteAqui();
@@ -69,17 +65,15 @@ function gruposDoBlueprint(p, visiveis, todas) {
   const ids = [...projetosOrdenados(p).map((x) => ({ id: x.id, nome: x.nome || tr("Sem nome"), descricao: x.descricao || "" })), { id: "", nome: tr("Geral"), descricao: "" }];
   return ids.map((g, i) => ({ ...g, numero: i + 1 })).filter((g) => g.id || doGrupo(todas, "").length).map((g) => {
     const chave = chaveProjeto(p, g.id), seus = doGrupo(todas, g.id);
-    return { ...g, chave, aberto: projetosAbertos.has(chave), acoes: doGrupo(visiveis, g.id), total: seus.length, ini: Math.min(...seus.map((f) => f.a)), fim: Math.max(...seus.map((f) => f.b)), ...resumo(seus) };
+    return { ...g, chave, aberto: projetosAbertos.has(chave), acoes: doGrupo(visiveis, g.id), total: seus.length, ...resumo(seus) };
   });
 }
 
-// Posição das linhas de UMA seção (a de um projeto, ou o blueprint inteiro quando não há projetos): só as linhas das ações, como sempre foi.
-// `op`: a seção aberta ou não, as alturas e como medir cada ação.
+// Posição das linhas de UMA seção (a de um projeto, ou o blueprint inteiro quando não há projetos): a escada, uma linha por ação, na ordem do blueprint.
+// `op`: a seção aberta ou não e as alturas.
 function disposicaoFolha(acoes, op) {
-  const { aberto, RH, PH, FOLGA, de, ate } = op, alts = [];
-  const n = linhas(acoes, de, ate);
-  for (let i = 0; i < n; i++) alts.push(aberto ? RH : 24);
-  acoes.forEach((f) => { if (aberto) alts[f.linha] = Math.max(alts[f.linha], f.alt); });
+  const { aberto, RH, PH, FOLGA } = op, alts = [];
+  acoes.forEach((f, i) => { f.linha = i; alts.push(aberto ? Math.max(RH, f.alt) : 24); });
   const rowY = [];
   let corpo = 0;
   alts.forEach((h, i) => { rowY[i] = corpo; corpo += h; });

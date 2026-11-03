@@ -1,10 +1,8 @@
 //! `validar_proposta`: porte de `validarPlano` do antigo plano.mjs. `blueprint` é o blueprint atual (None num blueprint novo);
 //! com erros a proposta não é aceita (`proposta` fica None).
-use super::datas::dia_valido;
 use super::decisoes::decisoes_propostas;
 use super::itens::{checkpoints, planos, Cenario};
 use super::mover::movidas;
-use super::prazos::{avisos_da_acao, avisos_de_buracos, Nova};
 use super::projetos::{escolher, projetos_novos, Escolha};
 use super::remocoes::remocoes;
 use super::texto::{campo, entre_aspas, lista, ou, str_de, truncar, verdade};
@@ -16,13 +14,13 @@ pub struct Validacao {
     pub proposta: Option<Value>,
 }
 
-pub fn validar_proposta(entrada: &Value, blueprint: Option<&Value>, hoje: &str) -> Validacao {
-    validar(entrada, blueprint, hoje, false)
+pub fn validar_proposta(entrada: &Value, blueprint: Option<&Value>) -> Validacao {
+    validar(entrada, blueprint, false)
 }
 
-/// `registro`: a mesma validação para o registro do que já foi feito (`registro.rs`): sem os avisos de datas passadas, prazos e quantidade de planos
+/// `registro`: a mesma validação para o registro do que já foi feito (`registro.rs`): sem os avisos de quantidade de planos
 /// (o trabalho já aconteceu), e sem recusar `feito`, que só vale ali.
-pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, hoje: &str, registro: bool) -> Validacao {
+pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, registro: bool) -> Validacao {
     let (mut erros, mut avisos) = (Vec::new(), Vec::new());
     if !(entrada.is_object() || entrada.is_array()) {
         return Validacao { erros: vec![crate::tr!("The proposal must be an object with the `acoes` list.", "A proposta precisa ser um objeto com a lista `acoes`.")], avisos, proposta: None };
@@ -65,7 +63,6 @@ pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, hoje: &str, re
 
     // ação existente: o que não vier fica como está (campos, planos e checkpoints); assim uma proposta parcial nunca apaga conteúdo
     let mut acoes_ok: Vec<Value> = Vec::new();
-    let mut novas: Vec<Nova> = Vec::new();
     for (i, f) in enviadas.iter().take(20).enumerate() {
         let id_f = campo(f, "id");
         let existente = if id_f.is_empty() { None } else { acoes_proj.iter().find(|x| str_de(x, "id") == id_f) };
@@ -78,19 +75,6 @@ pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, hoje: &str, re
         }
         if nome.is_empty() {
             erros.push(crate::tr!("{rotulo}: the name is missing.", "{rotulo}: falta o nome."));
-        }
-        let (inicio, fim) = (ou(campo(f, "inicio"), ex("inicio")), ou(campo(f, "fim"), ex("fim")));
-        if !dia_valido(&inicio) {
-            erros.push(crate::tr!("{rotulo}: `inicio` must be a valid yyyy-mm-dd date (got \"{inicio}\").", "{rotulo}: `inicio` deve ser uma data aaaa-mm-dd válida (recebido \"{inicio}\")."));
-        }
-        if !dia_valido(&fim) {
-            erros.push(crate::tr!("{rotulo}: `fim` must be a valid yyyy-mm-dd date (got \"{fim}\").", "{rotulo}: `fim` deve ser uma data aaaa-mm-dd válida (recebido \"{fim}\")."));
-        }
-        if dia_valido(&inicio) && dia_valido(&fim) && fim < inicio {
-            erros.push(crate::tr!("{rotulo}: `fim` ({fim}) is before `inicio` ({inicio}).", "{rotulo}: `fim` ({fim}) é anterior a `inicio` ({inicio})."));
-        }
-        if existente.is_none() && !registro && dia_valido(&inicio) && inicio.as_str() < hoje {
-            avisos.push(crate::tr!("{rotulo}: starts on {inicio}, before today ({hoje}); only do this if the user asked.", "{rotulo}: começa em {inicio}, antes de hoje ({hoje}); só faça isso se o usuário pediu."));
         }
         let status = match f.get("status") {
             None if existente.is_some() => if ex("status") == "planejado" { "planejado".to_string() } else { "andamento".to_string() },
@@ -110,19 +94,13 @@ pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, hoje: &str, re
                 }
             }
         }
-        let cenario = Cenario { acoes: acoes_proj, existente, movidas: &movidas, rotulo: &rotulo, inicio: &inicio, fim: &fim };
-        let mut calados = Vec::new(); // no registro os avisos dos planos (quantidade, estimativa, "validação") só atrapalham
+        let cenario = Cenario { acoes: acoes_proj, existente, movidas: &movidas, rotulo: &rotulo };
+        let mut calados = Vec::new(); // no registro os avisos dos planos (quantidade, "validação") só atrapalham
         let planos_ok = planos(f, &cenario, &mut erros, if registro { &mut calados } else { &mut avisos });
         let checkpoints_ok = checkpoints(f, &cenario, &mut erros);
         let observacao = ou(campo(f, "observacao"), ex("obs"));
-        if !registro {
-            avisos_da_acao(&rotulo, &inicio, &fim, &planos_ok, &observacao, &mut avisos);
-        }
-        if existente.is_none() {
-            novas.push(Nova { inicio: inicio.clone(), fim: fim.clone(), rotulo: rotulo.clone() });
-        }
         let mut acao_ok = json!({
-            "id": existente.map(|e| str_de(e, "id")).unwrap_or_default(), "nome": truncar(&nome, 120), "inicio": inicio, "fim": fim,
+            "id": existente.map(|e| str_de(e, "id")).unwrap_or_default(), "nome": truncar(&nome, 120),
             "status": if status_ok { status } else { "planejado".to_string() }, "observacao": truncar(&observacao, 20000),
             "planos": planos_ok, "checkpoints": checkpoints_ok,
         });
@@ -134,9 +112,6 @@ pub(super) fn validar(entrada: &Value, blueprint: Option<&Value>, hoje: &str, re
         acoes_ok.push(acao_ok);
     }
 
-    if !registro {
-        avisos_de_buracos(novas.into_iter().filter(|n| dia_valido(&n.inicio) && dia_valido(&n.fim)).collect(), &mut avisos);
-    }
     let mut remover = Vec::new();
     if !pedidos.is_empty() && blueprint.is_none() {
         avisos.push(crate::tr!("`remover` is ignored in a new blueprint.", "`remover` é ignorado em blueprint novo."));

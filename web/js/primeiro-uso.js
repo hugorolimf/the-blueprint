@@ -1,17 +1,13 @@
 // ---- primeiro uso: a entrada sem nenhum blueprint mostra 3 caminhos (abrir o exemplo, conectar o agente, criar um blueprint) ----
-// Some sozinha assim que existe um blueprint. O exemplo entra como um workspace NOVO (todo id trocado, datas trazidas para perto de hoje),
+// Some sozinha assim que existe um blueprint. O exemplo entra como um workspace NOVO (todo id trocado),
 // gravado por /api/mudancas como qualquer workspace criado à mão (rede.js): nunca toca nos dados que já existem, e sai com
 // "Remover exemplo" (o mesmo apagar do workspace, com confirmação). O modelo vem de GET /api/exemplo, no idioma da página.
-const EXEMPLO_HOJE = "2026-10-20"; // o "hoje" em que o data.exemplo.json foi escrito: as datas andam o mesmo tanto que o dia de hoje
-
-/** O data.exemplo.json como um workspace novo: os blueprints da raiz, ids novos em tudo o que é item, datas deslocadas para `hojeIso`. */
-function exemploComoWorkspace(modelo, hojeIso, gerarId = novoId) {
-  const desloca = Math.round(dia(hojeIso) - dia(EXEMPLO_HOJE)) || 0;
-  const data = (iso) => (ISO.test(iso || "") ? deDia(dia(iso) + desloca) : iso);
+/** O data.exemplo.json como um workspace novo: os blueprints da raiz, ids novos em tudo o que é item. */
+function exemploComoWorkspace(modelo, gerarId = novoId) {
   const novo = (o) => ({ ...o, id: gerarId() });
   const blueprints = (modelo.blueprints || []).map((p) => ({
     ...novo(p),
-    acoes: (p.acoes || []).map((a) => ({ ...novo(a), inicio: data(a.inicio), fim: data(a.fim), planos: (a.planos || []).map(novo), checkpoints: (a.checkpoints || []).map((m) => ({ ...novo(m), data: data(m.data) })), prototipos: [] })),
+    acoes: (p.acoes || []).map((a) => ({ ...novo(a), planos: (a.planos || []).map(novo), checkpoints: (a.checkpoints || []).map(novo), prototipos: [] })),
   }));
   const nome = String(modelo.empresa || tr("Exemplo"));
   return { id: gerarId(), nome, empresa: nome, descricao: tr("Dados fictícios para conhecer o app. Remova quando quiser."), icone: "blueprint", exemplo: true, blueprints };
@@ -44,7 +40,7 @@ async function abrirExemplo(botao) {
   try {
     const r = await fetch("/api/exemplo", { cache: "no-store" });
     if (!r.ok) throw new Error(r.status);
-    ws = limpa(exemploComoWorkspace(await r.json(), hoje));
+    ws = limpa(exemploComoWorkspace(await r.json()));
     arquivo.workspaces.push(ws);
     await gravarDados();
     location.hash = "/c/" + encodeURIComponent(ws.id);

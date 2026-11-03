@@ -239,7 +239,7 @@ pub(super) fn salvar(via: Via, a: &Value, perfil: Perfil, sessao: Option<&Path>)
     }
     let mut lista = pacote.avisos.clone();
     lista.extend(avisos(&doc));
-    let projetos: Vec<Value> = doc.projetos.iter().map(|p| json!({"nome": p.nome, "acoes": p.acoes.iter().map(|x| json!({"id": x.id, "nome": x.nome, "de": x.de, "ate": x.ate})).collect::<Vec<_>>()})).collect();
+    let projetos: Vec<Value> = doc.projetos.iter().map(|p| json!({"nome": p.nome, "acoes": p.acoes.iter().map(|x| json!({"id": x.id, "nome": x.nome})).collect::<Vec<_>>()})).collect();
     let mut abrir = json!({"workspaceId": ws, "blueprintId": bp.trim(), "blueprint": doc.blueprint, "origem": "salvar", "agente": nome_do_agente(perfil), "projetos": projetos, "tema": doc.tema});
     if let Some(r) = &doc.resumo {
         abrir["resumo"] = json!(r);

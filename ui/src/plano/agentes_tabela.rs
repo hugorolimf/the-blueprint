@@ -58,7 +58,7 @@ pub fn desenhar(ui: &mut Ui, c: &Pincel, grupos: &[Grupo], carregando: bool, y0:
     }
     let cabeca = mov::Entra::nova(c, mov::entrada(ui.ctx(), "agentes", 7));
     let (c_cab, letra) = (cabeca.pincel(), Letra::nova(9.5, MEDIO).trilha(0.1));
-    for (nome, x) in [("Plano", col.plano), ("Situação", col.situacao), ("Depende de", col.depende), ("Área", col.area), ("Ramo do agente", col.ramo), ("Tempo", col.tempo)] {
+    for (nome, x) in [("Plano", col.plano), ("Situação", col.situacao), ("Depende de", col.depende), ("Área", col.area), ("Ramo do agente", col.ramo)] {
         c_cab.rotulo(tr(nome), x, y0, letra);
     }
     c_cab.fio(x0, y0 + 8.0, x1, y0 + 8.0, TINTA.gamma_multiply(0.85), 1.0);

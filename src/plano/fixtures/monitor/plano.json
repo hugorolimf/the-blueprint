@@ -8,8 +8,6 @@
         {
           "id": "1.1",
           "nome": "Coleta dos medidores",
-          "de": "2026-11-02",
-          "ate": "2026-11-09",
           "planos": [
             {
               "id": "1.1.1",
@@ -27,16 +25,13 @@
           ],
           "checkpoints": [
             {
-              "texto": "Primeira semana de dados",
-              "data": "2026-11-09"
+              "texto": "Primeira semana de dados"
             }
           ]
         },
         {
           "id": "1.2",
           "nome": "Painel por sala",
-          "de": "2026-11-10",
-          "ate": "2026-11-20",
           "texto": "O consumo de cada sala, por dia e por semana, a partir das leituras guardadas na 1.1.",
           "planos": [
             {
@@ -63,8 +58,7 @@
           ],
           "checkpoints": [
             {
-              "texto": "Painel no ar",
-              "data": "2026-11-20"
+              "texto": "Painel no ar"
             }
           ],
           "detalhes": [
@@ -87,8 +81,6 @@
         {
           "id": "1.3",
           "nome": "Alerta de pico",
-          "de": "2026-11-21",
-          "ate": "2026-11-28",
           "planos": [
             {
               "id": "1.3.1",
@@ -116,7 +108,6 @@
       "id": "banco",
       "rotulo": "Banco local",
       "texto": "As leituras ficam num banco local; nada sai do escritório.",
-      "data": "2026-10-30",
       "acoes": [
         "1.1",
         "1.2"

@@ -68,7 +68,17 @@ fn suave(t: f64) -> f64 {
 pub fn passo(ui: &Ui, escopo: &str, tela: &str, alvos: &[Alvo]) -> Vec<Desenho> {
     let agora = ui.input(|i| i.time);
     let id = chave_memoria();
-    let mut mem: Memoria = ui.ctx().data_mut(|d| d.get_temp(id)).unwrap_or_default();
+    // a memória muda no lugar, sem copiar o mapa de todas as figuras a cada chamada (a lista chama uma vez por blueprint);
+    // dentro do `data_mut` nada pede outra trava do contexto: o tempo vem de antes e o repintar fica para depois
+    let (saida, animando) = ui.ctx().data_mut(|d| avancar(d.get_temp_mut_or_default::<Memoria>(id), agora, escopo, tela, alvos));
+    if animando {
+        ui.ctx().request_repaint();
+    }
+    saida
+}
+
+/// O passo de [`passo`] sobre a memória: devolve o que desenhar e se alguma figura ainda está se mexendo.
+fn avancar(mem: &mut Memoria, agora: f64, escopo: &str, tela: &str, alvos: &[Alvo]) -> (Vec<Desenho>, bool) {
     let (mut saida, mut animando) = (Vec::new(), false);
     for a in alvos {
         let chave = format!("{escopo}|{}", a.agente);
@@ -123,11 +133,7 @@ pub fn passo(ui: &Ui, escopo: &str, tela: &str, alvos: &[Alvo]) -> Vec<Desenho> 
         saida.push(Desenho { agente: f.agente.clone(), papel: f.papel, pose: f.pose, x: f.x, y: f.y, escala: (1.0 - t * t) as f32, vivo: false });
         true
     });
-    ui.ctx().data_mut(|d| d.insert_temp(id, mem));
-    if animando {
-        ui.ctx().request_repaint();
-    }
-    saida
+    (saida, animando)
 }
 
 fn atual(f: &Fig, agora: f64) -> (f32, f32) {

@@ -1,4 +1,4 @@
-// ---- situação e prazo da ação direto pelo menu do botão direito (a mesma regra do Editar: com planos ou checkpoints a situação vem deles) ----
+// ---- situação da ação direto pelo menu do botão direito (a mesma regra do Editar: com planos ou checkpoints a situação vem deles) ----
 const SEM_CONCLUIR_COM_ITENS = tr("Conclui sozinha quando todos os planos e checkpoints estiverem marcados");
 
 function mudarSituacaoAcao(pid, fid, status) {
@@ -10,14 +10,7 @@ function mudarSituacaoAcao(pid, fid, status) {
     if (document.body.classList.contains("editando")) montaEditor();
   });
 }
-// prorroga o fim; os checkpoints continuam dentro do período porque só o fim se afasta
-function prorrogarAcao(pid, fid, dias) {
-  const f = acaoDe(pid, fid);
-  if (!f || !(dia(f.fim) === dia(f.fim))) return;
-  mudarComSaida(pid, () => { f.fim = deDia(dia(f.fim) + dias); });
-}
-
-/** Os itens de situação e de prazo de uma ação: `{ grupo, icone, rotulo, fn, desabilitado?, motivo? }`. */
+/** Os itens de situação de uma ação: `{ grupo, icone, rotulo, fn, desabilitado?, motivo? }`. */
 function itensDeSituacao(pid, f) {
   const e = efetiva(f), itens = [];
   const situacao = (status, icone, rotulo) => itens.push({ grupo: "estado", icone, rotulo, fn: () => mudarSituacaoAcao(pid, f.id, status) });
@@ -29,8 +22,6 @@ function itensDeSituacao(pid, f) {
   if (e.status !== "concluido") {
     if (e.it[1]) itens.push({ grupo: "estado", icone: "check", rotulo: tr("Marcar como concluída"), fn() {}, desabilitado: true, motivo: SEM_CONCLUIR_COM_ITENS });
     else situacao("concluido", "check", tr("Marcar como concluída"));
-    itens.push({ grupo: "prazo", icone: "calendario", rotulo: tr("Prorrogar o fim em 1 dia"), fn: () => prorrogarAcao(pid, f.id, 1) });
-    itens.push({ grupo: "prazo", icone: "calendario", rotulo: tr("Prorrogar o fim em 1 semana"), fn: () => prorrogarAcao(pid, f.id, 7) });
   }
   return itens;
 }

@@ -14,7 +14,6 @@ const ICONES_CONTEXTO = {
   tela_cheia: '<path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4"/>',
   estrela: '<path d="M8 1.5l1.8 4.2 4.2.5-3.2 2.9.9 4.4L8 11.3 4.3 13.5l.9-4.4L2 6.2l4.2-.5z"/>',
   relogio: '<circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/>',
-  calendario: '<rect x="2.5" y="3.5" width="11" height="10" rx="1"/><path d="M2.5 7h11M5.5 2v3M10.5 2v3"/>',
   play: '<path d="M5 3l8 5-8 5z"/>',
   mais: '<path d="M8 3v10M3 8h10"/>',
   recolher: '<path d="M4 10l4-4 4 4"/>',

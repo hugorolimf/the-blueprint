@@ -98,7 +98,7 @@ try {
 
   // 3. o agente propõe e responde pelo MCP; a página mostra a resposta com o botão da proposta, e o botão abre o Planejar nela
   const chamar = mcpStdio(servidor.url);
-  const proposta = await chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: BP, mensagem: "Dividir o plano", acoes: [{ id: ACAO, planos: [{ texto: "Criar o endpoint de detalhar pedido", descricao: "Escopo: GET /pedidos/:id. Resultado esperado: 200 com o pedido. Validação: teste da rota.", horas: 2 }] }] });
+  const proposta = await chamar("propor_blueprint", { workspace_id: "sm", blueprint_id: BP, mensagem: "Dividir o plano", acoes: [{ id: ACAO, planos: [{ texto: "Criar o endpoint de detalhar pedido", descricao: "Escopo: GET /pedidos/:id. Resultado esperado: 200 com o pedido. Validação: teste da rota." }] }] });
   assert(!proposta.erro, proposta.texto);
   const numero = Number(/Proposal no\. (\d+)/.exec(proposta.texto)[1]);
   const fora = await chamar("responder_conversa", { workspace_id: "sm", blueprint_id: BP, acao_id: ACAO, texto: "x", proposta: numero + 50 });

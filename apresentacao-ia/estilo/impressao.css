@@ -8,7 +8,7 @@
     --anatomy-hi:#0a2a5a;--anatomy-mid:#4d78b0;--anatomy-lo:#9db8dc;--anatomy-faint:#d3dff0;--anatomy-lit:#000;--anatomy-lit-top:#fff;--anatomy-lit-shade:#e9f0fa;
     --anatomy-glow:transparent;--anatomy-halo:#8aa6cc;--anatomy-halo-opacity:.3;--anatomy-dot:#0a2a5a;
     background:#fff;color:var(--ink);font-size:11px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .ap-pular,.ap-nav,.ap-btn,.ap-etiqueta,.ap-g-hoje,.ap-sec-regua{display:none!important}
+  .ap-pular,.ap-nav,.ap-btn,.ap-etiqueta,.ap-sec-regua{display:none!important}
   .ap-topo,.ap-rodape{position:static;background:#fff;border-color:var(--lo)}
   .ap-corpo{display:block}
   .ap-principal{max-width:none;padding:14px 0;gap:14px}

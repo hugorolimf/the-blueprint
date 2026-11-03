@@ -4,7 +4,7 @@ use super::*;
 use serde_json::json;
 
 fn ws(id: &str) -> Lugar {
-    Lugar { tela: Tela::Workspace(id.into()), sub: Sub::default(), aberta: None, detalhe: None, antiga: false }
+    Lugar { tela: Tela::Workspace(id.into()), sub: Sub::default(), aberta: None, antiga: false }
 }
 
 fn com(lugares: &[&str]) -> Historico {
@@ -63,9 +63,8 @@ fn lugar_que_sumiu_e_pulado_sem_prender() {
 
 #[test]
 fn nao_volta_para_onde_ja_esta() {
-    // a tela apagada caiu no workspace de onde veio: a, apagado, a
-    let mut h = com(&["x", "a", "apagado", "c"]);
-    h.visitou(ws("a"));
+    // sem o lugar apagado que estava entre eles, o de trás é onde a pessoa já está
+    let mut h = Historico { atras: vec![ws("x"), ws("a"), ws("apagado")], frente: Vec::new(), atual: Some(ws("a")) };
     assert_eq!(h.voltar(|l| *l != ws("apagado")), Some(ws("x")));
 }
 
@@ -94,37 +93,35 @@ fn so_existe_o_que_esta_no_documento() {
 fn ir_a_um_lugar_deixa_a_tela_exatamente_nele() {
     let ctx = Context::default();
     let mut vista = Vista::nova();
-    let lugar = Lugar { tela: Tela::Blueprint("w".into(), "b".into()), sub: Sub::Agentes, aberta: Some("A1".into()), detalhe: Some("d1".into()), antiga: false };
-    lugar.clone().ir(&ctx, &mut vista);
-    assert_eq!(Lugar::de(&ctx, &vista), lugar, "senão o quadro seguinte anotaria um lugar a mais");
+    let lugar = Lugar { tela: Tela::Blueprint("w".into(), "b".into()), sub: Sub::Agentes, aberta: Some("A1".into()), antiga: false };
+    lugar.clone().ir(&mut vista);
+    assert_eq!(Lugar::de(&vista), lugar, "senão o quadro seguinte anotaria um lugar a mais");
     plano::rede::passo(&ctx, &mut vista.plano, "w", "b", "http://127.0.0.1:1");
-    assert_eq!(Lugar::de(&ctx, &vista), lugar, "o desenho não zera o Planejar que acabou de voltar");
+    assert_eq!(Lugar::de(&vista), lugar, "o desenho não zera o Planejar que acabou de voltar");
 }
 
 #[test]
 fn entrar_em_outro_blueprint_nao_anota_o_que_era_do_anterior() {
-    let ctx = Context::default();
     let mut vista = Vista::nova();
     plano::rede::entrar(&mut vista.plano, "w", "a");
     vista.plano.tela = Sub::Agentes;
     vista.plano.aberta = Some("A1".into());
     vista.tela = Tela::Blueprint("w".into(), "b".into());
-    let antes_de_desenhar = Lugar::de(&ctx, &vista);
+    let antes_de_desenhar = Lugar::de(&vista);
     assert_eq!(antes_de_desenhar.sub, Sub::Folha);
     plano::rede::entrar(&mut vista.plano, "w", "b");
-    assert_eq!(Lugar::de(&ctx, &vista), antes_de_desenhar);
+    assert_eq!(Lugar::de(&vista), antes_de_desenhar);
 }
 
 #[test]
 fn voltar_a_folha_antiga_e_sair_dela() {
-    let ctx = Context::default();
     let mut vista = Vista::nova();
     let antiga = Lugar { tela: Tela::Blueprint("w".into(), "b".into()), antiga: true, ..ws("") };
-    antiga.clone().ir(&ctx, &mut vista);
-    assert_eq!(Lugar::de(&ctx, &vista), antiga);
+    antiga.clone().ir(&mut vista);
+    assert_eq!(Lugar::de(&vista), antiga);
     let nova = Lugar { antiga: false, ..antiga };
-    nova.clone().ir(&ctx, &mut vista);
-    assert_eq!(Lugar::de(&ctx, &vista), nova);
+    nova.clone().ir(&mut vista);
+    assert_eq!(Lugar::de(&vista), nova);
     assert!(vista.folha_antiga.is_empty());
 }
 

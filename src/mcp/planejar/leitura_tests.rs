@@ -22,12 +22,12 @@ fn arvore() -> Value {
         {"id": "b1", "nome": "Monitor", "descricao": "Painel", "obs": "anotado", "links": [{"id": "l1", "rotulo": "Docs", "url": "https://exemplo.dev"}],
          "planoDoc": {"decisoes": [{"id": "d1", "texto": "Usar a rede local", "acoes": ["1.1"], "pede_aprovacao": true}], "perguntas": [{"id": "q1", "texto": "Qual banco?", "opcoes": ["A", "B"], "recomendada": "A", "acoes": ["1.1"]}]},
          "acoes": [
-            {"id": "a1", "ref": "1.1", "nome": "Coleta", "inicio": "2026-11-02", "fim": "2026-11-09", "status": "andamento", "obs": "Ler e guardar",
+            {"id": "a1", "ref": "1.1", "nome": "Coleta", "status": "andamento", "obs": "Ler e guardar",
              "detalhes": [{"id": "d-a", "titulo": "Esquema", "pede_aprovacao": true}],
              "planos": [{"id": "q1", "ref": "1.1.1", "texto": "Ler os medidores", "area": "coleta", "feito": true}, {"id": "q2", "ref": "1.1.2", "texto": "Guardar as leituras", "area": "banco", "dependeDe": ["1.1.1"]}],
-             "checkpoints": [{"id": "k1", "ref": "1.1.c1", "nome": "Primeiros dados", "data": "2026-11-09"}]},
-            {"id": "a2", "ref": "1.2", "nome": "Painel", "inicio": "2026-11-10", "fim": "2026-11-20", "status": "planejado", "planos": [{"id": "q3", "ref": "1.2.1", "texto": "Somar por sala", "area": "painel"}], "checkpoints": []}]},
-        {"id": "b2", "nome": "Biblioteca", "acoes": [{"id": "a3", "ref": "2.1", "nome": "Acervo", "inicio": "2026-11-02", "fim": "2026-11-09", "status": "planejado",
+             "checkpoints": [{"id": "k1", "ref": "1.1.c1", "nome": "Primeiros dados"}]},
+            {"id": "a2", "ref": "1.2", "nome": "Painel", "status": "planejado", "planos": [{"id": "q3", "ref": "1.2.1", "texto": "Somar por sala", "area": "painel"}], "checkpoints": []}]},
+        {"id": "b2", "nome": "Biblioteca", "acoes": [{"id": "a3", "ref": "2.1", "nome": "Acervo", "status": "planejado",
             "planos": [{"id": "q4", "ref": "2.1.1", "texto": "Cadastrar", "area": "coleta/livros"}, {"id": "q5", "ref": "2.1.2", "texto": "Emprestar", "area": "emprestimo", "feito": true}], "checkpoints": []}]}]})
 }
 
@@ -88,18 +88,16 @@ fn folha_de_blueprint_antigo() {
     assert!(f["escrita"].is_null() && f["pendente"].is_null());
     assert_eq!((f["semPasta"].as_bool(), f["limite"].as_u64()), (Some(true), Some(4)));
     assert_eq!(f["numeros"], json!({"aprovar": 0, "diffs": 0, "novas": 0}));
-    assert_eq!(f["hoje"], crate::tempo::hoje_local());
 
     let a = acao_de(&f, "f1"); // sem `ref`: o ref é o próprio id, e o id real continua sendo o dele
     assert_eq!(a["id"], "f1");
-    assert_eq!((a["de"].as_str(), a["ate"].as_str(), a["semData"].as_bool()), (Some("2026-11-01"), Some("2026-11-30"), Some(false)));
     assert_eq!((a["escrita"].as_str(), a["nova"].as_bool()), (Some("pronta"), Some(false)));
     assert!(a["diff"].is_null());
     assert_eq!(a["numeros"], json!({"planos": 2, "prontos": 1, "detalhes": 0, "decisoes": 0, "aprovar": 0}));
     let (livre, feito) = (plano_de(a, "t1"), plano_de(a, "t2"));
     assert_eq!((livre["id"].as_str(), livre["situacao"].as_str(), livre["instrucoes"].as_str()), (Some("t1"), Some("nao"), Some("x")));
     assert_eq!((feito["situacao"].as_str(), feito["feito"].as_bool()), (Some("pronto"), Some(true)));
-    assert_eq!(a["checkpoints"][1], json!({"id": "m2", "nome": "Já feito", "data": "2026-11-25", "feito": true}));
+    assert_eq!(a["checkpoints"][1], json!({"id": "m2", "nome": "Já feito", "feito": true}));
 
     let r = despachar(&e, &pedido("GET", "/api/mcp/planejar/folha?workspace=sm&blueprint=nao-existe", &[], None));
     assert_eq!(r.status, 404);
@@ -128,7 +126,7 @@ fn folha_com_aguardando() {
     let f = ler(&e, FOLHA);
     assert_eq!((f["escrita"]["escritaId"].as_str(), f["escrita"]["agente"].as_str(), f["escrita"]["origem"].as_str()), (Some(escrita.as_str()), Some("orquestrador"), Some("escrita")));
     let a = acao_de(&f, "1.3");
-    assert_eq!((a["escrita"].as_str(), a["nova"].as_bool(), a["semData"].as_bool()), (Some("aguardando"), Some(true), Some(true)));
+    assert_eq!((a["escrita"].as_str(), a["nova"].as_bool()), (Some("aguardando"), Some(true)));
     assert_eq!(a["id"], crate::plano::ids::id_real("b1", "acao", "1.3"));
     assert_eq!(acao_de(&f, "1.1")["escrita"], "pronta", "a que não está na escrita");
     assert_eq!(f["projetos"].as_array().unwrap().len(), 1, "entra no projeto de mesmo nome");
@@ -162,7 +160,6 @@ fn diff_na_acao() {
         a.planos[0].texto = "Ler os medidores pela rede".into(); // está feito: reabre ao aprovar
         a.planos[1].depende_de = Vec::new(); // só a dependência: não reabre
         a.planos.push(PlanoItem { id: "1.1.3".into(), texto: "Reenviar".into(), ..PlanoItem::default() });
-        a.ate = Some("2026-11-12".into());
         doc.projetos[0].acoes.retain(|x| x.id != "1.2");
     });
 
@@ -179,13 +176,12 @@ fn diff_na_acao() {
     let (x, y) = (super::revisao::acao_do(&antes, "1.1"), super::revisao::acao_do(&doc, "1.1"));
     assert_eq!(d["hash"], hash_diff(x, y), "o hash é o que gesto/revisar confere");
     assert_eq!((d["numero"].as_i64(), d["agente"].as_str(), d["removida"].as_bool()), (Some(numero), Some("plano 1"), Some(false)));
-    assert_eq!(d["resumo"], json!({"mais": 1, "menos": 0, "alterados": 3, "detalhes": 0, "outros": 0}));
-    assert_eq!(d["prazo"], json!({"antes": "2026-11-02 → 2026-11-09", "depois": "2026-11-02 → 2026-11-12"}));
+    assert_eq!(d["resumo"], json!({"mais": 1, "menos": 0, "alterados": 2, "detalhes": 0, "outros": 0}));
     let linhas = d["linhas"].as_array().unwrap();
-    assert_eq!(linhas.iter().map(|l| l["tipo"].as_str().unwrap()).collect::<Vec<_>>(), ["prazo", "alterado", "alterado", "novo"]);
-    assert_eq!((linhas[1]["ref"].as_str(), linhas[1]["antes"].as_str(), linhas[1]["situacao"].as_str()), (Some("1.1.1"), Some("Ler os medidores"), Some("reabre")));
-    assert!(linhas[1]["palavras"].as_array().unwrap().iter().any(|p| p["t"] == "mais" && p["s"].as_str().unwrap().contains("rede")));
-    assert_eq!((linhas[2]["campos"].clone(), linhas[2]["situacao"].as_str()), (json!(["depende_de"]), Some("")));
+    assert_eq!(linhas.iter().map(|l| l["tipo"].as_str().unwrap()).collect::<Vec<_>>(), ["alterado", "alterado", "novo"]);
+    assert_eq!((linhas[0]["ref"].as_str(), linhas[0]["antes"].as_str(), linhas[0]["situacao"].as_str()), (Some("1.1.1"), Some("Ler os medidores"), Some("reabre")));
+    assert!(linhas[0]["palavras"].as_array().unwrap().iter().any(|p| p["t"] == "mais" && p["s"].as_str().unwrap().contains("rede")));
+    assert_eq!((linhas[1]["campos"].clone(), linhas[1]["situacao"].as_str()), (json!(["depende_de"]), Some("")));
 
     // a folha continua mostrando a árvore: o diff é só a proposta
     assert_eq!(plano_de(a, "1.1.1")["texto"], "Ler os medidores");
@@ -196,7 +192,6 @@ fn diff_na_acao() {
     assert_eq!(saindo["diff"]["removida"], true);
     assert_eq!(saindo["diff"]["hash"], hash_diff(super::revisao::acao_do(&antes, "1.2"), None));
     assert_eq!(saindo["diff"]["linhas"][0]["tipo"], "removido");
-    assert_eq!(saindo["diff"]["prazo"], Value::Null);
 }
 
 #[test]
@@ -337,7 +332,6 @@ fn agentes_lista_entre_blueprints() {
     assert_eq!(w["agentes"].as_array().unwrap().len(), 3);
     assert_eq!(w["blueprints"].as_array().unwrap().iter().map(|b| b["id"].as_str().unwrap()).collect::<Vec<_>>(), ["b1", "b2"]);
     assert_eq!(w["recados"][0]["texto"], "Estou olhando");
-    assert_eq!(w["hoje"], crate::tempo::hoje_local());
 
     // workspace que não existe: 404, não uma lista vazia
     assert_eq!(despachar(&e, &pedido("GET", "/api/mcp/planejar/agentes?workspace=nao-existe", &[], None)).status, 404);

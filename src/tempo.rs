@@ -1,4 +1,4 @@
-//! Datas e horas sem dependência externa: a hora UTC em ISO 8601 (campo `em` dos eventos) e o dia local (`hoje`).
+//! Datas e horas sem dependência externa: a hora UTC em ISO 8601 (campo `em` dos eventos).
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// (ano, mês, dia) de um número de dias desde 1970-01-01 (algoritmo civil_from_days, de Howard Hinnant).
@@ -31,40 +31,6 @@ pub fn iso_utc(ms: i64) -> String {
     let (a, m, d) = civil(dias);
     let (h, min, s, milis) = (resto / 3_600_000, resto / 60_000 % 60, resto / 1000 % 60, resto % 1000);
     format!("{a:04}-{m:02}-{d:02}T{h:02}:{min:02}:{s:02}.{milis:03}Z")
-}
-
-#[cfg(windows)]
-fn dia_local() -> (i64, u32, u32) {
-    use windows_sys::Win32::Foundation::SYSTEMTIME;
-    use windows_sys::Win32::System::SystemInformation::GetLocalTime;
-    // SAFETY: SYSTEMTIME é só números e `GetLocalTime` preenche a estrutura inteira.
-    let t = unsafe {
-        let mut t: SYSTEMTIME = std::mem::zeroed();
-        GetLocalTime(&mut t);
-        t
-    };
-    (i64::from(t.wYear), u32::from(t.wMonth), u32::from(t.wDay))
-}
-
-/// Fora do Windows, o dia no fuso do sistema pela libc.
-#[cfg(not(windows))]
-fn dia_local() -> (i64, u32, u32) {
-    let segundos = SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs() as libc::time_t).unwrap_or(0);
-    // SAFETY: `tm` é só números e `localtime_r` preenche a estrutura inteira; ao falhar devolvemos o dia em UTC.
-    let t = unsafe {
-        let mut t: libc::tm = std::mem::zeroed();
-        if libc::localtime_r(&segundos, &mut t).is_null() {
-            return civil(i64::from(segundos).div_euclid(86_400));
-        }
-        t
-    };
-    (i64::from(t.tm_year) + 1900, t.tm_mon as u32 + 1, t.tm_mday as u32)
-}
-
-/// O dia de hoje no fuso do usuário, `aaaa-mm-dd` (o `hojeIso()` do plano.mjs).
-pub fn hoje_local() -> String {
-    let (a, m, d) = dia_local();
-    format!("{a:04}-{m:02}-{d:02}")
 }
 
 #[cfg(test)]

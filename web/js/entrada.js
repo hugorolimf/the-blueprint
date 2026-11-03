@@ -84,8 +84,6 @@ $("workspace-form").onsubmit = async (e) => {
   finally { salvandoWorkspace = false; controles.forEach((c) => { c.disabled = false; }); }
 };
 const host = $("desenho");
-const hojeSimulado = new URLSearchParams(location.search).get("hoje");
-let hoje = hojeSimulado || local(new Date());
 
 let D = { empresa: "", titulo: "", rev: "A", exemplo: false, blueprints: [] };
 let arquivo = D;

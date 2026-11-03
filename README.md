@@ -43,9 +43,9 @@ Not on Windows, or no installer? Build it with [Rust](https://rustup.rs): `cargo
 Workspace
 └─ Blueprint            the scope
    └─ Project           groups actions (optional)
-      └─ Action         start, end, status, instructions
-         ├─ Plan        title, description, hours, done + evidence
-         └─ Checkpoint  name, date, done
+      └─ Action         status, instructions
+         ├─ Plan        title, description, done + evidence
+         └─ Checkpoint  name, done
 ```
 
 The agent reads the structure, proposes changes, reports progress and marks plans done through MCP tools (`listar_blueprints`, `ler_blueprint`, `propor_blueprint`, `registrar_progresso`, `marcar_concluido` and more; [full list](docs/mcp.md)). You start an action yourself, with a confirmed click or the `blueprint claude` command, so the app never sends work to an agent on its own. Plans are sized for AI pace (0.5 to 4 hours) and the app measures how long each one really took. [The model in detail](docs/model.md).

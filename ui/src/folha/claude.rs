@@ -65,8 +65,9 @@ pub fn desenhar(c: &Cena, ui: &Ui, escopo: &str, tela: &str, ags: &[Agente], anc
         let imagem = Image::from_bytes(format!("bytes://claude-{nome}.svg"), egui::load::Bytes::Shared(bytes)).fit_to_exact_size(r.size());
         // a sombra da página (`drop-shadow(0 2px 3px)`): a própria figura, escura, 2 px abaixo; a opacidade acompanha o tamanho ao entrar e sair
         let alfa = |a: f32| egui::Color32::from_white_alpha((a * d.escala * 255.0) as u8);
-        imagem.clone().tint(egui::Color32::from_rgba_unmultiplied(0x02, 0x13, 0x2e, (0x99 as f32 * d.escala) as u8)).paint_at(ui, r.translate(vec2(0.0, 2.0)));
-        imagem.tint(alfa(1.0)).paint_at(ui, r);
+        // no pixel inteiro: rolando, o mesmo SVG não pede ±1 px conforme a posição (e não é rasterizado de novo)
+        imagem.clone().tint(egui::Color32::from_rgba_unmultiplied(0x02, 0x13, 0x2e, (0x99 as f32 * d.escala) as u8)).paint_at(ui, crate::emblema::no_pixel(ui, r.translate(vec2(0.0, 2.0))));
+        imagem.tint(alfa(1.0)).paint_at(ui, crate::emblema::no_pixel(ui, r));
         if d.vivo {
             let resposta = ui.interact(cheio, ui.scope_id().with(("claude", &d.agente)), egui::Sense::click());
             crate::menu::marcar(ui, cheio, || crate::menu::Alvo::Figura(d.agente.clone()));

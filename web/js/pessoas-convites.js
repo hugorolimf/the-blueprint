@@ -28,7 +28,6 @@ export function estadoDoConvite(c, agora = Date.now()) {
 }
 const rotuloEstado = (e) => ({ ativo: tr("ativo"), revogado: tr("revogado"), vencido: tr("vencido"), esgotado: tr("esgotado") })[e];
 const rotuloValidade = (h) => ({ 1: tr("1 hora"), 24: tr("1 dia"), 168: tr("7 dias"), 720: tr("30 dias") })[h];
-const dataCurta = (iso) => { const d = new Date(iso); return Number.isFinite(d.getTime()) ? d.toLocaleString(I18N.ativo, { dateStyle: "short", timeStyle: "short" }) : ""; };
 
 let raiz = null, ws = "";
 export function montarConvites(el, workspaceId) {
@@ -87,7 +86,7 @@ async function listarConvites() {
   $("eq-conv-lista").innerHTML = ordenados.length ? ordenados.map((c) => `<li data-convite="${esc(c.id)}" class="eq-${c.estado}">
     <span class="eq-nome"><strong>${esc(c.papel === "visitante" ? tr("Link público") : nomeDoPapel(c.papel))}</strong>
     <small>${esc(c.blueprintId ? bps.get(c.blueprintId) || c.blueprintId : tr("Workspace inteiro"))}${c.papel === "visitante" ? " · " + esc(c.abre === "apresentacao" ? tr("abre a apresentação") : tr("abre a folha")) : ""}</small>
-    <small>${esc(rotuloEstado(c.estado))} · ${esc(c.usosMax == null ? trn(c.usos, ["{n} uso", "{n} usos"]) : tr("{usos} de {max} usos", { usos: c.usos, max: c.usosMax }))} · ${esc(tr("vence {data}", { data: dataCurta(c.expiraEm) }))}${c.criadoPor ? " · " + esc(tr("por {nome}", { nome: c.criadoPor.nome })) : ""}</small></span>
+    <small>${esc(rotuloEstado(c.estado))} · ${esc(c.usosMax == null ? trn(c.usos, ["{n} uso", "{n} usos"]) : tr("{usos} de {max} usos", { usos: c.usos, max: c.usosMax }))}${c.criadoPor ? " · " + esc(tr("por {nome}", { nome: c.criadoPor.nome })) : ""}</small></span>
     ${c.estado === "ativo" ? `<button class="btn mini" type="button" data-trocar>${tr("Trocar")}</button><button class="btn mini perigo" type="button" data-revogar>${tr("Revogar")}</button>` : ""}
   </li>`).join("") : `<li class="eq-vazio">${tr("Nenhum link ainda.")}</li>`;
   $("eq-conv-lista").querySelectorAll("[data-trocar]").forEach((b) => b.addEventListener("click", () => criar("/api/convites/trocar", { id: b.closest("li").dataset.convite }, tr("Link trocado: o anterior deixou de valer."))));

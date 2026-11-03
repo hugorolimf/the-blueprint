@@ -43,9 +43,9 @@ Fora do Windows, ou sem o instalador? Compile com o [Rust](https://rustup.rs): `
 Workspace
 └─ Blueprint            o escopo
    └─ Projeto           agrupa ações (opcional)
-      └─ Ação           início, fim, status, instruções
-         ├─ Plano       título, descrição, horas, feito + evidência
-         └─ Checkpoint  nome, data, feito
+      └─ Ação           status, instruções
+         ├─ Plano       título, descrição, feito + evidência
+         └─ Checkpoint  nome, feito
 ```
 
 O agente lê a estrutura, propõe mudanças, relata o andamento e marca planos como feitos por ferramentas MCP (`listar_blueprints`, `ler_blueprint`, `propor_blueprint`, `registrar_progresso`, `marcar_concluido` e outras; [lista completa](docs/pt-BR/mcp.md)). Quem inicia uma ação é você, com um clique confirmado ou o comando `blueprint claude`, então o app nunca manda trabalho a um agente por conta própria. Os planos têm o tamanho do ritmo da IA (de 0,5 a 4 horas) e o app mede quanto cada um realmente levou. [O modelo em detalhe](docs/pt-BR/model.md).

@@ -126,12 +126,12 @@ pub fn lista(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecal
 }
 
 /// O blueprint aberto. `cabecalho_fim`: o x onde termina o título/subtítulo (já com os 24 px de respiro) para decidir entre a barra cheia e a de ícones.
-pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, pendentes: bool, contador: Option<String>, abrir_web: &mut Option<String>) -> (Option<&'static str>, Option<Periodo>) {
+pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cabecalho_fim: f32, pendentes: bool, contador: Option<String>, abrir_web: &mut Option<String>) -> (Option<&'static str>, Option<Filtro>) {
     let (direita, y) = (c.o.x + w - 64.0, c.o.y + 44.0);
     let compacta = (w - 64.0) - cabecalho_fim < BARRA_CHEIA;
     let comum = [Item::Icone("expandir"), Item::Icone("recolher"), Item::Icone("tela"), Item::Icone("foco")];
     if compacta && busca_compacta(ui, vista, direita, y, tr("Pesquisar ações, planos e checkpoints"), contador.clone()) {
-        return (None, periodo(ui, c, pendentes));
+        return (None, filtros(ui, c, pendentes));
     }
     let clique = if compacta {
         let itens = [Item::Icone("buscar"), Item::Icone("voltar-bp"), comum[0], comum[1], comum[2], comum[3], Item::Icone("planejar"), Item::Icone("compartilhar"), Item::Icone("apresentar")];
@@ -155,31 +155,29 @@ pub fn blueprint(ui: &mut Ui, vista: &mut Vista, c: &Cena, w: f32, id: &str, cab
         Some("planejar" | "compartilhar" | "apresentar") => *abrir_web = Some(format!("#/c/{id}")),
         _ => {}
     }
-    (clique.filter(|n| matches!(*n, "expandir" | "recolher")), periodo(ui, c, pendentes))
+    (clique.filter(|n| matches!(*n, "expandir" | "recolher")), filtros(ui, c, pendentes))
 }
 
-/// O que os botões de período pedem.
+/// O que os botões de filtro pedem.
 #[derive(Clone, Copy, PartialEq)]
-pub enum Periodo {
+pub enum Filtro {
     Todo,
-    Hoje,
     Pendentes,
 }
 
-/// Os filtros de período. «Em andamento» (que depende dos agentes) ainda não filtra. `pendentes`: o filtro está ligado.
-fn periodo(ui: &mut Ui, c: &Cena, pendentes: bool) -> Option<Periodo> {
+/// Os filtros. «Em andamento» (que depende dos agentes) ainda não filtra. `pendentes`: o filtro está ligado.
+fn filtros(ui: &mut Ui, c: &Cena, pendentes: bool) -> Option<Filtro> {
     let mut comando = None;
     let p = ui.painter().clone();
     let (mut x, y) = (c.o.x + 70.0, c.o.y + 124.0);
-    for rotulo in ["Todo o blueprint", "Hoje", "Pendentes", "Em andamento"] {
+    for rotulo in ["Todo o blueprint", "Pendentes", "Em andamento"] {
         let r = if rotulo == "Em andamento" { format!("{} · 0", tr(rotulo)) } else { tr(rotulo).to_string() };
         let b = Botao { texto: &r, tam: 10.0, cheio: rotulo == "Pendentes" && pendentes, ativo: true, altura: 27.0, pad_x: 12.0 };
         let largura = b.largura(&p);
         if botao(ui, pos2(x, y), &b).clicked() {
             comando = match rotulo {
-                "Todo o blueprint" => Some(Periodo::Todo),
-                "Hoje" => Some(Periodo::Hoje),
-                "Pendentes" => Some(Periodo::Pendentes),
+                "Todo o blueprint" => Some(Filtro::Todo),
+                "Pendentes" => Some(Filtro::Pendentes),
                 _ => None,
             };
         }

@@ -159,7 +159,7 @@ function apOpsFraseErro(status, j) {
 }
 
 // o fragmento (#) da página gerada que corresponde ao campo editado: o visor recarrega nessa seção (os ids são os de apresentacao-ia/biblioteca/secoes.js)
-const apOpsFragmentoSecao = (secao) => ({ visao: "s-visao", recebe: "s-entregas", etapas: "s-etapas", linha: "s-linha", precisamos: "s-voce", decisoes: "s-decisoes", riscos: "s-decisoes", acoes: "s-acoes" })[secao] || "s-visao";
+const apOpsFragmentoSecao = (secao) => ({ visao: "s-visao", recebe: "s-entregas", etapas: "s-etapas", precisamos: "s-voce", decisoes: "s-decisoes", riscos: "s-decisoes", acoes: "s-acoes" })[secao] || "s-visao";
 // o destino para o visor rolar (postMessage "ap-ir" da página gerada): a seção e, nas etapas, o número da etapa (1 a n)
 function apOpsDestino(caminho, doc) {
   const [a, b] = apOpsPartes(caminho);

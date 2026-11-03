@@ -1,5 +1,5 @@
 //! `GET /api/exemplo`: o `data.exemplo.json` (ou o `.en`, pelo idioma do pedido), embutido no binário. É só o modelo: a página
-//! (web/js/primeiro-uso.js) troca todos os ids, traz as datas para perto de hoje e grava como um workspace NOVO por `/api/mudancas`,
+//! (web/js/primeiro-uso.js) troca todos os ids e grava como um workspace NOVO por `/api/mudancas`,
 //! como qualquer workspace criado à mão. Nada aqui grava: os dados existentes não têm como ser tocados por esta rota.
 use super::pedido::{falha, Pedido, Resposta};
 

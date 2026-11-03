@@ -8,8 +8,6 @@
         {
           "id": "1",
           "nome": "Abrir a sala",
-          "de": "2026-11-09",
-          "ate": "2026-11-20",
           "planos": [
             {
               "id": "1.1",
@@ -35,8 +33,7 @@
           ],
           "checkpoints": [
             {
-              "texto": "Vistoria da elétrica",
-              "data": "2026-11-20"
+              "texto": "Vistoria da elétrica"
             }
           ],
           "detalhes": [
@@ -52,8 +49,6 @@
         {
           "id": "2",
           "nome": "Mudar as equipes",
-          "de": "2026-11-23",
-          "ate": "2026-11-27",
           "planos": [
             {
               "id": "2.1",

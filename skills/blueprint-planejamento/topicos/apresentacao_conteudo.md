@@ -4,12 +4,12 @@ A JSON object, at most 128 KB. Everything is plain text, no HTML, no emoji. Writ
 
 ```json
 { "versao": 1, "publico": "cliente", "nivel": "padrao", "idioma": "pt-BR",
-  "titulo": "…", "subtitulo": "…", "cliente": "…", "data": "yyyy-mm-dd",
+  "titulo": "…", "subtitulo": "…", "cliente": "…",
   "resumo": ["two to four short sentences: what the client receives"],
   "entregas": [{ "titulo": "…", "texto": "…" }],
-  "etapas": [{ "id": "e1", "titulo": "…", "inicio": "yyyy-mm-dd", "fim": "yyyy-mm-dd", "texto": "…",
-               "figura": "figura-id or null", "marcos": [{ "data": "yyyy-mm-dd", "nome": "…" }] }],
-  "precisamosDeVoce": [{ "titulo": "…", "texto": "…", "ate": "yyyy-mm-dd or null" }],
+  "etapas": [{ "id": "e1", "titulo": "…", "situacao": "prevista|andamento|concluida", "texto": "…",
+               "figura": "figura-id or null", "marcos": [{ "nome": "…" }] }],
+  "precisamosDeVoce": [{ "titulo": "…", "texto": "…" }],
   "decisoes": [{ "titulo": "…", "texto": "…", "estado": "aberta" }],
   "riscos": [{ "titulo": "…", "texto": "…" }],
   "interno": { "acoes": [{ "numero": "1.2", "nome": "…", "planos": ["…"] }] } }
@@ -17,7 +17,7 @@ A JSON object, at most 128 KB. Everything is plain text, no HTML, no emoji. Writ
 
 - `interno` only when `publico` is `interno`; with `cliente` the tool refuses it (`interno-no-cliente`), because it would leak.
 - `idioma` is the language the user speaks to you; every text follows it.
-- Group the blueprint's actions into 3 to 7 stages (a stage can span several actions). Every date comes from the blueprint; nothing is invented.
+- Group the blueprint's actions into 3 to 7 stages (a stage can span several actions). `situacao` comes from the real status of those actions; nothing is invented.
 - `figura` points to the `id` of one of your figures (see `apresentacao_figuras`); a stage without a figure is fine. The figure of a section is not referenced here: it carries its own `secao`.
 - `decisoes`: open ones are `"estado": "aberta"` and show as "to be decided".
 
